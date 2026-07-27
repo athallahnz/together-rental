@@ -9,11 +9,13 @@ import {
     Pencil,
     Plus,
     Search,
+    Sparkles,
     Tags,
     Timer,
     Trash2,
 } from 'lucide-react';
 import { useState } from 'react';
+import { BrandMark } from '@/components/catalog/brand-mark';
 import {
     CategoryFormDialog,
     PackageFormDialog,
@@ -41,6 +43,8 @@ import {
 } from '@/components/ui/select';
 import type {
     AccessBranch,
+    CatalogBrand,
+    CatalogModel,
     CatalogPermissions,
     Pagination,
     Product,
@@ -54,6 +58,8 @@ type Section = 'products' | 'categories' | 'packages' | 'rate-plans';
 type Props = {
     products: Pagination<Product>;
     categories: ProductCategory[];
+    brands: CatalogBrand[];
+    models: CatalogModel[];
     ratePlans: RatePlan[];
     packages: RentalPackage[];
     summary: {
@@ -66,6 +72,8 @@ type Props = {
     filters: {
         search: string;
         category_id: number | null;
+        catalog_brand_id: number | null;
+        catalog_model_id: number | null;
         tracking_type: string;
         status: string;
         section: Section;
@@ -77,6 +85,8 @@ type Props = {
 export default function CatalogIndex({
     products,
     categories,
+    brands,
+    models,
     ratePlans,
     packages,
     summary,
@@ -104,6 +114,8 @@ export default function CatalogIndex({
         section: Section,
         next: Partial<{
             category_id: number | null;
+            catalog_brand_id: number | null;
+            catalog_model_id: number | null;
             tracking_type: string;
             status: string;
         }> = {},
@@ -114,6 +126,18 @@ export default function CatalogIndex({
                 : (next.category_id ?? filters.category_id ?? undefined);
         const tracking = next.tracking_type ?? filters.tracking_type;
         const status = next.status ?? filters.status;
+        const catalogBrandId =
+            next.catalog_brand_id === null
+                ? undefined
+                : (next.catalog_brand_id ??
+                  filters.catalog_brand_id ??
+                  undefined);
+        const catalogModelId =
+            next.catalog_model_id === null
+                ? undefined
+                : (next.catalog_model_id ??
+                  filters.catalog_model_id ??
+                  undefined);
 
         router.get(
             '/catalog',
@@ -121,6 +145,8 @@ export default function CatalogIndex({
                 section,
                 search: search || undefined,
                 category_id: categoryId,
+                catalog_brand_id: catalogBrandId,
+                catalog_model_id: catalogModelId,
                 tracking_type:
                     tracking === 'all' ? undefined : tracking || undefined,
                 status: status === 'all' ? undefined : status || undefined,
@@ -165,29 +191,41 @@ export default function CatalogIndex({
                         </p>
                     </div>
                     {permissions.manage && (
-                        <Button
-                            onClick={() => {
-                                if (filters.section === 'categories') {
-                                    openCategory(null);
-                                } else if (filters.section === 'packages') {
-                                    openPackage(null);
-                                } else if (filters.section === 'rate-plans') {
-                                    openRatePlan(null);
-                                } else {
-                                    openProduct(null);
-                                }
-                            }}
-                        >
-                            <Plus />
-                            Tambah{' '}
-                            {filters.section === 'categories'
-                                ? 'kategori'
-                                : filters.section === 'packages'
-                                  ? 'paket'
-                                  : filters.section === 'rate-plans'
-                                    ? 'rate plan'
-                                    : 'produk'}
-                        </Button>
+                        <div className="flex flex-wrap gap-2">
+                            {permissions.manageGlobal && (
+                                <Button asChild variant="outline">
+                                    <Link href="/catalog/intelligence">
+                                        <Sparkles />
+                                        Catalog Intelligence
+                                    </Link>
+                                </Button>
+                            )}
+                            <Button
+                                onClick={() => {
+                                    if (filters.section === 'categories') {
+                                        openCategory(null);
+                                    } else if (filters.section === 'packages') {
+                                        openPackage(null);
+                                    } else if (
+                                        filters.section === 'rate-plans'
+                                    ) {
+                                        openRatePlan(null);
+                                    } else {
+                                        openProduct(null);
+                                    }
+                                }}
+                            >
+                                <Plus />
+                                Tambah{' '}
+                                {filters.section === 'categories'
+                                    ? 'kategori'
+                                    : filters.section === 'packages'
+                                      ? 'paket'
+                                      : filters.section === 'rate-plans'
+                                        ? 'rate plan'
+                                        : 'produk'}
+                            </Button>
+                        </div>
                     )}
                 </header>
 
@@ -265,6 +303,8 @@ export default function CatalogIndex({
                     <ProductsSection
                         products={products}
                         categories={categories}
+                        brands={brands}
+                        models={models}
                         filters={filters}
                         search={search}
                         setSearch={setSearch}
@@ -329,6 +369,8 @@ export default function CatalogIndex({
 function ProductsSection({
     products,
     categories,
+    brands,
+    models,
     filters,
     search,
     setSearch,
@@ -338,6 +380,8 @@ function ProductsSection({
 }: {
     products: Pagination<Product>;
     categories: ProductCategory[];
+    brands: CatalogBrand[];
+    models: CatalogModel[];
     filters: Props['filters'];
     search: string;
     setSearch: (value: string) => void;
@@ -345,6 +389,8 @@ function ProductsSection({
         section: Section,
         next?: Partial<{
             category_id: number | null;
+            catalog_brand_id: number | null;
+            catalog_model_id: number | null;
             tracking_type: string;
             status: string;
         }>,
@@ -354,7 +400,7 @@ function ProductsSection({
 }) {
     return (
         <Card>
-            <CardHeader className="gap-4">
+            <CardHeader className="gap-2 px-5 pb-0 sm:px-6">
                 <div>
                     <CardTitle>Master produk rental</CardTitle>
                     <CardDescription>
@@ -362,179 +408,283 @@ function ProductsSection({
                         master yang sama.
                     </CardDescription>
                 </div>
-                <div className="grid gap-2 xl:grid-cols-[minmax(260px,1fr)_repeat(3,minmax(150px,auto))]">
-                    <form
-                        className="flex gap-2"
-                        onSubmit={(event) => {
-                            event.preventDefault();
-                            navigate('products');
-                        }}
-                    >
-                        <div className="relative flex-1">
-                            <Search className="absolute top-2.5 left-3 size-4 text-muted-foreground" />
-                            <Input
-                                value={search}
-                                onChange={(event) =>
-                                    setSearch(event.target.value)
-                                }
-                                className="pl-9"
-                                placeholder="Cari SKU, produk, brand, model"
-                            />
-                        </div>
-                        <Button
-                            type="submit"
-                            size="icon"
-                            variant="outline"
-                            aria-label="Cari produk"
-                        >
-                            <Search />
-                        </Button>
-                    </form>
-                    <FilterSelect
-                        value={filters.category_id?.toString() ?? 'all'}
-                        placeholder="Semua kategori"
-                        onValueChange={(value) =>
+            </CardHeader>
+            <CardContent
+                className={`grid gap-5 px-5 pb-6 sm:px-6 lg:items-start ${
+                    brands.length > 0
+                        ? 'lg:grid-cols-[15rem_minmax(0,1fr)] xl:grid-cols-[17rem_minmax(0,1fr)]'
+                        : ''
+                }`}
+            >
+                {brands.length > 0 && (
+                    <BrandFilterNavigation
+                        brands={brands}
+                        activeBrandId={filters.catalog_brand_id}
+                        onChange={(catalogBrandId) =>
                             navigate('products', {
-                                category_id:
-                                    value === 'all' ? null : Number(value),
+                                catalog_brand_id: catalogBrandId,
+                                catalog_model_id: null,
                             })
                         }
-                        options={categories.map((category) => ({
-                            value: category.id.toString(),
-                            label: category.name,
-                        }))}
                     />
-                    <FilterSelect
-                        value={filters.tracking_type || 'all'}
-                        placeholder="Semua tracking"
-                        onValueChange={(tracking_type) =>
-                            navigate('products', { tracking_type })
-                        }
-                        options={[
-                            {
-                                value: 'serialized',
-                                label: 'Per unit / serial',
-                            },
-                            { value: 'bulk', label: 'Kuantitas / bulk' },
-                        ]}
+                )}
+                <div className="grid min-w-0 gap-4">
+                    <ProductFilterControls
+                        categories={categories}
+                        models={models}
+                        filters={filters}
+                        search={search}
+                        setSearch={setSearch}
+                        navigate={navigate}
                     />
-                    <FilterSelect
-                        value={filters.status || 'all'}
-                        placeholder="Semua status"
-                        onValueChange={(status) =>
-                            navigate('products', { status })
-                        }
-                        options={[
-                            { value: 'active', label: 'Aktif' },
-                            { value: 'inactive', label: 'Nonaktif' },
-                            { value: 'rentable', label: 'Dapat disewa' },
-                            {
-                                value: 'not-rentable',
-                                label: 'Tidak disewakan',
-                            },
-                        ]}
-                    />
-                </div>
-            </CardHeader>
-            <CardContent className="grid gap-4">
-                {products.data.length === 0 ? (
-                    <EmptyState
-                        icon={Boxes}
-                        title="Produk tidak ditemukan"
-                        description="Ubah filter atau tambahkan produk baru."
-                    />
-                ) : (
-                    <div className="grid gap-3">
-                        {products.data.map((product) => (
-                            <article
-                                key={product.id}
-                                className="grid gap-4 rounded-xl border p-4 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_auto] lg:items-center"
-                            >
-                                <div className="min-w-0">
-                                    <div className="flex flex-wrap items-center gap-2">
-                                        <Link
-                                            href={`/catalog/products/${product.id}`}
-                                            className="truncate font-semibold hover:underline"
-                                        >
-                                            {product.name}
-                                        </Link>
-                                        <Badge
-                                            variant={
-                                                product.is_active
-                                                    ? 'outline'
-                                                    : 'secondary'
+                    {products.data.length === 0 ? (
+                        <EmptyState
+                            icon={Boxes}
+                            title="Produk tidak ditemukan"
+                            description="Ubah filter atau tambahkan produk baru."
+                        />
+                    ) : (
+                        <div className="grid gap-3">
+                            {products.data.map((product) => (
+                                <article
+                                    key={product.id}
+                                    className="grid gap-4 rounded-xl border p-4 sm:p-5 xl:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_auto] xl:items-center"
+                                >
+                                    <div className="flex min-w-0 items-start gap-3">
+                                        <BrandMark
+                                            name={
+                                                product.catalog_brand?.name ??
+                                                product.brand ??
+                                                'Tanpa brand'
                                             }
+                                            logoUrl={
+                                                product.catalog_brand?.logo_url
+                                            }
+                                        />
+                                        <div className="min-w-0 flex-1">
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                <Link
+                                                    href={`/catalog/products/${product.id}`}
+                                                    className="truncate font-semibold hover:underline"
+                                                >
+                                                    {product.name}
+                                                </Link>
+                                                <Badge
+                                                    variant={
+                                                        product.is_active
+                                                            ? 'outline'
+                                                            : 'secondary'
+                                                    }
+                                                >
+                                                    {product.is_active
+                                                        ? 'Aktif'
+                                                        : 'Nonaktif'}
+                                                </Badge>
+                                                {!product.is_rentable && (
+                                                    <Badge variant="secondary">
+                                                        Tidak disewakan
+                                                    </Badge>
+                                                )}
+                                                {product.enrichment_status ===
+                                                    'enriched' && (
+                                                    <Badge variant="default">
+                                                        Canonical
+                                                    </Badge>
+                                                )}
+                                            </div>
+                                            <p className="mt-1 font-mono text-xs text-muted-foreground">
+                                                {product.sku}
+                                            </p>
+                                            <p className="mt-2 truncate text-sm text-muted-foreground">
+                                                {[
+                                                    product.catalog_brand
+                                                        ?.name ?? product.brand,
+                                                    product.catalog_model
+                                                        ?.name ?? product.model,
+                                                    product.variant,
+                                                ]
+                                                    .filter(Boolean)
+                                                    .join(' · ') ||
+                                                    'Brand dan model belum diisi'}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="grid gap-2 text-sm">
+                                        <p>
+                                            {product.category
+                                                ? `${product.category.code} · ${product.category.name}`
+                                                : 'Tanpa kategori'}
+                                        </p>
+                                        <p className="text-muted-foreground">
+                                            {product.tracking_type ===
+                                            'serialized'
+                                                ? 'Per unit / serial'
+                                                : 'Kuantitas / bulk'}{' '}
+                                            · {product.assets_count ?? 0} aset
+                                        </p>
+                                        <p className="text-xs text-muted-foreground">
+                                            {product.rates_count ?? 0} harga ·
+                                            stok{' '}
+                                            {Number(
+                                                product.quantity_on_hand ?? 0,
+                                            )}{' '}
+                                            · disewa{' '}
+                                            {Number(
+                                                product.quantity_rented ?? 0,
+                                            )}
+                                        </p>
+                                    </div>
+                                    <div className="flex flex-wrap gap-2 xl:justify-end">
+                                        <Button
+                                            asChild
+                                            size="sm"
+                                            variant="outline"
                                         >
-                                            {product.is_active
-                                                ? 'Aktif'
-                                                : 'Nonaktif'}
-                                        </Badge>
-                                        {!product.is_rentable && (
-                                            <Badge variant="secondary">
-                                                Tidak disewakan
-                                            </Badge>
+                                            <Link
+                                                href={`/catalog/products/${product.id}`}
+                                            >
+                                                Detail & harga
+                                            </Link>
+                                        </Button>
+                                        {permissions.manage && (
+                                            <Button
+                                                size="sm"
+                                                variant="ghost"
+                                                onClick={() => onEdit(product)}
+                                            >
+                                                <Pencil />
+                                                Edit
+                                            </Button>
                                         )}
                                     </div>
-                                    <p className="mt-1 font-mono text-xs text-muted-foreground">
-                                        {product.sku}
-                                    </p>
-                                    <p className="mt-2 truncate text-sm text-muted-foreground">
-                                        {[product.brand, product.model]
-                                            .filter(Boolean)
-                                            .join(' · ') ||
-                                            'Brand dan model belum diisi'}
-                                    </p>
-                                </div>
-                                <div className="grid gap-2 text-sm">
-                                    <p>
-                                        {product.category
-                                            ? `${product.category.code} · ${product.category.name}`
-                                            : 'Tanpa kategori'}
-                                    </p>
-                                    <p className="text-muted-foreground">
-                                        {product.tracking_type === 'serialized'
-                                            ? 'Per unit / serial'
-                                            : 'Kuantitas / bulk'}{' '}
-                                        · {product.assets_count ?? 0} aset
-                                    </p>
-                                    <p className="text-xs text-muted-foreground">
-                                        {product.rates_count ?? 0} harga · stok{' '}
-                                        {Number(product.quantity_on_hand ?? 0)}{' '}
-                                        · disewa{' '}
-                                        {Number(product.quantity_rented ?? 0)}
-                                    </p>
-                                </div>
-                                <div className="flex flex-wrap gap-2 lg:justify-end">
-                                    <Button asChild size="sm" variant="outline">
-                                        <Link
-                                            href={`/catalog/products/${product.id}`}
-                                        >
-                                            Detail & harga
-                                        </Link>
-                                    </Button>
-                                    {permissions.manage && (
-                                        <Button
-                                            size="sm"
-                                            variant="ghost"
-                                            onClick={() => onEdit(product)}
-                                        >
-                                            <Pencil />
-                                            Edit
-                                        </Button>
-                                    )}
-                                </div>
-                            </article>
-                        ))}
-                    </div>
-                )}
-                <PaginationLinks
-                    links={products.links}
-                    from={products.from}
-                    to={products.to}
-                    total={products.total}
-                />
+                                </article>
+                            ))}
+                        </div>
+                    )}
+                    <PaginationLinks
+                        links={products.links}
+                        from={products.from}
+                        to={products.to}
+                        total={products.total}
+                    />
+                </div>
             </CardContent>
         </Card>
+    );
+}
+
+function ProductFilterControls({
+    categories,
+    models,
+    filters,
+    search,
+    setSearch,
+    navigate,
+}: {
+    categories: ProductCategory[];
+    models: CatalogModel[];
+    filters: Props['filters'];
+    search: string;
+    setSearch: (value: string) => void;
+    navigate: (
+        section: Section,
+        next?: Partial<{
+            category_id: number | null;
+            catalog_brand_id: number | null;
+            catalog_model_id: number | null;
+            tracking_type: string;
+            status: string;
+        }>,
+    ) => void;
+}) {
+    return (
+        <div className="grid gap-3 rounded-xl border bg-muted/15 p-3 sm:p-4 md:grid-cols-2 2xl:grid-cols-[minmax(260px,1fr)_repeat(4,minmax(140px,auto))]">
+            <form
+                className="flex gap-2 md:col-span-2 2xl:col-span-1"
+                onSubmit={(event) => {
+                    event.preventDefault();
+                    navigate('products');
+                }}
+            >
+                <div className="relative flex-1">
+                    <Search className="absolute top-2.5 left-3 size-4 text-muted-foreground" />
+                    <Input
+                        value={search}
+                        onChange={(event) => setSearch(event.target.value)}
+                        className="pl-9"
+                        placeholder="Cari SKU, produk, brand, model"
+                    />
+                </div>
+                <Button
+                    type="submit"
+                    size="icon"
+                    variant="outline"
+                    aria-label="Cari produk"
+                >
+                    <Search />
+                </Button>
+            </form>
+            <FilterSelect
+                value={filters.catalog_model_id?.toString() ?? 'all'}
+                placeholder={
+                    filters.catalog_brand_id
+                        ? 'Semua model'
+                        : 'Pilih brand dahulu'
+                }
+                disabled={!filters.catalog_brand_id}
+                onValueChange={(value) =>
+                    navigate('products', {
+                        catalog_model_id:
+                            value === 'all' ? null : Number(value),
+                    })
+                }
+                options={models.map((model) => ({
+                    value: model.id.toString(),
+                    label: `${model.name} (${model.products_count ?? 0})`,
+                }))}
+            />
+            <FilterSelect
+                value={filters.category_id?.toString() ?? 'all'}
+                placeholder="Semua kategori"
+                onValueChange={(value) =>
+                    navigate('products', {
+                        category_id: value === 'all' ? null : Number(value),
+                    })
+                }
+                options={categories.map((category) => ({
+                    value: category.id.toString(),
+                    label: category.name,
+                }))}
+            />
+            <FilterSelect
+                value={filters.tracking_type || 'all'}
+                placeholder="Semua tracking"
+                onValueChange={(tracking_type) =>
+                    navigate('products', { tracking_type })
+                }
+                options={[
+                    {
+                        value: 'serialized',
+                        label: 'Per unit / serial',
+                    },
+                    { value: 'bulk', label: 'Kuantitas / bulk' },
+                ]}
+            />
+            <FilterSelect
+                value={filters.status || 'all'}
+                placeholder="Semua status"
+                onValueChange={(status) => navigate('products', { status })}
+                options={[
+                    { value: 'active', label: 'Aktif' },
+                    { value: 'inactive', label: 'Nonaktif' },
+                    { value: 'rentable', label: 'Dapat disewa' },
+                    {
+                        value: 'not-rentable',
+                        label: 'Tidak disewakan',
+                    },
+                ]}
+            />
+        </div>
     );
 }
 
@@ -828,14 +978,16 @@ function FilterSelect({
     placeholder,
     options,
     onValueChange,
+    disabled = false,
 }: {
     value: string;
     placeholder: string;
     options: { value: string; label: string }[];
     onValueChange: (value: string) => void;
+    disabled?: boolean;
 }) {
     return (
-        <Select value={value} onValueChange={onValueChange}>
+        <Select value={value} onValueChange={onValueChange} disabled={disabled}>
             <SelectTrigger>
                 <SelectValue />
             </SelectTrigger>
@@ -848,6 +1000,81 @@ function FilterSelect({
                 ))}
             </SelectContent>
         </Select>
+    );
+}
+
+function BrandFilterNavigation({
+    brands,
+    activeBrandId,
+    onChange,
+}: {
+    brands: CatalogBrand[];
+    activeBrandId: number | null;
+    onChange: (brandId: number | null) => void;
+}) {
+    const totalProducts = brands.reduce(
+        (total, brand) => total + (brand.products_count ?? 0),
+        0,
+    );
+
+    return (
+        <aside className="min-w-0 lg:sticky lg:top-4">
+            {/* <p className="mb-2 px-1 text-xs font-medium tracking-wide text-muted-foreground uppercase lg:px-0">
+                Filter brand
+            </p> */}
+            <nav
+                aria-label="Filter produk berdasarkan brand"
+                className="flex gap-3 overflow-x-auto overscroll-contain rounded-xl border bg-muted/15 p-3 pb-4 lg:max-h-[calc(100vh-13rem)] lg:flex-col lg:gap-2 lg:overflow-x-hidden lg:overflow-y-auto lg:p-3"
+            >
+                <button
+                    type="button"
+                    onClick={() => onChange(null)}
+                    aria-pressed={activeBrandId === null}
+                    className={`flex min-w-[10rem] shrink-0 items-center gap-3 rounded-xl border px-4 py-3 text-left transition hover:bg-muted/60 lg:w-full lg:min-w-0 ${
+                        activeBrandId === null
+                            ? 'border-primary bg-primary/5 ring-1 ring-primary'
+                            : 'bg-background'
+                    }`}
+                >
+                    <BrandMark name="Semua brand" className="size-10" />
+                    <span className="min-w-0">
+                        <span className="block truncate text-sm font-medium">
+                            Semua brand
+                        </span>
+                        <span className="block text-xs text-muted-foreground">
+                            {totalProducts} produk
+                        </span>
+                    </span>
+                </button>
+                {brands.map((brand) => (
+                    <button
+                        key={brand.id}
+                        type="button"
+                        onClick={() => onChange(brand.id)}
+                        aria-pressed={activeBrandId === brand.id}
+                        className={`flex min-w-[10rem] shrink-0 items-center gap-3 rounded-xl border px-4 py-3 text-left transition hover:bg-muted/60 lg:w-full lg:min-w-0 ${
+                            activeBrandId === brand.id
+                                ? 'border-primary bg-primary/5 ring-1 ring-primary'
+                                : 'bg-background'
+                        }`}
+                    >
+                        <BrandMark
+                            name={brand.name}
+                            logoUrl={brand.logo_url}
+                            className="size-10"
+                        />
+                        <span className="min-w-0">
+                            <span className="block truncate text-sm font-medium">
+                                {brand.name}
+                            </span>
+                            <span className="block text-xs text-muted-foreground">
+                                {brand.products_count ?? 0} produk
+                            </span>
+                        </span>
+                    </button>
+                ))}
+            </nav>
+        </aside>
     );
 }
 

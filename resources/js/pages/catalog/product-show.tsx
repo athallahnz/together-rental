@@ -95,15 +95,26 @@ export default function ProductShow({
                                         ? 'Per unit / serial'
                                         : 'Kuantitas / bulk'}
                                 </Badge>
+                                <Badge
+                                    variant={
+                                        product.enrichment_status === 'enriched'
+                                            ? 'default'
+                                            : 'outline'
+                                    }
+                                >
+                                    {product.enrichment_status === 'enriched'
+                                        ? 'Canonical mapped'
+                                        : 'Belum dipetakan'}
+                                </Badge>
                             </div>
                             <h1 className="mt-3 text-2xl font-semibold tracking-tight">
                                 {product.name}
                             </h1>
                             <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-                                {[product.brand, product.model]
+                                {[product.brand, product.model, product.variant]
                                     .filter(Boolean)
                                     .join(' · ') ||
-                                    'Brand dan model belum diisi'}
+                                    'Brand, model, dan varian belum diisi'}
                                 {product.category
                                     ? ` · ${product.category.name}`
                                     : ''}

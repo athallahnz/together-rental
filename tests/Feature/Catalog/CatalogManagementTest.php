@@ -4,6 +4,10 @@ namespace Tests\Feature\Catalog;
 
 use App\Models\Asset;
 use App\Models\Branch;
+use App\Models\CatalogBrand;
+use App\Models\CatalogBrandAlias;
+use App\Models\CatalogModel;
+use App\Models\CatalogModelAlias;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\RatePlan;
@@ -274,6 +278,101 @@ class CatalogManagementTest extends TestCase
         $this->actingAs($user)
             ->get(route('catalog.index'))
             ->assertForbidden();
+    }
+
+    public function test_products_can_be_filtered_by_canonical_brand_and_model(): void
+    {
+        [$user] = $this->superAdministrator();
+        $category = $this->category($user);
+        $sony = CatalogBrand::query()
+            ->where('company_id', $user->company_id)
+            ->where('name', 'Sony')
+            ->firstOrFail();
+        $canon = CatalogBrand::query()
+            ->where('company_id', $user->company_id)
+            ->where('name', 'Canon')
+            ->firstOrFail();
+        $sonyModel = CatalogModel::query()->create([
+            'company_id' => $user->company_id,
+            'catalog_brand_id' => $sony->id,
+            'category_id' => $category->id,
+            'name' => 'A7 III',
+            'normalized_name' => 'A7 III',
+            'is_active' => true,
+        ]);
+        $canonModel = CatalogModel::query()->create([
+            'company_id' => $user->company_id,
+            'catalog_brand_id' => $canon->id,
+            'category_id' => $category->id,
+            'name' => 'EOS R6',
+            'normalized_name' => 'EOS R6',
+            'is_active' => true,
+        ]);
+        $sonyProduct = $this->product($user, $category);
+        $sonyProduct->update([
+            'catalog_brand_id' => $sony->id,
+            'catalog_model_id' => $sonyModel->id,
+            'enrichment_status' => 'enriched',
+        ]);
+        $canonProduct = Product::query()->create([
+            'company_id' => $user->company_id,
+            ...$this->productPayload($category),
+            'sku' => 'CAM-CANON-R6',
+            'name' => 'Canon EOS R6',
+            'brand' => 'Canon',
+            'catalog_brand_id' => $canon->id,
+            'model' => 'EOS R6',
+            'catalog_model_id' => $canonModel->id,
+            'enrichment_status' => 'enriched',
+        ]);
+        CatalogBrandAlias::query()->create([
+            'catalog_brand_id' => $sony->id,
+            'alias' => 'Alpha System',
+            'normalized_alias' => 'ALPHA SYSTEM',
+        ]);
+        CatalogModelAlias::query()->create([
+            'catalog_model_id' => $sonyModel->id,
+            'alias' => 'ILCE-7M3',
+            'normalized_alias' => 'ILCE 7M3',
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('catalog.index', [
+                'catalog_brand_id' => $sony->id,
+                'catalog_model_id' => $sonyModel->id,
+            ]))
+            ->assertOk()
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->where('filters.catalog_brand_id', $sony->id)
+                ->where('filters.catalog_model_id', $sonyModel->id)
+                ->where('products.total', 1)
+                ->where('products.data.0.id', $sonyProduct->id)
+                ->where('products.data.0.catalog_brand.logo_url', null)
+                ->where('models.0.id', $sonyModel->id)
+                ->has('brands', 2));
+
+        $this->actingAs($user)
+            ->get(route('catalog.index', [
+                'catalog_brand_id' => $sony->id,
+                'catalog_model_id' => $canonModel->id,
+            ]))
+            ->assertOk()
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->where('filters.catalog_brand_id', $sony->id)
+                ->where('filters.catalog_model_id', null)
+                ->where('products.total', 1)
+                ->where('products.data.0.id', $sonyProduct->id));
+
+        foreach (['Alpha System', 'ILCE-7M3'] as $search) {
+            $this->actingAs($user)
+                ->get(route('catalog.index', ['search' => $search]))
+                ->assertOk()
+                ->assertInertia(fn (AssertableInertia $page) => $page
+                    ->where('products.total', 1)
+                    ->where('products.data.0.id', $sonyProduct->id));
+        }
+
+        $this->assertNotSame($sonyProduct->id, $canonProduct->id);
     }
 
     /**

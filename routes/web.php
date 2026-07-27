@@ -1,7 +1,9 @@
 <?php
 
 use App\Http\Controllers\BranchController;
+use App\Http\Controllers\CatalogBrandController;
 use App\Http\Controllers\CatalogController;
+use App\Http\Controllers\CatalogIntelligenceController;
 use App\Http\Controllers\CustomerAddressController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\CustomerIdentityController;
@@ -29,6 +31,30 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
         Route::get('/', [CatalogController::class, 'index'])
             ->middleware('can:products.view')
             ->name('index');
+        Route::get('/intelligence', [CatalogIntelligenceController::class, 'index'])
+            ->middleware('can:products.manage')
+            ->name('intelligence.index');
+        Route::post('/intelligence/generate', [CatalogIntelligenceController::class, 'generate'])
+            ->middleware('can:products.manage')
+            ->name('intelligence.generate');
+        Route::patch('/intelligence/candidates/{candidate}', [CatalogIntelligenceController::class, 'review'])
+            ->middleware('can:products.manage')
+            ->name('intelligence.candidates.review');
+        Route::post('/intelligence/runs/{run}/approve-high-confidence', [CatalogIntelligenceController::class, 'approveHighConfidence'])
+            ->middleware('can:products.manage')
+            ->name('intelligence.approve-high-confidence');
+        Route::post('/intelligence/runs/{run}/execute', [CatalogIntelligenceController::class, 'execute'])
+            ->middleware('can:products.manage')
+            ->name('intelligence.execute');
+        Route::post('/intelligence/runs/{run}/rollback', [CatalogIntelligenceController::class, 'rollback'])
+            ->middleware('can:products.manage')
+            ->name('intelligence.rollback');
+        Route::post('/brands/{catalogBrand}/visual', [CatalogBrandController::class, 'updateVisual'])
+            ->middleware('can:products.manage')
+            ->name('brands.visual.update');
+        Route::delete('/brands/{catalogBrand}/logo', [CatalogBrandController::class, 'destroyLogo'])
+            ->middleware('can:products.manage')
+            ->name('brands.logo.destroy');
         Route::post('/categories', [ProductCategoryController::class, 'store'])
             ->middleware('can:products.manage')
             ->name('categories.store');

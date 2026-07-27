@@ -1,5 +1,27 @@
 import type { AccessBranch } from './access';
 
+export type CatalogBrand = {
+    id: number;
+    company_id?: number;
+    name: string;
+    logo_path?: string | null;
+    logo_url: string | null;
+    sort_order: number;
+    is_active?: boolean;
+    products_count?: number;
+    models_count?: number;
+};
+
+export type CatalogModel = {
+    id: number;
+    company_id?: number;
+    catalog_brand_id: number | null;
+    category_id?: number | null;
+    name: string;
+    is_active?: boolean;
+    products_count?: number;
+};
+
 export type ProductCategory = {
     id: number;
     company_id: number;
@@ -49,7 +71,12 @@ export type Product = {
     sku: string;
     name: string;
     brand: string | null;
+    catalog_brand_id: number | null;
     model: string | null;
+    catalog_model_id: number | null;
+    variant: string | null;
+    enrichment_status: 'pending' | 'enriched' | 'reviewed';
+    enriched_at: string | null;
     tracking_type: 'serialized' | 'bulk';
     description: string | null;
     replacement_value: string;
@@ -57,6 +84,11 @@ export type Product = {
     is_active: boolean;
     metadata: Record<string, unknown> | null;
     category?: Pick<ProductCategory, 'id' | 'code' | 'name'> | null;
+    catalog_brand?: Pick<CatalogBrand, 'id' | 'name' | 'logo_url'> | null;
+    catalog_model?: Pick<
+        CatalogModel,
+        'id' | 'catalog_brand_id' | 'name'
+    > | null;
     rates?: ProductRate[];
     branch_inventories?: BranchInventory[];
     assets_count?: number;

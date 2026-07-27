@@ -14,7 +14,12 @@ use Illuminate\Database\Eloquent\SoftDeletes;
     'sku',
     'name',
     'brand',
+    'catalog_brand_id',
     'model',
+    'catalog_model_id',
+    'variant',
+    'enrichment_status',
+    'enriched_at',
     'tracking_type',
     'description',
     'replacement_value',
@@ -36,6 +41,18 @@ class Product extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(ProductCategory::class, 'category_id');
+    }
+
+    /** @return BelongsTo<CatalogBrand, $this> */
+    public function catalogBrand(): BelongsTo
+    {
+        return $this->belongsTo(CatalogBrand::class);
+    }
+
+    /** @return BelongsTo<CatalogModel, $this> */
+    public function catalogModel(): BelongsTo
+    {
+        return $this->belongsTo(CatalogModel::class);
     }
 
     /** @return HasMany<ProductRate, $this> */
@@ -65,10 +82,15 @@ class Product extends Model
     protected function casts(): array
     {
         return [
+            'company_id' => 'integer',
+            'category_id' => 'integer',
+            'catalog_brand_id' => 'integer',
+            'catalog_model_id' => 'integer',
             'replacement_value' => 'decimal:2',
             'is_rentable' => 'boolean',
             'is_active' => 'boolean',
             'metadata' => 'array',
+            'enriched_at' => 'datetime',
         ];
     }
 }

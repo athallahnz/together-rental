@@ -2,6 +2,8 @@
 
 namespace App\Providers;
 
+use App\Domain\Catalog\Intelligence\CatalogAiSuggestionProvider;
+use App\Domain\Catalog\Intelligence\DisabledCatalogAiSuggestionProvider;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Foundation\DevCommands;
@@ -18,7 +20,10 @@ class AppServiceProvider extends ServiceProvider
      */
     public function register(): void
     {
-        //
+        $this->app->bind(
+            CatalogAiSuggestionProvider::class,
+            DisabledCatalogAiSuggestionProvider::class,
+        );
     }
 
     /**

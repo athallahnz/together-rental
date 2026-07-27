@@ -2,6 +2,7 @@
 
 namespace Database\Seeders;
 
+use App\Domain\Catalog\Intelligence\CatalogTextNormalizer;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -55,6 +56,7 @@ class RentalFoundationSeeder extends Seeder
             $this->seedBranchSettings($branchId, $now);
             $this->seedAccessControl($companyId, $now);
             $this->seedOperationalDefaults($companyId, $branchId, $branchCode, $now);
+            $this->seedCatalogIntelligence($companyId, $now);
             $this->attachInitialAdministrator($companyId, $branchId, $now);
         });
     }
@@ -354,6 +356,74 @@ class RentalFoundationSeeder extends Seeder
                     'padding' => 6,
                     'updated_at' => $now,
                 ]);
+        }
+    }
+
+    private function seedCatalogIntelligence(int $companyId, mixed $now): void
+    {
+        $normalizer = app(CatalogTextNormalizer::class);
+        $dictionary = [
+            'Apple' => ['APPLE', 'IPHONE', 'IPHON'],
+            'Asus' => ['ASUS'],
+            'BenQ' => ['BENQ'],
+            'Boya' => ['BOYA'],
+            'Canon' => ['CANON'],
+            'DJI' => ['DJI', 'MAVIC', 'OSMO'],
+            'Fujifilm' => ['FUJIFILM', 'FUJI FILM', 'FUJI', 'FUJIFULM'],
+            'Godox' => ['GODOX'],
+            'GoPro' => ['GOPRO', 'GO PRO'],
+            'InFocus' => ['INFOCUS'],
+            'Insta360' => ['INSTA360', 'INSTA 360'],
+            'Lenovo' => ['LENOVO'],
+            'Meike' => ['MEIKE'],
+            'Nikon' => ['NIKON'],
+            'Panasonic' => ['PANASONIC', 'LUMIX'],
+            'Rode' => ['RODE'],
+            'Samyang' => ['SAMYANG'],
+            'Saramonic' => ['SARAMONIC'],
+            'Sigma' => ['SIGMA'],
+            'Somita' => ['SOMITA'],
+            'Sony' => ['SONY'],
+            'Tamron' => ['TAMRON'],
+            'Tokina' => ['TOKINA'],
+            'Viltrox' => ['VILTROX'],
+            'Zeiss' => ['ZEISS', 'CARL ZEISS'],
+            'Zhiyun' => ['ZHIYUN'],
+            '7Artisans' => ['7ARTISANS', '7 ARTISANS', '7ARTISAN', '7 ARTISAN'],
+        ];
+
+        foreach ($dictionary as $name => $aliases) {
+            $normalizedName = $normalizer->normalize($name);
+            DB::table('catalog_brands')->updateOrInsert(
+                [
+                    'company_id' => $companyId,
+                    'normalized_name' => $normalizedName,
+                ],
+                [
+                    'name' => $name,
+                    'is_active' => true,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ],
+            );
+            $brandId = (int) DB::table('catalog_brands')
+                ->where('company_id', $companyId)
+                ->where('normalized_name', $normalizedName)
+                ->value('id');
+
+            foreach (array_unique([$name, ...$aliases]) as $alias) {
+                DB::table('catalog_brand_aliases')->updateOrInsert(
+                    [
+                        'catalog_brand_id' => $brandId,
+                        'normalized_alias' => $normalizer->normalize($alias),
+                    ],
+                    [
+                        'alias' => $alias,
+                        'created_at' => $now,
+                        'updated_at' => $now,
+                    ],
+                );
+            }
         }
     }
 

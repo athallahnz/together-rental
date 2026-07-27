@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Domain\Catalog\CatalogScope;
+use App\Models\CatalogBrand;
+use App\Models\CatalogModel;
 use App\Models\Product;
 use App\Models\ProductCategory;
 use App\Models\RatePlan;
@@ -23,6 +25,8 @@ class CatalogController extends Controller
         $actor = $request->user();
         $search = trim($request->string('search')->toString());
         $categoryId = $request->integer('category_id') ?: null;
+        $catalogBrandId = $request->integer('catalog_brand_id') ?: null;
+        $catalogModelId = $request->integer('catalog_model_id') ?: null;
         $trackingType = $request->string('tracking_type')->toString();
         $status = $request->string('status')->toString();
         $section = in_array(
@@ -35,6 +39,28 @@ class CatalogController extends Controller
         $branchIds = $actor->accessibleBranches()->pluck('id');
         $productBase = Product::query()->where('company_id', $actor->company_id);
 
+        if (
+            $catalogBrandId !== null
+            && ! CatalogBrand::query()
+                ->where('company_id', $actor->company_id)
+                ->whereKey($catalogBrandId)
+                ->exists()
+        ) {
+            $catalogBrandId = null;
+        }
+
+        if (
+            $catalogBrandId === null
+            || ($catalogModelId !== null
+                && ! CatalogModel::query()
+                    ->where('company_id', $actor->company_id)
+                    ->where('catalog_brand_id', $catalogBrandId)
+                    ->whereKey($catalogModelId)
+                    ->exists())
+        ) {
+            $catalogModelId = null;
+        }
+
         $products = (clone $productBase)
             ->when($search !== '', function (Builder $query) use ($search): void {
                 $query->where(function (Builder $searchQuery) use ($search): void {
@@ -42,12 +68,36 @@ class CatalogController extends Controller
                         ->where('sku', 'like', "%{$search}%")
                         ->orWhere('name', 'like', "%{$search}%")
                         ->orWhere('brand', 'like', "%{$search}%")
-                        ->orWhere('model', 'like', "%{$search}%");
+                        ->orWhere('model', 'like', "%{$search}%")
+                        ->orWhereHas('catalogBrand', function (Builder $brandQuery) use ($search): void {
+                            $brandQuery->where(function (Builder $canonicalQuery) use ($search): void {
+                                $canonicalQuery
+                                    ->where('name', 'like', "%{$search}%")
+                                    ->orWhereHas('aliases', fn (Builder $aliasQuery) => $aliasQuery
+                                        ->where('alias', 'like', "%{$search}%"));
+                            });
+                        })
+                        ->orWhereHas('catalogModel', function (Builder $modelQuery) use ($search): void {
+                            $modelQuery->where(function (Builder $canonicalQuery) use ($search): void {
+                                $canonicalQuery
+                                    ->where('name', 'like', "%{$search}%")
+                                    ->orWhereHas('aliases', fn (Builder $aliasQuery) => $aliasQuery
+                                        ->where('alias', 'like', "%{$search}%"));
+                            });
+                        });
                 });
             })
             ->when(
                 $categoryId !== null,
                 fn (Builder $query) => $query->where('category_id', $categoryId),
+            )
+            ->when(
+                $catalogBrandId !== null,
+                fn (Builder $query) => $query->where('catalog_brand_id', $catalogBrandId),
+            )
+            ->when(
+                $catalogModelId !== null,
+                fn (Builder $query) => $query->where('catalog_model_id', $catalogModelId),
             )
             ->when(
                 in_array($trackingType, ['serialized', 'bulk'], true),
@@ -62,7 +112,11 @@ class CatalogController extends Controller
                     default => $query->where('is_rentable', false),
                 },
             )
-            ->with('category:id,code,name')
+            ->with([
+                'category:id,code,name',
+                'catalogBrand:id,name,logo_path',
+                'catalogModel:id,catalog_brand_id,name',
+            ])
             ->withCount(['assets', 'rates', 'packageItems'])
             ->withSum('branchInventories as quantity_on_hand', 'quantity_on_hand')
             ->withSum('branchInventories as quantity_rented', 'quantity_rented')
@@ -101,6 +155,24 @@ class CatalogController extends Controller
         return Inertia::render('catalog/index', [
             'products' => $products,
             'categories' => $categories,
+            'brands' => CatalogBrand::query()
+                ->where('company_id', $actor->company_id)
+                ->where('is_active', true)
+                ->whereHas('products')
+                ->withCount(['products', 'models'])
+                ->orderBy('sort_order')
+                ->orderBy('name')
+                ->get(['id', 'name', 'logo_path', 'sort_order']),
+            'models' => $catalogBrandId === null
+                ? []
+                : CatalogModel::query()
+                    ->where('company_id', $actor->company_id)
+                    ->where('catalog_brand_id', $catalogBrandId)
+                    ->where('is_active', true)
+                    ->whereHas('products')
+                    ->withCount('products')
+                    ->orderBy('name')
+                    ->get(['id', 'catalog_brand_id', 'name']),
             'ratePlans' => $ratePlans,
             'packages' => $packages,
             'summary' => [
@@ -128,6 +200,8 @@ class CatalogController extends Controller
             'filters' => [
                 'search' => $search,
                 'category_id' => $categoryId,
+                'catalog_brand_id' => $catalogBrandId,
+                'catalog_model_id' => $catalogModelId,
                 'tracking_type' => $trackingType,
                 'status' => $status,
                 'section' => $section,

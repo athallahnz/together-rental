@@ -41,7 +41,19 @@ class ProductController extends Controller
         ActivityRecorder $recorder,
     ): RedirectResponse {
         $oldValues = $this->auditValues($product);
-        $product->update($request->validated());
+        $values = $request->validated();
+        $identityChanged = $product->brand !== $values['brand']
+            || $product->model !== $values['model'];
+        $product->update([
+            ...$values,
+            ...($identityChanged ? [
+                'catalog_brand_id' => null,
+                'catalog_model_id' => null,
+                'variant' => null,
+                'enrichment_status' => 'pending',
+                'enriched_at' => null,
+            ] : []),
+        ]);
         $recorder->record(
             $request,
             'catalog.product.updated',
@@ -112,6 +124,12 @@ class ProductController extends Controller
             'id' => $product->id,
             'sku' => $product->sku,
             'name' => $product->name,
+            'brand' => $product->brand,
+            'catalog_brand_id' => $product->catalog_brand_id,
+            'model' => $product->model,
+            'catalog_model_id' => $product->catalog_model_id,
+            'variant' => $product->variant,
+            'enrichment_status' => $product->enrichment_status,
             'category_id' => $product->category_id,
             'tracking_type' => $product->tracking_type,
             'replacement_value' => $product->replacement_value,

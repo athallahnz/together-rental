@@ -59,6 +59,18 @@ class Company extends Model
         return $this->hasMany(User::class);
     }
 
+    /** @return HasMany<CatalogBrand, $this> */
+    public function catalogBrands(): HasMany
+    {
+        return $this->hasMany(CatalogBrand::class);
+    }
+
+    /** @return HasMany<CatalogModel, $this> */
+    public function catalogModels(): HasMany
+    {
+        return $this->hasMany(CatalogModel::class);
+    }
+
     protected function casts(): array
     {
         return [
