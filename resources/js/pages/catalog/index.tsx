@@ -1,0 +1,897 @@
+import { Head, Link, router, usePage } from '@inertiajs/react';
+import {
+    Boxes,
+    BoxIcon,
+    CircleDollarSign,
+    CircleOff,
+    Layers3,
+    PackageCheck,
+    Pencil,
+    Plus,
+    Search,
+    Tags,
+    Timer,
+    Trash2,
+} from 'lucide-react';
+import { useState } from 'react';
+import {
+    CategoryFormDialog,
+    PackageFormDialog,
+    ProductFormDialog,
+    RatePlanFormDialog,
+} from '@/components/catalog/catalog-dialogs';
+import { PaginationLinks } from '@/components/pagination-links';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { Badge } from '@/components/ui/badge';
+import { Button } from '@/components/ui/button';
+import {
+    Card,
+    CardContent,
+    CardDescription,
+    CardHeader,
+    CardTitle,
+} from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
+import type {
+    AccessBranch,
+    CatalogPermissions,
+    Pagination,
+    Product,
+    ProductCategory,
+    RatePlan,
+    RentalPackage,
+} from '@/types';
+
+type Section = 'products' | 'categories' | 'packages' | 'rate-plans';
+
+type Props = {
+    products: Pagination<Product>;
+    categories: ProductCategory[];
+    ratePlans: RatePlan[];
+    packages: RentalPackage[];
+    summary: {
+        products: number;
+        rentable: number;
+        serialized: number;
+        packages: number;
+        withoutRate: number;
+    };
+    filters: {
+        search: string;
+        category_id: number | null;
+        tracking_type: string;
+        status: string;
+        section: Section;
+    };
+    branches: AccessBranch[];
+    permissions: CatalogPermissions;
+};
+
+export default function CatalogIndex({
+    products,
+    categories,
+    ratePlans,
+    packages,
+    summary,
+    filters,
+    branches,
+    permissions,
+}: Props) {
+    const { errors } = usePage().props;
+    const [search, setSearch] = useState(filters.search);
+    const [productDialog, setProductDialog] = useState(false);
+    const [categoryDialog, setCategoryDialog] = useState(false);
+    const [ratePlanDialog, setRatePlanDialog] = useState(false);
+    const [packageDialog, setPackageDialog] = useState(false);
+    const [editingProduct, setEditingProduct] = useState<Product | null>(null);
+    const [editingCategory, setEditingCategory] =
+        useState<ProductCategory | null>(null);
+    const [editingRatePlan, setEditingRatePlan] = useState<RatePlan | null>(
+        null,
+    );
+    const [editingPackage, setEditingPackage] = useState<RentalPackage | null>(
+        null,
+    );
+
+    const navigate = (
+        section: Section,
+        next: Partial<{
+            category_id: number | null;
+            tracking_type: string;
+            status: string;
+        }> = {},
+    ) => {
+        const categoryId =
+            next.category_id === null
+                ? undefined
+                : (next.category_id ?? filters.category_id ?? undefined);
+        const tracking = next.tracking_type ?? filters.tracking_type;
+        const status = next.status ?? filters.status;
+
+        router.get(
+            '/catalog',
+            {
+                section,
+                search: search || undefined,
+                category_id: categoryId,
+                tracking_type:
+                    tracking === 'all' ? undefined : tracking || undefined,
+                status: status === 'all' ? undefined : status || undefined,
+            },
+            { preserveState: true, replace: true },
+        );
+    };
+
+    const openProduct = (product: Product | null) => {
+        setEditingProduct(product);
+        setProductDialog(true);
+    };
+    const openCategory = (category: ProductCategory | null) => {
+        setEditingCategory(category);
+        setCategoryDialog(true);
+    };
+    const openRatePlan = (ratePlan: RatePlan | null) => {
+        setEditingRatePlan(ratePlan);
+        setRatePlanDialog(true);
+    };
+    const openPackage = (rentalPackage: RentalPackage | null) => {
+        setEditingPackage(rentalPackage);
+        setPackageDialog(true);
+    };
+
+    return (
+        <>
+            <Head title="Katalog & Harga" />
+            <div className="flex h-full flex-1 flex-col gap-6 overflow-x-auto rounded-xl p-4 md:p-6">
+                <header className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+                    <div>
+                        <p className="text-sm font-medium text-primary">
+                            Master Catalog & Pricing
+                        </p>
+                        <h1 className="mt-1 text-2xl font-semibold tracking-tight">
+                            Katalog & Harga
+                        </h1>
+                        <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
+                            Kelola produk, kategori, paket rental, rate plan,
+                            dan harga global maupun khusus cabang dalam satu
+                            sumber data.
+                        </p>
+                    </div>
+                    {permissions.manage && (
+                        <Button
+                            onClick={() => {
+                                if (filters.section === 'categories') {
+                                    openCategory(null);
+                                } else if (filters.section === 'packages') {
+                                    openPackage(null);
+                                } else if (filters.section === 'rate-plans') {
+                                    openRatePlan(null);
+                                } else {
+                                    openProduct(null);
+                                }
+                            }}
+                        >
+                            <Plus />
+                            Tambah{' '}
+                            {filters.section === 'categories'
+                                ? 'kategori'
+                                : filters.section === 'packages'
+                                  ? 'paket'
+                                  : filters.section === 'rate-plans'
+                                    ? 'rate plan'
+                                    : 'produk'}
+                        </Button>
+                    )}
+                </header>
+
+                <CatalogErrors errors={errors} />
+
+                <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
+                    {[
+                        {
+                            label: 'Total produk',
+                            value: summary.products,
+                            icon: Boxes,
+                        },
+                        {
+                            label: 'Siap disewakan',
+                            value: summary.rentable,
+                            icon: PackageCheck,
+                        },
+                        {
+                            label: 'Per unit / serial',
+                            value: summary.serialized,
+                            icon: BoxIcon,
+                        },
+                        {
+                            label: 'Paket rental',
+                            value: summary.packages,
+                            icon: Layers3,
+                        },
+                        {
+                            label: 'Belum punya harga',
+                            value: summary.withoutRate,
+                            icon: CircleDollarSign,
+                        },
+                    ].map(({ label, value, icon: Icon }) => (
+                        <Card key={label}>
+                            <CardContent className="flex items-center justify-between p-5">
+                                <div>
+                                    <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                                        {label}
+                                    </p>
+                                    <p className="mt-2 text-3xl font-semibold">
+                                        {value}
+                                    </p>
+                                </div>
+                                <div className="flex size-11 items-center justify-center rounded-xl bg-muted">
+                                    <Icon className="size-5" />
+                                </div>
+                            </CardContent>
+                        </Card>
+                    ))}
+                </section>
+
+                <nav className="flex flex-wrap gap-2 rounded-xl border bg-card p-2">
+                    {[
+                        ['products', 'Produk', Boxes],
+                        ['categories', 'Kategori', Tags],
+                        ['packages', 'Paket Rental', Layers3],
+                        ['rate-plans', 'Rate Plan', Timer],
+                    ].map(([section, label, Icon]) => (
+                        <Button
+                            key={section as string}
+                            variant={
+                                filters.section === section
+                                    ? 'default'
+                                    : 'ghost'
+                            }
+                            onClick={() => navigate(section as Section)}
+                        >
+                            <Icon />
+                            {label as string}
+                        </Button>
+                    ))}
+                </nav>
+
+                {filters.section === 'products' && (
+                    <ProductsSection
+                        products={products}
+                        categories={categories}
+                        filters={filters}
+                        search={search}
+                        setSearch={setSearch}
+                        navigate={navigate}
+                        permissions={permissions}
+                        onEdit={openProduct}
+                    />
+                )}
+                {filters.section === 'categories' && (
+                    <CategoriesSection
+                        categories={categories}
+                        permissions={permissions}
+                        onEdit={openCategory}
+                    />
+                )}
+                {filters.section === 'packages' && (
+                    <PackagesSection
+                        packages={packages}
+                        permissions={permissions}
+                        onEdit={openPackage}
+                    />
+                )}
+                {filters.section === 'rate-plans' && (
+                    <RatePlansSection
+                        ratePlans={ratePlans}
+                        permissions={permissions}
+                        onEdit={openRatePlan}
+                    />
+                )}
+            </div>
+
+            <ProductFormDialog
+                open={productDialog}
+                onOpenChange={setProductDialog}
+                product={editingProduct}
+                categories={categories.filter((category) => category.is_active)}
+            />
+            <CategoryFormDialog
+                open={categoryDialog}
+                onOpenChange={setCategoryDialog}
+                category={editingCategory}
+                categories={categories}
+            />
+            <RatePlanFormDialog
+                open={ratePlanDialog}
+                onOpenChange={setRatePlanDialog}
+                ratePlan={editingRatePlan}
+                branches={branches}
+                manageGlobal={permissions.manageGlobal}
+            />
+            <PackageFormDialog
+                open={packageDialog}
+                onOpenChange={setPackageDialog}
+                rentalPackage={editingPackage}
+                branches={branches}
+                manageGlobal={permissions.manageGlobal}
+            />
+        </>
+    );
+}
+
+function ProductsSection({
+    products,
+    categories,
+    filters,
+    search,
+    setSearch,
+    navigate,
+    permissions,
+    onEdit,
+}: {
+    products: Pagination<Product>;
+    categories: ProductCategory[];
+    filters: Props['filters'];
+    search: string;
+    setSearch: (value: string) => void;
+    navigate: (
+        section: Section,
+        next?: Partial<{
+            category_id: number | null;
+            tracking_type: string;
+            status: string;
+        }>,
+    ) => void;
+    permissions: CatalogPermissions;
+    onEdit: (product: Product) => void;
+}) {
+    return (
+        <Card>
+            <CardHeader className="gap-4">
+                <div>
+                    <CardTitle>Master produk rental</CardTitle>
+                    <CardDescription>
+                        Produk hasil Legacy Import dan input baru menggunakan
+                        master yang sama.
+                    </CardDescription>
+                </div>
+                <div className="grid gap-2 xl:grid-cols-[minmax(260px,1fr)_repeat(3,minmax(150px,auto))]">
+                    <form
+                        className="flex gap-2"
+                        onSubmit={(event) => {
+                            event.preventDefault();
+                            navigate('products');
+                        }}
+                    >
+                        <div className="relative flex-1">
+                            <Search className="absolute top-2.5 left-3 size-4 text-muted-foreground" />
+                            <Input
+                                value={search}
+                                onChange={(event) =>
+                                    setSearch(event.target.value)
+                                }
+                                className="pl-9"
+                                placeholder="Cari SKU, produk, brand, model"
+                            />
+                        </div>
+                        <Button
+                            type="submit"
+                            size="icon"
+                            variant="outline"
+                            aria-label="Cari produk"
+                        >
+                            <Search />
+                        </Button>
+                    </form>
+                    <FilterSelect
+                        value={filters.category_id?.toString() ?? 'all'}
+                        placeholder="Semua kategori"
+                        onValueChange={(value) =>
+                            navigate('products', {
+                                category_id:
+                                    value === 'all' ? null : Number(value),
+                            })
+                        }
+                        options={categories.map((category) => ({
+                            value: category.id.toString(),
+                            label: category.name,
+                        }))}
+                    />
+                    <FilterSelect
+                        value={filters.tracking_type || 'all'}
+                        placeholder="Semua tracking"
+                        onValueChange={(tracking_type) =>
+                            navigate('products', { tracking_type })
+                        }
+                        options={[
+                            {
+                                value: 'serialized',
+                                label: 'Per unit / serial',
+                            },
+                            { value: 'bulk', label: 'Kuantitas / bulk' },
+                        ]}
+                    />
+                    <FilterSelect
+                        value={filters.status || 'all'}
+                        placeholder="Semua status"
+                        onValueChange={(status) =>
+                            navigate('products', { status })
+                        }
+                        options={[
+                            { value: 'active', label: 'Aktif' },
+                            { value: 'inactive', label: 'Nonaktif' },
+                            { value: 'rentable', label: 'Dapat disewa' },
+                            {
+                                value: 'not-rentable',
+                                label: 'Tidak disewakan',
+                            },
+                        ]}
+                    />
+                </div>
+            </CardHeader>
+            <CardContent className="grid gap-4">
+                {products.data.length === 0 ? (
+                    <EmptyState
+                        icon={Boxes}
+                        title="Produk tidak ditemukan"
+                        description="Ubah filter atau tambahkan produk baru."
+                    />
+                ) : (
+                    <div className="grid gap-3">
+                        {products.data.map((product) => (
+                            <article
+                                key={product.id}
+                                className="grid gap-4 rounded-xl border p-4 lg:grid-cols-[minmax(0,1.3fr)_minmax(0,1fr)_auto] lg:items-center"
+                            >
+                                <div className="min-w-0">
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <Link
+                                            href={`/catalog/products/${product.id}`}
+                                            className="truncate font-semibold hover:underline"
+                                        >
+                                            {product.name}
+                                        </Link>
+                                        <Badge
+                                            variant={
+                                                product.is_active
+                                                    ? 'outline'
+                                                    : 'secondary'
+                                            }
+                                        >
+                                            {product.is_active
+                                                ? 'Aktif'
+                                                : 'Nonaktif'}
+                                        </Badge>
+                                        {!product.is_rentable && (
+                                            <Badge variant="secondary">
+                                                Tidak disewakan
+                                            </Badge>
+                                        )}
+                                    </div>
+                                    <p className="mt-1 font-mono text-xs text-muted-foreground">
+                                        {product.sku}
+                                    </p>
+                                    <p className="mt-2 truncate text-sm text-muted-foreground">
+                                        {[product.brand, product.model]
+                                            .filter(Boolean)
+                                            .join(' · ') ||
+                                            'Brand dan model belum diisi'}
+                                    </p>
+                                </div>
+                                <div className="grid gap-2 text-sm">
+                                    <p>
+                                        {product.category
+                                            ? `${product.category.code} · ${product.category.name}`
+                                            : 'Tanpa kategori'}
+                                    </p>
+                                    <p className="text-muted-foreground">
+                                        {product.tracking_type === 'serialized'
+                                            ? 'Per unit / serial'
+                                            : 'Kuantitas / bulk'}{' '}
+                                        · {product.assets_count ?? 0} aset
+                                    </p>
+                                    <p className="text-xs text-muted-foreground">
+                                        {product.rates_count ?? 0} harga · stok{' '}
+                                        {Number(product.quantity_on_hand ?? 0)}{' '}
+                                        · disewa{' '}
+                                        {Number(product.quantity_rented ?? 0)}
+                                    </p>
+                                </div>
+                                <div className="flex flex-wrap gap-2 lg:justify-end">
+                                    <Button asChild size="sm" variant="outline">
+                                        <Link
+                                            href={`/catalog/products/${product.id}`}
+                                        >
+                                            Detail & harga
+                                        </Link>
+                                    </Button>
+                                    {permissions.manage && (
+                                        <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            onClick={() => onEdit(product)}
+                                        >
+                                            <Pencil />
+                                            Edit
+                                        </Button>
+                                    )}
+                                </div>
+                            </article>
+                        ))}
+                    </div>
+                )}
+                <PaginationLinks
+                    links={products.links}
+                    from={products.from}
+                    to={products.to}
+                    total={products.total}
+                />
+            </CardContent>
+        </Card>
+    );
+}
+
+function CategoriesSection({
+    categories,
+    permissions,
+    onEdit,
+}: {
+    categories: ProductCategory[];
+    permissions: CatalogPermissions;
+    onEdit: (category: ProductCategory) => void;
+}) {
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Hierarki kategori</CardTitle>
+                <CardDescription>
+                    Kategori yang masih memiliki produk atau subkategori tidak
+                    dapat diarsipkan.
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-3">
+                {categories.length === 0 ? (
+                    <EmptyState
+                        icon={Tags}
+                        title="Belum ada kategori"
+                        description="Tambahkan kategori pertama untuk menyusun produk."
+                    />
+                ) : (
+                    categories.map((category) => (
+                        <article
+                            key={category.id}
+                            className="flex flex-col gap-3 rounded-xl border p-4 md:flex-row md:items-center md:justify-between"
+                        >
+                            <div>
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <p className="font-semibold">
+                                        {category.name}
+                                    </p>
+                                    <Badge variant="outline">
+                                        {category.code}
+                                    </Badge>
+                                    <Badge
+                                        variant={
+                                            category.is_active
+                                                ? 'outline'
+                                                : 'secondary'
+                                        }
+                                    >
+                                        {category.is_active
+                                            ? 'Aktif'
+                                            : 'Nonaktif'}
+                                    </Badge>
+                                </div>
+                                <p className="mt-1 text-sm text-muted-foreground">
+                                    {category.parent
+                                        ? `Induk: ${category.parent.name}`
+                                        : 'Kategori utama'}{' '}
+                                    · {category.products_count ?? 0} produk ·{' '}
+                                    {category.children_count ?? 0} subkategori
+                                </p>
+                            </div>
+                            {permissions.manage && (
+                                <div className="flex gap-2">
+                                    <Button
+                                        size="sm"
+                                        variant="outline"
+                                        onClick={() => onEdit(category)}
+                                    >
+                                        <Pencil />
+                                        Edit
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        variant="ghost"
+                                        disabled={
+                                            (category.products_count ?? 0) >
+                                                0 ||
+                                            (category.children_count ?? 0) > 0
+                                        }
+                                        onClick={() => {
+                                            if (
+                                                window.confirm(
+                                                    `Arsipkan kategori ${category.name}?`,
+                                                )
+                                            ) {
+                                                router.delete(
+                                                    `/catalog/categories/${category.id}`,
+                                                    {
+                                                        preserveScroll: true,
+                                                    },
+                                                );
+                                            }
+                                        }}
+                                    >
+                                        <Trash2 />
+                                        Arsipkan
+                                    </Button>
+                                </div>
+                            )}
+                        </article>
+                    ))
+                )}
+            </CardContent>
+        </Card>
+    );
+}
+
+function PackagesSection({
+    packages,
+    permissions,
+    onEdit,
+}: {
+    packages: RentalPackage[];
+    permissions: CatalogPermissions;
+    onEdit: (rentalPackage: RentalPackage) => void;
+}) {
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Paket rental</CardTitle>
+                <CardDescription>
+                    Kombinasi produk dengan harga paket global atau per cabang.
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-3">
+                {packages.length === 0 ? (
+                    <EmptyState
+                        icon={Layers3}
+                        title="Belum ada paket"
+                        description="Buat paket untuk menjual kombinasi beberapa produk."
+                    />
+                ) : (
+                    packages.map((rentalPackage) => {
+                        const canManage =
+                            permissions.manage &&
+                            (rentalPackage.branch_id !== null ||
+                                permissions.manageGlobal);
+
+                        return (
+                            <article
+                                key={rentalPackage.id}
+                                className="grid gap-4 rounded-xl border p-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-center"
+                            >
+                                <div>
+                                    <div className="flex flex-wrap items-center gap-2">
+                                        <Link
+                                            href={`/catalog/packages/${rentalPackage.id}`}
+                                            className="font-semibold hover:underline"
+                                        >
+                                            {rentalPackage.name}
+                                        </Link>
+                                        <Badge variant="outline">
+                                            {rentalPackage.code}
+                                        </Badge>
+                                        <Badge
+                                            variant={
+                                                rentalPackage.is_active
+                                                    ? 'outline'
+                                                    : 'secondary'
+                                            }
+                                        >
+                                            {rentalPackage.is_active
+                                                ? 'Aktif'
+                                                : 'Nonaktif'}
+                                        </Badge>
+                                    </div>
+                                    <p className="mt-2 text-sm text-muted-foreground">
+                                        {rentalPackage.branch
+                                            ? `${rentalPackage.branch.code} · ${rentalPackage.branch.name}`
+                                            : 'Global seluruh cabang'}{' '}
+                                        · {rentalPackage.items_count ?? 0} item
+                                        · {rentalPackage.rates_count ?? 0} harga
+                                    </p>
+                                </div>
+                                <div className="flex gap-2">
+                                    <Button asChild size="sm" variant="outline">
+                                        <Link
+                                            href={`/catalog/packages/${rentalPackage.id}`}
+                                        >
+                                            Detail paket
+                                        </Link>
+                                    </Button>
+                                    {canManage && (
+                                        <Button
+                                            size="sm"
+                                            variant="ghost"
+                                            onClick={() =>
+                                                onEdit(rentalPackage)
+                                            }
+                                        >
+                                            <Pencil />
+                                            Edit
+                                        </Button>
+                                    )}
+                                </div>
+                            </article>
+                        );
+                    })
+                )}
+            </CardContent>
+        </Card>
+    );
+}
+
+function RatePlansSection({
+    ratePlans,
+    permissions,
+    onEdit,
+}: {
+    ratePlans: RatePlan[];
+    permissions: CatalogPermissions;
+    onEdit: (ratePlan: RatePlan) => void;
+}) {
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle>Rate plan</CardTitle>
+                <CardDescription>
+                    Standar durasi seperti 6 jam, 12 jam, satu hari, atau skema
+                    cabang khusus.
+                </CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-3">
+                {ratePlans.map((ratePlan) => {
+                    const canManage =
+                        permissions.manage &&
+                        (ratePlan.branch_id !== null ||
+                            permissions.manageGlobal);
+
+                    return (
+                        <article
+                            key={ratePlan.id}
+                            className="grid gap-4 rounded-xl border p-4 md:grid-cols-[minmax(0,1fr)_auto] md:items-center"
+                        >
+                            <div>
+                                <div className="flex flex-wrap items-center gap-2">
+                                    <p className="font-semibold">
+                                        {ratePlan.name}
+                                    </p>
+                                    <Badge variant="outline">
+                                        {ratePlan.code}
+                                    </Badge>
+                                    <Badge
+                                        variant={
+                                            ratePlan.is_active
+                                                ? 'outline'
+                                                : 'secondary'
+                                        }
+                                    >
+                                        {ratePlan.is_active
+                                            ? 'Aktif'
+                                            : 'Nonaktif'}
+                                    </Badge>
+                                </div>
+                                <p className="mt-2 text-sm text-muted-foreground">
+                                    {ratePlan.duration_value}{' '}
+                                    {durationLabel(ratePlan.duration_unit)} ·
+                                    grace {ratePlan.grace_period_minutes} menit
+                                    ·{' '}
+                                    {ratePlan.branch
+                                        ? ratePlan.branch.code
+                                        : 'Global'}
+                                </p>
+                                <p className="mt-1 text-xs text-muted-foreground">
+                                    {ratePlan.product_rates_count ?? 0} harga
+                                    produk · {ratePlan.package_rates_count ?? 0}{' '}
+                                    harga paket
+                                </p>
+                            </div>
+                            {canManage && (
+                                <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => onEdit(ratePlan)}
+                                >
+                                    <Pencil />
+                                    Edit
+                                </Button>
+                            )}
+                        </article>
+                    );
+                })}
+            </CardContent>
+        </Card>
+    );
+}
+
+function FilterSelect({
+    value,
+    placeholder,
+    options,
+    onValueChange,
+}: {
+    value: string;
+    placeholder: string;
+    options: { value: string; label: string }[];
+    onValueChange: (value: string) => void;
+}) {
+    return (
+        <Select value={value} onValueChange={onValueChange}>
+            <SelectTrigger>
+                <SelectValue />
+            </SelectTrigger>
+            <SelectContent>
+                <SelectItem value="all">{placeholder}</SelectItem>
+                {options.map((option) => (
+                    <SelectItem key={option.value} value={option.value}>
+                        {option.label}
+                    </SelectItem>
+                ))}
+            </SelectContent>
+        </Select>
+    );
+}
+
+function CatalogErrors({ errors }: { errors: Record<string, string> }) {
+    const message =
+        errors.product ?? errors.category ?? errors.package ?? errors.branch_id;
+
+    if (typeof message !== 'string') {
+        return null;
+    }
+
+    return (
+        <Alert variant="destructive">
+            <CircleOff />
+            <AlertTitle>Perubahan katalog ditolak</AlertTitle>
+            <AlertDescription>{message}</AlertDescription>
+        </Alert>
+    );
+}
+
+function EmptyState({
+    icon: Icon,
+    title,
+    description,
+}: {
+    icon: typeof Boxes;
+    title: string;
+    description: string;
+}) {
+    return (
+        <div className="py-16 text-center">
+            <Icon className="mx-auto size-9 text-muted-foreground" />
+            <p className="mt-4 font-medium">{title}</p>
+            <p className="mt-1 text-sm text-muted-foreground">{description}</p>
+        </div>
+    );
+}
+
+function durationLabel(unit: RatePlan['duration_unit']) {
+    return {
+        minute: 'menit',
+        hour: 'jam',
+        day: 'hari',
+        week: 'minggu',
+        month: 'bulan',
+    }[unit];
+}
