@@ -45,32 +45,70 @@ class BranchManagementTest extends TestCase
             ->assertRedirect(route('branches.index'))
             ->assertSessionHasNoErrors();
 
-        $branch = Branch::query()->where('code', 'MDO')->firstOrFail();
+        $branch = Branch::query()
+            ->where('code', 'MDO')
+            ->firstOrFail();
 
         $this->assertSame($user->company_id, $branch->company_id);
-        $this->assertSame(
-            5,
-            DB::table('branch_settings')->where('branch_id', $branch->id)->count(),
-        );
+
+        $expectedSettingKeys = [
+            'allow_cross_branch_return',
+            'currency',
+            'default_timezone',
+            'legacy_source_system',
+            'public_catalog_enabled',
+            'public_hero_description',
+            'public_hero_title',
+            'public_instagram',
+            'public_logo_path',
+            'public_maps_url',
+            'public_opening_hours',
+            'public_short_address',
+            'public_whatsapp',
+            'require_customer_identity',
+        ];
+
+        $actualSettingKeys = DB::table('branch_settings')
+            ->where('branch_id', $branch->id)
+            ->pluck('key')
+            ->sort()
+            ->values()
+            ->all();
+
+        $this->assertSame($expectedSettingKeys, $actualSettingKeys);
+
+        $this->assertDatabaseHas('branch_settings', [
+            'branch_id' => $branch->id,
+            'key' => 'public_catalog_enabled',
+            'value_type' => 'boolean',
+            'is_public' => true,
+        ]);
+
         $this->assertSame(
             9,
-            DB::table('number_sequences')->where('branch_id', $branch->id)->count(),
+            DB::table('number_sequences')
+                ->where('branch_id', $branch->id)
+                ->count(),
         );
+
         $this->assertDatabaseHas('number_sequences', [
             'branch_id' => $branch->id,
             'document_type' => 'rental',
             'prefix' => 'MDO-RNT',
         ]);
+
         $this->assertDatabaseHas('cash_registers', [
             'branch_id' => $branch->id,
             'code' => 'MAIN',
             'is_active' => true,
         ]);
+
         $this->assertDatabaseHas('branch_user', [
             'branch_id' => $branch->id,
             'user_id' => $user->id,
             'is_active' => true,
         ]);
+
         $this->assertDatabaseHas('activity_logs', [
             'branch_id' => $branch->id,
             'actor_id' => $user->id,
@@ -101,6 +139,7 @@ class BranchManagementTest extends TestCase
     public function test_user_can_switch_to_an_accessible_active_branch(): void
     {
         [$user] = $this->superAdministrator();
+
         $branch = Branch::query()->create([
             ...$this->branchPayload([
                 'code' => 'MDO',
@@ -108,7 +147,9 @@ class BranchManagementTest extends TestCase
             ]),
             'company_id' => $user->company_id,
         ]);
+
         app(BranchProvisioner::class)->provision($branch);
+
         $user->branches()->attach($branch->id, [
             'is_default' => false,
             'is_active' => true,
@@ -119,7 +160,11 @@ class BranchManagementTest extends TestCase
             ->assertRedirect()
             ->assertSessionHasNoErrors();
 
-        $this->assertSame($branch->id, $user->fresh()->current_branch_id);
+        $this->assertSame(
+            $branch->id,
+            $user->fresh()->current_branch_id,
+        );
+
         $this->assertDatabaseHas('activity_logs', [
             'branch_id' => $branch->id,
             'actor_id' => $user->id,
@@ -130,6 +175,7 @@ class BranchManagementTest extends TestCase
     public function test_current_branch_cannot_be_deactivated(): void
     {
         [$user, $currentBranch] = $this->superAdministrator();
+
         Branch::query()->create([
             ...$this->branchPayload([
                 'code' => 'MDO',
@@ -148,6 +194,7 @@ class BranchManagementTest extends TestCase
     public function test_branch_code_with_operational_data_cannot_be_changed(): void
     {
         [$user, $branch] = $this->superAdministrator();
+
         DB::table('customers')->insert([
             'company_id' => $user->company_id,
             'registered_branch_id' => $branch->id,
@@ -188,19 +235,25 @@ class BranchManagementTest extends TestCase
     {
         $this->seed(RentalFoundationSeeder::class);
 
-        $companyId = (int) DB::table('companies')->where('code', 'TK')->value('id');
+        $companyId = (int) DB::table('companies')
+            ->where('code', 'TK')
+            ->value('id');
+
         $branch = Branch::query()
             ->where('company_id', $companyId)
             ->where('code', 'PNG')
             ->firstOrFail();
+
         $user = User::factory()->create([
             'company_id' => $companyId,
             'current_branch_id' => $branch->id,
         ]);
+
         $roleId = (int) DB::table('roles')
             ->where('company_id', $companyId)
             ->where('slug', 'super-admin')
             ->value('id');
+
         $now = now();
 
         DB::table('branch_user')->insert([
@@ -211,6 +264,7 @@ class BranchManagementTest extends TestCase
             'created_at' => $now,
             'updated_at' => $now,
         ]);
+
         DB::table('role_user')->insert([
             'role_id' => $roleId,
             'user_id' => $user->id,
