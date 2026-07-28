@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AssetAnalyticsController;
 use App\Http\Controllers\BranchController;
+use App\Http\Controllers\BranchPublicProfileController;
 use App\Http\Controllers\CatalogBrandController;
 use App\Http\Controllers\CatalogController;
 use App\Http\Controllers\CatalogIntelligenceController;
@@ -17,13 +18,23 @@ use App\Http\Controllers\PositionController;
 use App\Http\Controllers\ProductCategoryController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductRateController;
+use App\Http\Controllers\PublicCatalogController;
 use App\Http\Controllers\RatePlanController;
 use App\Http\Controllers\RentalPackageController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserManagementController;
 use Illuminate\Support\Facades\Route;
 
-Route::inertia('/', 'welcome')->name('home');
+Route::get('/', [PublicCatalogController::class, 'home'])->name('home');
+Route::prefix('rental')->name('public.catalog.')->group(function (): void {
+    Route::get('/', [PublicCatalogController::class, 'index'])->name('index');
+    Route::get('/products/{slug}', [PublicCatalogController::class, 'product'])
+        ->where('slug', '[a-z0-9-]+')
+        ->name('products.show');
+    Route::get('/packages/{slug}', [PublicCatalogController::class, 'package'])
+        ->where('slug', '[a-z0-9-]+')
+        ->name('packages.show');
+});
 
 Route::middleware(['auth', 'active', 'verified'])->group(function () {
     Route::inertia('dashboard', 'dashboard')->name('dashboard');
@@ -239,6 +250,12 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
         Route::post('/{branch}/switch', [BranchController::class, 'switch'])
             ->middleware('can:branches.switch')
             ->name('switch');
+        Route::get('/{branch}/public-profile', [BranchPublicProfileController::class, 'edit'])
+            ->middleware('can:branches.manage')
+            ->name('public-profile.edit');
+        Route::put('/{branch}/public-profile', [BranchPublicProfileController::class, 'update'])
+            ->middleware('can:branches.manage')
+            ->name('public-profile.update');
     });
 
     Route::prefix('reports')->name('reports.')->group(function () {

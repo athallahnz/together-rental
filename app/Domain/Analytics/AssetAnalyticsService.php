@@ -210,7 +210,7 @@ class AssetAnalyticsService
     }
 
     /**
-     * @param Collection<int, stdClass> $rentalRows
+     * @param  Collection<int, stdClass>  $rentalRows
      * @return array<int, int>
      */
     private function rentalItemAssetCounts(
@@ -240,7 +240,7 @@ class AssetAnalyticsService
     }
 
     /**
-     * @param Collection<int, stdClass> $rows
+     * @param  Collection<int, stdClass>  $rows
      * @return array<int, float>
      */
     private function rentalLineTotals(Collection $rows): array
@@ -267,7 +267,7 @@ class AssetAnalyticsService
     }
 
     /**
-     * @param Collection<int, stdClass> $rows
+     * @param  Collection<int, stdClass>  $rows
      * @return array<int, float>
      */
     private function extensionLineTotals(Collection $rows): array
@@ -333,11 +333,11 @@ class AssetAnalyticsService
     }
 
     /**
-     * @param Collection<int, stdClass> $rows
-     * @param array<int, int> $itemCounts
-     * @param array<int, float> $rentalLineTotals
-     * @param array<int, array<string, mixed>> $metrics
-     * @param array<string, array<string, mixed>> $trend
+     * @param  Collection<int, stdClass>  $rows
+     * @param  array<int, int>  $itemCounts
+     * @param  array<int, float>  $rentalLineTotals
+     * @param  array<int, array<string, mixed>>  $metrics
+     * @param  array<string, array<string, mixed>>  $trend
      */
     private function applyRentalRevenueAndIntervals(
         Collection $rows,
@@ -446,11 +446,11 @@ class AssetAnalyticsService
     }
 
     /**
-     * @param Collection<int, stdClass> $rows
-     * @param array<int, int> $itemCounts
-     * @param array<int, float> $extensionLineTotals
-     * @param array<int, array<string, mixed>> $metrics
-     * @param array<string, array<string, mixed>> $trend
+     * @param  Collection<int, stdClass>  $rows
+     * @param  array<int, int>  $itemCounts
+     * @param  array<int, float>  $extensionLineTotals
+     * @param  array<int, array<string, mixed>>  $metrics
+     * @param  array<string, array<string, mixed>>  $trend
      */
     private function applyExtensionRevenue(
         Collection $rows,
@@ -500,9 +500,9 @@ class AssetAnalyticsService
     }
 
     /**
-     * @param Collection<int, stdClass> $rows
-     * @param array<int, array<string, mixed>> $metrics
-     * @param array<string, array<string, mixed>> $trend
+     * @param  Collection<int, stdClass>  $rows
+     * @param  array<int, array<string, mixed>>  $metrics
+     * @param  array<string, array<string, mixed>>  $trend
      */
     private function applyMaintenance(
         Collection $rows,
@@ -555,7 +555,7 @@ class AssetAnalyticsService
     }
 
     /**
-     * @param array<string, mixed> $metric
+     * @param  array<string, mixed>  $metric
      * @return array<string, mixed>
      */
     private function buildAssetRow(
@@ -995,7 +995,7 @@ class AssetAnalyticsService
     }
 
     /**
-     * @param array<string, mixed> $dataQuality
+     * @param  array<string, mixed>  $dataQuality
      * @return array<string, mixed>
      */
     private function businessRecommendation(
@@ -1140,7 +1140,7 @@ class AssetAnalyticsService
     }
 
     /**
-     * @param list<array{0: CarbonImmutable, 1: CarbonImmutable}> $intervals
+     * @param  list<array{0: CarbonImmutable, 1: CarbonImmutable}>  $intervals
      */
     private function intervalSeconds(array $intervals, CarbonImmutable $from, CarbonImmutable $to): int
     {
@@ -1167,6 +1167,7 @@ class AssetAnalyticsService
         foreach ($clipped as [$start, $end]) {
             if ($merged === []) {
                 $merged[] = [$start, $end];
+
                 continue;
             }
 
@@ -1283,9 +1284,8 @@ class AssetAnalyticsService
         return $trend;
     }
 
-
     /**
-     * @param array<string, array<string, mixed>> $trend
+     * @param  array<string, array<string, mixed>>  $trend
      * @return array<string, array<string, mixed>>
      */
     private function finalizeTrend(array $trend): array

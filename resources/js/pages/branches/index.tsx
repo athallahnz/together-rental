@@ -1,10 +1,11 @@
-import { Head, router, useForm, usePage } from '@inertiajs/react';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import {
     ArrowRightLeft,
     Building2,
     CalendarDays,
     CheckCircle2,
     CircleOff,
+    Globe2,
     MapPin,
     Pencil,
     Plus,
@@ -58,6 +59,7 @@ type Branch = {
     timezone: string;
     opened_at: string | null;
     is_active: boolean;
+    public_catalog_enabled: boolean;
     active_users_count: number;
     active_employees_count: number;
     customers_count: number;
@@ -88,6 +90,7 @@ type Props = {
         total: number;
         active: number;
         inactive: number;
+        public: number;
     };
     filters: {
         search: string;
@@ -243,7 +246,7 @@ export default function BranchIndex({
                     </Alert>
                 )}
 
-                <section className="grid gap-4 sm:grid-cols-3">
+                <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                     {[
                         {
                             label: 'Total cabang',
@@ -259,6 +262,11 @@ export default function BranchIndex({
                             label: 'Nonaktif',
                             value: summary.inactive,
                             icon: CircleOff,
+                        },
+                        {
+                            label: 'Tampil publik',
+                            value: summary.public,
+                            icon: Globe2,
                         },
                     ].map(({ label, value, icon: Icon }) => (
                         <Card key={label}>
@@ -392,6 +400,19 @@ export default function BranchIndex({
                                                                     ? 'Operasional'
                                                                     : 'Nonaktif'}
                                                             </Badge>
+                                                            <Badge
+                                                                variant={
+                                                                    branch.is_active &&
+                                                                    branch.public_catalog_enabled
+                                                                        ? 'default'
+                                                                        : 'secondary'
+                                                                }
+                                                            >
+                                                                {branch.is_active &&
+                                                                branch.public_catalog_enabled
+                                                                    ? 'Tampil publik'
+                                                                    : 'Tidak publik'}
+                                                            </Badge>
                                                         </div>
                                                         <p className="mt-1 font-mono text-xs text-muted-foreground">
                                                             {branch.code}
@@ -486,6 +507,18 @@ export default function BranchIndex({
                                                     )}
                                                 {permissions.manage && (
                                                     <>
+                                                        <Button
+                                                            asChild
+                                                            size="sm"
+                                                            variant="outline"
+                                                        >
+                                                            <Link
+                                                                href={`/branches/${branch.id}/public-profile`}
+                                                            >
+                                                                <Globe2 />
+                                                                Katalog publik
+                                                            </Link>
+                                                        </Button>
                                                         <Button
                                                             size="sm"
                                                             variant="outline"

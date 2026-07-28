@@ -29,6 +29,15 @@ class BranchProvisioner
             'legacy_source_system' => ['string', 'RentalV1', false],
             'require_customer_identity' => ['boolean', true, false],
             'allow_cross_branch_return' => ['boolean', false, false],
+            'public_catalog_enabled' => ['boolean', false, true],
+            'public_whatsapp' => ['string', preg_replace('/\D+/', '', (string) $branch->phone), true],
+            'public_maps_url' => ['string', null, true],
+            'public_instagram' => ['string', null, true],
+            'public_opening_hours' => ['string', '09.00–21.00 WIB', true],
+            'public_short_address' => ['string', $branch->address, true],
+            'public_logo_path' => ['string', '/primary-logos.png', true],
+            'public_hero_title' => ['string', 'Sewa alat kreatif tanpa ribet.', true],
+            'public_hero_description' => ['string', null, true],
         ];
 
         foreach ($settings as $key => [$type, $value, $isPublic]) {

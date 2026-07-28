@@ -19,7 +19,7 @@ class AssetAnalyticsAccessTest extends TestCase
         $this->actingAs($user)
             ->get(route('reports.asset-analytics.index'))
             ->assertOk()
-            ->assertInertia(fn(Assert $page) => $page
+            ->assertInertia(fn (Assert $page) => $page
                 ->component('reports/asset-analytics')
                 ->has('summary')
                 ->has('assets')

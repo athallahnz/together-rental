@@ -82,12 +82,45 @@ class BranchController extends Controller
             ->orderBy('name')
             ->get();
 
+        $publicSettings = DB::table('branch_settings')
+            ->whereIn('branch_id', $branches->pluck('id'))
+            ->where('key', 'public_catalog_enabled')
+            ->pluck('value', 'branch_id');
+        $publicScopeBranchIds = (clone $scope)
+            ->where('is_active', true)
+            ->pluck('id');
+        $publicCount = DB::table('branch_settings')
+            ->whereIn('branch_id', $publicScopeBranchIds)
+            ->where('key', 'public_catalog_enabled')
+            ->pluck('value')
+            ->filter(function (mixed $value): bool {
+                $decoded = is_string($value) ? json_decode($value, true) : $value;
+
+                return is_bool($decoded)
+                    ? $decoded
+                    : in_array(mb_strtolower((string) $decoded), ['1', 'true', 'yes', 'on'], true);
+            })
+            ->count();
+
+        $branches->each(function (Branch $branch) use ($publicSettings): void {
+            $value = $publicSettings->get($branch->id);
+            $decoded = is_string($value) ? json_decode($value, true) : $value;
+
+            $branch->setAttribute(
+                'public_catalog_enabled',
+                is_bool($decoded)
+                    ? $decoded
+                    : in_array(mb_strtolower((string) $decoded), ['1', 'true', 'yes', 'on'], true),
+            );
+        });
+
         return Inertia::render('branches/index', [
             'branches' => $branches,
             'summary' => [
                 'total' => (clone $scope)->count(),
                 'active' => (clone $scope)->where('is_active', true)->count(),
                 'inactive' => (clone $scope)->where('is_active', false)->count(),
+                'public' => $publicCount,
             ],
             'filters' => [
                 'search' => $search,

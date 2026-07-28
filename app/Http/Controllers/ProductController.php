@@ -17,9 +17,11 @@ class ProductController extends Controller
         SaveProductRequest $request,
         ActivityRecorder $recorder,
     ): RedirectResponse {
+        $validated = $request->validated();
         $product = Product::query()->create([
-            ...$request->validated(),
+            ...$validated,
             'company_id' => $request->user()->company_id,
+            'is_public' => $validated['is_active'] && $validated['is_rentable'],
         ]);
         $recorder->record(
             $request,
@@ -46,6 +48,7 @@ class ProductController extends Controller
             || $product->model !== $values['model'];
         $product->update([
             ...$values,
+            'is_public' => $values['is_active'] && $values['is_rentable'],
             ...($identityChanged ? [
                 'catalog_brand_id' => null,
                 'catalog_model_id' => null,
@@ -135,6 +138,9 @@ class ProductController extends Controller
             'replacement_value' => $product->replacement_value,
             'is_rentable' => $product->is_rentable,
             'is_active' => $product->is_active,
+            'is_public' => $product->is_public,
+            'is_featured' => $product->is_featured,
+            'public_sort_order' => $product->public_sort_order,
         ];
     }
 }

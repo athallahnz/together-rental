@@ -185,7 +185,7 @@ class AssetAnalyticsController extends Controller
     }
 
     /**
-     * @param list<int> $branchIds
+     * @param  list<int>  $branchIds
      * @return array{
      *     from: CarbonImmutable,
      *     to: CarbonImmutable,

@@ -18,9 +18,11 @@ class RentalPackageController extends Controller
         SaveRentalPackageRequest $request,
         ActivityRecorder $recorder,
     ): RedirectResponse {
+        $validated = $request->validated();
         $package = RentalPackage::query()->create([
-            ...$request->validated(),
+            ...$validated,
             'company_id' => $request->user()->company_id,
+            'is_public' => $validated['is_active'],
         ]);
         $recorder->record(
             $request,
@@ -54,7 +56,10 @@ class RentalPackageController extends Controller
         }
 
         $oldValues = $rentalPackage->toArray();
-        $rentalPackage->update($validated);
+        $rentalPackage->update([
+            ...$validated,
+            'is_public' => $validated['is_active'],
+        ]);
         $recorder->record(
             $request,
             'catalog.package.updated',

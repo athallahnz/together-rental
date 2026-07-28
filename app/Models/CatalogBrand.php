@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasPublicSlug;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
@@ -13,12 +14,17 @@ use Illuminate\Support\Facades\Storage;
     'company_id',
     'name',
     'normalized_name',
+    'slug',
     'logo_path',
     'sort_order',
     'is_active',
+    'is_public',
+    'is_featured',
 ])]
 class CatalogBrand extends Model
 {
+    use HasPublicSlug;
+
     /** @var list<string> */
     protected $appends = ['logo_url'];
 
@@ -51,6 +57,8 @@ class CatalogBrand extends Model
         return [
             'sort_order' => 'integer',
             'is_active' => 'boolean',
+            'is_public' => 'boolean',
+            'is_featured' => 'boolean',
         ];
     }
 

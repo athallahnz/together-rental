@@ -287,5 +287,4 @@ class AssetAnalyticsServiceTest extends TestCase
         $this->assertSame(0, $result['insights']['monitor_asset_count']);
         $this->assertSame(0, $result['insights']['deferred_decision_count']);
     }
-
 }

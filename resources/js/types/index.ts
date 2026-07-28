@@ -6,3 +6,5 @@ export type * from './navigation';
 export type * from './ui';
 
 export type * from './asset-analytics';
+
+export type * from './public-catalog';

@@ -16,9 +16,11 @@ class ProductCategoryController extends Controller
         SaveProductCategoryRequest $request,
         ActivityRecorder $recorder,
     ): RedirectResponse {
+        $validated = $request->validated();
         $category = ProductCategory::query()->create([
-            ...$request->validated(),
+            ...$validated,
             'company_id' => $request->user()->company_id,
+            'is_public' => $validated['is_active'],
         ]);
         $recorder->record(
             $request,
@@ -40,7 +42,11 @@ class ProductCategoryController extends Controller
         ActivityRecorder $recorder,
     ): RedirectResponse {
         $oldValues = $productCategory->toArray();
-        $productCategory->update($request->validated());
+        $validated = $request->validated();
+        $productCategory->update([
+            ...$validated,
+            'is_public' => $validated['is_active'],
+        ]);
         $recorder->record(
             $request,
             'catalog.category.updated',

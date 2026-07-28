@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Models\Concerns\HasPublicSlug;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -13,6 +14,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
     'category_id',
     'sku',
     'name',
+    'slug',
     'brand',
     'catalog_brand_id',
     'model',
@@ -22,13 +24,22 @@ use Illuminate\Database\Eloquent\SoftDeletes;
     'enriched_at',
     'tracking_type',
     'description',
+    'short_description',
+    'primary_image_path',
+    'gallery',
+    'seo_title',
+    'seo_description',
     'replacement_value',
     'is_rentable',
     'is_active',
+    'is_public',
+    'is_featured',
+    'public_sort_order',
     'metadata',
 ])]
 class Product extends Model
 {
+    use HasPublicSlug;
     use SoftDeletes;
 
     /** @return BelongsTo<Company, $this> */
@@ -89,6 +100,10 @@ class Product extends Model
             'replacement_value' => 'decimal:2',
             'is_rentable' => 'boolean',
             'is_active' => 'boolean',
+            'is_public' => 'boolean',
+            'is_featured' => 'boolean',
+            'public_sort_order' => 'integer',
+            'gallery' => 'array',
             'metadata' => 'array',
             'enriched_at' => 'datetime',
         ];
