@@ -6,7 +6,6 @@ use App\Domain\Access\ActivityRecorder;
 use App\Http\Requests\SaveRatePlanRequest;
 use App\Models\RatePlan;
 use Illuminate\Http\RedirectResponse;
-use Illuminate\Http\Request;
 use Illuminate\Validation\ValidationException;
 
 class RatePlanController extends Controller

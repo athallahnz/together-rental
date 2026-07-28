@@ -61,6 +61,8 @@ class AppServiceProvider extends ServiceProvider
             'imports.upload',
             'imports.validate',
             'imports.execute',
+            'reports.view',
+            'reports.export',
         ] as $permission) {
             Gate::define(
                 $permission,

@@ -1,5 +1,6 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
+    BarChart3,
     Building2,
     ContactRound,
     DatabaseZap,
@@ -66,6 +67,15 @@ export function AppSidebar() {
                       title: 'Katalog & Harga',
                       href: '/catalog',
                       icon: PackageSearch,
+                  },
+              ]
+            : []),
+        ...(auth.permissions['reports.view']
+            ? [
+                  {
+                      title: 'Analitik Aset',
+                      href: '/reports/asset-analytics',
+                      icon: BarChart3,
                   },
               ]
             : []),

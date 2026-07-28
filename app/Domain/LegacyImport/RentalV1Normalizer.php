@@ -5,7 +5,7 @@ namespace App\Domain\LegacyImport;
 final class RentalV1Normalizer
 {
     /** @param array<string, mixed> $payload
-     *  @return array<string, mixed>
+     * @return array<string, mixed>
      */
     public function sanitize(string $table, array $payload): array
     {
@@ -21,7 +21,7 @@ final class RentalV1Normalizer
     }
 
     /** @param array<string, mixed> $payload
-     *  @return array<string, mixed>
+     * @return array<string, mixed>
      */
     public function normalize(string $table, array $payload): array
     {
@@ -76,7 +76,7 @@ final class RentalV1Normalizer
     }
 
     /** @param array<string, mixed> $payload
-     *  @return array<string, mixed>
+     * @return array<string, mixed>
      */
     private function normalizeScalars(array $payload): array
     {

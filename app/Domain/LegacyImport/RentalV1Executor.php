@@ -893,7 +893,13 @@ final class RentalV1Executor
         $status = RentalV1Value::rentalStatus($data['rental_status'] ?? null);
         $returnedAt = RentalV1Value::operationalDateTime($data['rental_date_kembali'] ?? null);
 
-        if ($returnedAt === null && $status === 'returned') {
+        if (
+            $status === 'returned'
+            && (
+                $returnedAt === null
+                || CarbonImmutable::parse($returnedAt)->lessThan(CarbonImmutable::parse($checkedOutAt))
+            )
+        ) {
             $returnedAt = $this->reconstructReturnedAt(
                 $checkedOutAt,
                 $dueAt,

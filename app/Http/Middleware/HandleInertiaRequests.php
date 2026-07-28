@@ -62,6 +62,8 @@ class HandleInertiaRequests extends Middleware
                     'imports.upload' => $user->can('imports.upload'),
                     'imports.validate' => $user->can('imports.validate'),
                     'imports.execute' => $user->can('imports.execute'),
+                    'reports.view' => $user->can('reports.view'),
+                    'reports.export' => $user->can('reports.export'),
                 ],
                 'currentBranch' => $user?->currentBranch()
                     ->first(['id', 'code', 'name', 'city', 'is_active']),

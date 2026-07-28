@@ -250,8 +250,7 @@ class RentalFoundationSeeder extends Seeder
         int $branchId,
         string $branchCode,
         mixed $now,
-    ): void
-    {
+    ): void {
         $ratePlans = [
             ['6H', '6 Hours', 'hour', 6],
             ['12H', '12 Hours', 'hour', 12],

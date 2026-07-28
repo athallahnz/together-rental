@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\AssetAnalyticsController;
 use App\Http\Controllers\BranchController;
 use App\Http\Controllers\CatalogBrandController;
 use App\Http\Controllers\CatalogController;
@@ -238,6 +239,15 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
         Route::post('/{branch}/switch', [BranchController::class, 'switch'])
             ->middleware('can:branches.switch')
             ->name('switch');
+    });
+
+    Route::prefix('reports')->name('reports.')->group(function () {
+        Route::get('/asset-analytics', [AssetAnalyticsController::class, 'index'])
+            ->middleware('can:reports.view')
+            ->name('asset-analytics.index');
+        Route::get('/asset-analytics/export', [AssetAnalyticsController::class, 'export'])
+            ->middleware('can:reports.export')
+            ->name('asset-analytics.export');
     });
 
     Route::prefix('legacy-imports')->name('legacy-imports.')->group(function () {
