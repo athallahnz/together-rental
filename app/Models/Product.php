@@ -9,6 +9,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
+/**
+ * @property int|null $active_rates_count
+ * @property int|null $active_assets_count
+ * @property int|null $available_assets_count
+ */
 #[Fillable([
     'company_id',
     'category_id',

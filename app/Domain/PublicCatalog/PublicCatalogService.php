@@ -4,12 +4,17 @@ namespace App\Domain\PublicCatalog;
 
 use App\Models\Branch;
 use App\Models\CatalogBrand;
+use App\Models\CatalogModel;
+use App\Models\PackageItem;
+use App\Models\PackageRate;
 use App\Models\Product;
 use App\Models\ProductCategory;
+use App\Models\ProductRate;
+use App\Models\RatePlan;
 use App\Models\RentalPackage;
 use Illuminate\Contracts\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Collection as EloquentCollection;
+use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Storage;
@@ -47,13 +52,13 @@ class PublicCatalogService
             ->where('is_active', true)
             ->where('is_public', true)
             ->whereNull('deleted_at')
-            ->whereHas('products', fn(Builder $query) => $query
+            ->whereHas('products', fn (Builder $query) => $query
                 ->where('is_active', true)
                 ->where('is_rentable', true)
                 ->where('is_public', true)
                 ->whereNull('deleted_at'))
             ->withCount([
-                'products as public_products_count' => fn(Builder $query) => $query
+                'products as public_products_count' => fn (Builder $query) => $query
                     ->where('is_active', true)
                     ->where('is_rentable', true)
                     ->where('is_public', true)
@@ -63,7 +68,7 @@ class PublicCatalogService
             ->orderBy('name')
             ->limit(8)
             ->get()
-            ->map(fn(ProductCategory $category): array => $this->mapCategory($category))
+            ->map(fn (ProductCategory $category): array => $this->mapCategory($category))
             ->values()
             ->all();
 
@@ -71,13 +76,13 @@ class PublicCatalogService
             ->where('company_id', $companyId)
             ->where('is_active', true)
             ->where('is_public', true)
-            ->whereHas('products', fn(Builder $query) => $query
+            ->whereHas('products', fn (Builder $query) => $query
                 ->where('is_active', true)
                 ->where('is_rentable', true)
                 ->where('is_public', true)
                 ->whereNull('deleted_at'))
             ->withCount([
-                'products as public_products_count' => fn(Builder $query) => $query
+                'products as public_products_count' => fn (Builder $query) => $query
                     ->where('is_active', true)
                     ->where('is_rentable', true)
                     ->where('is_public', true)
@@ -88,7 +93,7 @@ class PublicCatalogService
             ->orderBy('name')
             ->limit(10)
             ->get()
-            ->map(fn(CatalogBrand $brand): array => $this->mapBrand($brand))
+            ->map(fn (CatalogBrand $brand): array => $this->mapBrand($brand))
             ->values()
             ->all();
 
@@ -98,7 +103,7 @@ class PublicCatalogService
             ->orderBy('name')
             ->limit(8)
             ->get()
-            ->map(fn(Product $product): array => $this->mapProduct($product, $context['branch']))
+            ->map(fn (Product $product): array => $this->mapProduct($product, $context['branch']))
             ->values()
             ->all();
 
@@ -108,7 +113,7 @@ class PublicCatalogService
             ->orderBy('name')
             ->limit(4)
             ->get()
-            ->map(fn(RentalPackage $package): array => $this->mapPackage($package, $context['branch']))
+            ->map(fn (RentalPackage $package): array => $this->mapPackage($package, $context['branch']))
             ->values()
             ->all();
 
@@ -127,7 +132,7 @@ class PublicCatalogService
     }
 
     /**
-     * @param array<string, mixed> $filters
+     * @param  array<string, mixed>  $filters
      * @return array<string, mixed>
      */
     public function catalog(array $filters): array
@@ -161,23 +166,23 @@ class PublicCatalogService
                         ->where('name', 'like', "%{$search}%")
                         ->orWhere('brand', 'like', "%{$search}%")
                         ->orWhere('model', 'like', "%{$search}%")
-                        ->orWhereHas('category', fn(Builder $categoryQuery) => $categoryQuery
+                        ->orWhereHas('category', fn (Builder $categoryQuery) => $categoryQuery
                             ->where('name', 'like', "%{$search}%"))
-                        ->orWhereHas('catalogBrand', fn(Builder $brandQuery) => $brandQuery
+                        ->orWhereHas('catalogBrand', fn (Builder $brandQuery) => $brandQuery
                             ->where('name', 'like', "%{$search}%"))
-                        ->orWhereHas('catalogModel', fn(Builder $modelQuery) => $modelQuery
+                        ->orWhereHas('catalogModel', fn (Builder $modelQuery) => $modelQuery
                             ->where('name', 'like', "%{$search}%"));
                 });
             })
-            ->when($category !== '', fn(Builder $productQuery) => $productQuery
-                ->whereHas('category', fn(Builder $categoryQuery) => $categoryQuery
+            ->when($category !== '', fn (Builder $productQuery) => $productQuery
+                ->whereHas('category', fn (Builder $categoryQuery) => $categoryQuery
                     ->where('slug', $category)
                     ->where('is_public', true)))
-            ->when($brand !== '', fn(Builder $productQuery) => $productQuery
-                ->whereHas('catalogBrand', fn(Builder $brandQuery) => $brandQuery
+            ->when($brand !== '', fn (Builder $productQuery) => $productQuery
+                ->whereHas('catalogBrand', fn (Builder $brandQuery) => $brandQuery
                     ->where('slug', $brand)
                     ->where('is_public', true)))
-            ->when($availability === 'available', fn(Builder $productQuery) => $this
+            ->when($availability === 'available', fn (Builder $productQuery) => $this
                 ->whereCurrentlyAvailable($productQuery, $branchId));
 
         if (in_array($sort, ['price_low', 'price_high'], true)) {
@@ -204,7 +209,7 @@ class PublicCatalogService
                             ->orWhereDate('product_rates.valid_until', '>=', today());
                     }),
             ])->orderByRaw(
-                'public_starting_price IS NULL, public_starting_price ' .
+                'public_starting_price IS NULL, public_starting_price '.
                     ($sort === 'price_low' ? 'ASC' : 'DESC'),
             );
         } elseif ($sort === 'name') {
@@ -219,20 +224,20 @@ class PublicCatalogService
         $products = $query
             ->paginate(12)
             ->withQueryString()
-            ->through(fn(Product $product): array => $this->mapProduct($product, $context['branch']));
+            ->through(fn (Product $product): array => $this->mapProduct($product, $context['branch']));
 
         $categories = ProductCategory::query()
             ->where('company_id', $companyId)
             ->where('is_active', true)
             ->where('is_public', true)
             ->whereNull('deleted_at')
-            ->whereHas('products', fn(Builder $categoryProducts) => $categoryProducts
+            ->whereHas('products', fn (Builder $categoryProducts) => $categoryProducts
                 ->where('is_active', true)
                 ->where('is_rentable', true)
                 ->where('is_public', true)
                 ->whereNull('deleted_at'))
             ->withCount([
-                'products as public_products_count' => fn(Builder $categoryProducts) => $categoryProducts
+                'products as public_products_count' => fn (Builder $categoryProducts) => $categoryProducts
                     ->where('is_active', true)
                     ->where('is_rentable', true)
                     ->where('is_public', true)
@@ -241,7 +246,7 @@ class PublicCatalogService
             ->orderBy('sort_order')
             ->orderBy('name')
             ->get()
-            ->map(fn(ProductCategory $item): array => $this->mapCategory($item))
+            ->map(fn (ProductCategory $item): array => $this->mapCategory($item))
             ->values()
             ->all();
 
@@ -249,13 +254,13 @@ class PublicCatalogService
             ->where('company_id', $companyId)
             ->where('is_active', true)
             ->where('is_public', true)
-            ->whereHas('products', fn(Builder $brandProducts) => $brandProducts
+            ->whereHas('products', fn (Builder $brandProducts) => $brandProducts
                 ->where('is_active', true)
                 ->where('is_rentable', true)
                 ->where('is_public', true)
                 ->whereNull('deleted_at'))
             ->withCount([
-                'products as public_products_count' => fn(Builder $brandProducts) => $brandProducts
+                'products as public_products_count' => fn (Builder $brandProducts) => $brandProducts
                     ->where('is_active', true)
                     ->where('is_rentable', true)
                     ->where('is_public', true)
@@ -264,7 +269,7 @@ class PublicCatalogService
             ->orderBy('sort_order')
             ->orderBy('name')
             ->get()
-            ->map(fn(CatalogBrand $item): array => $this->mapBrand($item))
+            ->map(fn (CatalogBrand $item): array => $this->mapBrand($item))
             ->values()
             ->all();
 
@@ -274,7 +279,7 @@ class PublicCatalogService
             ->orderBy('name')
             ->limit(6)
             ->get()
-            ->map(fn(RentalPackage $package): array => $this->mapPackage($package, $context['branch']))
+            ->map(fn (RentalPackage $package): array => $this->mapPackage($package, $context['branch']))
             ->values()
             ->all();
 
@@ -314,14 +319,14 @@ class PublicCatalogService
             ->whereKeyNot($product->id)
             ->when(
                 $product->category_id !== null,
-                fn(Builder $query) => $query->where('category_id', $product->category_id),
+                fn (Builder $query) => $query->where('category_id', $product->category_id),
             )
             ->orderByDesc('is_featured')
             ->orderBy('public_sort_order')
             ->orderBy('name')
             ->limit(4)
             ->get()
-            ->map(fn(Product $item): array => $this->mapProduct($item, $context['branch']))
+            ->map(fn (Product $item): array => $this->mapProduct($item, $context['branch']))
             ->values()
             ->all();
 
@@ -367,10 +372,17 @@ class PublicCatalogService
             return ['branch' => null, 'branches' => []];
         }
 
-        $settings = $this->publicSettings($branches->pluck('id')->all());
+        /** @var list<int> $branchIds */
+        $branchIds = $branches->pluck('id')
+            ->map(fn (mixed $id): int => (int) $id)
+            ->values()
+            ->all();
+        $settings = $this->publicSettings($branchIds);
+
+        /** @var Collection<int, array<string, mixed>> $profiles */
         $profiles = $branches
-            ->map(fn(Branch $branch): array => $this->mapBranch($branch, $settings[$branch->id] ?? []))
-            ->filter(fn(array $profile): bool => (bool) $profile['catalog_enabled'])
+            ->map(fn (Branch $branch): array => $this->mapBranch($branch, $settings[$branch->id] ?? []))
+            ->filter(fn (array $profile): bool => (bool) $profile['catalog_enabled'])
             ->values();
 
         if ($profiles->isEmpty()) {
@@ -378,19 +390,17 @@ class PublicCatalogService
         }
 
         $selected = $profiles->first(
-            fn(array $profile): bool => $branchCode !== null
+            fn (array $profile): bool => $branchCode !== null
                 && mb_strtolower((string) $profile['code']) === mb_strtolower($branchCode),
         ) ?? $profiles->first();
 
-        if (! is_array($selected)) {
-            return ['branch' => null, 'branches' => []];
-        }
-
         $companyId = (int) $selected['company_id'];
-        $companyProfiles = $profiles
-            ->filter(fn(array $profile): bool => (int) $profile['company_id'] === $companyId)
-            ->values()
-            ->all();
+        $companyProfiles = array_values(
+            $profiles
+                ->filter(fn (array $profile): bool => (int) $profile['company_id'] === $companyId)
+                ->values()
+                ->all(),
+        );
 
         return [
             'branch' => $selected,
@@ -399,7 +409,7 @@ class PublicCatalogService
     }
 
     /**
-     * @param list<int> $branchIds
+     * @param  list<int>  $branchIds
      * @return array<int, array<string, mixed>>
      */
     private function publicSettings(array $branchIds): array
@@ -414,7 +424,7 @@ class PublicCatalogService
             ->get(['branch_id', 'key', 'value'])
             ->groupBy('branch_id')
             ->map(function (Collection $rows): array {
-                return $rows->mapWithKeys(fn(object $row): array => [
+                return $rows->mapWithKeys(fn (object $row): array => [
                     (string) $row->key => $this->decodeSetting($row->value),
                 ])->all();
             })
@@ -422,7 +432,7 @@ class PublicCatalogService
     }
 
     /**
-     * @param array<string, mixed> $settings
+     * @param  array<string, mixed>  $settings
      * @return array<string, mixed>
      */
     private function mapBranch(Branch $branch, array $settings): array
@@ -459,6 +469,7 @@ class PublicCatalogService
         ];
     }
 
+    /** @return Builder<Product> */
     private function baseProductQuery(int $companyId, int $branchId): Builder
     {
         return $this->visibleProducts($companyId)
@@ -466,7 +477,7 @@ class PublicCatalogService
                 'category:id,name,slug,image_path,is_public,is_active',
                 'catalogBrand:id,name,slug,logo_path,is_public,is_active',
                 'catalogModel:id,name,specifications,is_active',
-                'rates' => fn($query) => $query
+                'rates' => fn ($query) => $query
                     ->where('is_active', true)
                     ->where(function (Builder $scope) use ($branchId): void {
                         $scope->whereNull('branch_id')->orWhere('branch_id', $branchId);
@@ -478,21 +489,22 @@ class PublicCatalogService
                         $dates->whereNull('valid_until')->orWhereDate('valid_until', '>=', today());
                     })
                     ->with(['ratePlan:id,name,duration_unit,duration_value,is_active'])
-                    ->whereHas('ratePlan', fn(Builder $plan) => $plan->where('is_active', true)),
-                'branchInventories' => fn($query) => $query->where('branch_id', $branchId),
+                    ->whereHas('ratePlan', fn (Builder $plan) => $plan->where('is_active', true)),
+                'branchInventories' => fn ($query) => $query->where('branch_id', $branchId),
             ])
             ->withCount([
-                'assets as available_assets_count' => fn(Builder $assets) => $assets
+                'assets as available_assets_count' => fn (Builder $assets) => $assets
                     ->where('current_branch_id', $branchId)
                     ->where('is_active', true)
                     ->where('status', 'available')
                     ->whereNotIn('condition', ['lost', 'retired']),
-                'assets as active_assets_count' => fn(Builder $assets) => $assets
+                'assets as active_assets_count' => fn (Builder $assets) => $assets
                     ->where('current_branch_id', $branchId)
                     ->where('is_active', true),
             ]);
     }
 
+    /** @return Builder<Product> */
     private function visibleProducts(int $companyId): Builder
     {
         return Product::query()
@@ -505,13 +517,14 @@ class PublicCatalogService
             ->where(function (Builder $query): void {
                 $query
                     ->whereNull('category_id')
-                    ->orWhereHas('category', fn(Builder $category) => $category
+                    ->orWhereHas('category', fn (Builder $category) => $category
                         ->where('is_active', true)
                         ->where('is_public', true)
                         ->whereNull('deleted_at'));
             });
     }
 
+    /** @return Builder<RentalPackage> */
     private function basePackageQuery(int $companyId, int $branchId): Builder
     {
         return RentalPackage::query()
@@ -531,18 +544,18 @@ class PublicCatalogService
             })
             ->with([
                 'branch:id,code,name',
-                'rates' => fn($query) => $query
+                'rates' => fn ($query) => $query
                     ->where('is_active', true)
                     ->where(function (Builder $scope) use ($branchId): void {
                         $scope->whereNull('branch_id')->orWhere('branch_id', $branchId);
                     })
                     ->with(['ratePlan:id,name,duration_unit,duration_value,is_active'])
-                    ->whereHas('ratePlan', fn(Builder $plan) => $plan->where('is_active', true)),
-                'items' => fn($query) => $query
+                    ->whereHas('ratePlan', fn (Builder $plan) => $plan->where('is_active', true)),
+                'items' => fn ($query) => $query
                     ->orderBy('sort_order')
                     ->orderBy('id')
                     ->with([
-                        'product' => fn($productQuery) => $productQuery
+                        'product' => fn ($productQuery) => $productQuery
                             ->where('is_active', true)
                             ->where('is_rentable', true)
                             ->where('is_public', true)
@@ -550,16 +563,16 @@ class PublicCatalogService
                             ->with([
                                 'category:id,name,slug,image_path',
                                 'catalogBrand:id,name,slug,logo_path',
-                                'branchInventories' => fn($inventory) => $inventory
+                                'branchInventories' => fn ($inventory) => $inventory
                                     ->where('branch_id', $branchId),
                             ])
                             ->withCount([
-                                'assets as available_assets_count' => fn(Builder $assets) => $assets
+                                'assets as available_assets_count' => fn (Builder $assets) => $assets
                                     ->where('current_branch_id', $branchId)
                                     ->where('is_active', true)
                                     ->where('status', 'available')
                                     ->whereNotIn('condition', ['lost', 'retired']),
-                                'assets as active_assets_count' => fn(Builder $assets) => $assets
+                                'assets as active_assets_count' => fn (Builder $assets) => $assets
                                     ->where('current_branch_id', $branchId)
                                     ->where('is_active', true),
                             ]),
@@ -567,6 +580,10 @@ class PublicCatalogService
             ]);
     }
 
+    /**
+     * @param  Builder<Product>  $query
+     * @return Builder<Product>
+     */
     private function whereCurrentlyAvailable(Builder $query, int $branchId): Builder
     {
         return $query->where(function (Builder $availability) use ($branchId): void {
@@ -574,7 +591,7 @@ class PublicCatalogService
                 ->where(function (Builder $serialized) use ($branchId): void {
                     $serialized
                         ->where('tracking_type', 'serialized')
-                        ->whereHas('assets', fn(Builder $assets) => $assets
+                        ->whereHas('assets', fn (Builder $assets) => $assets
                             ->where('current_branch_id', $branchId)
                             ->where('is_active', true)
                             ->where('status', 'available')
@@ -583,12 +600,12 @@ class PublicCatalogService
                 ->orWhere(function (Builder $quantity) use ($branchId): void {
                     $quantity
                         ->where('tracking_type', '!=', 'serialized')
-                        ->whereHas('branchInventories', fn(Builder $inventory) => $inventory
+                        ->whereHas('branchInventories', fn (Builder $inventory) => $inventory
                             ->where('branch_id', $branchId)
                             ->whereRaw(
-                                'COALESCE(branch_inventories.quantity_on_hand, 0) > ' .
-                                    '(COALESCE(branch_inventories.quantity_reserved, 0) + ' .
-                                    'COALESCE(branch_inventories.quantity_rented, 0) + ' .
+                                'COALESCE(branch_inventories.quantity_on_hand, 0) > '.
+                                    '(COALESCE(branch_inventories.quantity_reserved, 0) + '.
+                                    'COALESCE(branch_inventories.quantity_rented, 0) + '.
                                     'COALESCE(branch_inventories.quantity_maintenance, 0))',
                             ));
                 });
@@ -596,15 +613,18 @@ class PublicCatalogService
     }
 
     /**
-     * @param array<string, mixed> $branch
+     * @param  array<string, mixed>  $branch
      * @return array<string, mixed>
      */
     private function mapProduct(Product $product, array $branch, bool $detail = false): array
     {
         $rates = $this->mapRates($product->rates, (int) $branch['id']);
         $availability = $this->productAvailability($product);
-        $categoryImage = $product->category?->image_path;
-        $brandLogo = $product->catalogBrand?->logo_url;
+        $category = $product->getRelation('category');
+        $catalogBrand = $product->getRelation('catalogBrand');
+        $catalogModel = $product->getRelation('catalogModel');
+        $categoryImage = $category instanceof ProductCategory ? $category->image_path : null;
+        $brandLogo = $catalogBrand instanceof CatalogBrand ? $catalogBrand->logo_url : null;
         $image = $this->mediaUrl($product->primary_image_path)
             ?? $this->mediaUrl($categoryImage)
             ?? $brandLogo;
@@ -616,17 +636,17 @@ class PublicCatalogService
             'id' => $product->id,
             'slug' => $product->slug,
             'name' => $product->name,
-            'brand' => $product->catalogBrand?->name ?? $product->brand,
-            'model' => $product->catalogModel?->name ?? $product->model,
+            'brand' => $catalogBrand instanceof CatalogBrand ? $catalogBrand->name : $product->brand,
+            'model' => $catalogModel instanceof CatalogModel ? $catalogModel->name : $product->model,
             'variant' => $product->variant,
             'short_description' => $description !== '' ? $description : null,
             'image_url' => $image,
-            'category' => $product->category === null ? null : [
-                'name' => $product->category->name,
-                'slug' => $product->category->slug,
-            ],
+            'category' => $category instanceof ProductCategory ? [
+                'name' => $category->name,
+                'slug' => $category->slug,
+            ] : null,
             'rates' => $rates,
-            'starting_price' => collect($rates)->min('amount'),
+            'starting_price' => $this->startingPrice($rates),
             'availability' => $availability,
             'is_featured' => $product->is_featured,
             'inquiry_url' => $this->whatsappUrl((string) $branch['whatsapp'], $message),
@@ -641,26 +661,34 @@ class PublicCatalogService
             'description' => $product->description,
             'seo_title' => $product->seo_title ?? $product->name,
             'seo_description' => $product->seo_description ?? $description,
-            'gallery' => collect($product->gallery ?? [])
-                ->map(fn(mixed $path): ?string => $this->mediaUrl($this->stringOrNull($path)))
+            'gallery' => collect($this->stringList($product->getAttribute('gallery')))
+                ->map(fn (string $path): ?string => $this->mediaUrl($path))
                 ->filter()
                 ->values()
                 ->all(),
-            'specifications' => $this->specifications($product->catalogModel?->specifications),
+            'specifications' => $this->specifications(
+                $catalogModel instanceof CatalogModel ? $catalogModel->specifications : null,
+            ),
         ];
     }
 
     /**
-     * @param array<string, mixed> $branch
+     * @param  array<string, mixed>  $branch
      * @return array<string, mixed>
      */
     private function mapPackage(RentalPackage $package, array $branch, bool $detail = false): array
     {
         $rates = $this->mapRates($package->rates, (int) $branch['id']);
         $items = $package->items
-            ->filter(fn($item): bool => $item->product !== null)
-            ->map(function ($item): array {
+            ->map(function (PackageItem $item): ?array {
                 $product = $item->product;
+
+                if (! $product instanceof Product) {
+                    return null;
+                }
+
+                $category = $product->getRelation('category');
+                $catalogBrand = $product->getRelation('catalogBrand');
 
                 return [
                     'name' => $product->name,
@@ -668,16 +696,19 @@ class PublicCatalogService
                     'quantity' => $item->quantity,
                     'is_optional' => $item->is_optional,
                     'image_url' => $this->mediaUrl($product->primary_image_path)
-                        ?? $this->mediaUrl($product->category?->image_path)
-                        ?? $product->catalogBrand?->logo_url,
+                        ?? $this->mediaUrl(
+                            $category instanceof ProductCategory ? $category->image_path : null,
+                        )
+                        ?? ($catalogBrand instanceof CatalogBrand ? $catalogBrand->logo_url : null),
                     'availability' => $this->productAvailability($product),
                 ];
             })
+            ->filter(fn (?array $item): bool => $item !== null)
             ->values();
-        $required = $items->filter(fn(array $item): bool => ! $item['is_optional']);
+        $required = $items->filter(fn (array $item): bool => ! $item['is_optional']);
         $availableUnits = $required->isEmpty()
             ? 0
-            : (int) $required->map(fn(array $item): int => intdiv(
+            : (int) $required->map(fn (array $item): int => intdiv(
                 (int) $item['availability']['available_units'],
                 max((int) $item['quantity'], 1),
             ))->min();
@@ -691,7 +722,7 @@ class PublicCatalogService
             'image_url' => $this->mediaUrl($package->primary_image_path)
                 ?? $items->first()['image_url'] ?? null,
             'rates' => $rates,
-            'starting_price' => collect($rates)->min('amount'),
+            'starting_price' => $this->startingPrice($rates),
             'items_count' => $items->count(),
             'availability' => [
                 'available_units' => $availableUnits,
@@ -717,41 +748,57 @@ class PublicCatalogService
     }
 
     /**
-     * @param EloquentCollection<int, mixed> $rates
+     * @param  iterable<int, ProductRate|PackageRate>  $rates
      * @return list<array<string, mixed>>
      */
-    private function mapRates(EloquentCollection $rates, int $branchId): array
+    private function mapRates(iterable $rates, int $branchId): array
     {
-        return $rates
-            ->groupBy('rate_plan_id')
-            ->map(function (Collection $group) use ($branchId): ?array {
-                $rate = $group
-                    ->sortByDesc(fn($item): int => (int) $item->branch_id === $branchId ? 1 : 0)
-                    ->first();
+        /** @var array<int, ProductRate|PackageRate> $selectedByPlan */
+        $selectedByPlan = [];
 
-                if ($rate === null || $rate->ratePlan === null) {
-                    return null;
-                }
+        foreach ($rates as $rate) {
+            $planId = (int) $rate->rate_plan_id;
+            $current = $selectedByPlan[$planId] ?? null;
+            $isBranchSpecific = (int) $rate->branch_id === $branchId;
+            $currentIsBranchSpecific = $current !== null
+                && (int) $current->branch_id === $branchId;
 
-                return [
-                    'id' => $rate->id,
-                    'rate_plan' => $rate->ratePlan->name,
-                    'duration_label' => $this->durationLabel(
-                        (string) $rate->ratePlan->duration_unit,
-                        (int) $rate->ratePlan->duration_value,
-                    ),
-                    'duration_minutes' => $this->durationMinutes(
-                        (string) $rate->ratePlan->duration_unit,
-                        (int) $rate->ratePlan->duration_value,
-                    ),
-                    'amount' => (float) $rate->amount,
-                    'deposit_amount' => (float) $rate->deposit_amount,
-                ];
-            })
-            ->filter()
-            ->sortBy('duration_minutes')
-            ->values()
-            ->all();
+            if ($current === null || ($isBranchSpecific && ! $currentIsBranchSpecific)) {
+                $selectedByPlan[$planId] = $rate;
+            }
+        }
+
+        $mapped = [];
+
+        foreach ($selectedByPlan as $rate) {
+            $plan = $rate->ratePlan;
+
+            if (! $plan instanceof RatePlan) {
+                continue;
+            }
+
+            $mapped[] = [
+                'id' => $rate->id,
+                'rate_plan' => $plan->name,
+                'duration_label' => $this->durationLabel(
+                    (string) $plan->duration_unit,
+                    (int) $plan->duration_value,
+                ),
+                'duration_minutes' => $this->durationMinutes(
+                    (string) $plan->duration_unit,
+                    (int) $plan->duration_value,
+                ),
+                'amount' => (float) $rate->amount,
+                'deposit_amount' => (float) $rate->deposit_amount,
+            ];
+        }
+
+        usort(
+            $mapped,
+            fn (array $left, array $right): int => (int) $left['duration_minutes'] <=> (int) $right['duration_minutes'],
+        );
+
+        return $mapped;
     }
 
     /**
@@ -784,6 +831,37 @@ class PublicCatalogService
         ];
     }
 
+    /**
+     * @param  list<array<string, mixed>>  $rates
+     */
+    private function startingPrice(array $rates): ?float
+    {
+        if ($rates === []) {
+            return null;
+        }
+
+        return min(array_map(
+            fn (array $rate): float => (float) ($rate['amount'] ?? 0),
+            $rates,
+        ));
+    }
+
+    /** @return list<string> */
+    private function stringList(mixed $value): array
+    {
+        if (! is_array($value)) {
+            return [];
+        }
+
+        return array_values(array_filter(
+            array_map(
+                fn (mixed $item): string => is_string($item) ? trim($item) : '',
+                $value,
+            ),
+            fn (string $item): bool => $item !== '',
+        ));
+    }
+
     /** @return array<string, string> */
     private function specifications(mixed $specifications): array
     {
@@ -792,8 +870,8 @@ class PublicCatalogService
         }
 
         return collect($specifications)
-            ->filter(fn(mixed $value, mixed $key): bool => is_scalar($value) && is_string($key))
-            ->mapWithKeys(fn(mixed $value, string $key): array => [
+            ->filter(fn (mixed $value, mixed $key): bool => is_scalar($value) && is_string($key))
+            ->mapWithKeys(fn (mixed $value, string $key): array => [
                 Str::headline($key) => (string) $value,
             ])
             ->all();
@@ -841,7 +919,7 @@ class PublicCatalogService
                 'quantity_rented',
                 'quantity_maintenance',
             ])
-            ->sum(fn(object $inventory): int => max(
+            ->sum(fn (object $inventory): int => max(
                 0,
                 (int) $inventory->quantity_on_hand
                     - (int) $inventory->quantity_reserved
@@ -888,7 +966,7 @@ class PublicCatalogService
             return $path;
         }
 
-        /** @var \Illuminate\Filesystem\FilesystemAdapter $disk */
+        /** @var FilesystemAdapter $disk */
         $disk = Storage::disk('public');
 
         return $disk->url($path);
@@ -902,7 +980,7 @@ class PublicCatalogService
             return null;
         }
 
-        return 'https://wa.me/' . $normalized . '?text=' . rawurlencode($message);
+        return 'https://wa.me/'.$normalized.'?text='.rawurlencode($message);
     }
 
     private function decodeSetting(mixed $value): mixed

@@ -22,7 +22,7 @@ class RentalPackageController extends Controller
         $package = RentalPackage::query()->create([
             ...$validated,
             'company_id' => $request->user()->company_id,
-            'is_public' => $validated['is_active'],
+            'is_public' => false,
         ]);
         $recorder->record(
             $request,
@@ -58,7 +58,7 @@ class RentalPackageController extends Controller
         $oldValues = $rentalPackage->toArray();
         $rentalPackage->update([
             ...$validated,
-            'is_public' => $validated['is_active'],
+            'is_public' => $rentalPackage->is_public && $validated['is_active'],
         ]);
         $recorder->record(
             $request,

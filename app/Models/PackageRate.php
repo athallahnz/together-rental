@@ -16,16 +16,19 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 ])]
 class PackageRate extends Model
 {
+    /** @return BelongsTo<RentalPackage, $this> */
     public function package(): BelongsTo
     {
         return $this->belongsTo(RentalPackage::class, 'package_id');
     }
 
+    /** @return BelongsTo<Branch, $this> */
     public function branch(): BelongsTo
     {
         return $this->belongsTo(Branch::class);
     }
 
+    /** @return BelongsTo<RatePlan, $this> */
     public function ratePlan(): BelongsTo
     {
         return $this->belongsTo(RatePlan::class);

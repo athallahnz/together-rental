@@ -3,15 +3,15 @@
 namespace App\Domain\PublicCatalog;
 
 use App\Models\Branch;
+use App\Models\PackageItem;
 use App\Models\PackageRate;
 use App\Models\Product;
 use App\Models\ProductRate;
+use App\Models\RatePlan;
 use App\Models\RentalPackage;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
-use Illuminate\Database\Eloquent\Collection as EloquentCollection;
 use Illuminate\Database\Query\Builder as QueryBuilder;
-use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
@@ -57,7 +57,7 @@ class PublicAvailabilityService
             $timezone,
         );
 
-        if ($startsAt === false || $endsAt === false || ! $endsAt->isAfter($startsAt)) {
+        if ($startsAt === null || $endsAt === null || ! $endsAt->isAfter($startsAt)) {
             throw ValidationException::withMessages([
                 'ends_at' => 'Periode rental tidak valid.',
             ]);
@@ -217,12 +217,17 @@ class PublicAvailabilityService
             ->firstOrFail();
 
         $items = $package->items
-            ->filter(fn ($item): bool => $item->product !== null)
-            ->map(function ($item) use ($branch, $startsAt, $endsAt, $quantity): array {
+            ->map(function (PackageItem $item) use ($branch, $startsAt, $endsAt, $quantity): ?array {
+                $product = $item->product;
+
+                if (! $product instanceof Product) {
+                    return null;
+                }
+
                 $neededPerPackage = max((int) $item->quantity, 1);
                 $requestedUnits = $neededPerPackage * $quantity;
                 $availability = $this->productAvailability(
-                    $item->product,
+                    $product,
                     $branch,
                     $startsAt,
                     $endsAt,
@@ -230,8 +235,8 @@ class PublicAvailabilityService
                 );
 
                 return [
-                    'name' => $item->product->name,
-                    'slug' => $item->product->slug,
+                    'name' => $product->name,
+                    'slug' => $product->slug,
                     'quantity_per_package' => $neededPerPackage,
                     'requested_units' => $requestedUnits,
                     'is_optional' => (bool) $item->is_optional,
@@ -241,6 +246,7 @@ class PublicAvailabilityService
                     'label' => $availability['label'],
                 ];
             })
+            ->filter(fn (?array $item): bool => $item !== null)
             ->values();
         $requiredItems = $items->filter(fn (array $item): bool => ! $item['is_optional']);
         $totalPackages = $requiredItems->isEmpty()
@@ -553,24 +559,38 @@ SQL)
     }
 
     /**
-     * @param  EloquentCollection<int, ProductRate|PackageRate>  $rates
+     * @param  iterable<int, ProductRate|PackageRate>  $rates
      * @return array<string, mixed>|null
      */
     private function selectRate(
-        EloquentCollection $rates,
+        iterable $rates,
         Branch $branch,
         ?int $rateId,
     ): ?array {
-        $selectedRates = $rates
-            ->groupBy('rate_plan_id')
-            ->map(fn (Collection $group) => $group
-                ->sortByDesc(fn ($rate): int => (int) $rate->branch_id === $branch->id ? 1 : 0)
-                ->first())
-            ->filter()
-            ->values();
+        /** @var array<int, ProductRate|PackageRate> $selectedByPlan */
+        $selectedByPlan = [];
+
+        foreach ($rates as $rate) {
+            $planId = (int) $rate->rate_plan_id;
+            $current = $selectedByPlan[$planId] ?? null;
+            $isBranchSpecific = (int) $rate->branch_id === $branch->id;
+            $currentIsBranchSpecific = $current !== null
+                && (int) $current->branch_id === $branch->id;
+
+            if ($current === null || ($isBranchSpecific && ! $currentIsBranchSpecific)) {
+                $selectedByPlan[$planId] = $rate;
+            }
+        }
+
+        $selected = null;
 
         if ($rateId !== null) {
-            $selected = $selectedRates->first(fn ($rate): bool => (int) $rate->id === $rateId);
+            foreach ($selectedByPlan as $candidate) {
+                if ((int) $candidate->id === $rateId) {
+                    $selected = $candidate;
+                    break;
+                }
+            }
 
             if ($selected === null) {
                 throw ValidationException::withMessages([
@@ -578,29 +598,48 @@ SQL)
                 ]);
             }
         } else {
-            $selected = $selectedRates
-                ->sortBy(fn ($rate): int => $this->durationMinutes(
-                    (string) $rate->ratePlan->duration_unit,
-                    (int) $rate->ratePlan->duration_value,
-                ))
-                ->first();
+            $shortestDuration = null;
+
+            foreach ($selectedByPlan as $candidate) {
+                $plan = $candidate->ratePlan;
+
+                if (! $plan instanceof RatePlan) {
+                    continue;
+                }
+
+                $duration = $this->durationMinutes(
+                    (string) $plan->duration_unit,
+                    (int) $plan->duration_value,
+                );
+
+                if ($shortestDuration === null || $duration < $shortestDuration) {
+                    $shortestDuration = $duration;
+                    $selected = $candidate;
+                }
+            }
         }
 
-        if ($selected === null || $selected->ratePlan === null) {
+        if ($selected === null) {
+            return null;
+        }
+
+        $plan = $selected->ratePlan;
+
+        if (! $plan instanceof RatePlan) {
             return null;
         }
 
         $durationMinutes = $this->durationMinutes(
-            (string) $selected->ratePlan->duration_unit,
-            (int) $selected->ratePlan->duration_value,
+            (string) $plan->duration_unit,
+            (int) $plan->duration_value,
         );
 
         return [
             'id' => $selected->id,
-            'rate_plan' => $selected->ratePlan->name,
+            'rate_plan' => $plan->name,
             'duration_label' => $this->durationLabel(
-                (string) $selected->ratePlan->duration_unit,
-                (int) $selected->ratePlan->duration_value,
+                (string) $plan->duration_unit,
+                (int) $plan->duration_value,
             ),
             'duration_minutes' => $durationMinutes,
             'amount' => (float) $selected->amount,
@@ -647,13 +686,24 @@ SQL)
         return [
             'starts_at' => $startsAt->format('Y-m-d\\TH:i'),
             'ends_at' => $endsAt->format('Y-m-d\\TH:i'),
-            'starts_label' => $startsAt->locale('id')->translatedFormat('d M Y H:i'),
-            'ends_label' => $endsAt->locale('id')->translatedFormat('d M Y H:i'),
+            'starts_label' => $this->localizedDateTime($startsAt),
+            'ends_label' => $this->localizedDateTime($endsAt),
             'duration_minutes' => $durationMinutes,
             'duration_label' => $this->humanDuration($durationMinutes),
             'timezone' => $startsAt->getTimezone()->getName(),
             'timezone_label' => $this->timezoneLabel($startsAt->getTimezone()->getName()),
         ];
+    }
+
+    private function localizedDateTime(CarbonImmutable $dateTime): string
+    {
+        $localized = $dateTime->locale('id');
+
+        if (! $localized instanceof CarbonImmutable) {
+            return $dateTime->format('d M Y H:i');
+        }
+
+        return $localized->translatedFormat('d M Y H:i');
     }
 
     /**

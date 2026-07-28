@@ -1,2 +1,12 @@
 User-agent: *
 Allow: /
+Disallow: /dashboard
+Disallow: /catalog
+Disallow: /branches
+Disallow: /customers
+Disallow: /users
+Disallow: /employees
+Disallow: /roles
+Disallow: /reports
+Disallow: /legacy-imports
+Disallow: /settings

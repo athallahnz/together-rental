@@ -4,6 +4,7 @@ import {
     BoxIcon,
     CircleDollarSign,
     CircleOff,
+    Globe2,
     Layers3,
     PackageCheck,
     Pencil,
@@ -200,6 +201,12 @@ export default function CatalogIndex({
                                     </Link>
                                 </Button>
                             )}
+                            <Button asChild variant="outline">
+                                <Link href="/catalog/public-content">
+                                    <Globe2 />
+                                    Konten Publik
+                                </Link>
+                            </Button>
                             <Button
                                 onClick={() => {
                                     if (filters.section === 'categories') {

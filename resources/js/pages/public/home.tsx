@@ -113,6 +113,25 @@ export default function PublicHome({
                     property="og:image"
                     content={branch?.logo_url ?? '/primary-logos.png'}
                 />
+                <meta property="og:type" content="website" />
+                <link
+                    rel="canonical"
+                    href={branch ? `/?branch=${branch.code}` : '/'}
+                />
+                <script type="application/ld+json">
+                    {JSON.stringify({
+                        '@context': 'https://schema.org',
+                        '@type': 'LocalBusiness',
+                        name: branch?.name ?? 'Together Kamera',
+                        image: branch?.logo_url ?? '/primary-logos.png',
+                        address: branch?.address,
+                        telephone: branch?.whatsapp,
+                        openingHours: branch?.opening_hours,
+                        sameAs: branch?.instagram_url
+                            ? [branch.instagram_url]
+                            : [],
+                    })}
+                </script>
             </Head>
 
             <main>

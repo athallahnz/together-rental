@@ -88,6 +88,15 @@ export default function PublicCatalog({
                     name="description"
                     content="Jelajahi katalog kamera, lensa, lighting, audio, dan perlengkapan kreatif Together Kamera."
                 />
+                <meta property="og:type" content="website" />
+                <meta
+                    property="og:title"
+                    content="Katalog Rental Together Kamera"
+                />
+                <link
+                    rel="canonical"
+                    href={branch ? `/rental?branch=${branch.code}` : '/rental'}
+                />
             </Head>
 
             <main>

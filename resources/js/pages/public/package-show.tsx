@@ -43,6 +43,40 @@ export default function PublicPackageShow({
                         content={rentalPackage.image_url}
                     />
                 )}
+                <meta property="og:type" content="product" />
+                <link
+                    rel="canonical"
+                    href={`/rental/packages/${rentalPackage.slug}`}
+                />
+                <script type="application/ld+json">
+                    {JSON.stringify({
+                        '@context': 'https://schema.org',
+                        '@type': 'Product',
+                        name: rentalPackage.name,
+                        image: rentalPackage.image_url
+                            ? [rentalPackage.image_url]
+                            : [],
+                        description:
+                            rentalPackage.seo_description ??
+                            rentalPackage.short_description,
+                        isRelatedTo: rentalPackage.items.map(
+                            (item) => item.name,
+                        ),
+                        offers:
+                            rentalPackage.starting_price !== null
+                                ? {
+                                      '@type': 'Offer',
+                                      priceCurrency: 'IDR',
+                                      price: rentalPackage.starting_price,
+                                      availability:
+                                          rentalPackage.availability.status ===
+                                          'unavailable'
+                                              ? 'https://schema.org/OutOfStock'
+                                              : 'https://schema.org/InStock',
+                                  }
+                                : undefined,
+                    })}
+                </script>
             </Head>
 
             <main>

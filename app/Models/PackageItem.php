@@ -15,11 +15,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 ])]
 class PackageItem extends Model
 {
+    /** @return BelongsTo<RentalPackage, $this> */
     public function package(): BelongsTo
     {
         return $this->belongsTo(RentalPackage::class, 'package_id');
     }
 
+    /** @return BelongsTo<Product, $this> */
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);

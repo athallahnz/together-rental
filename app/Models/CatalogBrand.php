@@ -54,9 +54,7 @@ class CatalogBrand extends Model
         return $this->hasMany(Product::class);
     }
 
-    /**
-     * @return array<string, string>
-     */
+    /** @return array<string, string> */
     protected function casts(): array
     {
         return [

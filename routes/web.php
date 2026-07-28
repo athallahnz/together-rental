@@ -18,7 +18,9 @@ use App\Http\Controllers\PositionController;
 use App\Http\Controllers\ProductCategoryController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductRateController;
+use App\Http\Controllers\PublicCatalogContentController;
 use App\Http\Controllers\PublicCatalogController;
+use App\Http\Controllers\PublicSitemapController;
 use App\Http\Controllers\RatePlanController;
 use App\Http\Controllers\RentalPackageController;
 use App\Http\Controllers\RoleController;
@@ -26,6 +28,7 @@ use App\Http\Controllers\UserManagementController;
 use Illuminate\Support\Facades\Route;
 
 Route::get('/', [PublicCatalogController::class, 'home'])->name('home');
+Route::get('/sitemap.xml', PublicSitemapController::class)->name('public.sitemap');
 Route::prefix('rental')->name('public.catalog.')->group(function (): void {
     Route::get('/', [PublicCatalogController::class, 'index'])->name('index');
     Route::get('/availability', [PublicCatalogController::class, 'availability'])
@@ -46,6 +49,21 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
         Route::get('/', [CatalogController::class, 'index'])
             ->middleware('can:products.view')
             ->name('index');
+        Route::get('/public-content', [PublicCatalogContentController::class, 'index'])
+            ->middleware('can:products.manage')
+            ->name('public-content.index');
+        Route::put('/public-content/products/{product}', [PublicCatalogContentController::class, 'updateProduct'])
+            ->middleware('can:products.manage')
+            ->name('public-content.products.update');
+        Route::put('/public-content/packages/{rentalPackage}', [PublicCatalogContentController::class, 'updatePackage'])
+            ->middleware('can:products.manage')
+            ->name('public-content.packages.update');
+        Route::put('/public-content/categories/{productCategory}', [PublicCatalogContentController::class, 'updateCategory'])
+            ->middleware('can:products.manage')
+            ->name('public-content.categories.update');
+        Route::put('/public-content/brands/{catalogBrand}', [PublicCatalogContentController::class, 'updateBrand'])
+            ->middleware('can:products.manage')
+            ->name('public-content.brands.update');
         Route::get('/intelligence', [CatalogIntelligenceController::class, 'index'])
             ->middleware('can:products.manage')
             ->name('intelligence.index');

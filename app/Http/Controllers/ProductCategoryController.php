@@ -20,7 +20,7 @@ class ProductCategoryController extends Controller
         $category = ProductCategory::query()->create([
             ...$validated,
             'company_id' => $request->user()->company_id,
-            'is_public' => $validated['is_active'],
+            'is_public' => false,
         ]);
         $recorder->record(
             $request,
@@ -45,7 +45,7 @@ class ProductCategoryController extends Controller
         $validated = $request->validated();
         $productCategory->update([
             ...$validated,
-            'is_public' => $validated['is_active'],
+            'is_public' => $productCategory->is_public && $validated['is_active'],
         ]);
         $recorder->record(
             $request,

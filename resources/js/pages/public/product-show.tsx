@@ -50,6 +50,40 @@ export default function PublicProductShow({
                 {product.image_url && (
                     <meta property="og:image" content={product.image_url} />
                 )}
+                <meta property="og:type" content="product" />
+                <link
+                    rel="canonical"
+                    href={`/rental/products/${product.slug}`}
+                />
+                <script type="application/ld+json">
+                    {JSON.stringify({
+                        '@context': 'https://schema.org',
+                        '@type': 'Product',
+                        name: product.name,
+                        image: product.image_url
+                            ? [product.image_url, ...product.gallery]
+                            : product.gallery,
+                        description:
+                            product.seo_description ??
+                            product.short_description,
+                        brand: product.brand
+                            ? { '@type': 'Brand', name: product.brand }
+                            : undefined,
+                        offers:
+                            product.starting_price !== null
+                                ? {
+                                      '@type': 'Offer',
+                                      priceCurrency: 'IDR',
+                                      price: product.starting_price,
+                                      availability:
+                                          product.availability.status ===
+                                          'unavailable'
+                                              ? 'https://schema.org/OutOfStock'
+                                              : 'https://schema.org/InStock',
+                                  }
+                                : undefined,
+                    })}
+                </script>
             </Head>
 
             <main>

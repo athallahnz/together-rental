@@ -21,7 +21,7 @@ class ProductController extends Controller
         $product = Product::query()->create([
             ...$validated,
             'company_id' => $request->user()->company_id,
-            'is_public' => $validated['is_active'] && $validated['is_rentable'],
+            'is_public' => false,
         ]);
         $recorder->record(
             $request,
@@ -48,7 +48,7 @@ class ProductController extends Controller
             || $product->model !== $values['model'];
         $product->update([
             ...$values,
-            'is_public' => $values['is_active'] && $values['is_rentable'],
+            'is_public' => $product->is_public && $values['is_active'] && $values['is_rentable'],
             ...($identityChanged ? [
                 'catalog_brand_id' => null,
                 'catalog_model_id' => null,
