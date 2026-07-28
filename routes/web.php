@@ -28,6 +28,9 @@ use Illuminate\Support\Facades\Route;
 Route::get('/', [PublicCatalogController::class, 'home'])->name('home');
 Route::prefix('rental')->name('public.catalog.')->group(function (): void {
     Route::get('/', [PublicCatalogController::class, 'index'])->name('index');
+    Route::get('/availability', [PublicCatalogController::class, 'availability'])
+        ->middleware('throttle:60,1')
+        ->name('availability');
     Route::get('/products/{slug}', [PublicCatalogController::class, 'product'])
         ->where('slug', '[a-z0-9-]+')
         ->name('products.show');

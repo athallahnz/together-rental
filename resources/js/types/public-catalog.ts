@@ -29,7 +29,7 @@ export type PublicRate = {
 export type PublicAvailability = {
     available_units: number;
     total_units: number;
-    status: 'available' | 'unavailable';
+    status: 'available' | 'limited' | 'unavailable';
     label: string;
 };
 
@@ -139,4 +139,59 @@ export type PublicCatalogFilters = {
     brand: string;
     availability: 'all' | 'available';
     sort: 'recommended' | 'name' | 'price_low' | 'price_high';
+};
+
+export type PublicAvailabilityPeriod = {
+    starts_at: string;
+    ends_at: string;
+    starts_label: string;
+    ends_label: string;
+    duration_minutes: number;
+    duration_label: string;
+    timezone: string;
+    timezone_label: string;
+};
+
+export type PublicAvailabilityEstimate = {
+    billing_units: number;
+    rental_amount: number;
+    deposit_amount: number;
+    initial_payment_estimate: number;
+    note: string;
+};
+
+export type PublicAvailabilityItem = {
+    name: string;
+    slug: string;
+    quantity_per_package: number;
+    requested_units: number;
+    is_optional: boolean;
+    total_units: number;
+    available_units: number;
+    status: PublicAvailability['status'];
+    label: string;
+};
+
+export type PublicAvailabilityResult = {
+    type: 'product' | 'package';
+    slug: string;
+    name: string;
+    branch: {
+        code: string;
+        name: string;
+        city: string | null;
+        timezone: string;
+    };
+    period: PublicAvailabilityPeriod;
+    requested_quantity: number;
+    availability: PublicAvailability & {
+        reserved_units: number;
+        rented_units: number;
+        requested_units: number;
+    };
+    rate: PublicRate | null;
+    estimate: PublicAvailabilityEstimate | null;
+    items: PublicAvailabilityItem[];
+    inquiry_url: string | null;
+    requires_confirmation: boolean;
 };

@@ -2,8 +2,11 @@
 
 namespace App\Http\Controllers;
 
+use App\Domain\PublicCatalog\PublicAvailabilityService;
 use App\Domain\PublicCatalog\PublicCatalogService;
+use App\Http\Requests\PublicAvailabilityRequest;
 use App\Http\Requests\PublicCatalogRequest;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -54,5 +57,14 @@ class PublicCatalogController extends Controller
                 $request->string('branch')->toString() ?: null,
             ),
         );
+    }
+
+    public function availability(
+        PublicAvailabilityRequest $request,
+        PublicAvailabilityService $availability,
+    ): JsonResponse {
+        return response()->json([
+            'data' => $availability->check($request->validated()),
+        ]);
     }
 }

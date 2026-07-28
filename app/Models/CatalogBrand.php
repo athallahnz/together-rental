@@ -8,7 +8,9 @@ use Illuminate\Database\Eloquent\Casts\Attribute;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 
 #[Fillable([
     'company_id',
@@ -52,6 +54,9 @@ class CatalogBrand extends Model
         return $this->hasMany(Product::class);
     }
 
+    /**
+     * @return array<string, string>
+     */
     protected function casts(): array
     {
         return [
@@ -65,10 +70,23 @@ class CatalogBrand extends Model
     /** @return Attribute<string|null, never> */
     protected function logoUrl(): Attribute
     {
-        return Attribute::get(
-            fn (): ?string => $this->logo_path === null
-                ? null
-                : Storage::disk('public')->url($this->logo_path),
+        return Attribute::make(
+            get: function (): ?string {
+                $path = $this->logo_path;
+
+                if (! is_string($path) || trim($path) === '') {
+                    return null;
+                }
+
+                if (Str::startsWith($path, ['http://', 'https://', '/'])) {
+                    return $path;
+                }
+
+                /** @var FilesystemAdapter $disk */
+                $disk = Storage::disk('public');
+
+                return $disk->url($path);
+            },
         );
     }
 }

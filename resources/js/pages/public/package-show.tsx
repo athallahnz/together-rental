@@ -4,9 +4,9 @@ import {
     CheckCircle2,
     Clock3,
     Layers3,
-    MessageCircle,
     PackageCheck,
 } from 'lucide-react';
+import AvailabilityPlanner from '@/components/public/availability-planner';
 import PublicShell from '@/components/public/public-shell';
 import type { PublicBranch, PublicPackageDetail } from '@/types';
 
@@ -146,16 +146,21 @@ export default function PublicPackageShow({
                             )}
                         </div>
 
-                        {rentalPackage.inquiry_url && (
-                            <a
-                                href={rentalPackage.inquiry_url}
-                                target="_blank"
-                                rel="noreferrer"
-                                className="mt-5 inline-flex h-12 w-full items-center justify-center gap-2 rounded-full bg-neutral-950 px-6 text-sm font-semibold text-white transition hover:bg-neutral-800 sm:w-auto"
-                            >
-                                <MessageCircle className="size-4" /> Tanya paket
-                                ini
-                            </a>
+                        {branch && (
+                            <AvailabilityPlanner
+                                branch={branch}
+                                itemType="package"
+                                slug={rentalPackage.slug}
+                                itemName={rentalPackage.name}
+                                rates={rentalPackage.rates}
+                                currentAvailability={{
+                                    ...rentalPackage.availability,
+                                    total_units:
+                                        rentalPackage.availability
+                                            .available_units,
+                                }}
+                                fallbackInquiryUrl={rentalPackage.inquiry_url}
+                            />
                         )}
                     </div>
                 </section>

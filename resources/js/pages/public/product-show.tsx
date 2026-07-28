@@ -5,9 +5,9 @@ import {
     Camera,
     CheckCircle2,
     Clock3,
-    MessageCircle,
     ShieldCheck,
 } from 'lucide-react';
+import AvailabilityPlanner from '@/components/public/availability-planner';
 import ProductCard from '@/components/public/product-card';
 import PublicShell from '@/components/public/public-shell';
 import type { PublicBranch, PublicProduct, PublicProductDetail } from '@/types';
@@ -191,18 +191,19 @@ export default function PublicProductShow({
                             )}
                         </div>
 
-                        <div className="mt-5 flex flex-col gap-3 sm:flex-row">
-                            {product.inquiry_url && (
-                                <a
-                                    href={product.inquiry_url}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                    className="inline-flex h-12 flex-1 items-center justify-center gap-2 rounded-full bg-neutral-950 px-6 text-sm font-semibold text-white transition hover:bg-neutral-800"
-                                >
-                                    <MessageCircle className="size-4" /> Tanya
-                                    ketersediaan
-                                </a>
-                            )}
+                        {branch && (
+                            <AvailabilityPlanner
+                                branch={branch}
+                                itemType="product"
+                                slug={product.slug}
+                                itemName={product.name}
+                                rates={product.rates}
+                                currentAvailability={product.availability}
+                                fallbackInquiryUrl={product.inquiry_url}
+                            />
+                        )}
+
+                        <div className="mt-5">
                             <Link
                                 href={
                                     branch
@@ -219,9 +220,10 @@ export default function PublicProductShow({
                         <div className="mt-8 flex items-start gap-3 rounded-2xl bg-emerald-50 p-4 text-sm text-emerald-900">
                             <ShieldCheck className="mt-0.5 size-5 shrink-0" />
                             <p className="leading-6">
-                                Ketersediaan pada katalog adalah kondisi
-                                terkini. Admin akan melakukan konfirmasi final
-                                untuk periode rental Anda.
+                                Ketersediaan periode dihitung dari booking,
+                                rental aktif, dan kapasitas cabang. Admin tetap
+                                melakukan konfirmasi final sebelum transaksi
+                                dibuat.
                             </p>
                         </div>
                     </div>
