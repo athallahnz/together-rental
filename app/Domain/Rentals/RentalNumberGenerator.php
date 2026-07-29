@@ -17,6 +17,11 @@ class RentalNumberGenerator
         return $this->next('payments', 'payment_number', 'PAY', $branch);
     }
 
+    public function nextReturn(Branch $branch): string
+    {
+        return $this->next('rental_returns', 'return_number', 'RTN', $branch);
+    }
+
     private function next(string $table, string $column, string $label, Branch $branch): string
     {
         $prefix = $label.'-'.mb_strtoupper($branch->code).'-'.now()->format('ymd');

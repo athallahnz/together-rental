@@ -1,5 +1,5 @@
 import { Head, Link } from '@inertiajs/react';
-import { ArrowLeft } from 'lucide-react';
+import { ArrowLeft, PackageCheck } from 'lucide-react';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -16,6 +16,13 @@ type Rental = {
     deposit_amount: string;
     balance_due: string;
     notes: string | null;
+    returns: Array<{
+        id: number;
+        return_number: string;
+        type: string;
+        returned_at: string;
+        total_charge_amount: string;
+    }>;
     branch: { name: string };
     customer: { name: string; customer_number: string; phone: string | null };
     booking?: { booking_number: string; source: string } | null;
@@ -51,7 +58,7 @@ const money = new Intl.NumberFormat('id-ID', {
     maximumFractionDigits: 0,
 });
 
-export default function RentalShow({ rental }: Props) {
+export default function RentalShow({ rental, permissions }: Props) {
     return (
         <>
             <Head title={rental.rental_number} />
@@ -63,11 +70,24 @@ export default function RentalShow({ rental }: Props) {
                             Daftar rental
                         </Link>
                     </Button>
-                    <div className="mt-3 flex items-center gap-3">
-                        <h1 className="text-2xl font-semibold">
-                            {rental.rental_number}
-                        </h1>
-                        <Badge>{rental.status}</Badge>
+                    <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
+                        <div className="flex items-center gap-3">
+                            <h1 className="text-2xl font-semibold">
+                                {rental.rental_number}
+                            </h1>
+                            <Badge>{rental.status}</Badge>
+                        </div>
+                        {permissions.return &&
+                            ['active', 'partial_return'].includes(
+                                rental.status,
+                            ) && (
+                                <Button asChild>
+                                    <Link href={`/rentals/${rental.id}/return`}>
+                                        <PackageCheck />
+                                        Proses pengembalian
+                                    </Link>
+                                </Button>
+                            )}
                     </div>
                     <p className="mt-1 text-sm text-muted-foreground">
                         {rental.customer.name} · {rental.branch.name}
@@ -191,6 +211,38 @@ export default function RentalShow({ rental }: Props) {
                         ))}
                     </CardContent>
                 </Card>
+                {rental.returns.length > 0 && (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Riwayat pengembalian</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                            {rental.returns.map((item) => (
+                                <div
+                                    key={item.id}
+                                    className="flex flex-col justify-between gap-2 rounded-lg border p-4 sm:flex-row"
+                                >
+                                    <div>
+                                        <p className="font-medium">
+                                            {item.return_number}
+                                        </p>
+                                        <p className="text-sm text-muted-foreground">
+                                            {item.type} ·{' '}
+                                            {new Date(
+                                                item.returned_at,
+                                            ).toLocaleString('id-ID')}
+                                        </p>
+                                    </div>
+                                    <b>
+                                        {money.format(
+                                            Number(item.total_charge_amount),
+                                        )}
+                                    </b>
+                                </div>
+                            ))}
+                        </CardContent>
+                    </Card>
+                )}
             </div>
         </>
     );

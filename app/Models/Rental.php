@@ -78,6 +78,12 @@ class Rental extends Model
         return $this->hasMany(Payment::class);
     }
 
+    /** @return HasMany<RentalReturn, $this> */
+    public function returns(): HasMany
+    {
+        return $this->hasMany(RentalReturn::class);
+    }
+
     protected function casts(): array
     {
         return [

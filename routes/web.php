@@ -220,6 +220,10 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
             ->middleware('can:rentals.create')->name('checkout.create');
         Route::post('/checkout/{booking}', [RentalController::class, 'storeCheckout'])
             ->middleware('can:rentals.create')->name('checkout.store');
+        Route::get('/{rental}/return', [RentalController::class, 'createReturn'])
+            ->middleware('can:rentals.return')->name('return.create');
+        Route::post('/{rental}/return', [RentalController::class, 'storeReturn'])
+            ->middleware('can:rentals.return')->name('return.store');
         Route::get('/{rental}', [RentalController::class, 'show'])
             ->middleware('can:rentals.view')->name('show');
     });

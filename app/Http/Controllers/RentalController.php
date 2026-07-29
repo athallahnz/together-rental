@@ -4,8 +4,10 @@ namespace App\Http\Controllers;
 
 use App\Domain\Access\ActivityRecorder;
 use App\Domain\Rentals\RentalManager;
+use App\Domain\Rentals\RentalReturnManager;
 use App\Http\Requests\CheckoutBookingRequest;
 use App\Http\Requests\StoreDirectRentalRequest;
+use App\Http\Requests\StoreRentalReturnRequest;
 use App\Models\Booking;
 use App\Models\Customer;
 use App\Models\PaymentMethod;
@@ -35,33 +37,15 @@ class RentalController extends Controller
             ->whereIn('branch_id', $user->accessibleBranches()->select('id'));
 
         $rentals = (clone $base)
-            ->when(
-                $search !== '',
-                fn (Builder $query) => $query->where(
-                    fn (Builder $nested) => $nested
-                        ->where('rental_number', 'like', "%{$search}%")
-                        ->orWhereHas(
-                            'customer',
-                            fn (Builder $customer) => $customer->where(
-                                'name',
-                                'like',
-                                "%{$search}%",
-                            ),
-                        ),
-                ),
-            )
-            ->when(
-                in_array(
-                    $status,
-                    ['active', 'partial_return', 'returned', 'completed'],
-                    true,
-                ),
-                fn (Builder $query) => $query->where('status', $status),
-            )
-            ->when(
-                $branchId !== null,
-                fn (Builder $query) => $query->where('branch_id', $branchId),
-            )
+            ->when($search !== '', fn (Builder $query) => $query->where(
+                fn (Builder $nested) => $nested
+                    ->where('rental_number', 'like', "%{$search}%")
+                    ->orWhereHas('customer', fn (Builder $customer) => $customer->where('name', 'like', "%{$search}%")),
+            ))
+            ->when(in_array($status, ['active', 'partial_return', 'returned', 'completed'], true),
+                fn (Builder $query) => $query->where('status', $status))
+            ->when($branchId !== null,
+                fn (Builder $query) => $query->where('branch_id', $branchId))
             ->with([
                 'branch:id,code,name',
                 'customer:id,customer_number,name,phone',
@@ -129,24 +113,11 @@ class RentalController extends Controller
             'customer:id,customer_number,name,phone',
             'ratePlan:id,code,name,duration_unit,duration_value',
             'items.reservations.asset:id,product_id,asset_code,serial_number,status,condition',
-            'payments:id,booking_id,type,status,direction,amount',
         ]);
-        $rentalPaid = (float) $booking->payments
-            ->where('status', 'completed')->where('direction', 'in')
-            ->where('type', 'rental')->sum('amount');
-        $depositPaid = (float) $booking->payments
-            ->where('status', 'completed')->where('direction', 'in')
-            ->where('type', 'deposit')->sum('amount');
 
         return Inertia::render('rentals/checkout', [
             'booking' => $booking,
             'paymentMethods' => $this->paymentMethods($request->user()),
-            'financialSummary' => [
-                'rental_paid' => $rentalPaid,
-                'deposit_paid' => $depositPaid,
-                'balance_due' => max(0, (float) $booking->total_amount - $rentalPaid),
-                'deposit_due' => max(0, (float) $booking->deposit_required - $depositPaid),
-            ],
         ]);
     }
 
@@ -187,6 +158,7 @@ class RentalController extends Controller
             'ratePlan:id,code,name,duration_unit,duration_value',
             'items.product:id,sku,name',
             'items.assets.asset:id,asset_code,serial_number,status,condition',
+            'returns:id,rental_id,return_number,type,status,returned_at,total_charge_amount',
             'statusHistories.changer:id,name',
             'payments:id,rental_id,type,amount,status,paid_at,external_reference',
         ]);
@@ -194,6 +166,53 @@ class RentalController extends Controller
         return Inertia::render('rentals/show', [
             'rental' => $rental,
             'permissions' => $this->permissions($request->user()),
+        ]);
+    }
+
+    public function createReturn(Request $request, Rental $rental): Response
+    {
+        Gate::authorize('rentals.return');
+        $this->guardRentalAccess($request, $rental);
+        abort_unless(in_array($rental->status, ['active', 'partial_return'], true), 409);
+        $rental->load([
+            'branch:id,code,name',
+            'customer:id,customer_number,name,phone',
+            'items' => fn ($query) => $query->whereIn('status', ['out', 'partial_return']),
+            'items.assets' => fn ($query) => $query->where('status', 'out'),
+            'items.assets.asset:id,asset_code,serial_number,status,condition',
+        ]);
+
+        return Inertia::render('rentals/return', [
+            'rental' => $rental,
+            'paymentMethods' => $this->paymentMethods($request->user()),
+        ]);
+    }
+
+    public function storeReturn(
+        StoreRentalReturnRequest $request,
+        Rental $rental,
+        RentalReturnManager $manager,
+        ActivityRecorder $recorder,
+    ): RedirectResponse {
+        $this->guardRentalAccess($request, $rental);
+        $return = $manager->process($rental, $request->validated(), $request->user());
+        $recorder->record(
+            $request,
+            'rental.return_completed',
+            $rental->fresh(),
+            ['status' => $rental->status],
+            [
+                'return_id' => $return->id,
+                'return_number' => $return->return_number,
+                'type' => $return->type,
+                'total_charge_amount' => $return->total_charge_amount,
+            ],
+            $rental->branch_id,
+        );
+
+        return to_route('rentals.show', $rental)->with('toast', [
+            'type' => 'success',
+            'message' => "Pengembalian {$return->return_number} berhasil diproses.",
         ]);
     }
 
@@ -212,11 +231,9 @@ class RentalController extends Controller
             'ratePlans' => RatePlan::query()
                 ->where('company_id', $user->company_id)
                 ->where('is_active', true)
-                ->where(
-                    fn (Builder $query) => $query
-                        ->whereNull('branch_id')
-                        ->orWhereIn('branch_id', $branchIds),
-                )
+                ->where(fn (Builder $query) => $query
+                    ->whereNull('branch_id')
+                    ->orWhereIn('branch_id', $branchIds))
                 ->orderBy('name')
                 ->get(['id', 'branch_id', 'code', 'name', 'duration_unit', 'duration_value']),
             'products' => Product::query()->whereRaw('1 = 0')->get(['id', 'sku', 'name']),
@@ -240,6 +257,14 @@ class RentalController extends Controller
     {
         abort_unless(
             $request->user()->accessibleBranches()->whereKey($booking->branch_id)->exists(),
+            404,
+        );
+    }
+
+    private function guardRentalAccess(Request $request, Rental $rental): void
+    {
+        abort_unless(
+            $request->user()->accessibleBranches()->whereKey($rental->branch_id)->exists(),
             404,
         );
     }
