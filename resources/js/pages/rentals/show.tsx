@@ -1,5 +1,11 @@
 import { Head, Link, useForm } from '@inertiajs/react';
-import { ArrowLeft, PackageCheck, ShieldCheck } from 'lucide-react';
+import {
+    ArrowLeft,
+    AlertTriangle,
+    PackageCheck,
+    RotateCcw,
+    ShieldCheck,
+} from 'lucide-react';
 import type { FormEvent } from 'react';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -25,6 +31,7 @@ type Rental = {
         id: number;
         return_number: string;
         type: string;
+        status: string;
         returned_at: string;
         total_charge_amount: string;
     }>;
@@ -68,10 +75,26 @@ type Rental = {
         created_at: string;
         creator: { name: string };
     }>;
+    operational_corrections: Array<{
+        id: number;
+        correction_number: string;
+        status: 'open' | 'completed';
+        reason: string;
+        opened_at: string;
+        finalized_at: string | null;
+        original_return: { return_number: string };
+        replacement_return?: { return_number: string } | null;
+        opener: { name: string };
+        finalizer?: { name: string } | null;
+    }>;
 };
 type Props = {
     rental: Rental;
-    permissions: { return: boolean; correctCompleted: boolean };
+    permissions: {
+        return: boolean;
+        correctCompleted: boolean;
+        reopenReturn: boolean;
+    };
 };
 const money = new Intl.NumberFormat('id-ID', {
     style: 'currency',
@@ -93,12 +116,26 @@ export default function RentalShow({ rental, permissions }: Props) {
         reason: '',
         notes: '',
     });
+    const operational = useForm<{
+        rental_return_id: string;
+        reason: string;
+    }>({
+        rental_return_id:
+            rental.returns
+                .find((item) => item.status === 'completed')
+                ?.id.toString() ?? '',
+        reason: '',
+    });
     const submitCorrection = (event: FormEvent) => {
         event.preventDefault();
         correction.post(`/rentals/${rental.id}/financial-corrections`, {
             preserveScroll: true,
             onSuccess: () => correction.reset(),
         });
+    };
+    const submitOperationalCorrection = (event: FormEvent) => {
+        event.preventDefault();
+        operational.post(`/rentals/${rental.id}/operational-corrections`);
     };
     const refundDue = Number(rental.balance_due) < 0;
 
@@ -121,9 +158,11 @@ export default function RentalShow({ rental, permissions }: Props) {
                             <Badge>{rental.status}</Badge>
                         </div>
                         {permissions.return &&
-                            ['active', 'partial_return'].includes(
-                                rental.status,
-                            ) && (
+                            [
+                                'active',
+                                'partial_return',
+                                'correction_pending',
+                            ].includes(rental.status) && (
                                 <Button asChild>
                                     <Link href={`/rentals/${rental.id}/return`}>
                                         <PackageCheck />
@@ -282,16 +321,176 @@ export default function RentalShow({ rental, permissions }: Props) {
                                             ).toLocaleString('id-ID')}
                                         </p>
                                     </div>
-                                    <b>
-                                        {money.format(
-                                            Number(item.total_charge_amount),
-                                        )}
-                                    </b>
+                                    <div className="flex items-center gap-3">
+                                        <b>
+                                            {money.format(
+                                                Number(
+                                                    item.total_charge_amount,
+                                                ),
+                                            )}
+                                        </b>
+                                        <Badge variant="outline">
+                                            {item.status}
+                                        </Badge>
+                                    </div>
                                 </div>
                             ))}
                         </CardContent>
                     </Card>
                 )}
+                {rental.operational_corrections.length > 0 && (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Riwayat koreksi operasional</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                            {rental.operational_corrections.map((item) => (
+                                <div
+                                    key={item.id}
+                                    className="rounded-lg border p-4"
+                                >
+                                    <div className="flex flex-wrap items-center justify-between gap-2">
+                                        <div>
+                                            <p className="font-medium">
+                                                {item.correction_number}
+                                            </p>
+                                            <p className="text-sm text-muted-foreground">
+                                                {
+                                                    item.original_return
+                                                        .return_number
+                                                }
+                                                {item.replacement_return
+                                                    ? ` → ${item.replacement_return.return_number}`
+                                                    : ' → menunggu finalisasi'}
+                                            </p>
+                                        </div>
+                                        <Badge>{item.status}</Badge>
+                                    </div>
+                                    <p className="mt-3 text-sm">
+                                        {item.reason}
+                                    </p>
+                                    <p className="mt-2 text-xs text-muted-foreground">
+                                        Dibuka oleh {item.opener.name}
+                                        {item.finalizer
+                                            ? ` · Difinalisasi oleh ${item.finalizer.name}`
+                                            : ''}
+                                    </p>
+                                </div>
+                            ))}
+                        </CardContent>
+                    </Card>
+                )}
+                {permissions.reopenReturn &&
+                    ['returned', 'completed'].includes(rental.status) && (
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <RotateCcw className="size-5" />
+                                    Buka kembali pengembalian
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <Alert className="mb-5">
+                                    <AlertTriangle />
+                                    <AlertTitle>
+                                        Koreksi operasional terkontrol
+                                    </AlertTitle>
+                                    <AlertDescription>
+                                        Digunakan untuk memperbaiki waktu,
+                                        kondisi, unit, catatan, atau inspeksi.
+                                        Nominal tetap dikelola melalui koreksi
+                                        keuangan.
+                                    </AlertDescription>
+                                </Alert>
+                                <form
+                                    className="grid gap-4"
+                                    onSubmit={submitOperationalCorrection}
+                                >
+                                    <div className="space-y-2">
+                                        <Label htmlFor="rental_return_id">
+                                            Return yang dikoreksi
+                                        </Label>
+                                        <select
+                                            id="rental_return_id"
+                                            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs"
+                                            value={
+                                                operational.data
+                                                    .rental_return_id
+                                            }
+                                            onChange={(event) =>
+                                                operational.setData(
+                                                    'rental_return_id',
+                                                    event.target.value,
+                                                )
+                                            }
+                                        >
+                                            {rental.returns
+                                                .filter(
+                                                    (item) =>
+                                                        item.status ===
+                                                        'completed',
+                                                )
+                                                .map((item) => (
+                                                    <option
+                                                        key={item.id}
+                                                        value={item.id}
+                                                    >
+                                                        {item.return_number}
+                                                    </option>
+                                                ))}
+                                        </select>
+                                        {operational.errors
+                                            .rental_return_id && (
+                                            <p className="text-sm text-destructive">
+                                                {
+                                                    operational.errors
+                                                        .rental_return_id
+                                                }
+                                            </p>
+                                        )}
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="operational_reason">
+                                            Alasan pembukaan kembali
+                                        </Label>
+                                        <textarea
+                                            id="operational_reason"
+                                            className="flex min-h-24 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs"
+                                            value={operational.data.reason}
+                                            onChange={(event) =>
+                                                operational.setData(
+                                                    'reason',
+                                                    event.target.value,
+                                                )
+                                            }
+                                            placeholder="Wajib diisi minimal 10 karakter."
+                                        />
+                                        {operational.errors.reason && (
+                                            <p className="text-sm text-destructive">
+                                                {operational.errors.reason}
+                                            </p>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <Button
+                                            type="submit"
+                                            variant="destructive"
+                                            disabled={
+                                                operational.processing ||
+                                                operational.data
+                                                    .rental_return_id === '' ||
+                                                operational.data.reason.trim()
+                                                    .length < 10
+                                            }
+                                        >
+                                            <RotateCcw />
+                                            Buka dan lanjutkan koreksi
+                                        </Button>
+                                    </div>
+                                </form>
+                            </CardContent>
+                        </Card>
+                    )}
                 {rental.financial_adjustments.length > 0 && (
                     <Card>
                         <CardHeader>

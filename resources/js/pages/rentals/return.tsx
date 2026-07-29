@@ -21,6 +21,8 @@ type Unit = {
     id: number;
     checkout_condition: string;
     asset: {
+        id: number;
+        product_id: number;
         asset_code: string;
         serial_number: string | null;
         condition: string;
@@ -40,14 +42,29 @@ type PaymentMethod = {
     name: string;
     requires_reference: boolean;
 };
+type OperationalCorrection = {
+    correction_number: string;
+    reason: string;
+    original_return: {
+        return_number: string;
+        returned_at: string;
+    };
+};
 type ReturnLine = {
     rental_item_asset_id: number;
+    replacement_asset_id: number | null;
     selected: boolean;
     condition: string;
     late_fee_amount: number;
     damage_fee_amount: number;
     cleaning_fee_amount: number;
     notes: string;
+};
+type ReplacementAsset = {
+    id: number;
+    product_id: number;
+    asset_code: string;
+    serial_number: string | null;
 };
 type FormData = {
     returned_at: string;
@@ -73,15 +90,24 @@ const localDateTime = () => {
 export default function RentalReturn({
     rental,
     paymentMethods,
+    operationalCorrection,
+    replacementAssets,
 }: {
     rental: Rental;
     paymentMethods: PaymentMethod[];
+    operationalCorrection: OperationalCorrection | null;
+    replacementAssets: ReplacementAsset[];
 }) {
+    const correctionMode = operationalCorrection !== null;
     const units = rental.items.flatMap((item) =>
         item.assets.map((unit) => ({ ...unit, description: item.description })),
     );
     const form = useForm<FormData>({
-        returned_at: localDateTime(),
+        returned_at: correctionMode
+            ? new Date(operationalCorrection.original_return.returned_at)
+                  .toISOString()
+                  .slice(0, 16)
+            : localDateTime(),
         notes: '',
         discount_amount: 0,
         payment_amount: 0,
@@ -89,6 +115,7 @@ export default function RentalReturn({
         payment_reference: '',
         items: units.map((unit) => ({
             rental_item_asset_id: unit.id,
+            replacement_asset_id: unit.asset.id,
             selected: true,
             condition: unit.asset.condition || 'good',
             late_fee_amount: 0,
@@ -154,7 +181,26 @@ export default function RentalReturn({
                     </p>
                 </header>
 
-                {new Date(rental.due_at) < new Date() && (
+                {correctionMode && (
+                    <Alert>
+                        <AlertTriangle />
+                        <AlertTitle>
+                            Koreksi operasional{' '}
+                            {operationalCorrection.correction_number}
+                        </AlertTitle>
+                        <AlertDescription>
+                            Merevisi{' '}
+                            {
+                                operationalCorrection.original_return
+                                    .return_number
+                            }
+                            . Semua unit wajib difinalisasi bersama. Nominal
+                            tetap Rp0 dan koreksi keuangan harus dilakukan
+                            melalui adjustment ledger.
+                        </AlertDescription>
+                    </Alert>
+                )}
+                {!correctionMode && new Date(rental.due_at) < new Date() && (
                     <Alert variant="destructive">
                         <AlertTriangle />
                         <AlertTitle>Rental melewati batas kembali</AlertTitle>
@@ -189,6 +235,7 @@ export default function RentalReturn({
                                                 selected: value === true,
                                             })
                                         }
+                                        disabled={correctionMode}
                                     />
                                     <div>
                                         <p className="font-medium">
@@ -204,6 +251,63 @@ export default function RentalReturn({
                                 </div>
                                 {form.data.items[index].selected && (
                                     <div className="grid gap-4 md:grid-cols-4">
+                                        {correctionMode && (
+                                            <Field label="Unit aktual">
+                                                <Select
+                                                    value={String(
+                                                        form.data.items[index]
+                                                            .replacement_asset_id,
+                                                    )}
+                                                    onValueChange={(value) =>
+                                                        setLine(index, {
+                                                            replacement_asset_id:
+                                                                Number(value),
+                                                        })
+                                                    }
+                                                >
+                                                    <SelectTrigger>
+                                                        <SelectValue />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem
+                                                            value={String(
+                                                                unit.asset.id,
+                                                            )}
+                                                        >
+                                                            {
+                                                                unit.asset
+                                                                    .asset_code
+                                                            }{' '}
+                                                            (tercatat)
+                                                        </SelectItem>
+                                                        {replacementAssets
+                                                            .filter(
+                                                                (asset) =>
+                                                                    asset.product_id ===
+                                                                    unit.asset
+                                                                        .product_id,
+                                                            )
+                                                            .map((asset) => (
+                                                                <SelectItem
+                                                                    key={
+                                                                        asset.id
+                                                                    }
+                                                                    value={String(
+                                                                        asset.id,
+                                                                    )}
+                                                                >
+                                                                    {
+                                                                        asset.asset_code
+                                                                    }
+                                                                    {asset.serial_number
+                                                                        ? ` · SN ${asset.serial_number}`
+                                                                        : ''}
+                                                                </SelectItem>
+                                                            ))}
+                                                    </SelectContent>
+                                                </Select>
+                                            </Field>
+                                        )}
                                         <Field label="Kondisi kembali">
                                             <Select
                                                 value={
@@ -238,42 +342,52 @@ export default function RentalReturn({
                                                 </SelectContent>
                                             </Select>
                                         </Field>
-                                        <MoneyField
-                                            label="Denda terlambat"
-                                            value={
-                                                form.data.items[index]
-                                                    .late_fee_amount
-                                            }
-                                            onChange={(late_fee_amount) =>
-                                                setLine(index, {
-                                                    late_fee_amount,
-                                                })
-                                            }
-                                        />
-                                        <MoneyField
-                                            label="Biaya kerusakan"
-                                            value={
-                                                form.data.items[index]
-                                                    .damage_fee_amount
-                                            }
-                                            onChange={(damage_fee_amount) =>
-                                                setLine(index, {
-                                                    damage_fee_amount,
-                                                })
-                                            }
-                                        />
-                                        <MoneyField
-                                            label="Biaya cleaning"
-                                            value={
-                                                form.data.items[index]
-                                                    .cleaning_fee_amount
-                                            }
-                                            onChange={(cleaning_fee_amount) =>
-                                                setLine(index, {
-                                                    cleaning_fee_amount,
-                                                })
-                                            }
-                                        />
+                                        {!correctionMode && (
+                                            <>
+                                                <MoneyField
+                                                    label="Denda terlambat"
+                                                    value={
+                                                        form.data.items[index]
+                                                            .late_fee_amount
+                                                    }
+                                                    onChange={(
+                                                        late_fee_amount,
+                                                    ) =>
+                                                        setLine(index, {
+                                                            late_fee_amount,
+                                                        })
+                                                    }
+                                                />
+                                                <MoneyField
+                                                    label="Biaya kerusakan"
+                                                    value={
+                                                        form.data.items[index]
+                                                            .damage_fee_amount
+                                                    }
+                                                    onChange={(
+                                                        damage_fee_amount,
+                                                    ) =>
+                                                        setLine(index, {
+                                                            damage_fee_amount,
+                                                        })
+                                                    }
+                                                />
+                                                <MoneyField
+                                                    label="Biaya cleaning"
+                                                    value={
+                                                        form.data.items[index]
+                                                            .cleaning_fee_amount
+                                                    }
+                                                    onChange={(
+                                                        cleaning_fee_amount,
+                                                    ) =>
+                                                        setLine(index, {
+                                                            cleaning_fee_amount,
+                                                        })
+                                                    }
+                                                />
+                                            </>
+                                        )}
                                         <div className="md:col-span-4">
                                             <Label>Catatan pemeriksaan</Label>
                                             <Input
@@ -315,62 +429,90 @@ export default function RentalReturn({
                                 />
                                 <InputError message={form.errors.returned_at} />
                             </Field>
-                            <MoneyField
-                                label="Diskon biaya"
-                                value={form.data.discount_amount}
-                                onChange={(value) =>
-                                    form.setData('discount_amount', value)
-                                }
-                            />
-                            <InputError message={form.errors.discount_amount} />
-                            <MoneyField
-                                label="Pembayaran diterima"
-                                value={form.data.payment_amount}
-                                onChange={(value) =>
-                                    form.setData('payment_amount', value)
-                                }
-                            />
-                            <InputError message={form.errors.payment_amount} />
-                            <Field label="Metode pembayaran">
-                                <Select
-                                    value={form.data.payment_method_id ?? ''}
-                                    onValueChange={(value) =>
-                                        form.setData('payment_method_id', value)
-                                    }
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Pilih metode" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {paymentMethods.map((method) => (
-                                            <SelectItem
-                                                key={method.id}
-                                                value={String(method.id)}
-                                            >
-                                                {method.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                                <InputError
-                                    message={form.errors.payment_method_id}
-                                />
-                            </Field>
-                            <div className="sm:col-span-2">
-                                <Label>Referensi pembayaran</Label>
-                                <Input
-                                    value={form.data.payment_reference}
-                                    onChange={(event) =>
-                                        form.setData(
-                                            'payment_reference',
-                                            event.target.value,
-                                        )
-                                    }
-                                />
-                                <InputError
-                                    message={form.errors.payment_reference}
-                                />
-                            </div>
+                            {!correctionMode && (
+                                <>
+                                    <MoneyField
+                                        label="Diskon biaya"
+                                        value={form.data.discount_amount}
+                                        onChange={(value) =>
+                                            form.setData(
+                                                'discount_amount',
+                                                value,
+                                            )
+                                        }
+                                    />
+                                    <InputError
+                                        message={form.errors.discount_amount}
+                                    />
+                                    <MoneyField
+                                        label="Pembayaran diterima"
+                                        value={form.data.payment_amount}
+                                        onChange={(value) =>
+                                            form.setData(
+                                                'payment_amount',
+                                                value,
+                                            )
+                                        }
+                                    />
+                                    <InputError
+                                        message={form.errors.payment_amount}
+                                    />
+                                    <Field label="Metode pembayaran">
+                                        <Select
+                                            value={
+                                                form.data.payment_method_id ??
+                                                ''
+                                            }
+                                            onValueChange={(value) =>
+                                                form.setData(
+                                                    'payment_method_id',
+                                                    value,
+                                                )
+                                            }
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue placeholder="Pilih metode" />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {paymentMethods.map(
+                                                    (method) => (
+                                                        <SelectItem
+                                                            key={method.id}
+                                                            value={String(
+                                                                method.id,
+                                                            )}
+                                                        >
+                                                            {method.name}
+                                                        </SelectItem>
+                                                    ),
+                                                )}
+                                            </SelectContent>
+                                        </Select>
+                                        <InputError
+                                            message={
+                                                form.errors.payment_method_id
+                                            }
+                                        />
+                                    </Field>
+                                    <div className="sm:col-span-2">
+                                        <Label>Referensi pembayaran</Label>
+                                        <Input
+                                            value={form.data.payment_reference}
+                                            onChange={(event) =>
+                                                form.setData(
+                                                    'payment_reference',
+                                                    event.target.value,
+                                                )
+                                            }
+                                        />
+                                        <InputError
+                                            message={
+                                                form.errors.payment_reference
+                                            }
+                                        />
+                                    </div>
+                                </>
+                            )}
                         </CardContent>
                     </Card>
                     <Card>
@@ -382,14 +524,18 @@ export default function RentalReturn({
                                 label="Saldo sebelumnya"
                                 value={rental.balance_due}
                             />
-                            <Summary
-                                label="Biaya pengembalian"
-                                value={finalCharge}
-                            />
-                            <Summary
-                                label="Pembayaran"
-                                value={-form.data.payment_amount}
-                            />
+                            {!correctionMode && (
+                                <>
+                                    <Summary
+                                        label="Biaya pengembalian"
+                                        value={finalCharge}
+                                    />
+                                    <Summary
+                                        label="Pembayaran"
+                                        value={-form.data.payment_amount}
+                                    />
+                                </>
+                            )}
                             <Summary
                                 label="Sisa setelah proses"
                                 value={projectedBalance}
@@ -437,7 +583,9 @@ export default function RentalReturn({
                         <PackageCheck />
                         {form.processing
                             ? 'Memproses...'
-                            : 'Simpan pengembalian'}
+                            : correctionMode
+                              ? 'Finalisasi koreksi operasional'
+                              : 'Simpan pengembalian'}
                     </Button>
                 </div>
             </form>

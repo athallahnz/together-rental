@@ -67,6 +67,7 @@ class AppServiceProvider extends ServiceProvider
             'rentals.extend',
             'rentals.return',
             'rentals.correct_completed',
+            'rentals.reopen_return',
             'maintenance.view',
             'maintenance.manage',
             'payments.view',

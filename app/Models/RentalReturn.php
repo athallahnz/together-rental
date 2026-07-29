@@ -26,6 +26,11 @@ class RentalReturn extends Model
         return $this->hasMany(RentalReturnItem::class);
     }
 
+    public function operationalCorrection(): HasMany
+    {
+        return $this->hasMany(RentalOperationalCorrection::class, 'original_return_id');
+    }
+
     protected function casts(): array
     {
         return [

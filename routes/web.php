@@ -227,6 +227,8 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
             ->middleware('can:rentals.return')->name('return.store');
         Route::post('/{rental}/financial-corrections', [RentalController::class, 'storeFinancialCorrection'])
             ->middleware('can:rentals.correct_completed')->name('financial-corrections.store');
+        Route::post('/{rental}/operational-corrections', [RentalController::class, 'reopenReturn'])
+            ->middleware('can:rentals.reopen_return')->name('operational-corrections.store');
         Route::get('/{rental}', [RentalController::class, 'show'])
             ->middleware('can:rentals.view')->name('show');
     });

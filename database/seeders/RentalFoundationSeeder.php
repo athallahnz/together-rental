@@ -118,6 +118,7 @@ class RentalFoundationSeeder extends Seeder
             ['rentals.extend', 'Extend rentals', 'rentals'],
             ['rentals.return', 'Process rental returns', 'rentals'],
             ['rentals.correct_completed', 'Correct completed rental financials', 'rentals'],
+            ['rentals.reopen_return', 'Reopen completed rental return', 'rentals'],
             ['payments.view', 'View payments', 'payments'],
             ['payments.create', 'Create payments', 'payments'],
             ['payments.void', 'Void payments', 'payments'],

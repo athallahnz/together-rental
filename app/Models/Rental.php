@@ -90,6 +90,12 @@ class Rental extends Model
         return $this->hasMany(RentalFinancialAdjustment::class);
     }
 
+    /** @return HasMany<RentalOperationalCorrection, $this> */
+    public function operationalCorrections(): HasMany
+    {
+        return $this->hasMany(RentalOperationalCorrection::class);
+    }
+
     protected function casts(): array
     {
         return [

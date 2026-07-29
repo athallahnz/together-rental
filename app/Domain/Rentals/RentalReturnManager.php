@@ -9,15 +9,20 @@ use App\Models\Payment;
 use App\Models\Rental;
 use App\Models\RentalItem;
 use App\Models\RentalItemAsset;
+use App\Models\RentalOperationalCorrection;
 use App\Models\RentalReturn;
 use App\Models\User;
+use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 use Symfony\Component\HttpKernel\Exception\ConflictHttpException;
 
 class RentalReturnManager
 {
-    public function __construct(private readonly RentalNumberGenerator $numbers) {}
+    public function __construct(
+        private readonly RentalNumberGenerator $numbers,
+        private readonly RentalOperationalCorrectionManager $corrections,
+    ) {}
 
     /** @param array<string, mixed> $data */
     public function process(Rental $rental, array $data, User $actor): RentalReturn
@@ -28,13 +33,26 @@ class RentalReturnManager
                 ->lockForUpdate()
                 ->findOrFail($rental->id);
 
-            if (! in_array($locked->status, ['active', 'partial_return'], true)) {
+            if (! in_array($locked->status, ['active', 'partial_return', 'correction_pending'], true)) {
                 throw new ConflictHttpException(
                     'Rental ini sudah selesai atau tidak dapat menerima pengembalian.',
                 );
             }
 
+            $correction = $locked->status === 'correction_pending'
+                ? $this->corrections->openSession($locked)
+                : null;
+
+            if ($locked->status === 'correction_pending' && $correction === null) {
+                throw new ConflictHttpException('Sesi koreksi operasional tidak ditemukan.');
+            }
+
             $inputItems = collect($data['items'])->keyBy('rental_item_asset_id');
+
+            if ($correction !== null) {
+                $this->swapCorrectedAssets($locked, $correction, $inputItems, $actor);
+            }
+
             $units = RentalItemAsset::query()
                 ->whereIn('id', $inputItems->keys())
                 ->whereHas('rentalItem', fn ($query) => $query->where('rental_id', $locked->id))
@@ -49,13 +67,36 @@ class RentalReturnManager
                 );
             }
 
+            if ($correction !== null) {
+                $expectedAssignmentIds = collect($correction->snapshot_before['units'])
+                    ->pluck('rental_item_asset_id')->sort()->values()->all();
+                $submittedAssignmentIds = $units->pluck('id')->sort()->values()->all();
+
+                if ($expectedAssignmentIds !== $submittedAssignmentIds) {
+                    throw ValidationException::withMessages([
+                        'items' => 'Semua unit dari return yang dibuka harus difinalisasi bersama.',
+                    ]);
+                }
+            }
+
             $returnedAt = $data['returned_at'];
             $lateFee = $inputItems->sum(fn (array $item): float => (float) ($item['late_fee_amount'] ?? 0));
             $damageFee = $inputItems->sum(fn (array $item): float => (float) ($item['damage_fee_amount'] ?? 0));
             $cleaningFee = $inputItems->sum(fn (array $item): float => (float) ($item['cleaning_fee_amount'] ?? 0));
             $discount = (float) ($data['discount_amount'] ?? 0);
             $grossCharge = $lateFee + $damageFee + $cleaningFee;
-            $isFinalReturn = $this->willComplete($locked, $units->count());
+            $isFinalReturn = $correction !== null
+                || $this->willComplete($locked, $units->count());
+
+            if ($correction !== null && (
+                $grossCharge > 0
+                || $discount > 0
+                || (float) ($data['payment_amount'] ?? 0) > 0
+            )) {
+                throw ValidationException::withMessages([
+                    'items' => 'Koreksi operasional tidak menerima perubahan nominal. Gunakan koreksi keuangan.',
+                ]);
+            }
 
             if ($discount > $grossCharge) {
                 throw ValidationException::withMessages([
@@ -187,8 +228,29 @@ class RentalReturnManager
             }
 
             $this->refreshItemStatuses($locked);
-            $this->applyFinancials($locked, $return, $data, $actor);
+            if ($correction === null) {
+                $this->applyFinancials($locked, $return, $data, $actor);
+            }
             $this->refreshRentalStatus($locked, $return, $actor);
+
+            if ($correction !== null) {
+                $this->corrections->finalize(
+                    $correction,
+                    $return,
+                    $locked,
+                    $actor,
+                );
+
+                // RentalOperationalCorrectionManager owns the correction
+                // ledger. The locked return aggregate owns the final rental
+                // state, so close correction_pending here in the same
+                // transaction after the correction has been finalized.
+                $locked->forceFill([
+                    'status' => 'returned',
+                    'returned_at' => $return->returned_at,
+                    'updated_by' => $actor->id,
+                ])->saveOrFail();
+            }
 
             return $return->fresh(['items.asset', 'rental']);
         }, 3);
@@ -211,6 +273,82 @@ class RentalReturnManager
                 'created_at' => now(),
             ],
         );
+    }
+
+    private function swapCorrectedAssets(
+        Rental $rental,
+        RentalOperationalCorrection $correction,
+        Collection $assignments,
+        User $actor,
+    ): void {
+        foreach ($assignments as $assignmentId => $input) {
+            $replacementId = (int) ($input['replacement_asset_id'] ?? 0);
+
+            if ($replacementId === 0) {
+                continue;
+            }
+
+            $assignment = RentalItemAsset::query()
+                ->with(['asset', 'rentalItem'])
+                ->lockForUpdate()
+                ->findOrFail($assignmentId);
+
+            if ($assignment->asset_id === $replacementId) {
+                continue;
+            }
+
+            $replacement = Asset::query()->lockForUpdate()->findOrFail($replacementId);
+
+            if (
+                $assignment->rentalItem->rental_id !== $rental->id
+                || $replacement->current_branch_id !== $rental->branch_id
+                || $replacement->product_id !== $assignment->rentalItem->product_id
+                || $replacement->status !== 'available'
+                || ! $replacement->is_active
+            ) {
+                throw ValidationException::withMessages([
+                    'items' => 'Unit pengganti tidak tersedia pada produk dan cabang yang sama.',
+                ]);
+            }
+
+            $original = $assignment->asset;
+            $originalStatus = $original->status;
+            $originalCondition = $original->condition;
+            $replacementStatus = $replacement->status;
+            $replacementCondition = $replacement->condition;
+            $original->update([
+                'status' => 'available',
+                'condition' => $assignment->checkout_condition,
+            ]);
+            $replacement->update(['status' => 'rented']);
+            $assignment->update([
+                'asset_id' => $replacement->id,
+                'checkout_condition' => $replacementCondition,
+            ]);
+
+            foreach (
+                [
+                    [$original, $originalStatus, $originalCondition, 'available'],
+                    [$replacement, $replacementStatus, $replacementCondition, 'rented'],
+                ] as [$asset, $fromStatus, $fromCondition, $toStatus]
+            ) {
+                DB::table('asset_status_histories')->insert([
+                    'asset_id' => $asset->id,
+                    'branch_id' => $rental->branch_id,
+                    'from_status' => $fromStatus,
+                    'to_status' => $toStatus,
+                    'from_condition' => $fromCondition,
+                    'to_condition' => $asset->condition,
+                    'source_type' => RentalOperationalCorrection::class,
+                    'source_id' => $correction->id,
+                    'reason' => "Koreksi unit melalui {$correction->correction_number}.",
+                    'changed_by' => $actor->id,
+                    'changed_at' => now(),
+                    'created_at' => now(),
+                    'updated_at' => now(),
+                ]);
+            }
+        }
     }
 
     private function createMaintenanceOrder(

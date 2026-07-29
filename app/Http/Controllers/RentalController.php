@@ -5,11 +5,14 @@ namespace App\Http\Controllers;
 use App\Domain\Access\ActivityRecorder;
 use App\Domain\Rentals\RentalFinancialCorrectionManager;
 use App\Domain\Rentals\RentalManager;
+use App\Domain\Rentals\RentalOperationalCorrectionManager;
 use App\Domain\Rentals\RentalReturnManager;
 use App\Http\Requests\CheckoutBookingRequest;
+use App\Http\Requests\ReopenRentalReturnRequest;
 use App\Http\Requests\StoreDirectRentalRequest;
 use App\Http\Requests\StoreRentalFinancialAdjustmentRequest;
 use App\Http\Requests\StoreRentalReturnRequest;
+use App\Models\Asset;
 use App\Models\Booking;
 use App\Models\Customer;
 use App\Models\PaymentMethod;
@@ -45,7 +48,7 @@ class RentalController extends Controller
                     ->where('rental_number', 'like', "%{$search}%")
                     ->orWhereHas('customer', fn (Builder $customer) => $customer->where('name', 'like', "%{$search}%")),
             ))
-            ->when(in_array($status, ['active', 'partial_return', 'returned', 'completed'], true),
+            ->when(in_array($status, ['active', 'partial_return', 'correction_pending', 'returned', 'completed'], true),
                 fn (Builder $query) => $query->where('status', $status))
             ->when($branchId !== null,
                 fn (Builder $query) => $query->where('branch_id', $branchId))
@@ -63,7 +66,7 @@ class RentalController extends Controller
             'rentals' => $rentals,
             'summary' => [
                 'active' => (clone $base)->where('status', 'active')->count(),
-                'overdue' => (clone $base)->whereIn('status', ['active', 'partial_return'])
+                'overdue' => (clone $base)->whereIn('status', ['active', 'partial_return', 'correction_pending'])
                     ->where('due_at', '<', now())->count(),
                 'today' => (clone $base)->whereDate('checked_out_at', today())->count(),
             ],
@@ -160,12 +163,17 @@ class RentalController extends Controller
             'booking:id,booking_number,source',
             'ratePlan:id,code,name,duration_unit,duration_value',
             'items.product:id,sku,name',
-            'items.assets.asset:id,asset_code,serial_number,status,condition',
+            'items.assets.asset:id,product_id,asset_code,serial_number,status,condition',
             'returns:id,rental_id,return_number,type,status,returned_at,total_charge_amount',
             'statusHistories.changer:id,name',
             'payments:id,rental_id,type,amount,status,paid_at,external_reference',
             'financialAdjustments' => fn ($query) => $query->latest(),
             'financialAdjustments.creator:id,name',
+            'operationalCorrections' => fn ($query) => $query->latest(),
+            'operationalCorrections.originalReturn:id,return_number',
+            'operationalCorrections.replacementReturn:id,return_number',
+            'operationalCorrections.opener:id,name',
+            'operationalCorrections.finalizer:id,name',
         ]);
 
         return Inertia::render('rentals/show', [
@@ -178,18 +186,64 @@ class RentalController extends Controller
     {
         Gate::authorize('rentals.return');
         $this->guardRentalAccess($request, $rental);
-        abort_unless(in_array($rental->status, ['active', 'partial_return'], true), 409);
+        abort_unless(in_array($rental->status, ['active', 'partial_return', 'correction_pending'], true), 409);
         $rental->load([
             'branch:id,code,name',
             'customer:id,customer_number,name,phone',
             'items' => fn ($query) => $query->whereIn('status', ['out', 'partial_return']),
             'items.assets' => fn ($query) => $query->where('status', 'out'),
-            'items.assets.asset:id,asset_code,serial_number,status,condition',
+            'items.assets.asset:id,product_id,asset_code,serial_number,status,condition',
         ]);
 
         return Inertia::render('rentals/return', [
             'rental' => $rental,
             'paymentMethods' => $this->paymentMethods($request->user()),
+            'operationalCorrection' => $rental->status === 'correction_pending'
+                ? $rental->operationalCorrections()
+                    ->where('status', 'open')
+                    ->with('originalReturn:id,return_number,returned_at')
+                    ->first()
+                : null,
+            'replacementAssets' => $rental->status === 'correction_pending'
+                ? Asset::query()
+                    ->where('current_branch_id', $rental->branch_id)
+                    ->whereIn('product_id', $rental->items->pluck('product_id'))
+                    ->where('status', 'available')
+                    ->where('is_active', true)
+                    ->orderBy('asset_code')
+                    ->get(['id', 'product_id', 'asset_code', 'serial_number'])
+                : [],
+        ]);
+    }
+
+    public function reopenReturn(
+        ReopenRentalReturnRequest $request,
+        Rental $rental,
+        RentalOperationalCorrectionManager $manager,
+        ActivityRecorder $recorder,
+    ): RedirectResponse {
+        $this->guardRentalAccess($request, $rental);
+        $before = $this->audit($rental);
+        $correction = $manager->reopen($rental, $request->validated(), $request->user());
+        $fresh = $rental->fresh();
+        $recorder->record(
+            $request,
+            'rental.return_reopened',
+            $fresh,
+            $before,
+            [
+                ...$this->audit($fresh),
+                'correction_id' => $correction->id,
+                'correction_number' => $correction->correction_number,
+                'original_return_id' => $correction->original_return_id,
+                'reason' => $correction->reason,
+            ],
+            $rental->branch_id,
+        );
+
+        return to_route('rentals.return.create', $rental)->with('toast', [
+            'type' => 'success',
+            'message' => "{$correction->correction_number} dibuka. Finalisasi ulang pengembalian.",
         ]);
     }
 
@@ -200,10 +254,13 @@ class RentalController extends Controller
         ActivityRecorder $recorder,
     ): RedirectResponse {
         $this->guardRentalAccess($request, $rental);
+        $wasOperationalCorrection = $rental->status === 'correction_pending';
         $return = $manager->process($rental, $request->validated(), $request->user());
         $recorder->record(
             $request,
-            'rental.return_completed',
+            $wasOperationalCorrection
+                ? 'rental.operational_correction_finalized'
+                : 'rental.return_completed',
             $rental->fresh(),
             ['status' => $rental->status],
             [
@@ -329,6 +386,7 @@ class RentalController extends Controller
             'update' => $user->can('rentals.update'),
             'return' => $user->can('rentals.return'),
             'correctCompleted' => $user->can('rentals.correct_completed'),
+            'reopenReturn' => $user->can('rentals.reopen_return'),
         ];
     }
 

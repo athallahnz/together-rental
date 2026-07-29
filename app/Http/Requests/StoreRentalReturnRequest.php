@@ -28,6 +28,7 @@ class StoreRentalReturnRequest extends FormRequest
             'payment_reference' => ['nullable', 'string', 'max:100'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.rental_item_asset_id' => ['required', 'integer', 'distinct'],
+            'items.*.replacement_asset_id' => ['nullable', 'integer', 'distinct', 'exists:assets,id'],
             'items.*.condition' => [
                 'required',
                 Rule::in(['excellent', 'good', 'fair', 'damaged', 'lost']),
