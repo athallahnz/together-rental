@@ -29,7 +29,7 @@ class CheckoutBookingRequest extends FormRequest
             'assets.*.notes' => ['nullable', 'string', 'max:1000'],
             'payment_amount' => ['nullable', 'numeric', 'min:0'],
             'deposit_paid' => ['nullable', 'numeric', 'min:0'],
-            'payment_method_id' => ['nullable', 'integer'],
+            'payment_method_id' => ['nullable', 'integer', 'min:1'],
             'payment_reference' => ['nullable', 'string', 'max:100'],
             'payment_notes' => ['nullable', 'string', 'max:1000'],
         ];
@@ -71,10 +71,13 @@ class CheckoutBookingRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
+        $paymentMethodId = $this->integer('payment_method_id');
+
         $this->merge([
             'checkout_condition' => $this->input('checkout_condition', 'good'),
             'payment_amount' => $this->input('payment_amount', 0),
             'deposit_paid' => $this->input('deposit_paid', 0),
+            'payment_method_id' => $paymentMethodId > 0 ? $paymentMethodId : null,
         ]);
     }
 }

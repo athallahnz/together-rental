@@ -1,5 +1,5 @@
 import { Head, Link, useForm } from '@inertiajs/react';
-import { ArrowLeft, LogOut } from 'lucide-react';
+import { AlertTriangle, ArrowLeft, LogOut } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -83,6 +83,12 @@ export default function RentalCheckout({
                 position === index ? { ...asset, ...patch } : asset,
             ),
         );
+    const remainingBalance = Math.max(
+        0,
+        financialSummary.balance_due - form.data.payment_amount,
+    );
+    const hasNewPayment =
+        form.data.payment_amount > 0 || form.data.deposit_paid > 0;
 
     return (
         <>
@@ -110,7 +116,7 @@ export default function RentalCheckout({
                             · {booking.branch?.name}
                         </p>
                     </div>
-                    <Button disabled={form.processing}>
+                    <Button type="submit" disabled={form.processing}>
                         <LogOut />
                         Checkout menjadi rental aktif
                     </Button>
@@ -251,6 +257,34 @@ export default function RentalCheckout({
                                     )
                                 }
                             />
+                            {form.errors.payment_method_id && (
+                                <p className="text-sm text-destructive">
+                                    {form.errors.payment_method_id}
+                                </p>
+                            )}
+                            {form.errors.payment_reference && (
+                                <p className="text-sm text-destructive">
+                                    {form.errors.payment_reference}
+                                </p>
+                            )}
+                            {hasNewPayment &&
+                                form.data.payment_method_id === 0 && (
+                                    <p className="text-sm text-amber-700">
+                                        Pilih metode pembayaran untuk mencatat
+                                        pembayaran ini.
+                                    </p>
+                                )}
+                            {remainingBalance > 0 && (
+                                <div className="flex gap-2 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
+                                    <AlertTriangle className="mt-0.5 size-4 shrink-0" />
+                                    <p>
+                                        Setelah checkout masih ada tagihan{' '}
+                                        <b>{money.format(remainingBalance)}</b>.
+                                        Rental tetap dapat diaktifkan dan
+                                        pelunasan dicatat kemudian.
+                                    </p>
+                                </div>
+                            )}
                         </CardContent>
                     </Card>
                 </section>

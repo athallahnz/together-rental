@@ -122,7 +122,10 @@ export default function BookingForm({
 }: Props) {
     const direct = mode === 'direct';
     const [selectedCustomer, setSelectedCustomer] = useState<Option | null>(
-        customers[0] ?? null,
+        booking
+            ? (customers.find((option) => option.id === booking.customer_id) ??
+                  null)
+            : null,
     );
     const [selectedItems, setSelectedItems] = useState<Record<string, Option>>(
         () => ({
@@ -261,7 +264,7 @@ export default function BookingForm({
                                   : 'Booking baru'}
                         </h1>
                     </div>
-                    <Button disabled={form.processing}>
+                    <Button type="submit" disabled={form.processing}>
                         <Save />
                         {direct ? 'Checkout sekarang' : 'Simpan booking'}
                     </Button>
@@ -515,6 +518,17 @@ export default function BookingForm({
                                             }
                                         </p>
                                     )}
+                                    {form.errors[
+                                        `items.${index}.id` as keyof typeof form.errors
+                                    ] && (
+                                        <p className="text-sm text-destructive md:col-span-4">
+                                            {
+                                                form.errors[
+                                                    `items.${index}.id` as keyof typeof form.errors
+                                                ]
+                                            }
+                                        </p>
+                                    )}
                                 </div>
                             );
                         })}
@@ -525,125 +539,134 @@ export default function BookingForm({
                         )}
                     </CardContent>
                 </Card>
-                {direct && (
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Checkout dan pembayaran awal</CardTitle>
-                        </CardHeader>
-                        <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                            <Field
-                                label="Waktu checkout aktual"
-                                error={form.errors.checked_out_at}
-                            >
-                                <Input
-                                    type="datetime-local"
-                                    value={form.data.checked_out_at}
-                                    onChange={(event) =>
-                                        form.setData(
-                                            'checked_out_at',
-                                            event.target.value,
-                                        )
-                                    }
-                                />
-                            </Field>
-                            <Field
-                                label="Kondisi awal seluruh unit"
-                                error={form.errors.checkout_condition}
-                            >
-                                <Select
-                                    value={form.data.checkout_condition}
-                                    onValueChange={(
-                                        value: 'excellent' | 'good' | 'fair',
-                                    ) =>
-                                        form.setData(
-                                            'checkout_condition',
-                                            value,
-                                        )
-                                    }
+                <Card>
+                    <CardHeader>
+                        <CardTitle>
+                            {direct
+                                ? 'Checkout dan pembayaran awal'
+                                : 'Pembayaran awal booking'}
+                        </CardTitle>
+                    </CardHeader>
+                    <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                        {direct && (
+                            <>
+                                <Field
+                                    label="Waktu checkout aktual"
+                                    error={form.errors.checked_out_at}
                                 >
-                                    <SelectTrigger>
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="excellent">
-                                            Sangat baik
-                                        </SelectItem>
-                                        <SelectItem value="good">
-                                            Baik
-                                        </SelectItem>
-                                        <SelectItem value="fair">
-                                            Cukup
-                                        </SelectItem>
-                                    </SelectContent>
-                                </Select>
-                            </Field>
-                            <Field
-                                label="Metode pembayaran"
-                                error={form.errors.payment_method_id}
-                            >
-                                <Select
-                                    value={String(
-                                        form.data.payment_method_id || '',
-                                    )}
-                                    onValueChange={(value) =>
-                                        form.setData(
-                                            'payment_method_id',
-                                            Number(value),
-                                        )
-                                    }
+                                    <Input
+                                        type="datetime-local"
+                                        value={form.data.checked_out_at}
+                                        onChange={(event) =>
+                                            form.setData(
+                                                'checked_out_at',
+                                                event.target.value,
+                                            )
+                                        }
+                                    />
+                                </Field>
+                                <Field
+                                    label="Kondisi awal seluruh unit"
+                                    error={form.errors.checkout_condition}
                                 >
-                                    <SelectTrigger>
-                                        <SelectValue placeholder="Pilih bila ada pembayaran" />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {paymentMethods.map((method) => (
-                                            <SelectItem
-                                                key={method.id}
-                                                value={String(method.id)}
-                                            >
-                                                {method.name}
+                                    <Select
+                                        value={form.data.checkout_condition}
+                                        onValueChange={(
+                                            value:
+                                                'excellent' | 'good' | 'fair',
+                                        ) =>
+                                            form.setData(
+                                                'checkout_condition',
+                                                value,
+                                            )
+                                        }
+                                    >
+                                        <SelectTrigger>
+                                            <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                            <SelectItem value="excellent">
+                                                Sangat baik
                                             </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
-                            </Field>
-                            <Field
-                                label="Pembayaran rental"
-                                error={form.errors.payment_amount}
+                                            <SelectItem value="good">
+                                                Baik
+                                            </SelectItem>
+                                            <SelectItem value="fair">
+                                                Cukup
+                                            </SelectItem>
+                                        </SelectContent>
+                                    </Select>
+                                </Field>
+                            </>
+                        )}
+                        <Field
+                            label="Metode pembayaran"
+                            error={form.errors.payment_method_id}
+                        >
+                            <Select
+                                value={String(
+                                    form.data.payment_method_id || '',
+                                )}
+                                onValueChange={(value) =>
+                                    form.setData(
+                                        'payment_method_id',
+                                        Number(value),
+                                    )
+                                }
                             >
-                                <RupiahInput
-                                    value={form.data.payment_amount}
-                                    onValueChange={(value) =>
-                                        form.setData('payment_amount', value)
-                                    }
-                                />
-                            </Field>
-                            <Field
-                                label="Deposit diterima"
-                                error={form.errors.deposit_paid}
-                            >
-                                <RupiahInput
-                                    value={form.data.deposit_paid}
-                                    onValueChange={(value) =>
-                                        form.setData('deposit_paid', value)
-                                    }
-                                />
-                            </Field>
-                            <Field
-                                label="Referensi pembayaran"
-                                error={form.errors.payment_reference}
-                            >
-                                <Input
-                                    value={form.data.payment_reference}
-                                    onChange={(event) =>
-                                        form.setData(
-                                            'payment_reference',
-                                            event.target.value,
-                                        )
-                                    }
-                                    placeholder="Nomor transfer/QRIS"
-                                />
-                            </Field>
+                                <SelectTrigger>
+                                    <SelectValue placeholder="Pilih bila ada pembayaran" />
+                                </SelectTrigger>
+                                <SelectContent>
+                                    {paymentMethods.map((method) => (
+                                        <SelectItem
+                                            key={method.id}
+                                            value={String(method.id)}
+                                        >
+                                            {method.name}
+                                        </SelectItem>
+                                    ))}
+                                </SelectContent>
+                            </Select>
+                        </Field>
+                        <Field
+                            label="Pembayaran rental"
+                            error={form.errors.payment_amount}
+                        >
+                            <RupiahInput
+                                value={form.data.payment_amount}
+                                onValueChange={(value) =>
+                                    form.setData('payment_amount', value)
+                                }
+                            />
+                        </Field>
+                        <Field
+                            label="Deposit diterima"
+                            error={form.errors.deposit_paid}
+                        >
+                            <RupiahInput
+                                value={form.data.deposit_paid}
+                                onValueChange={(value) =>
+                                    form.setData('deposit_paid', value)
+                                }
+                            />
+                        </Field>
+                        <Field
+                            label="Referensi pembayaran"
+                            error={form.errors.payment_reference}
+                        >
+                            <Input
+                                value={form.data.payment_reference}
+                                onChange={(event) =>
+                                    form.setData(
+                                        'payment_reference',
+                                        event.target.value,
+                                    )
+                                }
+                                placeholder="Nomor transfer/QRIS"
+                            />
+                        </Field>
+                        {direct && (
                             <div className="md:col-span-2 xl:col-span-3">
                                 <Label>Catatan checkout dan kelengkapan</Label>
                                 <textarea
@@ -658,9 +681,9 @@ export default function BookingForm({
                                     placeholder="Tas, baterai, charger, memory card, dan catatan kondisi."
                                 />
                             </div>
-                        </CardContent>
-                    </Card>
-                )}
+                        )}
+                    </CardContent>
+                </Card>
                 <Card>
                     <CardHeader>
                         <CardTitle>Catatan</CardTitle>
