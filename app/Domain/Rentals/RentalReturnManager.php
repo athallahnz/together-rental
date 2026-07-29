@@ -48,12 +48,9 @@ class RentalReturnManager
             }
 
             $returnedAt = $data['returned_at'];
-            $lateFee = $inputItems->sum(fn (array $item): float =>
-                (float) ($item['late_fee_amount'] ?? 0));
-            $damageFee = $inputItems->sum(fn (array $item): float =>
-                (float) ($item['damage_fee_amount'] ?? 0));
-            $cleaningFee = $inputItems->sum(fn (array $item): float =>
-                (float) ($item['cleaning_fee_amount'] ?? 0));
+            $lateFee = $inputItems->sum(fn (array $item): float => (float) ($item['late_fee_amount'] ?? 0));
+            $damageFee = $inputItems->sum(fn (array $item): float => (float) ($item['damage_fee_amount'] ?? 0));
+            $cleaningFee = $inputItems->sum(fn (array $item): float => (float) ($item['cleaning_fee_amount'] ?? 0));
             $discount = (float) ($data['discount_amount'] ?? 0);
             $grossCharge = $lateFee + $damageFee + $cleaningFee;
             $isFinalReturn = $this->willComplete($locked, $units->count());

@@ -3,10 +3,12 @@
 namespace App\Http\Controllers;
 
 use App\Domain\Access\ActivityRecorder;
+use App\Domain\Rentals\RentalFinancialCorrectionManager;
 use App\Domain\Rentals\RentalManager;
 use App\Domain\Rentals\RentalReturnManager;
 use App\Http\Requests\CheckoutBookingRequest;
 use App\Http\Requests\StoreDirectRentalRequest;
+use App\Http\Requests\StoreRentalFinancialAdjustmentRequest;
 use App\Http\Requests\StoreRentalReturnRequest;
 use App\Models\Booking;
 use App\Models\Customer;
@@ -20,6 +22,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
@@ -161,6 +164,8 @@ class RentalController extends Controller
             'returns:id,rental_id,return_number,type,status,returned_at,total_charge_amount',
             'statusHistories.changer:id,name',
             'payments:id,rental_id,type,amount,status,paid_at,external_reference',
+            'financialAdjustments' => fn ($query) => $query->latest(),
+            'financialAdjustments.creator:id,name',
         ]);
 
         return Inertia::render('rentals/show', [
@@ -213,6 +218,53 @@ class RentalController extends Controller
         return to_route('rentals.show', $rental)->with('toast', [
             'type' => 'success',
             'message' => "Pengembalian {$return->return_number} berhasil diproses.",
+        ]);
+    }
+
+    public function storeFinancialCorrection(
+        StoreRentalFinancialAdjustmentRequest $request,
+        Rental $rental,
+        RentalFinancialCorrectionManager $manager,
+        ActivityRecorder $recorder,
+    ): RedirectResponse {
+        $this->guardRentalAccess($request, $rental);
+
+        $adjustment = DB::transaction(function () use (
+            $request,
+            $rental,
+            $manager,
+            $recorder,
+        ) {
+            $before = $this->audit($rental);
+            $adjustment = $manager->create(
+                $rental,
+                $request->validated(),
+                $request->user(),
+            );
+            $fresh = $rental->fresh();
+            $recorder->record(
+                $request,
+                'rental.completed_financial_corrected',
+                $fresh,
+                $before,
+                [
+                    ...$this->audit($fresh),
+                    'adjustment_id' => $adjustment->id,
+                    'adjustment_number' => $adjustment->adjustment_number,
+                    'component' => $adjustment->component,
+                    'direction' => $adjustment->direction,
+                    'amount' => $adjustment->amount,
+                    'reason' => $adjustment->reason,
+                ],
+                $rental->branch_id,
+            );
+
+            return $adjustment;
+        });
+
+        return back()->with('toast', [
+            'type' => 'success',
+            'message' => "Koreksi {$adjustment->adjustment_number} berhasil dicatat.",
         ]);
     }
 
@@ -276,6 +328,7 @@ class RentalController extends Controller
             'create' => $user->can('rentals.create'),
             'update' => $user->can('rentals.update'),
             'return' => $user->can('rentals.return'),
+            'correctCompleted' => $user->can('rentals.correct_completed'),
         ];
     }
 

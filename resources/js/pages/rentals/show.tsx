@@ -1,8 +1,13 @@
-import { Head, Link } from '@inertiajs/react';
-import { ArrowLeft, PackageCheck } from 'lucide-react';
+import { Head, Link, useForm } from '@inertiajs/react';
+import { ArrowLeft, PackageCheck, ShieldCheck } from 'lucide-react';
+import type { FormEvent } from 'react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
+import { RupiahInput } from '@/components/ui/rupiah-input';
 
 type Rental = {
     id: number;
@@ -50,8 +55,24 @@ type Rental = {
         reason: string | null;
         changer?: { name: string } | null;
     }>;
+    financial_adjustments: Array<{
+        id: number;
+        adjustment_number: string;
+        component: 'charge' | 'payment' | 'deposit';
+        direction: 'increase' | 'decrease';
+        amount: string;
+        balance_before: string;
+        balance_after: string;
+        reason: string;
+        notes: string | null;
+        created_at: string;
+        creator: { name: string };
+    }>;
 };
-type Props = { rental: Rental; permissions: { return: boolean } };
+type Props = {
+    rental: Rental;
+    permissions: { return: boolean; correctCompleted: boolean };
+};
 const money = new Intl.NumberFormat('id-ID', {
     style: 'currency',
     currency: 'IDR',
@@ -59,6 +80,28 @@ const money = new Intl.NumberFormat('id-ID', {
 });
 
 export default function RentalShow({ rental, permissions }: Props) {
+    const correction = useForm<{
+        component: string;
+        direction: string;
+        amount: number;
+        reason: string;
+        notes: string;
+    }>({
+        component: 'charge',
+        direction: 'increase',
+        amount: 0,
+        reason: '',
+        notes: '',
+    });
+    const submitCorrection = (event: FormEvent) => {
+        event.preventDefault();
+        correction.post(`/rentals/${rental.id}/financial-corrections`, {
+            preserveScroll: true,
+            onSuccess: () => correction.reset(),
+        });
+    };
+    const refundDue = Number(rental.balance_due) < 0;
+
     return (
         <>
             <Head title={rental.rental_number} />
@@ -159,9 +202,15 @@ export default function RentalShow({ rental, permissions }: Props) {
                                 </b>
                             </p>
                             <p className="flex justify-between border-t pt-2">
-                                <span>Sisa</span>
+                                <span>
+                                    {refundDue
+                                        ? 'Kelebihan bayar / refund'
+                                        : 'Sisa'}
+                                </span>
                                 <b>
-                                    {money.format(Number(rental.balance_due))}
+                                    {money.format(
+                                        Math.abs(Number(rental.balance_due)),
+                                    )}
                                 </b>
                             </p>
                         </CardContent>
@@ -243,6 +292,206 @@ export default function RentalShow({ rental, permissions }: Props) {
                         </CardContent>
                     </Card>
                 )}
+                {rental.financial_adjustments.length > 0 && (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Riwayat koreksi keuangan</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                            {rental.financial_adjustments.map((item) => (
+                                <div
+                                    key={item.id}
+                                    className="rounded-lg border p-4"
+                                >
+                                    <div className="flex flex-wrap items-start justify-between gap-3">
+                                        <div>
+                                            <p className="font-medium">
+                                                {item.adjustment_number}
+                                            </p>
+                                            <p className="text-sm text-muted-foreground">
+                                                {item.component} ·{' '}
+                                                {item.direction} ·{' '}
+                                                {item.creator.name}
+                                            </p>
+                                        </div>
+                                        <b>
+                                            {money.format(Number(item.amount))}
+                                        </b>
+                                    </div>
+                                    <p className="mt-3 text-sm">
+                                        {item.reason}
+                                    </p>
+                                    <p className="mt-2 text-xs text-muted-foreground">
+                                        Saldo{' '}
+                                        {money.format(
+                                            Number(item.balance_before),
+                                        )}
+                                        {' → '}
+                                        {money.format(
+                                            Number(item.balance_after),
+                                        )}
+                                    </p>
+                                </div>
+                            ))}
+                        </CardContent>
+                    </Card>
+                )}
+                {permissions.correctCompleted &&
+                    ['returned', 'completed'].includes(rental.status) && (
+                        <Card>
+                            <CardHeader>
+                                <CardTitle className="flex items-center gap-2">
+                                    <ShieldCheck className="size-5" />
+                                    Koreksi transaksi selesai
+                                </CardTitle>
+                            </CardHeader>
+                            <CardContent>
+                                <Alert className="mb-5">
+                                    <AlertTitle>Koreksi terkontrol</AlertTitle>
+                                    <AlertDescription>
+                                        Histori pembayaran asli tidak berubah.
+                                        Setiap koreksi dicatat sebagai
+                                        adjustment ledger dan audit Super Admin.
+                                    </AlertDescription>
+                                </Alert>
+                                <form
+                                    className="grid gap-4 md:grid-cols-2"
+                                    onSubmit={submitCorrection}
+                                >
+                                    <div className="space-y-2">
+                                        <Label htmlFor="component">
+                                            Komponen
+                                        </Label>
+                                        <select
+                                            id="component"
+                                            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs"
+                                            value={correction.data.component}
+                                            onChange={(event) =>
+                                                correction.setData(
+                                                    'component',
+                                                    event.target.value,
+                                                )
+                                            }
+                                        >
+                                            <option value="charge">
+                                                Tagihan / biaya
+                                            </option>
+                                            <option value="payment">
+                                                Pembayaran
+                                            </option>
+                                            <option value="deposit">
+                                                Deposit
+                                            </option>
+                                        </select>
+                                        {correction.errors.component && (
+                                            <p className="text-sm text-destructive">
+                                                {correction.errors.component}
+                                            </p>
+                                        )}
+                                    </div>
+                                    <div className="space-y-2">
+                                        <Label htmlFor="direction">
+                                            Perubahan
+                                        </Label>
+                                        <select
+                                            id="direction"
+                                            className="flex h-9 w-full rounded-md border border-input bg-transparent px-3 py-1 text-sm shadow-xs"
+                                            value={correction.data.direction}
+                                            onChange={(event) =>
+                                                correction.setData(
+                                                    'direction',
+                                                    event.target.value,
+                                                )
+                                            }
+                                        >
+                                            <option value="increase">
+                                                Tambah
+                                            </option>
+                                            <option value="decrease">
+                                                Kurangi
+                                            </option>
+                                        </select>
+                                        {correction.errors.direction && (
+                                            <p className="text-sm text-destructive">
+                                                {correction.errors.direction}
+                                            </p>
+                                        )}
+                                    </div>
+                                    <div className="space-y-2 md:col-span-2">
+                                        <Label htmlFor="amount">
+                                            Nominal koreksi
+                                        </Label>
+                                        <RupiahInput
+                                            id="amount"
+                                            min={1}
+                                            value={correction.data.amount}
+                                            onValueChange={(value) =>
+                                                correction.setData(
+                                                    'amount',
+                                                    value,
+                                                )
+                                            }
+                                        />
+                                        {correction.errors.amount && (
+                                            <p className="text-sm text-destructive">
+                                                {correction.errors.amount}
+                                            </p>
+                                        )}
+                                    </div>
+                                    <div className="space-y-2 md:col-span-2">
+                                        <Label htmlFor="reason">
+                                            Alasan koreksi
+                                        </Label>
+                                        <textarea
+                                            id="reason"
+                                            className="flex min-h-24 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
+                                            value={correction.data.reason}
+                                            onChange={(event) =>
+                                                correction.setData(
+                                                    'reason',
+                                                    event.target.value,
+                                                )
+                                            }
+                                            placeholder="Wajib diisi minimal 10 karakter."
+                                        />
+                                        {correction.errors.reason && (
+                                            <p className="text-sm text-destructive">
+                                                {correction.errors.reason}
+                                            </p>
+                                        )}
+                                    </div>
+                                    <div className="space-y-2 md:col-span-2">
+                                        <Label htmlFor="notes">
+                                            Catatan internal (opsional)
+                                        </Label>
+                                        <Input
+                                            id="notes"
+                                            value={correction.data.notes}
+                                            onChange={(event) =>
+                                                correction.setData(
+                                                    'notes',
+                                                    event.target.value,
+                                                )
+                                            }
+                                        />
+                                    </div>
+                                    <div className="md:col-span-2">
+                                        <Button
+                                            type="submit"
+                                            disabled={
+                                                correction.processing ||
+                                                correction.data.amount <= 0 ||
+                                                correction.data.reason.trim()
+                                                    .length < 10
+                                            }
+                                        >
+                                            Simpan koreksi terkontrol
+                                        </Button>
+                                    </div>
+                                </form>
+                            </CardContent>
+                        </Card>
+                    )}
             </div>
         </>
     );
