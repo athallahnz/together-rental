@@ -7,8 +7,10 @@ use App\Domain\Bookings\BookingManager;
 use App\Http\Requests\BookingAvailabilityRequest;
 use App\Http\Requests\CancelBookingRequest;
 use App\Http\Requests\SaveBookingRequest;
+use App\Http\Requests\StoreBookingPaymentRequest;
 use App\Models\Booking;
 use App\Models\Customer;
+use App\Models\PaymentMethod;
 use App\Models\Product;
 use App\Models\RatePlan;
 use App\Models\RentalPackage;
@@ -228,11 +230,25 @@ class BookingController extends Controller
             'items.product:id,sku,name', 'items.package:id,code,name',
             'items.reservations.asset:id,asset_code,serial_number,status,condition',
             'statusHistories.changer:id,name',
+            'payments:id,booking_id,payment_method_id,payment_number,type,status,amount,paid_at,external_reference',
+            'payments.paymentMethod:id,name',
         ]);
 
         return Inertia::render('bookings/show', [
             'booking' => $booking,
             'permissions' => $this->permissions($request->user()),
+            'financialSummary' => [
+                'rental_paid' => (float) $booking->payments
+                    ->where('status', 'completed')->where('type', 'rental')->sum('amount'),
+                'deposit_paid' => (float) $booking->payments
+                    ->where('status', 'completed')->where('type', 'deposit')->sum('amount'),
+            ],
+            'paymentMethods' => PaymentMethod::query()
+                ->where('company_id', $request->user()->company_id)
+                ->where('is_active', true)
+                ->orderBy('sort_order')
+                ->orderBy('name')
+                ->get(['id', 'code', 'name', 'requires_reference']),
         ]);
     }
 
@@ -278,6 +294,29 @@ class BookingController extends Controller
         $recorder->record($request, 'booking.confirmed', $confirmed, $old, $this->audit($confirmed), $confirmed->branch_id);
 
         return back()->with('toast', ['type' => 'success', 'message' => 'Booking berhasil dikonfirmasi.']);
+    }
+
+    public function storePayment(
+        StoreBookingPaymentRequest $request,
+        Booking $booking,
+        BookingManager $manager,
+        ActivityRecorder $recorder,
+    ): RedirectResponse {
+        $this->guardAccess($request, $booking);
+        $updated = $manager->receivePayment($booking, $request->validated(), $request->user());
+        $recorder->record(
+            $request,
+            'booking.payment_received',
+            $updated,
+            null,
+            $this->audit($updated),
+            $updated->branch_id,
+        );
+
+        return back()->with('toast', [
+            'type' => 'success',
+            'message' => 'Pembayaran booking berhasil dicatat.',
+        ]);
     }
 
     public function cancel(
@@ -326,6 +365,12 @@ class BookingController extends Controller
             'packages' => RentalPackage::query()
                 ->whereIn('id', $packageIds)
                 ->get(['id', 'branch_id', 'code', 'name']),
+            'paymentMethods' => PaymentMethod::query()
+                ->where('company_id', $user->company_id)
+                ->where('is_active', true)
+                ->orderBy('sort_order')
+                ->orderBy('name')
+                ->get(['id', 'code', 'name', 'requires_reference']),
         ];
     }
 
@@ -337,7 +382,13 @@ class BookingController extends Controller
     /** @return array<string, bool> */
     private function permissions(User $user): array
     {
-        return ['create' => $user->can('bookings.create'), 'update' => $user->can('bookings.update'), 'cancel' => $user->can('bookings.cancel')];
+        return [
+            'create' => $user->can('bookings.create'),
+            'update' => $user->can('bookings.update'),
+            'cancel' => $user->can('bookings.cancel'),
+            'checkout' => $user->can('rentals.create'),
+            'payment' => $user->can('payments.create'),
+        ];
     }
 
     /** @return array<string, mixed> */

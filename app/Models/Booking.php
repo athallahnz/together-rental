@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable([
@@ -94,6 +95,18 @@ class Booking extends Model
     public function statusHistories(): HasMany
     {
         return $this->hasMany(BookingStatusHistory::class);
+    }
+
+    /** @return HasOne<Rental, $this> */
+    public function rental(): HasOne
+    {
+        return $this->hasOne(Rental::class);
+    }
+
+    /** @return HasMany<Payment, $this> */
+    public function payments(): HasMany
+    {
+        return $this->hasMany(Payment::class);
     }
 
     protected function casts(): array

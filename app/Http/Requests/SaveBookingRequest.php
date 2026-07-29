@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Models\Booking;
 use App\Models\Branch;
+use App\Models\PaymentMethod;
 use App\Models\RatePlan;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Foundation\Http\FormRequest;
@@ -39,6 +40,10 @@ class SaveBookingRequest extends FormRequest
             'items.*.type' => ['required', Rule::in(['product', 'package'])],
             'items.*.id' => ['required', 'integer', 'min:1'],
             'items.*.quantity' => ['required', 'integer', 'min:1', 'max:100'],
+            'payment_amount' => ['nullable', 'numeric', 'min:0'],
+            'deposit_paid' => ['nullable', 'numeric', 'min:0'],
+            'payment_method_id' => ['nullable', 'integer'],
+            'payment_reference' => ['nullable', 'string', 'max:100'],
         ];
     }
 
@@ -69,6 +74,34 @@ class SaveBookingRequest extends FormRequest
                     ->exists()) {
                     $validator->errors()->add('rate_plan_id', 'Rate plan tidak tersedia untuk cabang terpilih.');
                 }
+
+                $paymentAmount = $this->float('payment_amount');
+                $depositPaid = $this->float('deposit_paid');
+                $hasPayment = $paymentAmount > 0 || $depositPaid > 0;
+
+                if ($booking instanceof Booking && $hasPayment) {
+                    $validator->errors()->add(
+                        'payment_amount',
+                        'Pembayaran baru dicatat dari detail booking, bukan saat mengubah booking.',
+                    );
+                }
+
+                if ($hasPayment && ! $this->filled('payment_method_id')) {
+                    $validator->errors()->add('payment_method_id', 'Metode pembayaran wajib dipilih.');
+                }
+
+                if ($this->filled('payment_method_id')) {
+                    $method = PaymentMethod::query()
+                        ->where('company_id', $this->user()->company_id)
+                        ->where('is_active', true)
+                        ->find($this->integer('payment_method_id'));
+
+                    if ($method === null) {
+                        $validator->errors()->add('payment_method_id', 'Metode pembayaran tidak tersedia.');
+                    } elseif ($method->requires_reference && ! $this->filled('payment_reference')) {
+                        $validator->errors()->add('payment_reference', 'Referensi pembayaran wajib diisi.');
+                    }
+                }
             },
         ];
     }
@@ -78,6 +111,8 @@ class SaveBookingRequest extends FormRequest
         $this->merge([
             'source' => $this->input('source', 'counter'),
             'notes' => $this->filled('notes') ? trim((string) $this->input('notes')) : null,
+            'payment_amount' => $this->input('payment_amount', 0),
+            'deposit_paid' => $this->input('deposit_paid', 0),
         ]);
     }
 }

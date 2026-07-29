@@ -12,6 +12,7 @@ import {
     DialogTitle,
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
+import { RupiahInput } from '@/components/ui/rupiah-input';
 import { Label } from '@/components/ui/label';
 import {
     Select,
@@ -209,16 +210,13 @@ export function ProductFormDialog({
                             name="replacement_value"
                             error={form.errors.replacement_value}
                         >
-                            <Input
+                            <RupiahInput
                                 id="replacement_value"
-                                type="number"
-                                min="0"
-                                step="0.01"
                                 value={form.data.replacement_value}
-                                onChange={(event) =>
+                                onValueChange={(value) =>
                                     form.setData(
                                         'replacement_value',
-                                        event.target.value,
+                                        String(value),
                                     )
                                 }
                                 required
@@ -1373,13 +1371,10 @@ function MoneyField({
 }) {
     return (
         <Field label={label} name={id} error={error}>
-            <Input
+            <RupiahInput
                 id={id}
-                type="number"
-                min="0"
-                step="0.01"
                 value={value}
-                onChange={(event) => onChange(event.target.value)}
+                onValueChange={(nextValue) => onChange(String(nextValue))}
                 required
             />
         </Field>

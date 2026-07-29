@@ -6,6 +6,7 @@ use App\Models\Asset;
 use App\Models\Booking;
 use App\Models\Branch;
 use App\Models\Customer;
+use App\Models\PaymentMethod;
 use App\Models\Product;
 use App\Models\ProductRate;
 use App\Models\RatePlan;
@@ -43,6 +44,53 @@ class BookingManagementTest extends TestCase
             'subject_id' => $booking->id,
             'event' => 'booking.created',
         ]);
+    }
+
+    public function test_booking_accepts_rental_dp_and_security_deposit_separately(): void
+    {
+        [$user, $branch, $customer, $plan, $product] = $this->fixture();
+        $method = PaymentMethod::query()->where('code', 'CASH')->firstOrFail();
+        $payload = $this->payload($branch, $customer, $plan, $product);
+        $payload['payment_amount'] = 50000;
+        $payload['deposit_paid'] = 200000;
+        $payload['payment_method_id'] = $method->id;
+
+        $this->actingAs($user)->post(route('bookings.store'), $payload)
+            ->assertSessionHasNoErrors();
+
+        $booking = Booking::query()->firstOrFail();
+
+        $this->assertDatabaseHas('payments', [
+            'booking_id' => $booking->id,
+            'rental_id' => null,
+            'type' => 'rental',
+            'amount' => 50000,
+        ]);
+        $this->assertDatabaseHas('payments', [
+            'booking_id' => $booking->id,
+            'type' => 'deposit',
+            'amount' => 200000,
+        ]);
+        $this->assertSame('200000.00', $booking->deposit_paid);
+    }
+
+    public function test_booking_rejects_payment_above_remaining_bill(): void
+    {
+        [$user, $branch, $customer, $plan, $product] = $this->fixture();
+        $method = PaymentMethod::query()->where('code', 'CASH')->firstOrFail();
+        $this->actingAs($user)->post(
+            route('bookings.store'),
+            $this->payload($branch, $customer, $plan, $product),
+        );
+        $booking = Booking::query()->firstOrFail();
+
+        $this->actingAs($user)->post(route('bookings.payments.store', $booking), [
+            'payment_amount' => 200000,
+            'deposit_paid' => 0,
+            'payment_method_id' => $method->id,
+        ])->assertSessionHasErrors('payment_amount');
+
+        $this->assertDatabaseCount('payments', 0);
     }
 
     public function test_overlapping_booking_cannot_reserve_the_same_asset(): void

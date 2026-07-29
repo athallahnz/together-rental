@@ -2,12 +2,14 @@
 
 namespace App\Domain\Bookings;
 
+use App\Domain\Rentals\RentalNumberGenerator;
 use App\Models\Asset;
 use App\Models\AssetReservation;
 use App\Models\Booking;
 use App\Models\BookingItem;
 use App\Models\Branch;
 use App\Models\PackageRate;
+use App\Models\Payment;
 use App\Models\Product;
 use App\Models\ProductRate;
 use App\Models\RatePlan;
@@ -21,7 +23,10 @@ use Illuminate\Validation\ValidationException;
 
 class BookingManager
 {
-    public function __construct(private readonly BookingNumberGenerator $numbers) {}
+    public function __construct(
+        private readonly BookingNumberGenerator $numbers,
+        private readonly RentalNumberGenerator $rentalNumbers,
+    ) {}
 
     /** @param array<string, mixed> $data */
     public function create(array $data, User $actor): Booking
@@ -51,10 +56,89 @@ class BookingManager
             ]);
 
             $this->replaceItems($booking, $data, $plan);
+            $this->recordInitialPayments($booking, $data, $actor);
             $this->history($booking, null, 'draft', 'Booking dibuat.', $actor);
 
             return $booking->fresh(['items', 'reservations']);
         }, 3);
+    }
+
+    /** @param array<string, mixed> $data */
+    private function recordInitialPayments(Booking $booking, array $data, User $actor): void
+    {
+        if ($booking->source === 'direct') {
+            return;
+        }
+
+        $this->recordPayments($booking, $data, $actor);
+    }
+
+    /** @param array<string, mixed> $data */
+    private function recordPayments(Booking $booking, array $data, User $actor): void
+    {
+        $rentalAmount = (float) ($data['payment_amount'] ?? 0);
+        $depositAmount = (float) ($data['deposit_paid'] ?? 0);
+        $rentalPaid = (float) $booking->payments()
+            ->where('status', 'completed')
+            ->where('direction', 'in')
+            ->where('type', 'rental')
+            ->sum('amount');
+        $depositPaid = (float) $booking->payments()
+            ->where('status', 'completed')
+            ->where('direction', 'in')
+            ->where('type', 'deposit')
+            ->sum('amount');
+
+        if ($rentalPaid + $rentalAmount > (float) $booking->total_amount) {
+            throw ValidationException::withMessages([
+                'payment_amount' => 'DP sewa tidak boleh melebihi sisa tagihan.',
+            ]);
+        }
+
+        if ($depositPaid + $depositAmount > (float) $booking->deposit_required) {
+            throw ValidationException::withMessages([
+                'deposit_paid' => 'Deposit jaminan tidak boleh melebihi kekurangan deposit.',
+            ]);
+        }
+
+        $methodId = $data['payment_method_id'] ?? null;
+
+        if ($methodId === null || ($rentalAmount <= 0 && $depositAmount <= 0)) {
+            return;
+        }
+
+        $categoryIds = DB::table('financial_categories')
+            ->where('company_id', $actor->company_id)
+            ->whereIn('code', ['RENTAL', 'DEPOSIT'])
+            ->pluck('id', 'code');
+
+        foreach ([
+            ['amount' => $rentalAmount, 'type' => 'rental', 'category' => 'RENTAL'],
+            ['amount' => $depositAmount, 'type' => 'deposit', 'category' => 'DEPOSIT'],
+        ] as $entry) {
+            if ($entry['amount'] <= 0) {
+                continue;
+            }
+
+            Payment::query()->create([
+                'branch_id' => $booking->branch_id,
+                'customer_id' => $booking->customer_id,
+                'booking_id' => $booking->id,
+                'payment_method_id' => $methodId,
+                'financial_category_id' => $categoryIds->get($entry['category']),
+                'payment_number' => $this->rentalNumbers->nextPayment($booking->branch),
+                'direction' => 'in',
+                'type' => $entry['type'],
+                'status' => 'completed',
+                'amount' => $entry['amount'],
+                'paid_at' => now(),
+                'external_reference' => $data['payment_reference'] ?? null,
+                'notes' => 'Pembayaran diterima saat booking dibuat.',
+                'received_by' => $actor->id,
+            ]);
+        }
+
+        $booking->update(['deposit_paid' => $depositPaid + $depositAmount]);
     }
 
     /** @param array<string, mixed> $data */
@@ -103,6 +187,24 @@ class BookingManager
             $this->history($locked, 'draft', 'confirmed', 'Booking dikonfirmasi.', $actor);
 
             return $locked;
+        }, 3);
+    }
+
+    /** @param array<string, mixed> $data */
+    public function receivePayment(Booking $booking, array $data, User $actor): Booking
+    {
+        return DB::transaction(function () use ($booking, $data, $actor): Booking {
+            $locked = Booking::query()->lockForUpdate()->findOrFail($booking->id);
+
+            if (! in_array($locked->status, Booking::ACTIVE_STATUSES, true)) {
+                throw ValidationException::withMessages([
+                    'booking' => 'Pembayaran hanya dapat dicatat pada booking aktif.',
+                ]);
+            }
+
+            $this->recordPayments($locked, $data, $actor);
+
+            return $locked->fresh(['payments.paymentMethod']);
         }, 3);
     }
 

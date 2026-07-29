@@ -23,6 +23,7 @@ use App\Http\Controllers\PublicCatalogContentController;
 use App\Http\Controllers\PublicCatalogController;
 use App\Http\Controllers\PublicSitemapController;
 use App\Http\Controllers\RatePlanController;
+use App\Http\Controllers\RentalController;
 use App\Http\Controllers\RentalPackageController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\UserManagementController;
@@ -202,8 +203,25 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
             ->middleware('can:bookings.update')->name('update');
         Route::post('/{booking}/confirm', [BookingController::class, 'confirm'])
             ->middleware('can:bookings.update')->name('confirm');
+        Route::post('/{booking}/payments', [BookingController::class, 'storePayment'])
+            ->middleware('can:payments.create')->name('payments.store');
         Route::post('/{booking}/cancel', [BookingController::class, 'cancel'])
             ->middleware('can:bookings.cancel')->name('cancel');
+    });
+
+    Route::prefix('rentals')->name('rentals.')->group(function () {
+        Route::get('/', [RentalController::class, 'index'])
+            ->middleware('can:rentals.view')->name('index');
+        Route::get('/direct/create', [RentalController::class, 'createDirect'])
+            ->middleware('can:rentals.create')->name('direct.create');
+        Route::post('/direct', [RentalController::class, 'storeDirect'])
+            ->middleware('can:rentals.create')->name('direct.store');
+        Route::get('/checkout/{booking}', [RentalController::class, 'createCheckout'])
+            ->middleware('can:rentals.create')->name('checkout.create');
+        Route::post('/checkout/{booking}', [RentalController::class, 'storeCheckout'])
+            ->middleware('can:rentals.create')->name('checkout.store');
+        Route::get('/{rental}', [RentalController::class, 'show'])
+            ->middleware('can:rentals.view')->name('show');
     });
 
     Route::prefix('customer-identities')->name('customer-identities.')->group(function () {

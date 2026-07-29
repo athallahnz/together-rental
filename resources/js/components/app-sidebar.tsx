@@ -7,6 +7,7 @@ import {
     DatabaseZap,
     LayoutGrid,
     PackageSearch,
+    ShoppingBag,
     UserRoundCog,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
@@ -77,6 +78,24 @@ export function AppSidebar() {
                       title: 'Booking',
                       href: '/bookings',
                       icon: CalendarDays,
+                  },
+              ]
+            : []),
+        ...(auth.permissions['rentals.view']
+            ? [
+                  {
+                      title: 'Rental Aktif',
+                      href: '/rentals',
+                      icon: ShoppingBag,
+                  },
+              ]
+            : []),
+        ...(auth.permissions['rentals.create']
+            ? [
+                  {
+                      title: 'Rental Langsung',
+                      href: '/rentals/direct/create',
+                      icon: ShoppingBag,
                   },
               ]
             : []),
