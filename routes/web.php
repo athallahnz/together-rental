@@ -13,6 +13,7 @@ use App\Http\Controllers\CustomerIdentityController;
 use App\Http\Controllers\CustomerLoyaltyController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\LegacyImportController;
+use App\Http\Controllers\MaintenanceController;
 use App\Http\Controllers\PackageItemController;
 use App\Http\Controllers\PackageRateController;
 use App\Http\Controllers\PositionController;
@@ -228,6 +229,21 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
             ->middleware('can:rentals.correct_completed')->name('financial-corrections.store');
         Route::get('/{rental}', [RentalController::class, 'show'])
             ->middleware('can:rentals.view')->name('show');
+    });
+
+    Route::prefix('maintenance')->name('maintenance.')->group(function () {
+        Route::get('/', [MaintenanceController::class, 'index'])
+            ->middleware('can:maintenance.view')->name('index');
+        Route::post('/', [MaintenanceController::class, 'store'])
+            ->middleware('can:maintenance.manage')->name('store');
+        Route::get('/{maintenance}', [MaintenanceController::class, 'show'])
+            ->middleware('can:maintenance.view')->name('show');
+        Route::post('/{maintenance}/start', [MaintenanceController::class, 'start'])
+            ->middleware('can:maintenance.manage')->name('start');
+        Route::post('/{maintenance}/complete', [MaintenanceController::class, 'complete'])
+            ->middleware('can:maintenance.manage')->name('complete');
+        Route::post('/{maintenance}/cancel', [MaintenanceController::class, 'cancel'])
+            ->middleware('can:maintenance.manage')->name('cancel');
     });
 
     Route::prefix('customer-identities')->name('customer-identities.')->group(function () {

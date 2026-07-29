@@ -48,6 +48,18 @@ class Asset extends Model
         return $this->hasMany(AssetReservation::class);
     }
 
+    /** @return HasMany<MaintenanceOrder, $this> */
+    public function maintenanceOrders(): HasMany
+    {
+        return $this->hasMany(MaintenanceOrder::class);
+    }
+
+    /** @return HasMany<AssetStatusHistory, $this> */
+    public function statusHistories(): HasMany
+    {
+        return $this->hasMany(AssetStatusHistory::class);
+    }
+
     protected function casts(): array
     {
         return [

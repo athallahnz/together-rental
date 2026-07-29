@@ -2,7 +2,9 @@
 
 namespace App\Domain\Rentals;
 
+use App\Models\Asset;
 use App\Models\AssetInspection;
+use App\Models\MaintenanceOrder;
 use App\Models\Payment;
 use App\Models\Rental;
 use App\Models\RentalItem;
@@ -131,6 +133,18 @@ class RentalReturnManager
                     'status' => $assetStatus,
                     'condition' => $condition,
                 ]);
+                $this->syncMaintenanceInventory(
+                    $unit->asset->current_branch_id,
+                    $unit->asset->product_id,
+                );
+                if ($condition === 'damaged') {
+                    $this->createMaintenanceOrder(
+                        $unit->asset,
+                        $return,
+                        $input['notes'] ?? null,
+                        $actor,
+                    );
+                }
                 DB::table('asset_status_histories')->insert([
                     'asset_id' => $unit->asset_id,
                     'branch_id' => $locked->branch_id,
@@ -178,6 +192,65 @@ class RentalReturnManager
 
             return $return->fresh(['items.asset', 'rental']);
         }, 3);
+    }
+
+    private function syncMaintenanceInventory(int $branchId, int $productId): void
+    {
+        $quantity = DB::table('assets')
+            ->where('current_branch_id', $branchId)
+            ->where('product_id', $productId)
+            ->whereNull('deleted_at')
+            ->where('status', 'maintenance')
+            ->count();
+
+        DB::table('branch_inventories')->updateOrInsert(
+            ['branch_id' => $branchId, 'product_id' => $productId],
+            [
+                'quantity_maintenance' => $quantity,
+                'updated_at' => now(),
+                'created_at' => now(),
+            ],
+        );
+    }
+
+    private function createMaintenanceOrder(
+        Asset $asset,
+        RentalReturn $return,
+        ?string $notes,
+        User $actor,
+    ): void {
+        $hasActiveOrder = MaintenanceOrder::query()
+            ->where('asset_id', $asset->id)
+            ->whereIn('status', ['reported', 'in_progress'])
+            ->exists();
+
+        if ($hasActiveOrder) {
+            return;
+        }
+
+        DB::table('branches')->where('id', $asset->current_branch_id)->lockForUpdate()->first();
+        $branchCode = DB::table('branches')
+            ->where('id', $asset->current_branch_id)
+            ->value('code');
+        $prefix = 'MNT-'.$branchCode.'-'.now()->format('ymd').'-';
+        $last = MaintenanceOrder::query()
+            ->where('branch_id', $asset->current_branch_id)
+            ->where('maintenance_number', 'like', $prefix.'%')
+            ->orderByDesc('maintenance_number')
+            ->value('maintenance_number');
+        $sequence = $last === null ? 1 : ((int) substr($last, -4)) + 1;
+
+        MaintenanceOrder::query()->create([
+            'branch_id' => $asset->current_branch_id,
+            'asset_id' => $asset->id,
+            'maintenance_number' => $prefix.str_pad((string) $sequence, 4, '0', STR_PAD_LEFT),
+            'type' => 'repair',
+            'status' => 'reported',
+            'problem_description' => $notes
+                ?? "Kerusakan tercatat saat {$return->return_number}.",
+            'reported_at' => $return->returned_at,
+            'created_by' => $actor->id,
+        ]);
     }
 
     private function willComplete(Rental $rental, int $returningCount): bool

@@ -61,6 +61,17 @@ class RentalReturnTest extends TestCase
             'amount' => 20000,
             'status' => 'charged',
         ]);
+        $this->assertDatabaseHas('maintenance_orders', [
+            'branch_id' => $rental->branch_id,
+            'asset_id' => $asset->id,
+            'type' => 'repair',
+            'status' => 'reported',
+        ]);
+        $this->assertDatabaseHas('branch_inventories', [
+            'branch_id' => $rental->branch_id,
+            'product_id' => $asset->product_id,
+            'quantity_maintenance' => 1,
+        ]);
         $this->assertDatabaseHas('activity_logs', [
             'subject_id' => $rental->id,
             'event' => 'rental.return_completed',

@@ -7,6 +7,7 @@ import {
     DatabaseZap,
     LayoutGrid,
     PackageSearch,
+    Wrench,
     ShoppingBag,
     UserRoundCog,
 } from 'lucide-react';
@@ -96,6 +97,15 @@ export function AppSidebar() {
                       title: 'Rental Langsung',
                       href: '/rentals/direct/create',
                       icon: ShoppingBag,
+                  },
+              ]
+            : []),
+        ...(auth.permissions['maintenance.view']
+            ? [
+                  {
+                      title: 'Maintenance',
+                      href: '/maintenance',
+                      icon: Wrench,
                   },
               ]
             : []),
