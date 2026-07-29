@@ -5,6 +5,7 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable([
@@ -39,6 +40,12 @@ class Asset extends Model
     public function currentBranch(): BelongsTo
     {
         return $this->belongsTo(Branch::class, 'current_branch_id');
+    }
+
+    /** @return HasMany<AssetReservation, $this> */
+    public function reservations(): HasMany
+    {
+        return $this->hasMany(AssetReservation::class);
     }
 
     protected function casts(): array

@@ -1,6 +1,7 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
     BarChart3,
+    CalendarDays,
     Building2,
     ContactRound,
     DatabaseZap,
@@ -67,6 +68,15 @@ export function AppSidebar() {
                       title: 'Katalog & Harga',
                       href: '/catalog',
                       icon: PackageSearch,
+                  },
+              ]
+            : []),
+        ...(auth.permissions['bookings.view']
+            ? [
+                  {
+                      title: 'Booking',
+                      href: '/bookings',
+                      icon: CalendarDays,
                   },
               ]
             : []),

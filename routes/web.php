@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AssetAnalyticsController;
+use App\Http\Controllers\BookingController;
 use App\Http\Controllers\BranchController;
 use App\Http\Controllers\BranchPublicProfileController;
 use App\Http\Controllers\CatalogBrandController;
@@ -178,6 +179,31 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
         Route::post('/{customer}/loyalty-adjustments', [CustomerLoyaltyController::class, 'store'])
             ->middleware('can:customers.loyalty')
             ->name('loyalty.store');
+    });
+
+    Route::prefix('bookings')->name('bookings.')->group(function () {
+        Route::get('/', [BookingController::class, 'index'])
+            ->middleware('can:bookings.view')->name('index');
+        Route::get('/create', [BookingController::class, 'create'])
+            ->middleware('can:bookings.create')->name('create');
+        Route::post('/', [BookingController::class, 'store'])
+            ->middleware('can:bookings.create')->name('store');
+        Route::get('/availability', [BookingController::class, 'availability'])
+            ->middleware('can:bookings.view')->name('availability');
+        Route::get('/options', [BookingController::class, 'options'])
+            ->middleware('can:bookings.view')
+            ->middleware('throttle:120,1')
+            ->name('options');
+        Route::get('/{booking}', [BookingController::class, 'show'])
+            ->middleware('can:bookings.view')->name('show');
+        Route::get('/{booking}/edit', [BookingController::class, 'edit'])
+            ->middleware('can:bookings.update')->name('edit');
+        Route::put('/{booking}', [BookingController::class, 'update'])
+            ->middleware('can:bookings.update')->name('update');
+        Route::post('/{booking}/confirm', [BookingController::class, 'confirm'])
+            ->middleware('can:bookings.update')->name('confirm');
+        Route::post('/{booking}/cancel', [BookingController::class, 'cancel'])
+            ->middleware('can:bookings.cancel')->name('cancel');
     });
 
     Route::prefix('customer-identities')->name('customer-identities.')->group(function () {

@@ -19,11 +19,13 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 ])]
 class RatePlan extends Model
 {
+    /** @return BelongsTo<Company, $this> */
     public function company(): BelongsTo
     {
         return $this->belongsTo(Company::class);
     }
 
+    /** @return BelongsTo<Branch, $this> */
     public function branch(): BelongsTo
     {
         return $this->belongsTo(Branch::class);

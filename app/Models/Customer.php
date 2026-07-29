@@ -75,11 +75,13 @@ class Customer extends Model
         return $this->hasOne(LoyaltyAccount::class);
     }
 
+    /** @return HasMany<Booking, $this> */
     public function bookings(): HasMany
     {
         return $this->hasMany(Booking::class);
     }
 
+    /** @return HasMany<Rental, $this> */
     public function rentals(): HasMany
     {
         return $this->hasMany(Rental::class);
