@@ -1,7 +1,6 @@
 import { Link, usePage } from "@inertiajs/react";
 import {
   BarChart3,
-  BrainCircuit,
   CalendarDays,
   Building2,
   ContactRound,
@@ -14,6 +13,7 @@ import {
   UserRound,
   UsersRound,
   Wrench,
+  Sparkles,
 } from "lucide-react";
 import AppLogo from "@/components/app-logo";
 import { BranchSwitcher } from "@/components/branch-switcher";
@@ -117,7 +117,7 @@ export function AppSidebar() {
               {
                 title: "Kecerdasan Katalog",
                 href: "/catalog/intelligence",
-                icon: BrainCircuit,
+                icon: Sparkles,
               },
             ]
           : []),

@@ -84,10 +84,14 @@ class RoleController extends Controller
         Role $role,
         ActivityRecorder $recorder,
     ): RedirectResponse {
-        $this->guardCustomRole($request, $role);
+        $this->guardRoleBelongsToActorCompany($request, $role);
         $validated = $request->validated();
 
-        if ($role->scope !== $validated['scope'] && $role->users()->exists()) {
+        if (
+            ! $role->is_system
+            && $role->scope !== $validated['scope']
+            && $role->users()->exists()
+        ) {
             throw ValidationException::withMessages([
                 'scope' => 'Scope role yang sudah digunakan tidak dapat diubah.',
             ]);
@@ -102,14 +106,17 @@ class RoleController extends Controller
             $role,
             $validated,
         ): void {
-            $role->update([
-                'name' => $validated['name'],
-                'slug' => $validated['slug'],
-                'scope' => $validated['scope'],
-            ]);
+            if (! $role->is_system) {
+                $role->update([
+                    'name' => $validated['name'],
+                    'slug' => $validated['slug'],
+                    'scope' => $validated['scope'],
+                ]);
+            }
+
             $role->permissions()->sync(
                 $this->normalizedPermissions(
-                    $validated['scope'],
+                    $role->scope,
                     $validated['permission_ids'],
                 ),
             );
@@ -124,7 +131,9 @@ class RoleController extends Controller
 
         return back()->with('toast', [
             'type' => 'success',
-            'message' => "Role {$role->name} berhasil diperbarui.",
+            'message' => $role->is_system
+                ? "Permission role sistem {$role->name} berhasil diperbarui."
+                : "Role {$role->name} berhasil diperbarui.",
         ]);
     }
 
@@ -149,15 +158,13 @@ class RoleController extends Controller
             ->all();
     }
 
-    private function guardCustomRole(Request $request, Role $role): void
+    private function guardRoleBelongsToActorCompany(Request $request, Role $role): void
     {
         abort_unless(
             $request->user()->company_id !== null
                 && $role->company_id === $request->user()->company_id,
             404,
         );
-
-        abort_if($role->is_system, 403, 'Role sistem tidak dapat diubah.');
     }
 
     /** @return array<string, mixed> */

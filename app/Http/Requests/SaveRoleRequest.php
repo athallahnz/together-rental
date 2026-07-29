@@ -14,9 +14,23 @@ class SaveRoleRequest extends FormRequest
     {
         $role = $this->route('role');
 
-        return Gate::allows('roles.manage')
-            && (! $role instanceof Role
-                || ($role->company_id === $this->user()->company_id && ! $role->is_system));
+        if (! Gate::allows('roles.manage')) {
+            return false;
+        }
+
+        if (! $role instanceof Role) {
+            return true;
+        }
+
+        if ($role->company_id !== $this->user()->company_id) {
+            return false;
+        }
+
+        return ! $role->is_system
+            || $this->user()
+                ->roles()
+                ->where('roles.slug', 'super-admin')
+                ->exists();
     }
 
     /** @return array<string, list<mixed>> */
@@ -24,19 +38,29 @@ class SaveRoleRequest extends FormRequest
     {
         $target = $this->route('role');
         $targetId = $target instanceof Role ? $target->id : null;
+        $isSystemRole = $target instanceof Role && $target->is_system;
 
         return [
-            'name' => ['required', 'string', 'max:100'],
+            'name' => [
+                'required',
+                'string',
+                'max:100',
+                ...($isSystemRole ? [Rule::in([$target->name])] : []),
+            ],
             'slug' => [
                 'required',
                 'string',
                 'max:100',
                 'regex:/^[a-z0-9-]+$/',
+                ...($isSystemRole ? [Rule::in([$target->slug])] : []),
                 Rule::unique('roles', 'slug')
                     ->where('company_id', $this->user()->company_id)
                     ->ignore($targetId),
             ],
-            'scope' => ['required', Rule::in(['company', 'branch'])],
+            'scope' => [
+                'required',
+                Rule::in($isSystemRole ? [$target->scope] : ['company', 'branch']),
+            ],
             'permission_ids' => ['present', 'array'],
             'permission_ids.*' => [
                 'integer',

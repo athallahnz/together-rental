@@ -225,8 +225,10 @@ export default function RoleIndex({
                     <ShieldCheck />
                     <AlertTitle>Guardrail akses aktif</AlertTitle>
                     <AlertDescription>
-                        Role sistem dikunci. Role scope cabang selalu membawa
-                        izin berpindah ke cabang yang memang ditugaskan.
+                        Identitas role sistem dikunci, tetapi permission-nya
+                        dapat disesuaikan oleh Super Admin. Role scope cabang
+                        selalu membawa izin berpindah ke cabang yang memang
+                        ditugaskan.
                     </AlertDescription>
                 </Alert>
 
@@ -305,19 +307,26 @@ export default function RoleIndex({
                                     )}
                                 </div>
 
-                                {permissions.manage && !role.is_system && (
+                                {permissions.manage && (
                                     <Button
                                         variant="outline"
                                         onClick={() => openEdit(role)}
                                     >
-                                        <Pencil />
-                                        Edit role
+                                        {role.is_system ? (
+                                            <ShieldCheck />
+                                        ) : (
+                                            <Pencil />
+                                        )}
+                                        {role.is_system
+                                            ? 'Atur permission'
+                                            : 'Edit role'}
                                     </Button>
                                 )}
                                 {role.is_system && (
                                     <p className="flex items-center gap-2 text-xs text-muted-foreground">
                                         <LockKeyhole className="size-4" />
-                                        Dikelola oleh foundation seeder.
+                                        Identitas role dikunci. Permission dapat
+                                        disesuaikan oleh Super Admin.
                                     </p>
                                 )}
                             </CardContent>
@@ -345,13 +354,16 @@ export default function RoleIndex({
                 <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-4xl">
                     <DialogHeader>
                         <DialogTitle>
-                            {editingRole
-                                ? `Edit ${editingRole.name}`
+                            {editingRole?.is_system
+                                ? `Atur permission ${editingRole.name}`
+                                : editingRole
+                                  ? `Edit ${editingRole.name}`
                                 : 'Buat role khusus'}
                         </DialogTitle>
                         <DialogDescription>
-                            Berikan permission minimum yang diperlukan sesuai
-                            tanggung jawab pengguna.
+                            {editingRole?.is_system
+                                ? 'Nama, slug, dan scope role sistem tetap dikunci. Sesuaikan hanya permission yang diperlukan.'
+                                : 'Berikan permission minimum yang diperlukan sesuai tanggung jawab pengguna.'}
                         </DialogDescription>
                     </DialogHeader>
 
@@ -368,6 +380,7 @@ export default function RoleIndex({
                                     onChange={(event) =>
                                         form.setData('name', event.target.value)
                                     }
+                                    disabled={editingRole?.is_system}
                                     required
                                 />
                             </FormField>
@@ -383,6 +396,7 @@ export default function RoleIndex({
                                         form.setData('slug', event.target.value)
                                     }
                                     placeholder="otomatis-dari-nama"
+                                    disabled={editingRole?.is_system}
                                 />
                             </FormField>
                             <FormField
@@ -396,8 +410,9 @@ export default function RoleIndex({
                                         setScope(value as Role['scope'])
                                     }
                                     disabled={
-                                        Boolean(editingRole?.users_count) &&
-                                        editingRole?.scope !== undefined
+                                        editingRole?.is_system ||
+                                        (Boolean(editingRole?.users_count) &&
+                                            editingRole?.scope !== undefined)
                                     }
                                 >
                                     <SelectTrigger id="role_scope">
@@ -521,7 +536,9 @@ export default function RoleIndex({
                             <Button type="submit" disabled={form.processing}>
                                 {form.processing
                                     ? 'Menyimpan…'
-                                    : editingRole
+                                    : editingRole?.is_system
+                                      ? 'Simpan permission'
+                                      : editingRole
                                       ? 'Simpan perubahan'
                                       : 'Buat role'}
                             </Button>

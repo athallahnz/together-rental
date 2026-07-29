@@ -161,7 +161,14 @@ class RentalFoundationSeeder extends Seeder
             'inventory-staff' => ['Inventory Staff', 'branch'],
         ];
 
+        $newRoleSlugs = [];
+
         foreach ($roles as $slug => [$name, $scope]) {
+            $roleExists = DB::table('roles')
+                ->where('company_id', $companyId)
+                ->where('slug', $slug)
+                ->exists();
+
             DB::table('roles')->updateOrInsert(
                 ['company_id' => $companyId, 'slug' => $slug],
                 [
@@ -172,47 +179,118 @@ class RentalFoundationSeeder extends Seeder
                     'updated_at' => $now,
                 ],
             );
+
+            if (! $roleExists) {
+                $newRoleSlugs[] = $slug;
+            }
         }
 
         $rolePermissions = [
             'super-admin' => ['*'],
             'owner-management' => [
-                'company.view', 'branches.view', 'branches.switch', 'users.view',
-                'roles.view', 'customers.view', 'products.view', 'assets.view',
-                'bookings.view', 'rentals.view', 'payments.view', 'cash.view',
-                'transfers.view', 'maintenance.view', 'reports.view',
-                'reports.export', 'imports.view', 'audit.view',
+                'company.view',
+                'branches.view',
+                'branches.switch',
+                'users.view',
+                'roles.view',
+                'customers.view',
+                'products.view',
+                'assets.view',
+                'bookings.view',
+                'rentals.view',
+                'payments.view',
+                'cash.view',
+                'transfers.view',
+                'maintenance.view',
+                'reports.view',
+                'reports.export',
+                'imports.view',
+                'audit.view',
             ],
             'branch-manager' => [
-                'branches.view', 'branches.switch', 'users.view', 'customers.view',
-                'customers.create', 'customers.update', 'customers.verify',
+                'branches.view',
+                'branches.switch',
+                'users.view',
+                'customers.view',
+                'customers.create',
+                'customers.update',
+                'customers.verify',
                 'customers.loyalty',
-                'products.view', 'products.manage', 'assets.view', 'assets.manage', 'assets.inspect',
-                'bookings.view', 'bookings.create', 'bookings.update', 'bookings.cancel',
-                'rentals.view', 'rentals.create', 'rentals.update', 'rentals.extend',
-                'rentals.return', 'payments.view', 'payments.create', 'payments.void',
-                'refunds.manage', 'cash.view', 'cash.manage', 'transfers.view',
-                'transfers.create', 'transfers.approve', 'transfers.receive',
-                'maintenance.view', 'maintenance.manage', 'reports.view',
-                'reports.export', 'imports.view',
+                'products.view',
+                'products.manage',
+                'assets.view',
+                'assets.manage',
+                'assets.inspect',
+                'bookings.view',
+                'bookings.create',
+                'bookings.update',
+                'bookings.cancel',
+                'rentals.view',
+                'rentals.create',
+                'rentals.update',
+                'rentals.extend',
+                'rentals.return',
+                'payments.view',
+                'payments.create',
+                'payments.void',
+                'refunds.manage',
+                'cash.view',
+                'cash.manage',
+                'transfers.view',
+                'transfers.create',
+                'transfers.approve',
+                'transfers.receive',
+                'maintenance.view',
+                'maintenance.manage',
+                'reports.view',
+                'reports.export',
+                'imports.view',
             ],
             'rental-operator' => [
-                'branches.switch', 'customers.view', 'customers.create',
-                'customers.update', 'customers.verify', 'products.view', 'assets.view',
+                'branches.switch',
+                'customers.view',
+                'customers.create',
+                'customers.update',
+                'customers.verify',
+                'products.view',
+                'assets.view',
                 'customers.loyalty',
-                'assets.inspect', 'bookings.view', 'bookings.create', 'bookings.update',
-                'bookings.cancel', 'rentals.view', 'rentals.create', 'rentals.update',
-                'rentals.extend', 'rentals.return', 'payments.view', 'payments.create',
+                'assets.inspect',
+                'bookings.view',
+                'bookings.create',
+                'bookings.update',
+                'bookings.cancel',
+                'rentals.view',
+                'rentals.create',
+                'rentals.update',
+                'rentals.extend',
+                'rentals.return',
+                'payments.view',
+                'payments.create',
             ],
             'cashier' => [
-                'branches.switch', 'customers.view', 'bookings.view', 'rentals.view',
-                'payments.view', 'payments.create', 'cash.view', 'cash.manage',
+                'branches.switch',
+                'customers.view',
+                'bookings.view',
+                'rentals.view',
+                'payments.view',
+                'payments.create',
+                'cash.view',
+                'cash.manage',
                 'reports.view',
             ],
             'inventory-staff' => [
-                'branches.switch', 'products.view', 'products.manage', 'assets.view',
-                'assets.manage', 'assets.inspect', 'transfers.view', 'transfers.create',
-                'transfers.receive', 'maintenance.view', 'maintenance.manage',
+                'branches.switch',
+                'products.view',
+                'products.manage',
+                'assets.view',
+                'assets.manage',
+                'assets.inspect',
+                'transfers.view',
+                'transfers.create',
+                'transfers.receive',
+                'maintenance.view',
+                'maintenance.manage',
                 'reports.view',
             ],
         ];
@@ -220,6 +298,10 @@ class RentalFoundationSeeder extends Seeder
         $allPermissionIds = DB::table('permissions')->pluck('id')->map(fn ($id): int => (int) $id)->all();
 
         foreach ($rolePermissions as $roleSlug => $permissionSlugs) {
+            if (! in_array($roleSlug, $newRoleSlugs, true)) {
+                continue;
+            }
+
             $roleId = (int) DB::table('roles')
                 ->where('company_id', $companyId)
                 ->where('slug', $roleSlug)
@@ -274,12 +356,14 @@ class RentalFoundationSeeder extends Seeder
             );
         }
 
-        foreach ([
-            ['CASH', 'Cash', 'cash', false],
-            ['TRANSFER', 'Bank Transfer', 'bank_transfer', true],
-            ['QRIS', 'QRIS', 'qris', true],
-            ['CARD', 'Debit / Credit Card', 'card', true],
-        ] as [$code, $name, $type, $requiresReference]) {
+        foreach (
+            [
+                ['CASH', 'Cash', 'cash', false],
+                ['TRANSFER', 'Bank Transfer', 'bank_transfer', true],
+                ['QRIS', 'QRIS', 'qris', true],
+                ['CARD', 'Debit / Credit Card', 'card', true],
+            ] as [$code, $name, $type, $requiresReference]
+        ) {
             DB::table('payment_methods')->updateOrInsert(
                 ['company_id' => $companyId, 'code' => $code],
                 [
@@ -293,14 +377,16 @@ class RentalFoundationSeeder extends Seeder
             );
         }
 
-        foreach ([
-            ['RENTAL', 'Rental Revenue', 'income'],
-            ['DEPOSIT', 'Rental Deposit', 'liability'],
-            ['LATE-FEE', 'Late Fee', 'income'],
-            ['DAMAGE', 'Damage Charge', 'income'],
-            ['REFUND', 'Customer Refund', 'expense'],
-            ['OPERATING', 'Operating Expense', 'expense'],
-        ] as [$code, $name, $type]) {
+        foreach (
+            [
+                ['RENTAL', 'Rental Revenue', 'income'],
+                ['DEPOSIT', 'Rental Deposit', 'liability'],
+                ['LATE-FEE', 'Late Fee', 'income'],
+                ['DAMAGE', 'Damage Charge', 'income'],
+                ['REFUND', 'Customer Refund', 'expense'],
+                ['OPERATING', 'Operating Expense', 'expense'],
+            ] as [$code, $name, $type]
+        ) {
             DB::table('financial_categories')->updateOrInsert(
                 ['company_id' => $companyId, 'code' => $code],
                 [
@@ -323,17 +409,19 @@ class RentalFoundationSeeder extends Seeder
             ],
         );
 
-        foreach ([
-            'customer' => 'CUS',
-            'booking' => 'BKG',
-            'rental' => 'RNT',
-            'extension' => 'EXT',
-            'return' => 'RET',
-            'payment' => 'PAY',
-            'refund' => 'RFD',
-            'transfer' => 'TRF',
-            'maintenance' => 'MNT',
-        ] as $documentType => $shortCode) {
+        foreach (
+            [
+                'customer' => 'CUS',
+                'booking' => 'BKG',
+                'rental' => 'RNT',
+                'extension' => 'EXT',
+                'return' => 'RET',
+                'payment' => 'PAY',
+                'refund' => 'RFD',
+                'transfer' => 'TRF',
+                'maintenance' => 'MNT',
+            ] as $documentType => $shortCode
+        ) {
             $scope = [
                 'branch_id' => $branchId,
                 'document_type' => $documentType,

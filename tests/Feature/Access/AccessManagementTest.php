@@ -4,6 +4,7 @@ namespace Tests\Feature\Access;
 
 use App\Models\Branch;
 use App\Models\Employee;
+use App\Models\Permission;
 use App\Models\Position;
 use App\Models\Role;
 use App\Models\User;
@@ -256,24 +257,76 @@ class AccessManagementTest extends TestCase
         ]);
     }
 
-    public function test_system_role_cannot_be_edited(): void
+    public function test_super_administrator_can_update_system_role_permissions(): void
     {
         [$actor] = $this->superAdministrator();
+
         $systemRole = Role::query()
             ->where('company_id', $actor->company_id)
             ->where('slug', 'branch-manager')
             ->firstOrFail();
 
+        $permission = Permission::query()
+            ->where('slug', 'reports.view')
+            ->firstOrFail();
+
+        $this->actingAs($actor)
+            ->put(route('roles.update', $systemRole), [
+                'name' => $systemRole->name,
+                'slug' => $systemRole->slug,
+                'scope' => $systemRole->scope,
+                'permission_ids' => [$permission->id],
+            ])
+            ->assertRedirect()
+            ->assertSessionHasNoErrors();
+
+        $systemRole->refresh();
+
+        $this->assertSame('Branch Manager', $systemRole->name);
+        $this->assertSame('branch-manager', $systemRole->slug);
+        $this->assertTrue(
+            $systemRole->permissions()
+                ->where('permissions.id', $permission->id)
+                ->exists(),
+        );
+
+        $this->assertDatabaseHas('activity_logs', [
+            'actor_id' => $actor->id,
+            'subject_id' => $systemRole->id,
+            'event' => 'role.updated',
+        ]);
+    }
+
+    public function test_system_role_identity_cannot_be_changed(): void
+    {
+        [$actor] = $this->superAdministrator();
+
+        $systemRole = Role::query()
+            ->where('company_id', $actor->company_id)
+            ->where('slug', 'branch-manager')
+            ->firstOrFail();
+
+        $originalName = $systemRole->name;
+        $originalSlug = $systemRole->slug;
+        $originalScope = $systemRole->scope;
+
         $this->actingAs($actor)
             ->put(route('roles.update', $systemRole), [
                 'name' => 'Changed System Role',
-                'slug' => $systemRole->slug,
-                'scope' => $systemRole->scope,
-                'permission_ids' => [],
+                'slug' => 'changed-system-role',
+                'scope' => $originalScope === 'branch' ? 'company' : 'branch',
+                'permission_ids' => $systemRole
+                    ->permissions()
+                    ->pluck('permissions.id')
+                    ->all(),
             ])
-            ->assertForbidden();
+            ->assertSessionHasErrors(['name', 'slug', 'scope']);
 
-        $this->assertSame('Branch Manager', $systemRole->fresh()->name);
+        $systemRole->refresh();
+
+        $this->assertSame($originalName, $systemRole->name);
+        $this->assertSame($originalSlug, $systemRole->slug);
+        $this->assertSame($originalScope, $systemRole->scope);
     }
 
     public function test_inactive_user_cannot_authenticate_or_keep_an_active_session(): void
