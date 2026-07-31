@@ -132,6 +132,26 @@ class PublicAvailabilityTest extends TestCase
         $this->assertStringContainsString('Estimasi biaya rental', $message);
     }
 
+    public function test_in_transit_asset_is_removed_from_public_period_capacity(): void
+    {
+        DB::table('assets')
+            ->where('asset_code', 'PNG-A001')
+            ->update(['status' => 'in_transit', 'updated_at' => now()]);
+
+        $this->getJson('/rental/availability?'.http_build_query([
+            'branch' => 'PNG',
+            'type' => 'product',
+            'slug' => $this->product->slug,
+            'starts_at' => '2026-07-29T09:00',
+            'ends_at' => '2026-07-30T09:00',
+            'quantity' => 2,
+        ]))
+            ->assertOk()
+            ->assertJsonPath('data.availability.total_units', 1)
+            ->assertJsonPath('data.availability.available_units', 1)
+            ->assertJsonPath('data.availability.status', 'limited');
+    }
+
     public function test_overlapping_booking_reduces_available_units_and_non_overlapping_booking_does_not(): void
     {
         $bookingId = DB::table('bookings')->insertGetId([

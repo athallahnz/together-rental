@@ -18,7 +18,7 @@ class MaintenanceManager
             $asset = Asset::query()->lockForUpdate()->findOrFail($data['asset_id']);
             $this->guardBranch($asset, $actor);
 
-            if (in_array($asset->status, ['rented', 'reserved', 'lost', 'retired'], true)) {
+            if (in_array($asset->status, ['rented', 'reserved', 'in_transit', 'lost', 'retired'], true)) {
                 throw ValidationException::withMessages([
                     'asset_id' => 'Status aset tidak memungkinkan maintenance baru.',
                 ]);

@@ -1,6 +1,5 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import type { FormEvent, ReactNode } from 'react';
-import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Label } from '@/components/ui/label';
@@ -90,15 +89,7 @@ export default function MaintenanceShow({
     };
 
     return (
-        <AppLayout
-            breadcrumbs={[
-                { title: 'Maintenance', href: '/maintenance' },
-                {
-                    title: maintenance.maintenance_number,
-                    href: `/maintenance/${maintenance.id}`,
-                },
-            ]}
-        >
+        <>
             <Head title={maintenance.maintenance_number} />
             <div className="space-y-6 p-4 md:p-6">
                 <div className="flex flex-wrap items-center justify-between gap-3">
@@ -378,7 +369,7 @@ export default function MaintenanceShow({
                     </CardContent>
                 </Card>
             </div>
-        </AppLayout>
+        </>
     );
 }
 

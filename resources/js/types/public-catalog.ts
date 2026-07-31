@@ -29,7 +29,8 @@ export type PublicRate = {
 export type PublicAvailability = {
     available_units: number;
     total_units: number;
-    status: 'available' | 'limited' | 'unavailable';
+    in_transit_units?: number;
+    status: 'available' | 'limited' | 'in_transit' | 'unavailable';
     label: string;
 };
 

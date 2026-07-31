@@ -69,6 +69,12 @@ class RentalFoundationSeeder extends Seeder
             'legacy_source_system' => ['string', 'RentalV1', false],
             'require_customer_identity' => ['boolean', true, false],
             'allow_cross_branch_return' => ['boolean', false, false],
+            'transfer_dispatch_capture_mode' => ['string', 'camera_required', false],
+            'transfer_receiving_capture_mode' => ['string', 'camera_required', false],
+            'transfer_dispatch_min_photos' => ['integer', 1, false],
+            'transfer_receiving_min_photos' => ['integer', 1, false],
+            'transfer_require_waybill' => ['boolean', true, false],
+            'transfer_allow_gallery_override' => ['boolean', false, false],
         ];
 
         foreach ($settings as $key => [$type, $value, $isPublic]) {
@@ -129,6 +135,13 @@ class RentalFoundationSeeder extends Seeder
             ['transfers.create', 'Create branch transfers', 'transfers'],
             ['transfers.approve', 'Approve branch transfers', 'transfers'],
             ['transfers.receive', 'Receive branch transfers', 'transfers'],
+            ['transfers.update', 'Update branch transfers', 'transfers'],
+            ['transfers.cancel', 'Cancel branch transfers', 'transfers'],
+            ['transfers.dispatch', 'Dispatch branch transfers', 'transfers'],
+            ['transfers.expense', 'Manage branch transfer expenses', 'transfers'],
+            ['transfers.resolve_discrepancy', 'Resolve branch transfer discrepancies', 'transfers'],
+            ['transfers.settings', 'Manage branch transfer settings', 'transfers'],
+            ['transfers.override', 'Override branch transfer guardrails', 'transfers'],
             ['maintenance.view', 'View maintenance', 'maintenance'],
             ['maintenance.manage', 'Manage maintenance', 'maintenance'],
             ['reports.view', 'View reports', 'reports'],
@@ -240,6 +253,11 @@ class RentalFoundationSeeder extends Seeder
                 'transfers.create',
                 'transfers.approve',
                 'transfers.receive',
+                'transfers.update',
+                'transfers.cancel',
+                'transfers.dispatch',
+                'transfers.expense',
+                'transfers.resolve_discrepancy',
                 'maintenance.view',
                 'maintenance.manage',
                 'reports.view',
@@ -278,6 +296,8 @@ class RentalFoundationSeeder extends Seeder
                 'cash.view',
                 'cash.manage',
                 'reports.view',
+                'transfers.view',
+                'transfers.expense',
             ],
             'inventory-staff' => [
                 'branches.switch',
@@ -287,7 +307,7 @@ class RentalFoundationSeeder extends Seeder
                 'assets.manage',
                 'assets.inspect',
                 'transfers.view',
-                'transfers.create',
+                'transfers.dispatch',
                 'transfers.receive',
                 'maintenance.view',
                 'maintenance.manage',
@@ -385,6 +405,7 @@ class RentalFoundationSeeder extends Seeder
                 ['DAMAGE', 'Damage Charge', 'income'],
                 ['REFUND', 'Customer Refund', 'expense'],
                 ['OPERATING', 'Operating Expense', 'expense'],
+                ['TRANSFER-SHIPPING', 'Transfer & Shipping Expense', 'expense'],
             ] as [$code, $name, $type]
         ) {
             DB::table('financial_categories')->updateOrInsert(

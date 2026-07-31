@@ -55,6 +55,18 @@ class Branch extends Model
         return $this->hasMany(Customer::class, 'registered_branch_id');
     }
 
+    /** @return HasMany<BranchTransfer, $this> */
+    public function outgoingTransfers(): HasMany
+    {
+        return $this->hasMany(BranchTransfer::class, 'from_branch_id');
+    }
+
+    /** @return HasMany<BranchTransfer, $this> */
+    public function incomingTransfers(): HasMany
+    {
+        return $this->hasMany(BranchTransfer::class, 'to_branch_id');
+    }
+
     protected function casts(): array
     {
         return [

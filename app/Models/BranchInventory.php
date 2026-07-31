@@ -13,6 +13,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
     'quantity_reserved',
     'quantity_rented',
     'quantity_maintenance',
+    'quantity_in_transfer',
     'reorder_level',
 ])]
 class BranchInventory extends Model
@@ -36,6 +37,7 @@ class BranchInventory extends Model
             'quantity_reserved' => 'integer',
             'quantity_rented' => 'integer',
             'quantity_maintenance' => 'integer',
+            'quantity_in_transfer' => 'integer',
             'reorder_level' => 'integer',
         ];
     }

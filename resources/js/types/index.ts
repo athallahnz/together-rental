@@ -9,3 +9,5 @@ export type * from './ui';
 export type * from './asset-analytics';
 
 export type * from './public-catalog';
+
+export type * from './transfer';

@@ -61,7 +61,7 @@ class MaintenanceController extends Controller
             'assets' => Asset::query()
                 ->whereIn('current_branch_id', $branchIds)
                 ->where('is_active', true)
-                ->whereNotIn('status', ['rented', 'reserved', 'lost', 'retired'])
+                ->whereNotIn('status', ['rented', 'reserved', 'in_transit', 'lost', 'retired'])
                 ->whereDoesntHave('maintenanceOrders',
                     fn (Builder $query) => $query->whereIn('status', ['reported', 'in_progress']))
                 ->with(['product:id,sku,name', 'currentBranch:id,code,name'])

@@ -501,6 +501,10 @@ class PublicCatalogService
                 'assets as active_assets_count' => fn (Builder $assets) => $assets
                     ->where('current_branch_id', $branchId)
                     ->where('is_active', true),
+                'assets as in_transit_assets_count' => fn (Builder $assets) => $assets
+                    ->where('current_branch_id', $branchId)
+                    ->where('is_active', true)
+                    ->where('status', 'in_transit'),
             ]);
     }
 
@@ -575,6 +579,10 @@ class PublicCatalogService
                                 'assets as active_assets_count' => fn (Builder $assets) => $assets
                                     ->where('current_branch_id', $branchId)
                                     ->where('is_active', true),
+                                'assets as in_transit_assets_count' => fn (Builder $assets) => $assets
+                                    ->where('current_branch_id', $branchId)
+                                    ->where('is_active', true)
+                                    ->where('status', 'in_transit'),
                             ]),
                     ]),
             ]);
@@ -606,7 +614,8 @@ class PublicCatalogService
                                 'COALESCE(branch_inventories.quantity_on_hand, 0) > '.
                                     '(COALESCE(branch_inventories.quantity_reserved, 0) + '.
                                     'COALESCE(branch_inventories.quantity_rented, 0) + '.
-                                    'COALESCE(branch_inventories.quantity_maintenance, 0))',
+                                    'COALESCE(branch_inventories.quantity_maintenance, 0) + '.
+                                    'COALESCE(branch_inventories.quantity_in_transfer, 0))',
                             ));
                 });
         });
@@ -714,6 +723,13 @@ class PublicCatalogService
             ))->min();
         $message = "Halo {$branch['name']}, saya tertarik dengan paket {$package->name}. Apakah tersedia?";
 
+        $hasInTransitItem = $required->contains(
+            fn (array $item): bool => $item['availability']['status'] === 'in_transit',
+        );
+        $packageStatus = $availableUnits > 0
+            ? 'available'
+            : ($hasInTransitItem ? 'in_transit' : 'unavailable');
+
         $payload = [
             'id' => $package->id,
             'slug' => $package->slug,
@@ -726,8 +742,12 @@ class PublicCatalogService
             'items_count' => $items->count(),
             'availability' => [
                 'available_units' => $availableUnits,
-                'status' => $availableUnits > 0 ? 'available' : 'unavailable',
-                'label' => $availableUnits > 0 ? 'Tersedia' : 'Tanyakan ketersediaan',
+                'status' => $packageStatus,
+                'label' => match ($packageStatus) {
+                    'available' => 'Tersedia',
+                    'in_transit' => 'In Transit',
+                    default => 'Tanyakan ketersediaan',
+                },
             ],
             'is_featured' => $package->is_featured,
             'inquiry_url' => $this->whatsappUrl((string) $branch['whatsapp'], $message),
@@ -802,15 +822,17 @@ class PublicCatalogService
     }
 
     /**
-     * @return array{available_units: int, total_units: int, status: string, label: string}
+     * @return array{available_units: int, total_units: int, in_transit_units: int, status: string, label: string}
      */
     private function productAvailability(Product $product): array
     {
         if ($product->tracking_type === 'serialized') {
             $available = (int) ($product->available_assets_count ?? 0);
             $total = (int) ($product->active_assets_count ?? 0);
+            $inTransit = (int) ($product->in_transit_assets_count ?? 0);
         } else {
             $inventory = $product->branchInventories->first();
+            $inTransit = $inventory === null ? 0 : (int) $inventory->quantity_in_transfer;
             $available = $inventory === null
                 ? 0
                 : max(
@@ -818,16 +840,27 @@ class PublicCatalogService
                     (int) $inventory->quantity_on_hand
                         - (int) $inventory->quantity_reserved
                         - (int) $inventory->quantity_rented
-                        - (int) $inventory->quantity_maintenance,
+                        - (int) $inventory->quantity_maintenance
+                        - $inTransit,
                 );
             $total = $inventory === null ? 0 : (int) $inventory->quantity_on_hand;
         }
 
+        $status = $available > 0
+            ? 'available'
+            : ($inTransit > 0 ? 'in_transit' : 'unavailable');
+        $label = match ($status) {
+            'available' => 'Tersedia',
+            'in_transit' => 'In Transit',
+            default => 'Tanyakan ketersediaan',
+        };
+
         return [
             'available_units' => $available,
             'total_units' => $total,
-            'status' => $available > 0 ? 'available' : 'unavailable',
-            'label' => $available > 0 ? 'Tersedia' : 'Tanyakan ketersediaan',
+            'in_transit_units' => $inTransit,
+            'status' => $status,
+            'label' => $label,
         ];
     }
 
@@ -918,13 +951,15 @@ class PublicCatalogService
                 'quantity_reserved',
                 'quantity_rented',
                 'quantity_maintenance',
+                'quantity_in_transfer',
             ])
             ->sum(fn (object $inventory): int => max(
                 0,
                 (int) $inventory->quantity_on_hand
                     - (int) $inventory->quantity_reserved
                     - (int) $inventory->quantity_rented
-                    - (int) $inventory->quantity_maintenance,
+                    - (int) $inventory->quantity_maintenance
+                    - (int) $inventory->quantity_in_transfer,
             ));
 
         return $serialized + (int) $quantity;

@@ -27,16 +27,19 @@ class Asset extends Model
 {
     use SoftDeletes;
 
+    /** @return BelongsTo<Product, $this> */
     public function product(): BelongsTo
     {
         return $this->belongsTo(Product::class);
     }
 
+    /** @return BelongsTo<Branch, $this> */
     public function owningBranch(): BelongsTo
     {
         return $this->belongsTo(Branch::class, 'owning_branch_id');
     }
 
+    /** @return BelongsTo<Branch, $this> */
     public function currentBranch(): BelongsTo
     {
         return $this->belongsTo(Branch::class, 'current_branch_id');
@@ -52,6 +55,12 @@ class Asset extends Model
     public function maintenanceOrders(): HasMany
     {
         return $this->hasMany(MaintenanceOrder::class);
+    }
+
+    /** @return HasMany<BranchTransferItem, $this> */
+    public function transferItems(): HasMany
+    {
+        return $this->hasMany(BranchTransferItem::class);
     }
 
     /** @return HasMany<AssetStatusHistory, $this> */

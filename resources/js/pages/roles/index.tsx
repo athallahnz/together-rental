@@ -358,7 +358,7 @@ export default function RoleIndex({
                                 ? `Atur permission ${editingRole.name}`
                                 : editingRole
                                   ? `Edit ${editingRole.name}`
-                                : 'Buat role khusus'}
+                                  : 'Buat role khusus'}
                         </DialogTitle>
                         <DialogDescription>
                             {editingRole?.is_system
@@ -539,8 +539,8 @@ export default function RoleIndex({
                                     : editingRole?.is_system
                                       ? 'Simpan permission'
                                       : editingRole
-                                      ? 'Simpan perubahan'
-                                      : 'Buat role'}
+                                        ? 'Simpan perubahan'
+                                        : 'Buat role'}
                             </Button>
                         </DialogFooter>
                     </form>

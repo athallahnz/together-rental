@@ -194,6 +194,13 @@ class RentalOperationalCorrectionManager
             ->join('branch_transfers', 'branch_transfers.id', '=', 'branch_transfer_items.branch_transfer_id')
             ->where('branch_transfer_items.asset_id', $asset->id)
             ->where('branch_transfers.created_at', '>', $return->returned_at)
+            ->whereIn('branch_transfers.status', [
+                'approved',
+                'dispatched',
+                'receiving',
+                'discrepancy',
+                'completed',
+            ])
             ->exists();
 
         if ($transferred) {

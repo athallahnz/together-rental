@@ -279,6 +279,7 @@
 [FILE] phpunit.xml
 [FILE] pint.json
 [FILE] pnpm-workspace.yaml
+[FILE] project-structure.txt
 [DIR]  public
 [FILE] public\.htaccess
 [FILE] public\android-chrome-192x192.png
@@ -288,8 +289,6 @@
 [FILE] public\favicon.svg
 [FILE] public\favicon-16x16.png
 [FILE] public\favicon-32x32.png
-[FILE] public\fonts-manifest.dev.json
-[FILE] public\hot
 [FILE] public\index.php
 [FILE] public\primary-logos.png
 [FILE] public\robots.txt

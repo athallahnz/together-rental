@@ -1,5 +1,11 @@
 import { Link } from '@inertiajs/react';
-import { ArrowUpRight, Camera, CheckCircle2, Clock3 } from 'lucide-react';
+import {
+    ArrowUpRight,
+    Camera,
+    CheckCircle2,
+    Clock3,
+    Truck,
+} from 'lucide-react';
 import type { PublicBranch, PublicProduct } from '@/types';
 
 const currency = new Intl.NumberFormat('id-ID', {
@@ -46,10 +52,17 @@ export default function ProductCard({
                             className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-[11px] font-semibold ${
                                 product.availability.status === 'available'
                                     ? 'bg-emerald-50 text-emerald-700'
-                                    : 'bg-amber-50 text-amber-700'
+                                    : product.availability.status ===
+                                        'in_transit'
+                                      ? 'bg-sky-50 text-sky-700'
+                                      : 'bg-amber-50 text-amber-700'
                             }`}
                         >
-                            <CheckCircle2 className="size-3" />{' '}
+                            {product.availability.status === 'in_transit' ? (
+                                <Truck className="size-3" />
+                            ) : (
+                                <CheckCircle2 className="size-3" />
+                            )}{' '}
                             {product.availability.label}
                         </span>
                     </div>

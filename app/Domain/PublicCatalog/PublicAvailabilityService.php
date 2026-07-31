@@ -349,7 +349,7 @@ class PublicAvailabilityService
             ->where('current_branch_id', $branch->id)
             ->where('is_active', true)
             ->whereNull('deleted_at')
-            ->whereNotIn('status', ['maintenance', 'lost', 'retired', 'inactive'])
+            ->whereNotIn('status', ['maintenance', 'lost', 'retired', 'inactive', 'in_transit'])
             ->whereNotIn('condition', ['lost', 'retired'])
             ->whereNotExists(function (QueryBuilder $maintenance): void {
                 $maintenance
@@ -374,6 +374,7 @@ class PublicAvailabilityService
             ->first([
                 'quantity_on_hand',
                 'quantity_maintenance',
+                'quantity_in_transfer',
             ]);
 
         if ($inventory === null) {
@@ -383,7 +384,8 @@ class PublicAvailabilityService
         return max(
             0,
             (int) $inventory->quantity_on_hand
-                - (int) $inventory->quantity_maintenance,
+                - (int) $inventory->quantity_maintenance
+                - (int) $inventory->quantity_in_transfer,
         );
     }
 

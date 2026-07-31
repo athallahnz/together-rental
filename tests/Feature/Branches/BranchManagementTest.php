@@ -66,6 +66,12 @@ class BranchManagementTest extends TestCase
             'public_short_address',
             'public_whatsapp',
             'require_customer_identity',
+            'transfer_allow_gallery_override',
+            'transfer_dispatch_capture_mode',
+            'transfer_dispatch_min_photos',
+            'transfer_receiving_capture_mode',
+            'transfer_receiving_min_photos',
+            'transfer_require_waybill',
         ];
 
         $actualSettingKeys = DB::table('branch_settings')

@@ -1,7 +1,6 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { useState } from 'react';
 import type { FormEvent, ReactNode } from 'react';
-import AppLayout from '@/layouts/app-layout';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -116,9 +115,7 @@ export default function MaintenanceIndex({
     };
 
     return (
-        <AppLayout
-            breadcrumbs={[{ title: 'Maintenance', href: '/maintenance' }]}
-        >
+        <>
             <Head title="Maintenance Aset" />
             <div className="space-y-6 p-4 md:p-6">
                 <div className="flex flex-wrap items-center justify-between gap-3">
@@ -405,7 +402,7 @@ export default function MaintenanceIndex({
                     </form>
                 </DialogContent>
             </Dialog>
-        </AppLayout>
+        </>
     );
 }
 

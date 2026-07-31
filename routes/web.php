@@ -27,6 +27,13 @@ use App\Http\Controllers\RatePlanController;
 use App\Http\Controllers\RentalController;
 use App\Http\Controllers\RentalPackageController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\Transfers\BranchTransferApprovalController;
+use App\Http\Controllers\Transfers\BranchTransferController;
+use App\Http\Controllers\Transfers\BranchTransferDispatchController;
+use App\Http\Controllers\Transfers\BranchTransferDocumentController;
+use App\Http\Controllers\Transfers\BranchTransferExpenseController;
+use App\Http\Controllers\Transfers\BranchTransferReceivingController;
+use App\Http\Controllers\Transfers\BranchTransferSettingsController;
 use App\Http\Controllers\UserManagementController;
 use Illuminate\Support\Facades\Route;
 
@@ -231,6 +238,53 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
             ->middleware('can:rentals.reopen_return')->name('operational-corrections.store');
         Route::get('/{rental}', [RentalController::class, 'show'])
             ->middleware('can:rentals.view')->name('show');
+    });
+
+    Route::prefix('transfers')->name('transfers.')->group(function () {
+        Route::get('/settings', [BranchTransferSettingsController::class, 'edit'])
+            ->middleware('can:transfers.settings')->name('settings.edit');
+        Route::put('/settings', [BranchTransferSettingsController::class, 'update'])
+            ->middleware('can:transfers.settings')->name('settings.update');
+        Route::get('/', [BranchTransferController::class, 'index'])
+            ->middleware('can:transfers.view')->name('index');
+        Route::get('/create', [BranchTransferController::class, 'create'])
+            ->middleware('can:transfers.create')->name('create');
+        Route::post('/', [BranchTransferController::class, 'store'])
+            ->middleware('can:transfers.create')->name('store');
+        Route::get('/options', [BranchTransferController::class, 'options'])
+            ->middleware('can:transfers.view')->middleware('throttle:120,1')->name('options');
+        Route::post('/preflight', [BranchTransferController::class, 'preflight'])
+            ->name('preflight');
+        Route::get('/documents/{document}', [BranchTransferDocumentController::class, 'show'])
+            ->middleware('can:transfers.view')->name('documents.show');
+        Route::get('/inspection-media/{media}', [BranchTransferDocumentController::class, 'inspectionMedia'])
+            ->middleware('can:transfers.view')->name('inspection-media.show');
+        Route::get('/{transfer}', [BranchTransferController::class, 'show'])
+            ->middleware('can:transfers.view')->name('show');
+        Route::get('/{transfer}/edit', [BranchTransferController::class, 'edit'])
+            ->middleware('can:transfers.update')->name('edit');
+        Route::put('/{transfer}', [BranchTransferController::class, 'update'])
+            ->middleware('can:transfers.update')->name('update');
+        Route::post('/{transfer}/submit', [BranchTransferController::class, 'submit'])
+            ->middleware('can:transfers.create')->name('submit');
+        Route::post('/{transfer}/cancel', [BranchTransferController::class, 'cancel'])
+            ->middleware('can:transfers.cancel')->name('cancel');
+        Route::post('/{transfer}/approvals', [BranchTransferApprovalController::class, 'store'])
+            ->middleware('can:transfers.approve')->name('approvals.store');
+        Route::post('/{transfer}/dispatch', [BranchTransferDispatchController::class, 'store'])
+            ->middleware('can:transfers.dispatch')->name('dispatch.store');
+        Route::post('/{transfer}/receipts', [BranchTransferReceivingController::class, 'store'])
+            ->middleware('can:transfers.receive')->name('receipts.store');
+        Route::post('/{transfer}/items/{item}/resolve', [BranchTransferReceivingController::class, 'resolve'])
+            ->middleware('can:transfers.resolve_discrepancy')->name('items.resolve');
+        Route::post('/{transfer}/expenses', [BranchTransferExpenseController::class, 'store'])
+            ->middleware('can:transfers.expense')->name('expenses.store');
+        Route::put('/{transfer}/expenses/{expense}', [BranchTransferExpenseController::class, 'update'])
+            ->middleware('can:transfers.expense')->name('expenses.update');
+        Route::post('/{transfer}/expenses/{expense}/pay', [BranchTransferExpenseController::class, 'pay'])
+            ->middleware('can:transfers.expense')->name('expenses.pay');
+        Route::post('/{transfer}/expenses/{expense}/void', [BranchTransferExpenseController::class, 'void'])
+            ->middleware('can:transfers.expense')->name('expenses.void');
     });
 
     Route::prefix('maintenance')->name('maintenance.')->group(function () {
