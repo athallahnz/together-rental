@@ -27,3 +27,6 @@ yarn-error.log
 /.nova
 /.vscode
 /.zed
+
+# Generated audit packages
+Together-Kamera-Notification-Validation-Audit-*.zip
