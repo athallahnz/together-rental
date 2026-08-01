@@ -353,11 +353,27 @@ class BranchTransferController extends Controller
         BranchTransferManager $manager,
         TransferEligibilityService $eligibility,
     ): JsonResponse {
+        $contextTransfer = null;
+        $contextTransferId = $request->integer('context_transfer_id') ?: null;
+
+        if ($contextTransferId !== null) {
+            Gate::authorize('transfers.update');
+            $contextTransfer = BranchTransfer::query()
+                ->where('company_id', $request->user()->company_id)
+                ->with('items')
+                ->findOrFail($contextTransferId);
+            $this->guardAccess($request, $contextTransfer);
+        }
+
         DB::beginTransaction();
 
         try {
             $transfer = $manager->createDraft($request->validated(), $request->user());
-            $blockers = $eligibility->blockers($transfer);
+            $blockers = $eligibility->blockers(
+                $transfer,
+                false,
+                $contextTransfer,
+            );
             DB::rollBack();
 
             return response()->json([

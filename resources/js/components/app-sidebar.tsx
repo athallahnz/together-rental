@@ -162,14 +162,14 @@ export function AppSidebar() {
                 ...(auth.permissions['users.view']
                     ? [
                           {
-                              title: 'Pengguna',
-                              href: '/users',
-                              icon: UserRound,
-                          },
-                          {
                               title: 'Karyawan',
                               href: '/employees',
                               icon: UsersRound,
+                          },
+                          {
+                              title: 'Pengguna',
+                              href: '/users',
+                              icon: UserRound,
                           },
                       ]
                     : []),

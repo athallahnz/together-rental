@@ -13,7 +13,6 @@ import {
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import type { FormEvent, ReactNode } from 'react';
-import InputError from '@/components/input-error';
 import { TransferCameraDialog } from '@/components/transfers/transfer-camera-dialog';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -293,9 +292,18 @@ export default function TransferShow({
         key: K,
         value: EvidenceRow[K],
     ) => {
-        const next = [...dispatch.data.inspections];
-        next[index] = { ...next[index], [key]: value };
-        dispatch.setData('inspections', next);
+        dispatch.setData((current) => {
+            const next = [...current.inspections];
+            const row = next[index];
+
+            if (!row) {
+                return current;
+            }
+
+            next[index] = { ...row, [key]: value };
+
+            return { ...current, inspections: next };
+        });
     };
 
     const updateReceivingEvidence = <K extends keyof ReceivingRow>(
@@ -303,9 +311,18 @@ export default function TransferShow({
         key: K,
         value: ReceivingRow[K],
     ) => {
-        const next = [...receiving.data.items];
-        next[index] = { ...next[index], [key]: value };
-        receiving.setData('items', next);
+        receiving.setData((current) => {
+            const next = [...current.items];
+            const row = next[index];
+
+            if (!row) {
+                return current;
+            }
+
+            next[index] = { ...row, [key]: value };
+
+            return { ...current, items: next };
+        });
     };
 
     const capturePhoto = (file: File) => {
@@ -314,28 +331,42 @@ export default function TransferShow({
         }
 
         if (cameraTarget.mode === 'dispatch') {
-            const row = dispatch.data.inspections[cameraTarget.index];
-            updateDispatchEvidence(cameraTarget.index, 'photos', [
-                ...row.photos,
-                file,
-            ]);
-            updateDispatchEvidence(
-                cameraTarget.index,
-                'capture_source',
-                'camera',
-            );
-        } else {
-            const row = receiving.data.items[cameraTarget.index];
-            updateReceivingEvidence(cameraTarget.index, 'photos', [
-                ...row.photos,
-                file,
-            ]);
-            updateReceivingEvidence(
-                cameraTarget.index,
-                'capture_source',
-                'camera',
-            );
+            dispatch.setData((current) => {
+                const next = [...current.inspections];
+                const row = next[cameraTarget.index];
+
+                if (!row) {
+                    return current;
+                }
+
+                next[cameraTarget.index] = {
+                    ...row,
+                    photos: [...row.photos, file],
+                    capture_source: 'camera',
+                };
+
+                return { ...current, inspections: next };
+            });
+
+            return;
         }
+
+        receiving.setData((current) => {
+            const next = [...current.items];
+            const row = next[cameraTarget.index];
+
+            if (!row) {
+                return current;
+            }
+
+            next[cameraTarget.index] = {
+                ...row,
+                photos: [...row.photos, file],
+                capture_source: 'camera',
+            };
+
+            return { ...current, items: next };
+        });
     };
 
     const canEdit =
@@ -351,6 +382,11 @@ export default function TransferShow({
         permissions.receive &&
         ['dispatched', 'receiving', 'discrepancy'].includes(transfer.status) &&
         currentBranchId === transfer.to_branch_id;
+
+    const openDispatch = () => {
+        dispatch.clearErrors();
+        setDispatchOpen(true);
+    };
 
     const openReceiving = () => {
         receiving.clearErrors();
@@ -557,7 +593,7 @@ export default function TransferShow({
                         <CardTitle>Item dan Pemeriksaan</CardTitle>
                         <div className="flex gap-2">
                             {canDispatch && (
-                                <Button onClick={() => setDispatchOpen(true)}>
+                                <Button onClick={openDispatch}>
                                     <Truck className="size-4" />
                                     Proses Dispatch
                                 </Button>
@@ -929,6 +965,18 @@ function DispatchDialog({
     ) => void;
     onOpenCamera: (index: number) => void;
 }) {
+    const errorMessages = Object.values(form.errors).filter(
+        (message): message is string =>
+            typeof message === 'string' && message.trim() !== '',
+    );
+    const incompleteEvidenceCount = form.data.inspections.filter(
+        (inspection) => inspection.photos.length < policy.min_photos,
+    ).length;
+    const waybillMissing =
+        policy.require_waybill && form.data.waybill_number.trim() === '';
+    const confirmDisabled =
+        form.processing || incompleteEvidenceCount > 0 || waybillMissing;
+
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-h-[90vh] max-w-5xl overflow-y-auto">
@@ -1040,7 +1088,31 @@ function DispatchDialog({
                             />
                         </Field>
                     )}
-                    <InputError message={form.errors.inspections} />
+                    {errorMessages.length > 0 && (
+                        <Alert variant="destructive">
+                            <AlertTitle>
+                                Dispatch belum dapat diproses
+                            </AlertTitle>
+                            <AlertDescription>
+                                <ul className="list-disc space-y-1 pl-5">
+                                    {errorMessages.map((message) => (
+                                        <li key={message}>{message}</li>
+                                    ))}
+                                </ul>
+                            </AlertDescription>
+                        </Alert>
+                    )}
+                    {incompleteEvidenceCount > 0 && (
+                        <p className="text-sm text-destructive">
+                            Ambil minimal {policy.min_photos} foto pada setiap
+                            item sebelum konfirmasi dispatch.
+                        </p>
+                    )}
+                    {waybillMissing && (
+                        <p className="text-sm text-destructive">
+                            Nomor surat jalan wajib diisi.
+                        </p>
+                    )}
                     <DialogFooter>
                         <Button
                             type="button"
@@ -1049,7 +1121,7 @@ function DispatchDialog({
                         >
                             Batal
                         </Button>
-                        <Button disabled={form.processing}>
+                        <Button type="submit" disabled={confirmDisabled}>
                             Konfirmasi Dispatch
                         </Button>
                     </DialogFooter>

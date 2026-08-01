@@ -121,6 +121,7 @@ export function TransferCameraDialog({
 
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
+
         const context = canvas.getContext('2d');
 
         if (!context) {

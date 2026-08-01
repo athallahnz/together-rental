@@ -18,9 +18,13 @@ class TransferEligibilityService
     /**
      * @return list<array{code: string, field: string, message: string, asset_id?: int, asset_code?: string, source_type?: string, source_id?: int, source_number?: string, starts_at?: string|null, ends_at?: string|null}>
      */
-    public function blockers(BranchTransfer $transfer, bool $forDispatch = false): array
-    {
+    public function blockers(
+        BranchTransfer $transfer,
+        bool $forDispatch = false,
+        ?BranchTransfer $contextTransfer = null,
+    ): array {
         $transfer->loadMissing(['items.asset', 'items.product']);
+        $contextTransfer?->loadMissing('items');
         $blockers = [];
 
         if ($transfer->planned_dispatch_at === null) {
@@ -37,7 +41,12 @@ class TransferEligibilityService
             if ($item->asset_id !== null) {
                 $blockers = [
                     ...$blockers,
-                    ...$this->serializedBlockers($transfer, $item, $forDispatch),
+                    ...$this->serializedBlockers(
+                        $transfer,
+                        $item,
+                        $forDispatch,
+                        $contextTransfer,
+                    ),
                 ];
 
                 continue;
@@ -45,16 +54,24 @@ class TransferEligibilityService
 
             $blockers = [
                 ...$blockers,
-                ...$this->pooledBlockers($transfer, $item, $forDispatch),
+                ...$this->pooledBlockers(
+                    $transfer,
+                    $item,
+                    $forDispatch,
+                    $contextTransfer,
+                ),
             ];
         }
 
         return $blockers;
     }
 
-    public function assertEligible(BranchTransfer $transfer, bool $forDispatch = false): void
-    {
-        $blockers = $this->blockers($transfer, $forDispatch);
+    public function assertEligible(
+        BranchTransfer $transfer,
+        bool $forDispatch = false,
+        ?BranchTransfer $contextTransfer = null,
+    ): void {
+        $blockers = $this->blockers($transfer, $forDispatch, $contextTransfer);
 
         if ($blockers === []) {
             return;
@@ -72,6 +89,7 @@ class TransferEligibilityService
         BranchTransfer $transfer,
         BranchTransferItem $item,
         bool $forDispatch,
+        ?BranchTransfer $contextTransfer,
     ): array {
         $asset = $item->asset;
 
@@ -84,7 +102,10 @@ class TransferEligibilityService
         }
 
         $blockers = [];
-        $expectedStatus = $forDispatch ? 'in_transit' : 'available';
+        $heldByContext = $this->contextHoldsAsset($contextTransfer, $asset->id);
+        $allowedStatuses = $forDispatch
+            ? ['in_transit']
+            : ($heldByContext ? ['available', 'in_transit'] : ['available']);
 
         if (! $asset->is_active) {
             $blockers[] = $this->assetBlocker($asset, 'ASSET_INACTIVE', 'Aset tidak aktif.');
@@ -98,7 +119,7 @@ class TransferEligibilityService
             $blockers[] = $this->assetBlocker($asset, 'PRODUCT_MISMATCH', 'Produk aset tidak sesuai dengan item transfer.');
         }
 
-        if ($asset->status !== $expectedStatus) {
+        if (! in_array($asset->status, $allowedStatuses, true)) {
             $message = $forDispatch
                 ? 'Aset tidak lagi berada pada status in transit.'
                 : 'Aset harus berstatus tersedia sebelum transfer disetujui.';
@@ -163,10 +184,15 @@ class TransferEligibilityService
             ];
         }
 
+        $excludedTransferIds = [$transfer->id];
+        if ($contextTransfer !== null && $contextTransfer->id !== $transfer->id) {
+            $excludedTransferIds[] = $contextTransfer->id;
+        }
+
         $otherTransfer = DB::table('branch_transfer_items')
             ->join('branch_transfers', 'branch_transfers.id', '=', 'branch_transfer_items.branch_transfer_id')
             ->where('branch_transfer_items.asset_id', $asset->id)
-            ->where('branch_transfers.id', '!=', $transfer->id)
+            ->whereNotIn('branch_transfers.id', $excludedTransferIds)
             ->whereIn('branch_transfers.status', [
                 TransferStatus::Approved->value,
                 TransferStatus::Dispatched->value,
@@ -213,6 +239,7 @@ class TransferEligibilityService
         BranchTransfer $transfer,
         BranchTransferItem $item,
         bool $forDispatch,
+        ?BranchTransfer $contextTransfer,
     ): array {
         $inventory = BranchInventory::query()
             ->where('branch_id', $transfer->from_branch_id)
@@ -227,14 +254,18 @@ class TransferEligibilityService
             ]];
         }
 
-        $heldByThisTransfer = $forDispatch ? $item->quantity : 0;
+        $heldByCurrentTransfer = $forDispatch ? $item->quantity : 0;
+        $heldByContext = $forDispatch
+            ? 0
+            : $this->contextHeldQuantity($contextTransfer, $item->product_id);
         $available = max(0,
             $inventory->quantity_on_hand
             - $inventory->quantity_reserved
             - $inventory->quantity_rented
             - $inventory->quantity_maintenance
             - $inventory->quantity_in_transfer
-            + $heldByThisTransfer,
+            + $heldByCurrentTransfer
+            + $heldByContext,
         );
 
         if ($available < $item->quantity) {
@@ -246,6 +277,36 @@ class TransferEligibilityService
         }
 
         return [];
+    }
+
+    private function contextHoldsAsset(?BranchTransfer $contextTransfer, int $assetId): bool
+    {
+        if ($contextTransfer === null || ! $contextTransfer->status->holdsInventory()) {
+            return false;
+        }
+
+        return $contextTransfer->items->contains(
+            static fn (BranchTransferItem $item): bool => $item->asset_id === $assetId,
+        );
+    }
+
+    private function contextHeldQuantity(?BranchTransfer $contextTransfer, int $productId): int
+    {
+        if ($contextTransfer === null || ! $contextTransfer->status->holdsInventory()) {
+            return 0;
+        }
+
+        return $contextTransfer->items
+            ->filter(
+                static fn (BranchTransferItem $item): bool => $item->asset_id === null
+                    && $item->product_id === $productId,
+            )
+            ->sum(
+                static fn (BranchTransferItem $item): int => max(
+                    0,
+                    $item->quantity - $item->received_quantity,
+                ),
+            );
     }
 
     /** @return array{code: string, field: string, message: string, asset_id: int, asset_code: string} */

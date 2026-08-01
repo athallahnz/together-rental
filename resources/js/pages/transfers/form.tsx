@@ -243,7 +243,11 @@ export default function TransferForm({
                 Accept: 'application/json',
                 ...(token ? { 'X-CSRF-TOKEN': token } : {}),
             },
-            body: JSON.stringify({ ...form.data, submit: false }),
+            body: JSON.stringify({
+                ...form.data,
+                submit: false,
+                context_transfer_id: transfer?.id ?? null,
+            }),
         });
         const payload = (await response.json()) as {
             eligible?: boolean;

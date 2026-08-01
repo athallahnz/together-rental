@@ -124,4 +124,42 @@ class BranchTransferEligibilityTest extends TestCase
 
         $this->assertDatabaseCount('branch_transfers', 0);
     }
+
+    public function test_approved_transfer_preflight_ignores_its_own_hold_context(): void
+    {
+        $fixture = $this->transferFixture();
+
+        $this->actingAs($fixture['originManager'])
+            ->post(
+                route('transfers.store'),
+                $this->serializedPayload($fixture, true),
+            )
+            ->assertSessionHasNoErrors();
+        $transfer = BranchTransfer::query()->firstOrFail();
+
+        $this->actingAs($fixture['destinationManager'])
+            ->post(route('transfers.approvals.store', $transfer), [
+                'side' => 'destination',
+                'decision' => 'approved',
+                'notes' => 'Cabang tujuan siap menerima unit.',
+                'revision_number' => $transfer->revision_number,
+            ])
+            ->assertSessionHasNoErrors();
+
+        $transfer->refresh();
+        $this->assertSame('approved', $transfer->status->value);
+        $this->assertSame('in_transit', $fixture['asset']->fresh()->status);
+
+        $this->actingAs($fixture['originManager'])
+            ->postJson(route('transfers.preflight'), [
+                ...$this->serializedPayload($fixture),
+                'context_transfer_id' => $transfer->id,
+                'lock_version' => $transfer->lock_version,
+            ])
+            ->assertOk()
+            ->assertJsonPath('eligible', true)
+            ->assertJsonCount(0, 'blockers');
+
+        $this->assertDatabaseCount('branch_transfers', 1);
+    }
 }
