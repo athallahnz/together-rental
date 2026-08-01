@@ -1,0 +1,9 @@
+{
+    "Profile updated.": "Profil berhasil diperbarui.",
+    "Password updated.": "Kata sandi berhasil diperbarui.",
+    "The given data was invalid.": "Data yang diberikan tidak valid.",
+    "Unauthenticated.": "Sesi Anda telah berakhir. Silakan masuk kembali.",
+    "Forbidden": "Anda tidak memiliki izin untuk melakukan tindakan ini.",
+    "Not Found": "Halaman atau data tidak ditemukan.",
+    "Too Many Requests": "Terlalu banyak permintaan. Coba kembali beberapa saat lagi."
+}

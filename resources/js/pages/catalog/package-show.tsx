@@ -14,6 +14,7 @@ import {
     PackageItemFormDialog,
     PackageRateFormDialog,
 } from '@/components/catalog/catalog-dialogs';
+import { useConfirmDialog } from '@/components/confirm-dialog-provider';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -49,6 +50,7 @@ export default function PackageShow({
     permissions,
 }: Props) {
     const { errors } = usePage().props;
+    const confirm = useConfirmDialog();
     const [packageDialog, setPackageDialog] = useState(false);
     const [itemDialog, setItemDialog] = useState(false);
     const [rateDialog, setRateDialog] = useState(false);
@@ -205,19 +207,27 @@ export default function PackageShow({
                                                 size="icon"
                                                 variant="ghost"
                                                 aria-label="Hapus item paket"
-                                                onClick={() => {
-                                                    if (
-                                                        window.confirm(
-                                                            `Keluarkan ${item.product?.name ?? 'produk'} dari paket?`,
-                                                        )
-                                                    ) {
-                                                        router.delete(
-                                                            `/catalog/package-items/${item.id}`,
-                                                            {
-                                                                preserveScroll: true,
-                                                            },
-                                                        );
+                                                onClick={async () => {
+                                                    const confirmed =
+                                                        await confirm({
+                                                            title: 'Keluarkan item paket?',
+                                                            description: `${item.product?.name ?? 'Produk'} akan dihapus dari komposisi paket ini.`,
+                                                            confirmLabel:
+                                                                'Keluarkan item',
+                                                            variant:
+                                                                'destructive',
+                                                        });
+
+                                                    if (!confirmed) {
+                                                        return;
                                                     }
+
+                                                    router.delete(
+                                                        `/catalog/package-items/${item.id}`,
+                                                        {
+                                                            preserveScroll: true,
+                                                        },
+                                                    );
                                                 }}
                                             >
                                                 <Trash2 />
@@ -311,19 +321,28 @@ export default function PackageShow({
                                                         size="icon"
                                                         variant="ghost"
                                                         aria-label="Hapus harga"
-                                                        onClick={() => {
-                                                            if (
-                                                                window.confirm(
-                                                                    'Hapus harga paket ini?',
-                                                                )
-                                                            ) {
-                                                                router.delete(
-                                                                    `/catalog/package-rates/${rate.id}`,
-                                                                    {
-                                                                        preserveScroll: true,
-                                                                    },
-                                                                );
+                                                        onClick={async () => {
+                                                            const confirmed =
+                                                                await confirm({
+                                                                    title: 'Hapus harga paket?',
+                                                                    description:
+                                                                        'Harga ini akan dihapus dan tidak lagi tersedia untuk transaksi baru.',
+                                                                    confirmLabel:
+                                                                        'Hapus harga',
+                                                                    variant:
+                                                                        'destructive',
+                                                                });
+
+                                                            if (!confirmed) {
+                                                                return;
                                                             }
+
+                                                            router.delete(
+                                                                `/catalog/package-rates/${rate.id}`,
+                                                                {
+                                                                    preserveScroll: true,
+                                                                },
+                                                            );
                                                         }}
                                                     >
                                                         <Trash2 />
@@ -384,16 +403,21 @@ export default function PackageShow({
                         <CardContent>
                             <Button
                                 variant="destructive"
-                                onClick={() => {
-                                    if (
-                                        window.confirm(
-                                            `Arsipkan paket ${rentalPackage.name}?`,
-                                        )
-                                    ) {
-                                        router.delete(
-                                            `/catalog/packages/${rentalPackage.id}`,
-                                        );
+                                onClick={async () => {
+                                    const confirmed = await confirm({
+                                        title: 'Arsipkan paket?',
+                                        description: `${rentalPackage.name} tidak akan tersedia untuk transaksi baru. Histori tetap disimpan.`,
+                                        confirmLabel: 'Arsipkan paket',
+                                        variant: 'destructive',
+                                    });
+
+                                    if (!confirmed) {
+                                        return;
                                     }
+
+                                    router.delete(
+                                        `/catalog/packages/${rentalPackage.id}`,
+                                    );
                                 }}
                             >
                                 <Trash2 />

@@ -9,13 +9,13 @@ export default function AlertError({
     title?: string;
 }) {
     return (
-        <Alert variant="destructive">
+        <Alert variant="destructive" role="alert" aria-live="polite">
             <AlertCircleIcon />
-            <AlertTitle>{title || 'Something went wrong.'}</AlertTitle>
+            <AlertTitle>{title || 'Tindakan belum dapat diproses'}</AlertTitle>
             <AlertDescription>
                 <ul className="list-inside list-disc text-sm">
-                    {Array.from(new Set(errors)).map((error, index) => (
-                        <li key={index}>{error}</li>
+                    {Array.from(new Set(errors)).map((error) => (
+                        <li key={error}>{error}</li>
                     ))}
                 </ul>
             </AlertDescription>

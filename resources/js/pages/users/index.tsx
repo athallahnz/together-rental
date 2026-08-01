@@ -15,6 +15,7 @@ import {
 import type { FormEvent } from 'react';
 import { useMemo, useState } from 'react';
 import { AccessNav } from '@/components/access-nav';
+import { useConfirmDialog } from '@/components/confirm-dialog-provider';
 import InputError from '@/components/input-error';
 import { PaginationLinks } from '@/components/pagination-links';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -167,6 +168,7 @@ export default function UserIndex({
     currentUserId,
 }: Props) {
     const { errors: pageErrors } = usePage().props;
+    const confirm = useConfirmDialog();
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editingUser, setEditingUser] = useState<ManagedUser | null>(null);
     const [search, setSearch] = useState(filters.search);
@@ -261,11 +263,16 @@ export default function UserIndex({
         );
     };
 
-    const toggleStatus = (user: ManagedUser) => {
-        const action =
-            user.status === 'active' ? 'menonaktifkan' : 'mengaktifkan';
+    const toggleStatus = async (user: ManagedUser) => {
+        const activating = user.status !== 'active';
+        const confirmed = await confirm({
+            title: activating ? 'Aktifkan akun?' : 'Nonaktifkan akun?',
+            description: `Akun ${user.name} akan ${activating ? 'diaktifkan kembali' : 'dinonaktifkan dan tidak dapat masuk ke sistem'}.`,
+            confirmLabel: activating ? 'Aktifkan' : 'Nonaktifkan',
+            variant: activating ? 'default' : 'destructive',
+        });
 
-        if (!window.confirm(`Yakin ingin ${action} akun ${user.name}?`)) {
+        if (!confirmed) {
             return;
         }
 

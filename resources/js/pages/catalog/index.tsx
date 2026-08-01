@@ -17,6 +17,7 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { BrandMark } from '@/components/catalog/brand-mark';
+import { useConfirmDialog } from '@/components/confirm-dialog-provider';
 import {
     CategoryFormDialog,
     PackageFormDialog,
@@ -704,6 +705,8 @@ function CategoriesSection({
     permissions: CatalogPermissions;
     onEdit: (category: ProductCategory) => void;
 }) {
+    const confirm = useConfirmDialog();
+
     return (
         <Card>
             <CardHeader>
@@ -772,19 +775,25 @@ function CategoriesSection({
                                                 0 ||
                                             (category.children_count ?? 0) > 0
                                         }
-                                        onClick={() => {
-                                            if (
-                                                window.confirm(
-                                                    `Arsipkan kategori ${category.name}?`,
-                                                )
-                                            ) {
-                                                router.delete(
-                                                    `/catalog/categories/${category.id}`,
-                                                    {
-                                                        preserveScroll: true,
-                                                    },
-                                                );
+                                        onClick={async () => {
+                                            const confirmed = await confirm({
+                                                title: 'Arsipkan kategori?',
+                                                description: `${category.name} tidak akan tersedia untuk pengelompokan produk baru.`,
+                                                confirmLabel:
+                                                    'Arsipkan kategori',
+                                                variant: 'destructive',
+                                            });
+
+                                            if (!confirmed) {
+                                                return;
                                             }
+
+                                            router.delete(
+                                                `/catalog/categories/${category.id}`,
+                                                {
+                                                    preserveScroll: true,
+                                                },
+                                            );
                                         }}
                                     >
                                         <Trash2 />

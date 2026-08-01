@@ -22,6 +22,7 @@ import {
 } from 'lucide-react';
 import type { FormEvent } from 'react';
 import { useState } from 'react';
+import { useConfirmDialog } from '@/components/confirm-dialog-provider';
 import { CustomerFormDialog } from '@/components/customers/customer-form-dialog';
 import InputError from '@/components/input-error';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -87,6 +88,8 @@ type BookingSummary = {
     branch: AccessBranch | null;
 };
 
+type Confirm = ReturnType<typeof useConfirmDialog>;
+
 type Props = {
     customer: Customer;
     statistics: {
@@ -118,6 +121,7 @@ export default function CustomerShow({
     permissions,
 }: Props) {
     const { errors: pageErrors } = usePage().props;
+    const confirm = useConfirmDialog();
     const [editOpen, setEditOpen] = useState(false);
     const [identityOpen, setIdentityOpen] = useState(false);
     const [addressOpen, setAddressOpen] = useState(false);
@@ -130,12 +134,15 @@ export default function CustomerShow({
     const addresses = customer.addresses ?? [];
     const loyalty = customer.loyalty_account;
 
-    const archiveCustomer = () => {
-        if (
-            !window.confirm(
-                `Arsipkan ${customer.name}? Data histori tetap disimpan, tetapi pelanggan tidak tampil pada transaksi baru.`,
-            )
-        ) {
+    const archiveCustomer = async () => {
+        const confirmed = await confirm({
+            title: 'Arsipkan pelanggan?',
+            description: `${customer.name} tidak akan tersedia untuk transaksi baru. Seluruh histori tetap disimpan.`,
+            confirmLabel: 'Arsipkan pelanggan',
+            variant: 'destructive',
+        });
+
+        if (!confirmed) {
             return;
         }
 
@@ -505,8 +512,9 @@ export default function CustomerShow({
                                                         variant="ghost"
                                                         aria-label="Hapus identitas"
                                                         onClick={() =>
-                                                            destroyIdentity(
+                                                            void destroyIdentity(
                                                                 identity,
+                                                                confirm,
                                                             )
                                                         }
                                                     >
@@ -595,7 +603,10 @@ export default function CustomerShow({
                                                     variant="ghost"
                                                     aria-label="Hapus alamat"
                                                     onClick={() =>
-                                                        destroyAddress(address)
+                                                        void destroyAddress(
+                                                            address,
+                                                            confirm,
+                                                        )
                                                     }
                                                 >
                                                     <Trash2 />
@@ -1312,8 +1323,15 @@ function RiskBadge({ risk }: { risk: Customer['risk_level'] }) {
     );
 }
 
-function destroyIdentity(identity: CustomerIdentity) {
-    if (!window.confirm(`Hapus identitas ${identity.number}?`)) {
+async function destroyIdentity(identity: CustomerIdentity, confirm: Confirm) {
+    const confirmed = await confirm({
+        title: 'Hapus identitas pelanggan?',
+        description: `Identitas ${identity.number} akan dihapus dari profil pelanggan.`,
+        confirmLabel: 'Hapus identitas',
+        variant: 'destructive',
+    });
+
+    if (!confirmed) {
         return;
     }
 
@@ -1322,8 +1340,15 @@ function destroyIdentity(identity: CustomerIdentity) {
     });
 }
 
-function destroyAddress(address: CustomerAddress) {
-    if (!window.confirm('Hapus alamat pelanggan ini?')) {
+async function destroyAddress(address: CustomerAddress, confirm: Confirm) {
+    const confirmed = await confirm({
+        title: 'Hapus alamat pelanggan?',
+        description: 'Alamat ini akan dihapus dari profil pelanggan.',
+        confirmLabel: 'Hapus alamat',
+        variant: 'destructive',
+    });
+
+    if (!confirmed) {
         return;
     }
 

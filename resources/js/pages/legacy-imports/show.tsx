@@ -16,6 +16,7 @@ import {
     UploadCloud,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import { useConfirmDialog } from '@/components/confirm-dialog-provider';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -197,6 +198,7 @@ export default function LegacyImportShow({
     filters,
     permissions,
 }: Props) {
+    const confirm = useConfirmDialog();
     const [activeAction, setActiveAction] = useState<string | null>(null);
     const currentStep =
         batch.status === 'failed'
@@ -229,18 +231,23 @@ export default function LegacyImportShow({
         return () => window.clearInterval(timer);
     }, [batch.status]);
 
-    const runAction = () => {
+    const runAction = async () => {
         if (!nextAction) {
             return;
         }
 
-        if (
-            nextAction.key === 'execution' &&
-            !window.confirm(
-                'Execute akan menulis data RentalV1 ke tabel operasional V2 dalam satu transaksi. Lanjutkan?',
-            )
-        ) {
-            return;
+        if (nextAction.key === 'execution') {
+            const confirmed = await confirm({
+                title: 'Execute import RentalV1?',
+                description:
+                    'Data hasil validasi akan ditulis ke tabel operasional V2 dalam satu transaksi. Pastikan mapping dan blocker sudah diperiksa.',
+                confirmLabel: 'Execute import',
+                variant: 'destructive',
+            });
+
+            if (!confirmed) {
+                return;
+            }
         }
 
         setActiveAction(nextAction.key);

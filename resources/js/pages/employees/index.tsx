@@ -13,6 +13,7 @@ import {
 import type { FormEvent } from 'react';
 import { useMemo, useState } from 'react';
 import { AccessNav } from '@/components/access-nav';
+import { useConfirmDialog } from '@/components/confirm-dialog-provider';
 import InputError from '@/components/input-error';
 import { PaginationLinks } from '@/components/pagination-links';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -180,6 +181,7 @@ export default function EmployeeIndex({
     permissions,
 }: Props) {
     const { errors: pageErrors } = usePage().props;
+    const confirm = useConfirmDialog();
     const [search, setSearch] = useState(filters.search);
     const [employeeDialogOpen, setEmployeeDialogOpen] = useState(false);
     const [positionDialogOpen, setPositionDialogOpen] = useState(false);
@@ -283,11 +285,16 @@ export default function EmployeeIndex({
         );
     };
 
-    const toggleEmployeeStatus = (employee: Employee) => {
-        const action =
-            employee.status === 'active' ? 'menonaktifkan' : 'mengaktifkan';
+    const toggleEmployeeStatus = async (employee: Employee) => {
+        const activating = employee.status !== 'active';
+        const confirmed = await confirm({
+            title: activating ? 'Aktifkan karyawan?' : 'Nonaktifkan karyawan?',
+            description: `${employee.name} akan ${activating ? 'diaktifkan kembali' : 'dinonaktifkan dari operasional aktif'}.`,
+            confirmLabel: activating ? 'Aktifkan' : 'Nonaktifkan',
+            variant: activating ? 'default' : 'destructive',
+        });
 
-        if (!window.confirm(`Yakin ingin ${action} ${employee.name}?`)) {
+        if (!confirmed) {
             return;
         }
 
@@ -298,12 +305,16 @@ export default function EmployeeIndex({
         );
     };
 
-    const togglePositionStatus = (position: Position) => {
-        const action = position.is_active ? 'menonaktifkan' : 'mengaktifkan';
+    const togglePositionStatus = async (position: Position) => {
+        const activating = !position.is_active;
+        const confirmed = await confirm({
+            title: activating ? 'Aktifkan jabatan?' : 'Nonaktifkan jabatan?',
+            description: `Jabatan ${position.name} akan ${activating ? 'diaktifkan kembali' : 'dinonaktifkan untuk penugasan baru'}.`,
+            confirmLabel: activating ? 'Aktifkan' : 'Nonaktifkan',
+            variant: activating ? 'default' : 'destructive',
+        });
 
-        if (
-            !window.confirm(`Yakin ingin ${action} jabatan ${position.name}?`)
-        ) {
+        if (!confirmed) {
             return;
         }
 

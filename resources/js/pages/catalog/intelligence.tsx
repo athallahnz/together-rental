@@ -17,6 +17,7 @@ import {
 import { useState } from 'react';
 import type { FormEvent } from 'react';
 import { BrandMark } from '@/components/catalog/brand-mark';
+import { useConfirmDialog } from '@/components/confirm-dialog-provider';
 import { PaginationLinks } from '@/components/pagination-links';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -389,6 +390,8 @@ export default function CatalogIntelligence({
 }
 
 function RunActions({ run, busy }: { run: EnrichmentRun; busy: boolean }) {
+    const confirm = useConfirmDialog();
+
     return (
         <Card>
             <CardContent className="flex flex-col gap-4 p-5 lg:flex-row lg:items-center lg:justify-between">
@@ -426,18 +429,22 @@ function RunActions({ run, busy }: { run: EnrichmentRun; busy: boolean }) {
                             </Button>
                             <Button
                                 disabled={run.approved_count === 0}
-                                onClick={() => {
-                                    if (
-                                        window.confirm(
-                                            `Execute ${run.approved_count} kandidat yang disetujui?`,
-                                        )
-                                    ) {
-                                        router.post(
-                                            `/catalog/intelligence/runs/${run.id}/execute`,
-                                            {},
-                                            { preserveScroll: true },
-                                        );
+                                onClick={async () => {
+                                    const confirmed = await confirm({
+                                        title: 'Jalankan enrichment?',
+                                        description: `${run.approved_count} kandidat yang disetujui akan diterapkan ke master produk dan diverifikasi.`,
+                                        confirmLabel: 'Execute & verify',
+                                    });
+
+                                    if (!confirmed) {
+                                        return;
                                     }
+
+                                    router.post(
+                                        `/catalog/intelligence/runs/${run.id}/execute`,
+                                        {},
+                                        { preserveScroll: true },
+                                    );
                                 }}
                             >
                                 <DatabaseZap />
@@ -448,18 +455,24 @@ function RunActions({ run, busy }: { run: EnrichmentRun; busy: boolean }) {
                     {run.status === 'executed' && (
                         <Button
                             variant="outline"
-                            onClick={() => {
-                                if (
-                                    window.confirm(
-                                        'Rollback hasil enrichment run ini?',
-                                    )
-                                ) {
-                                    router.post(
-                                        `/catalog/intelligence/runs/${run.id}/rollback`,
-                                        {},
-                                        { preserveScroll: true },
-                                    );
+                            onClick={async () => {
+                                const confirmed = await confirm({
+                                    title: 'Rollback enrichment?',
+                                    description:
+                                        'Perubahan dari run ini akan dibatalkan sejauh data masih aman untuk dikembalikan.',
+                                    confirmLabel: 'Rollback',
+                                    variant: 'destructive',
+                                });
+
+                                if (!confirmed) {
+                                    return;
                                 }
+
+                                router.post(
+                                    `/catalog/intelligence/runs/${run.id}/rollback`,
+                                    {},
+                                    { preserveScroll: true },
+                                );
                             }}
                         >
                             <RotateCcw />
@@ -665,6 +678,7 @@ function BrandVisualManager({ brands }: { brands: CatalogBrand[] }) {
 }
 
 function BrandVisualCard({ brand }: { brand: CatalogBrand }) {
+    const confirm = useConfirmDialog();
     const [fileInputKey, setFileInputKey] = useState(0);
     const form = useForm<{
         logo: File | null;
@@ -747,17 +761,22 @@ function BrandVisualCard({ brand }: { brand: CatalogBrand }) {
                             size="sm"
                             variant="ghost"
                             disabled={form.processing}
-                            onClick={() => {
-                                if (
-                                    window.confirm(
-                                        `Hapus logo brand ${brand.name}?`,
-                                    )
-                                ) {
-                                    router.delete(
-                                        `/catalog/brands/${brand.id}/logo`,
-                                        { preserveScroll: true },
-                                    );
+                            onClick={async () => {
+                                const confirmed = await confirm({
+                                    title: 'Hapus logo brand?',
+                                    description: `Logo ${brand.name} akan dihapus dari katalog.`,
+                                    confirmLabel: 'Hapus logo',
+                                    variant: 'destructive',
+                                });
+
+                                if (!confirmed) {
+                                    return;
                                 }
+
+                                router.delete(
+                                    `/catalog/brands/${brand.id}/logo`,
+                                    { preserveScroll: true },
+                                );
                             }}
                         >
                             <X />
