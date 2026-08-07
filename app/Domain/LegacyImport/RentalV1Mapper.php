@@ -2,6 +2,7 @@
 
 namespace App\Domain\LegacyImport;
 
+use App\Models\Branch;
 use App\Models\LegacyImportBatch;
 use Illuminate\Support\Facades\DB;
 use RuntimeException;
@@ -9,28 +10,50 @@ use Throwable;
 
 final class RentalV1Mapper
 {
-    public function __construct(private readonly LegacyImportRecorder $recorder) {}
+    public function __construct(
+        private readonly LegacyImportRecorder $recorder,
+        private readonly LegacyImportTargetManager $targetManager,
+    ) {}
 
     public function confirmBranch(LegacyImportBatch $batch, int $userId): LegacyImportBatch
     {
-        $this->guard($batch);
-        $branchCode = (string) config('legacy-import.branch_code', 'PNG');
-        $branch = DB::table('branches')->where('code', $branchCode)->first();
+        $branch = Branch::query()->find($batch->branch_id);
 
-        if ($branch === null || (int) $branch->id !== (int) $batch->branch_id) {
-            throw new RuntimeException(
-                "Cabang tujuan [{$branchCode}] tidak tersedia atau tidak cocok dengan batch.",
-            );
+        if ($branch === null) {
+            throw new RuntimeException('Cabang tujuan import tidak ditemukan.');
+        }
+
+        return $this->confirmTarget($batch, $branch, (string) $batch->import_prefix, $userId);
+    }
+
+    public function confirmTarget(
+        LegacyImportBatch $batch,
+        Branch $branch,
+        string $prefix,
+        int $userId,
+    ): LegacyImportBatch {
+        $this->guard($batch);
+        $prefix = strtoupper(trim($prefix));
+        $this->targetManager->assertTargetIsValid($branch, $prefix, $batch);
+
+        if ((int) $branch->id !== (int) $batch->branch_id) {
+            throw new RuntimeException('Cabang mapping tidak cocok dengan tujuan batch. Simpan perubahan tujuan dan ulangi Preview terlebih dahulu.');
+        }
+
+        if ($batch->import_prefix !== $prefix) {
+            throw new RuntimeException('PREFIX mapping tidak cocok dengan batch. Simpan perubahan PREFIX dan ulangi Preview terlebih dahulu.');
         }
 
         try {
-            DB::transaction(function () use ($batch, $branch, $branchCode, $userId): void {
+            DB::transaction(function () use ($batch, $branch, $prefix, $userId): void {
                 DB::table('legacy_import_mappings')->where('batch_id', $batch->id)->delete();
 
                 $now = now();
                 $rows = [
                     $this->mapping($batch, 'branch', (string) $branch->name, 'branches', (int) $branch->id, [
-                        'branch_code' => $branchCode,
+                        'branch_code' => $branch->code,
+                        'source_city' => $batch->source_city,
+                        'import_prefix' => $prefix,
                     ], $userId, $now),
                     $this->mapping($batch, 'gender', 'Laki-laki', null, null, ['value' => 'male'], $userId, $now),
                     $this->mapping($batch, 'gender', 'Perempuan', null, null, ['value' => 'female'], $userId, $now),
@@ -70,6 +93,9 @@ final class RentalV1Mapper
 
             $options = $batch->options ?? [];
             unset($options['failed_step']);
+            $options['branch_code'] = $branch->code;
+            $options['source_city'] = $batch->source_city;
+            $options['import_prefix'] = $prefix;
 
             $batch->update([
                 'status' => 'mapped',
@@ -85,7 +111,12 @@ final class RentalV1Mapper
                 $userId,
                 'validated',
                 'mapped',
-                ['branch_code' => $branchCode],
+                [
+                    'branch_id' => (int) $branch->id,
+                    'branch_code' => $branch->code,
+                    'source_city' => $batch->source_city,
+                    'import_prefix' => $prefix,
+                ],
             );
 
             return $batch->fresh();
@@ -107,6 +138,25 @@ final class RentalV1Mapper
 
         if ($batch->error_rows > 0) {
             throw new RuntimeException('Mapping diblokir karena masih ada baris error.');
+        }
+
+        if (! preg_match('/^[A-Z]{3}$/', (string) $batch->import_prefix)) {
+            throw new RuntimeException('PREFIX import belum valid.');
+        }
+
+        if (trim((string) $batch->source_city) === '') {
+            throw new RuntimeException('Nama kota tujuan import belum tersedia.');
+        }
+
+        $options = $batch->options ?? [];
+
+        if (
+            ($options['import_prefix'] ?? null) !== $batch->import_prefix
+            || ($options['source_city'] ?? null) !== $batch->source_city
+        ) {
+            throw new RuntimeException(
+                'Validasi belum memakai identitas kota/PREFIX terbaru. Simpan tujuan import lalu ulangi Preview dan Validasi.',
+            );
         }
     }
 

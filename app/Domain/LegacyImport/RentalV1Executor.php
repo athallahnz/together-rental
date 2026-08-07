@@ -20,7 +20,7 @@ final class RentalV1Executor
 
     private int $companyId;
 
-    private string $branchCode;
+    private string $importPrefix;
 
     /** @var array<string, array{target_table: string, target_id: int}> */
     private array $idMaps = [];
@@ -44,12 +44,20 @@ final class RentalV1Executor
         $this->branchId = (int) $batch->branch_id;
         $branch = DB::table('branches')
             ->where('id', $this->branchId)
-            ->first(['company_id', 'code']);
+            ->first(['company_id', 'code', 'city']);
         $this->companyId = (int) ($branch?->company_id ?? 0);
-        $this->branchCode = strtoupper(trim((string) ($branch?->code ?? '')));
+        $this->importPrefix = strtoupper(trim((string) $batch->import_prefix));
 
-        if ($this->companyId < 1 || $this->branchCode === '') {
-            throw new RuntimeException('Company atau kode cabang import tidak ditemukan.');
+        if ($this->companyId < 1 || $branch === null) {
+            throw new RuntimeException('Company atau cabang tujuan import tidak ditemukan.');
+        }
+
+        if (! preg_match('/^[A-Z]{3}$/', $this->importPrefix)) {
+            throw new RuntimeException('PREFIX import belum valid.');
+        }
+
+        if (trim((string) $batch->source_city) === '') {
+            throw new RuntimeException('Nama kota tujuan import belum tersedia.');
         }
 
         $this->recorder->transition($batch, 'executing', 'execution_started', $userId);
@@ -124,6 +132,14 @@ final class RentalV1Executor
             throw new RuntimeException('Execute diblokir karena masih ada baris error.');
         }
 
+        if (! preg_match('/^[A-Z]{3}$/', (string) $batch->import_prefix)) {
+            throw new RuntimeException('Execute diblokir karena PREFIX import belum valid.');
+        }
+
+        if (trim((string) $batch->source_city) === '') {
+            throw new RuntimeException('Execute diblokir karena nama kota tujuan import belum tersedia.');
+        }
+
         $unconfirmed = DB::table('legacy_import_mappings')
             ->where('batch_id', $batch->id)
             ->where('is_confirmed', false)
@@ -131,6 +147,25 @@ final class RentalV1Executor
 
         if ($unconfirmed || ! DB::table('legacy_import_mappings')->where('batch_id', $batch->id)->exists()) {
             throw new RuntimeException('Mapping batch belum dikonfirmasi.');
+        }
+
+        $branchMapping = DB::table('legacy_import_mappings')
+            ->where('batch_id', $batch->id)
+            ->where('mapping_type', 'branch')
+            ->first(['target_id', 'transform_rule']);
+        $branchRule = $branchMapping?->transform_rule === null
+            ? []
+            : json_decode((string) $branchMapping->transform_rule, true, flags: JSON_THROW_ON_ERROR);
+
+        if (
+            $branchMapping === null
+            || (int) $branchMapping->target_id !== (int) $batch->branch_id
+            || ($branchRule['import_prefix'] ?? null) !== $batch->import_prefix
+            || ($branchRule['source_city'] ?? null) !== $batch->source_city
+        ) {
+            throw new RuntimeException(
+                'Mapping cabang belum memakai identitas kota/PREFIX terbaru. Simpan tujuan import lalu ulangi Preview, Validasi, dan Mapping.',
+            );
         }
     }
 
@@ -293,7 +328,7 @@ final class RentalV1Executor
         $customerId = DB::table('customers')->insertGetId([
             'company_id' => $this->companyId,
             'registered_branch_id' => $this->branchId,
-            'customer_number' => "LEG-{$this->branchCode}-{$legacyId}",
+            'customer_number' => "LEG-{$this->importPrefix}-{$legacyId}",
             'name' => RentalV1Value::string($data['customer_name'] ?? null, 150) ?? "Legacy Customer {$legacyId}",
             'gender' => RentalV1Value::gender($data['customer_jeniskelamin'] ?? null),
             'phone' => RentalV1Value::string($data['customer_nohp'] ?? null, 30),
@@ -395,7 +430,7 @@ final class RentalV1Executor
         $legacyId = RentalV1Value::integer($data['idjabatan'] ?? null);
         $positionId = DB::table('positions')->insertGetId([
             'company_id' => $this->companyId,
-            'code' => "LEG-POS-{$legacyId}",
+            'code' => "LEG-{$this->importPrefix}-POS-{$legacyId}",
             'name' => RentalV1Value::string($data['nama'] ?? null, 100) ?? "Legacy Position {$legacyId}",
             'is_active' => true,
             'created_at' => RentalV1Value::dateTime($data['tgledit'] ?? null) ?? now(),
@@ -416,7 +451,7 @@ final class RentalV1Executor
             'position_id' => $this->mappedId('jabatan', $data['idjabatan'] ?? null),
             'user_id' => null,
             'employee_number' => $this->uniqueEmployeeNumber(
-                RentalV1Value::string($data['nik'] ?? null, 40) ?? "LEG-EMP-{$legacyId}",
+                RentalV1Value::string($data['nik'] ?? null, 40) ?? "LEG-{$this->importPrefix}-EMP-{$legacyId}",
                 $legacyId,
             ),
             'name' => RentalV1Value::string($data['nama'] ?? null, 150) ?? "Legacy Employee {$legacyId}",
@@ -446,7 +481,7 @@ final class RentalV1Executor
         $legacyId = RentalV1Value::integer($data['category_id'] ?? null);
         $categoryId = DB::table('product_categories')->insertGetId([
             'company_id' => $this->companyId,
-            'code' => "LEG-CAT-{$legacyId}",
+            'code' => "LEG-{$this->importPrefix}-CAT-{$legacyId}",
             'name' => RentalV1Value::string($data['category_name'] ?? null, 100) ?? "Legacy Category {$legacyId}",
             'is_active' => true,
             'sort_order' => $legacyId,
@@ -466,7 +501,7 @@ final class RentalV1Executor
         $promotionId = DB::table('promotions')->insertGetId([
             'company_id' => $this->companyId,
             'branch_id' => $this->branchId,
-            'code' => "LEG-PROMO-{$legacyId}",
+            'code' => "LEG-{$this->importPrefix}-PROMO-{$legacyId}",
             'name' => RentalV1Value::string($data['promo_name'] ?? null, 150) ?? "Legacy Promo {$legacyId}",
             'type' => $isDiscount ? 'percentage' : 'bonus_duration',
             'value' => $isDiscount
@@ -490,7 +525,10 @@ final class RentalV1Executor
     {
         $data = $row->payload;
         $legacyId = RentalV1Value::integer($data['rentproduct_id'] ?? null);
-        $sku = RentalV1Value::string($data['rentproduct_code'] ?? null, 50) ?? "LEG-PRD-{$legacyId}";
+        $sku = $this->prefixedLegacyCode(
+            RentalV1Value::string($data['rentproduct_code'] ?? null, 50) ?? "LEG-PRD-{$legacyId}",
+            50,
+        );
         $trackingType = RentalV1Value::boolean($data['rentproduct_is_serial'] ?? null)
             ? 'serialized'
             : 'quantity';
@@ -519,7 +557,7 @@ final class RentalV1Executor
                 'product_id' => $productId,
                 'owning_branch_id' => $this->branchId,
                 'current_branch_id' => $this->branchId,
-                'asset_code' => $this->uniqueAssetCode("{$this->branchCode}-{$sku}", $legacyId),
+                'asset_code' => $this->uniqueAssetCode($sku, $legacyId),
                 'serial_number' => RentalV1Value::string($data['rentproduct_serial_number'] ?? null, 120),
                 'status' => $assetStatus,
                 'condition' => 'good',
@@ -595,7 +633,10 @@ final class RentalV1Executor
         $packageId = DB::table('packages')->insertGetId([
             'company_id' => $this->companyId,
             'branch_id' => $this->branchId,
-            'code' => RentalV1Value::string($data['package_code'] ?? null, 40) ?? "LEG-PKG-{$legacyId}",
+            'code' => $this->prefixedLegacyCode(
+                RentalV1Value::string($data['package_code'] ?? null, 40) ?? "LEG-PKG-{$legacyId}",
+                40,
+            ),
             'name' => RentalV1Value::string($data['package_name'] ?? null, 150) ?? "Legacy Package {$legacyId}",
             'description' => RentalV1Value::string($data['package_serial_number'] ?? null),
             'is_active' => RentalV1Value::boolean($data['package_active'] ?? null),
@@ -672,7 +713,7 @@ final class RentalV1Executor
             $packageId = DB::table('packages')->insertGetId([
                 'company_id' => $this->companyId,
                 'branch_id' => $this->branchId,
-                'code' => 'LEG-PROFILE-'.$profileLegacyId,
+                'code' => $this->prefixedLegacyCode('LEG-PROFILE-'.$profileLegacyId, 40),
                 'name' => $profile?->name ?? "Legacy Profile Package {$profileLegacyId}",
                 'description' => 'Generated from RentalV1 rent_product_package.',
                 'is_active' => true,
@@ -1389,6 +1430,17 @@ final class RentalV1Executor
         ]);
     }
 
+    private function prefixedLegacyCode(string $candidate, int $maxLength): string
+    {
+        $candidate = strtoupper(trim($candidate));
+
+        if (str_starts_with($candidate, $this->importPrefix.'-')) {
+            return mb_substr($candidate, 0, $maxLength);
+        }
+
+        return mb_substr($this->importPrefix.'-'.$candidate, 0, $maxLength);
+    }
+
     private function uniqueAssetCode(string $candidate, int $legacyId): string
     {
         $candidate = mb_substr($candidate, 0, 60);
@@ -1397,7 +1449,7 @@ final class RentalV1Executor
             return $candidate;
         }
 
-        return mb_substr("{$this->branchCode}-LEG-ASSET-{$legacyId}", 0, 60);
+        return mb_substr("{$this->importPrefix}-LEG-ASSET-{$legacyId}", 0, 60);
     }
 
     private function uniqueEmployeeNumber(string $candidate, int $legacyId): string
@@ -1409,7 +1461,7 @@ final class RentalV1Executor
             return $candidate;
         }
 
-        $suffix = "-L{$legacyId}";
+        $suffix = "-{$this->importPrefix}-L{$legacyId}";
 
         return mb_substr($candidate, 0, 40 - mb_strlen($suffix)).$suffix;
     }
@@ -1640,7 +1692,11 @@ final class RentalV1Executor
             'legacy_id' => $legacyId,
             'target_table' => $targetTable,
             'target_id' => $targetId,
-            'metadata' => json_encode(['imported_by' => $this->userId], JSON_THROW_ON_ERROR),
+            'metadata' => json_encode([
+                'imported_by' => $this->userId,
+                'import_prefix' => $this->importPrefix,
+                'source_city' => $this->batch->source_city,
+            ], JSON_THROW_ON_ERROR),
             'created_at' => now(),
             'updated_at' => now(),
         ]);

@@ -1,6 +1,7 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { ArrowLeft, CheckCircle2, LogOut, Pencil, XCircle } from 'lucide-react';
 import { useState } from 'react';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -122,6 +123,18 @@ export default function BookingShow({
                         )}
                     </div>
                 </header>
+                {booking.status === 'expired' && (
+                    <Alert variant="destructive">
+                        <XCircle className="size-4" />
+                        <AlertTitle>Booking kedaluwarsa</AlertTitle>
+                        <AlertDescription>
+                            Periode booking telah berakhir dan reservasi tidak
+                            lagi boleh digunakan untuk checkout. Buat booking
+                            baru bila pelanggan tetap membutuhkan unit.
+                        </AlertDescription>
+                    </Alert>
+                )}
+
                 <section className="grid gap-4 lg:grid-cols-3">
                     <Card>
                         <CardHeader>

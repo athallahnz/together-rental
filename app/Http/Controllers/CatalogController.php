@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Domain\Catalog\CatalogScope;
+use App\Models\Asset;
 use App\Models\CatalogBrand;
 use App\Models\CatalogModel;
 use App\Models\Product;
@@ -36,7 +37,20 @@ class CatalogController extends Controller
         )
             ? $request->string('section')->toString()
             : 'products';
-        $branchIds = $actor->accessibleBranches()->pluck('id');
+
+        $branches = $actor->accessibleBranches()
+            ->orderBy('name')
+            ->get(['id', 'code', 'name']);
+        $branchIds = $branches->pluck('id');
+        $branchId = $request->integer('branch_id') ?: null;
+
+        if ($branchId !== null) {
+            abort_unless($branchIds->contains($branchId), 403);
+        }
+
+        $scopeBranchIds = $branchId === null
+            ? $branchIds
+            : collect([$branchId]);
         $productBase = Product::query()->where('company_id', $actor->company_id);
 
         if (
@@ -117,9 +131,55 @@ class CatalogController extends Controller
                 'catalogBrand:id,name,logo_path',
                 'catalogModel:id,catalog_brand_id,name',
             ])
-            ->withCount(['assets', 'rates', 'packageItems'])
-            ->withSum('branchInventories as quantity_on_hand', 'quantity_on_hand')
-            ->withSum('branchInventories as quantity_rented', 'quantity_rented')
+            ->withCount([
+                'assets as assets_count' => fn (Builder $query) => $query
+                    ->whereIn('current_branch_id', $scopeBranchIds),
+                'assets as available_assets_count' => fn (Builder $query) => $query
+                    ->whereIn('current_branch_id', $scopeBranchIds)
+                    ->where('status', 'available')
+                    ->where('is_active', true),
+                'assets as rented_assets_count' => fn (Builder $query) => $query
+                    ->whereIn('current_branch_id', $scopeBranchIds)
+                    ->where('status', 'rented'),
+                'assets as maintenance_assets_count' => fn (Builder $query) => $query
+                    ->whereIn('current_branch_id', $scopeBranchIds)
+                    ->where('status', 'maintenance'),
+                'assets as in_transit_assets_count' => fn (Builder $query) => $query
+                    ->whereIn('current_branch_id', $scopeBranchIds)
+                    ->where('status', 'in_transit'),
+                'rates as rates_count' => fn (Builder $query) => $query
+                    ->where(function (Builder $scopeQuery) use ($scopeBranchIds): void {
+                        $scopeQuery
+                            ->whereNull('branch_id')
+                            ->orWhereIn('branch_id', $scopeBranchIds);
+                    }),
+                'packageItems',
+            ])
+            ->withSum(
+                ['branchInventories as quantity_on_hand' => fn (Builder $query) => $query
+                    ->whereIn('branch_id', $scopeBranchIds)],
+                'quantity_on_hand',
+            )
+            ->withSum(
+                ['branchInventories as quantity_reserved' => fn (Builder $query) => $query
+                    ->whereIn('branch_id', $scopeBranchIds)],
+                'quantity_reserved',
+            )
+            ->withSum(
+                ['branchInventories as quantity_rented' => fn (Builder $query) => $query
+                    ->whereIn('branch_id', $scopeBranchIds)],
+                'quantity_rented',
+            )
+            ->withSum(
+                ['branchInventories as quantity_maintenance' => fn (Builder $query) => $query
+                    ->whereIn('branch_id', $scopeBranchIds)],
+                'quantity_maintenance',
+            )
+            ->withSum(
+                ['branchInventories as quantity_in_transfer' => fn (Builder $query) => $query
+                    ->whereIn('branch_id', $scopeBranchIds)],
+                'quantity_in_transfer',
+            )
             ->orderBy('name')
             ->paginate(24)
             ->withQueryString();
@@ -133,24 +193,57 @@ class CatalogController extends Controller
             ->get();
         $ratePlans = RatePlan::query()
             ->where('company_id', $actor->company_id)
-            ->where(function (Builder $query) use ($branchIds): void {
-                $query->whereNull('branch_id')->orWhereIn('branch_id', $branchIds);
+            ->where(function (Builder $query) use ($scopeBranchIds): void {
+                $query->whereNull('branch_id')->orWhereIn('branch_id', $scopeBranchIds);
             })
             ->with('branch:id,code,name')
-            ->withCount(['productRates', 'packageRates'])
+            ->withCount([
+                'productRates' => fn (Builder $query) => $query
+                    ->where(function (Builder $scopeQuery) use ($scopeBranchIds): void {
+                        $scopeQuery
+                            ->whereNull('branch_id')
+                            ->orWhereIn('branch_id', $scopeBranchIds);
+                    }),
+                'packageRates' => fn (Builder $query) => $query
+                    ->where(function (Builder $scopeQuery) use ($scopeBranchIds): void {
+                        $scopeQuery
+                            ->whereNull('branch_id')
+                            ->orWhereIn('branch_id', $scopeBranchIds);
+                    }),
+            ])
             ->orderByRaw('branch_id is not null')
             ->orderBy('duration_value')
             ->get();
         $packages = RentalPackage::query()
             ->where('company_id', $actor->company_id)
-            ->where(function (Builder $query) use ($branchIds): void {
-                $query->whereNull('branch_id')->orWhereIn('branch_id', $branchIds);
+            ->where(function (Builder $query) use ($scopeBranchIds): void {
+                $query->whereNull('branch_id')->orWhereIn('branch_id', $scopeBranchIds);
             })
             ->with('branch:id,code,name')
-            ->withCount(['items', 'rates'])
+            ->withCount([
+                'items',
+                'rates' => fn (Builder $query) => $query
+                    ->where(function (Builder $scopeQuery) use ($scopeBranchIds): void {
+                        $scopeQuery
+                            ->whereNull('branch_id')
+                            ->orWhereIn('branch_id', $scopeBranchIds);
+                    }),
+            ])
             ->orderByDesc('is_active')
             ->orderBy('name')
             ->get();
+
+        $assetBase = DB::table('assets')
+            ->join('products', 'products.id', '=', 'assets.product_id')
+            ->where('products.company_id', $actor->company_id)
+            ->whereNull('products.deleted_at')
+            ->whereNull('assets.deleted_at')
+            ->whereIn('assets.current_branch_id', $scopeBranchIds);
+        $inventoryBase = DB::table('branch_inventories')
+            ->join('products', 'products.id', '=', 'branch_inventories.product_id')
+            ->where('products.company_id', $actor->company_id)
+            ->whereNull('products.deleted_at')
+            ->whereIn('branch_inventories.branch_id', $scopeBranchIds);
 
         return Inertia::render('catalog/index', [
             'products' => $products,
@@ -186,16 +279,37 @@ class CatalogController extends Controller
                     ->count(),
                 'packages' => $packages->count(),
                 'withoutRate' => (clone $productBase)
-                    ->whereDoesntHave('rates', function (Builder $query) use ($branchIds): void {
+                    ->whereDoesntHave('rates', function (Builder $query) use ($scopeBranchIds): void {
                         $query
                             ->where('is_active', true)
-                            ->where(function (Builder $scopeQuery) use ($branchIds): void {
+                            ->where(function (Builder $scopeQuery) use ($scopeBranchIds): void {
                                 $scopeQuery
                                     ->whereNull('branch_id')
-                                    ->orWhereIn('branch_id', $branchIds);
+                                    ->orWhereIn('branch_id', $scopeBranchIds);
                             });
                     })
                     ->count(),
+            ],
+            'inventorySummary' => [
+                'assets' => (clone $assetBase)->count(),
+                'availableAssets' => (clone $assetBase)
+                    ->where('assets.status', 'available')
+                    ->where('assets.is_active', true)
+                    ->count(),
+                'rentedAssets' => (clone $assetBase)
+                    ->where('assets.status', 'rented')
+                    ->count(),
+                'maintenanceAssets' => (clone $assetBase)
+                    ->where('assets.status', 'maintenance')
+                    ->count(),
+                'inTransitAssets' => (clone $assetBase)
+                    ->where('assets.status', 'in_transit')
+                    ->count(),
+                'quantityOnHand' => (int) (clone $inventoryBase)->sum('branch_inventories.quantity_on_hand'),
+                'quantityReserved' => (int) (clone $inventoryBase)->sum('branch_inventories.quantity_reserved'),
+                'quantityRented' => (int) (clone $inventoryBase)->sum('branch_inventories.quantity_rented'),
+                'quantityMaintenance' => (int) (clone $inventoryBase)->sum('branch_inventories.quantity_maintenance'),
+                'quantityInTransfer' => (int) (clone $inventoryBase)->sum('branch_inventories.quantity_in_transfer'),
             ],
             'filters' => [
                 'search' => $search,
@@ -205,10 +319,9 @@ class CatalogController extends Controller
                 'tracking_type' => $trackingType,
                 'status' => $status,
                 'section' => $section,
+                'branch_id' => $branchId,
             ],
-            'branches' => $actor->accessibleBranches()
-                ->orderBy('name')
-                ->get(['id', 'code', 'name']),
+            'branches' => $branches,
             'permissions' => $this->permissions($actor),
         ]);
     }
@@ -217,31 +330,106 @@ class CatalogController extends Controller
     {
         Gate::authorize('products.view');
         $this->guardProduct($request, $product);
-        $branchIds = $request->user()->accessibleBranches()->pluck('id');
+        $branches = $request->user()->accessibleBranches()
+            ->orderBy('name')
+            ->get(['id', 'code', 'name']);
+        $branchIds = $branches->pluck('id');
+        $branchId = $request->integer('branch_id') ?: null;
+
+        if ($branchId !== null) {
+            abort_unless($branchIds->contains($branchId), 403);
+        }
+
+        $scopeBranchIds = $branchId === null
+            ? $branchIds
+            : collect([$branchId]);
 
         $product->load([
             'category:id,code,name',
             'rates' => fn ($query) => $query
-                ->where(function (Builder $scopeQuery) use ($branchIds): void {
-                    $scopeQuery->whereNull('branch_id')->orWhereIn('branch_id', $branchIds);
+                ->where(function (Builder $scopeQuery) use ($scopeBranchIds): void {
+                    $scopeQuery->whereNull('branch_id')->orWhereIn('branch_id', $scopeBranchIds);
                 })
                 ->with(['branch:id,code,name', 'ratePlan:id,branch_id,code,name,duration_unit,duration_value'])
                 ->orderByDesc('is_active')
                 ->orderBy('branch_id'),
             'branchInventories' => fn ($query) => $query
-                ->whereIn('branch_id', $branchIds)
+                ->whereIn('branch_id', $scopeBranchIds)
                 ->with('branch:id,code,name')
                 ->orderBy('branch_id'),
         ]);
+
+        $assetRows = DB::table('assets')
+            ->where('product_id', $product->id)
+            ->whereNull('deleted_at')
+            ->whereIn('current_branch_id', $branchIds)
+            ->selectRaw('current_branch_id, status, count(*) as total')
+            ->groupBy('current_branch_id', 'status')
+            ->get()
+            ->groupBy('current_branch_id');
+        $inventoryRows = DB::table('branch_inventories')
+            ->where('product_id', $product->id)
+            ->whereIn('branch_id', $branchIds)
+            ->get()
+            ->keyBy('branch_id');
+        $branchStock = $branches->map(function ($branch) use ($assetRows, $inventoryRows): array {
+            $assetCounts = $assetRows
+                ->get($branch->id, collect())
+                ->pluck('total', 'status');
+            $inventory = $inventoryRows->get($branch->id);
+
+            return [
+                'branch' => $branch,
+                'assets' => [
+                    'total' => (int) $assetCounts->sum(),
+                    'available' => (int) ($assetCounts->get('available') ?? 0),
+                    'reserved' => (int) ($assetCounts->get('reserved') ?? 0),
+                    'rented' => (int) ($assetCounts->get('rented') ?? 0),
+                    'maintenance' => (int) ($assetCounts->get('maintenance') ?? 0),
+                    'lost' => (int) ($assetCounts->get('lost') ?? 0),
+                    'in_transit' => (int) ($assetCounts->get('in_transit') ?? 0),
+                ],
+                'inventory' => [
+                    'quantity_on_hand' => (int) ($inventory->quantity_on_hand ?? 0),
+                    'quantity_reserved' => (int) ($inventory->quantity_reserved ?? 0),
+                    'quantity_rented' => (int) ($inventory->quantity_rented ?? 0),
+                    'quantity_maintenance' => (int) ($inventory->quantity_maintenance ?? 0),
+                    'quantity_in_transfer' => (int) ($inventory->quantity_in_transfer ?? 0),
+                ],
+            ];
+        })->values();
 
         return Inertia::render('catalog/product-show', [
             'product' => $product,
             'assetSummary' => DB::table('assets')
                 ->where('product_id', $product->id)
                 ->whereNull('deleted_at')
+                ->whereIn('current_branch_id', $scopeBranchIds)
                 ->selectRaw('status, count(*) as total')
                 ->groupBy('status')
                 ->pluck('total', 'status'),
+            'branchStock' => $branchStock,
+            'assetUnits' => $product->tracking_type === 'serialized'
+                ? Asset::query()
+                    ->where('product_id', $product->id)
+                    ->whereIn('current_branch_id', $scopeBranchIds)
+                    ->whereNull('deleted_at')
+                    ->with('currentBranch:id,code,name')
+                    ->orderBy('asset_code')
+                    ->get([
+                        'id',
+                        'product_id',
+                        'current_branch_id',
+                        'asset_code',
+                        'serial_number',
+                        'status',
+                        'condition',
+                        'is_active',
+                    ])
+                : [],
+            'filters' => [
+                'branch_id' => $branchId,
+            ],
             'categories' => ProductCategory::query()
                 ->where('company_id', $request->user()->company_id)
                 ->where('is_active', true)
@@ -250,16 +438,14 @@ class CatalogController extends Controller
                 ->get(['id', 'code', 'name']),
             'ratePlans' => RatePlan::query()
                 ->where('company_id', $request->user()->company_id)
-                ->where(function (Builder $query) use ($branchIds): void {
-                    $query->whereNull('branch_id')->orWhereIn('branch_id', $branchIds);
+                ->where(function (Builder $query) use ($scopeBranchIds): void {
+                    $query->whereNull('branch_id')->orWhereIn('branch_id', $scopeBranchIds);
                 })
                 ->where('is_active', true)
                 ->with('branch:id,code,name')
                 ->orderBy('name')
                 ->get(),
-            'branches' => $request->user()->accessibleBranches()
-                ->orderBy('name')
-                ->get(['id', 'code', 'name']),
+            'branches' => $branches,
             'permissions' => $this->permissions($request->user()),
         ]);
     }

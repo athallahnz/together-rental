@@ -11,3 +11,5 @@ export type * from './asset-analytics';
 export type * from './public-catalog';
 
 export type * from './transfer';
+
+export type * from './asset-calendar';

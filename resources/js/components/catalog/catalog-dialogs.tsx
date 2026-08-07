@@ -93,6 +93,17 @@ export function ProductFormDialog({
                     </DialogDescription>
                 </DialogHeader>
                 <form onSubmit={submit} className="grid gap-5">
+                    <div className="rounded-lg border border-primary/20 bg-primary/[0.03] p-3 text-sm">
+                        <p className="font-medium">
+                            Lingkup master produk: Global perusahaan
+                        </p>
+                        <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                            Produk dan kategori dipakai bersama oleh seluruh
+                            cabang. Lokasi aset, stok bulk, paket, rate plan,
+                            dan harga dapat memiliki lingkup cabang
+                            masing-masing.
+                        </p>
+                    </div>
                     <div className="grid gap-4 sm:grid-cols-2">
                         <Field label="SKU" name="sku" error={form.errors.sku}>
                             <Input
@@ -1289,7 +1300,7 @@ function ScopeField({
     error?: string;
 }) {
     return (
-        <Field label="Scope harga" name="branch_id" error={error}>
+        <Field label="Lingkup / cabang" name="branch_id" error={error}>
             <Select
                 value={value?.toString() ?? 'global'}
                 onValueChange={(next) =>

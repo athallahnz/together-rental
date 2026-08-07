@@ -1,6 +1,7 @@
 import { Link } from '@inertiajs/react';
 import {
     ArrowUpRight,
+    CalendarDays,
     Camera,
     CheckCircle2,
     Clock3,
@@ -85,6 +86,12 @@ export default function ProductCard({
                         <p className="mt-3 line-clamp-2 text-sm leading-6 text-neutral-500">
                             {product.short_description}
                         </p>
+                    )}
+                    {product.tracking_type === 'serialized' && (
+                        <div className="mt-4 flex items-center gap-2 rounded-xl bg-neutral-50 px-3 py-2 text-xs font-medium text-neutral-600">
+                            <CalendarDays className="size-3.5" />
+                            Smart calendar tersedia per unit
+                        </div>
                     )}
                     <div className="mt-5 flex items-end justify-between border-t border-black/5 pt-4">
                         <div>

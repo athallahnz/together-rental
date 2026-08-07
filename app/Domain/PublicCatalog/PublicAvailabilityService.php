@@ -456,7 +456,16 @@ SQL;
             ->whereNotIn('rentals.status', self::NON_BLOCKING_RENTAL_STATUSES)
             ->whereNotNull('rentals.checked_out_at')
             ->where('rentals.checked_out_at', '<', $endsAt->toDateTimeString())
-            ->whereRaw("{$effectiveDueSql} > ?", [$startsAt->toDateTimeString()])
+            ->where(function (QueryBuilder $period) use ($effectiveDueSql, $startsAt): void {
+                $period
+                    ->whereRaw("{$effectiveDueSql} > ?", [$startsAt->toDateTimeString()])
+                    ->orWhere(function (QueryBuilder $overdue) use ($effectiveDueSql): void {
+                        $overdue
+                            ->whereIn('rentals.status', ['active', 'partial_return', 'correction_pending'])
+                            ->whereNull('rentals.returned_at')
+                            ->whereRaw("{$effectiveDueSql} < ?", [now()->toDateTimeString()]);
+                    });
+            })
             ->selectRaw(<<<'SQL'
 COALESCE(SUM(
     CASE

@@ -1,4 +1,4 @@
-import { Head, Link, router } from '@inertiajs/react';
+import { Form, Head, Link, router } from '@inertiajs/react';
 import {
     AlertTriangle,
     ArrowLeft,
@@ -9,6 +9,7 @@ import {
     FileSearch,
     GitMerge,
     ListChecks,
+    MapPin,
     LoaderCircle,
     Play,
     ScanSearch,
@@ -17,6 +18,7 @@ import {
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useConfirmDialog } from '@/components/confirm-dialog-provider';
+import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -26,6 +28,8 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
+import { Input } from '@/components/ui/input';
+import { Label } from '@/components/ui/label';
 import { cn } from '@/lib/utils';
 
 type SourceTable = {
@@ -64,12 +68,23 @@ type ImportEvent = {
     created_at: string;
 };
 
+type BranchOption = {
+    id: number;
+    code: string;
+    name: string;
+    city: string;
+    suggested_prefix: string;
+    prefix_locked: boolean;
+};
+
 type Batch = {
     id: string;
     source_system: string;
     source_filename: string;
     source_sha256: string;
     source_size: number;
+    source_city: string | null;
+    import_prefix: string | null;
     status: string;
     total_rows: number;
     valid_rows: number;
@@ -77,7 +92,12 @@ type Batch = {
     error_rows: number;
     imported_rows: number;
     skipped_rows: number;
-    options: { failed_step?: string } | null;
+    options: {
+        failed_step?: string;
+        branch_code?: string;
+        source_city?: string;
+        import_prefix?: string;
+    } | null;
     summary: {
         verification?: {
             passed: boolean;
@@ -99,7 +119,7 @@ type Batch = {
     executed_at: string | null;
     verified_at: string | null;
     created_at: string;
-    branch: { id: number; code: string; name: string };
+    branch: { id: number; code: string; name: string; city: string | null };
     uploader: { id: number; name: string; email: string } | null;
     tables: SourceTable[];
     mappings: Mapping[];
@@ -144,6 +164,7 @@ type Pagination<T> = {
 
 type Props = {
     batch: Batch;
+    targetBranches: BranchOption[];
     rows: Pagination<ImportRow>;
     issues: Pagination<ImportIssue>;
     issueSummary: Array<{
@@ -192,6 +213,7 @@ const statusOrder: Record<string, number> = {
 
 export default function LegacyImportShow({
     batch,
+    targetBranches,
     rows,
     issues,
     issueSummary,
@@ -200,6 +222,21 @@ export default function LegacyImportShow({
 }: Props) {
     const confirm = useConfirmDialog();
     const [activeAction, setActiveAction] = useState<string | null>(null);
+    const [targetBranchId, setTargetBranchId] = useState(batch.branch.id);
+    const [targetPrefix, setTargetPrefix] = useState(batch.import_prefix ?? '');
+    const targetEditable = canEditTarget(batch, permissions);
+    const selectedTargetBranch =
+        targetBranches.find((branch) => branch.id === targetBranchId) ?? null;
+    const targetSnapshotOutdated =
+        targetEditable &&
+        (batch.options?.branch_code !== batch.branch.code ||
+            batch.options?.source_city !== batch.source_city ||
+            batch.options?.import_prefix !== batch.import_prefix);
+    const targetDirty =
+        targetEditable &&
+        (targetSnapshotOutdated ||
+            targetBranchId !== batch.branch.id ||
+            targetPrefix !== (batch.import_prefix ?? ''));
     const currentStep =
         batch.status === 'failed'
             ? Math.max(
@@ -239,8 +276,7 @@ export default function LegacyImportShow({
         if (nextAction.key === 'execution') {
             const confirmed = await confirm({
                 title: 'Execute import RentalV1?',
-                description:
-                    'Data hasil validasi akan ditulis ke tabel operasional V2 dalam satu transaksi. Pastikan mapping dan blocker sudah diperiksa.',
+                description: `Data hasil validasi akan ditulis ke tabel operasional V2 untuk ${batch.source_city || batch.branch.name} dengan PREFIX ${batch.import_prefix || '---'}. Pastikan tujuan, mapping, dan blocker sudah diperiksa.`,
                 confirmLabel: 'Execute import',
                 variant: 'destructive',
             });
@@ -289,7 +325,12 @@ export default function LegacyImportShow({
                                 </Badge>
                                 <StatusBadge status={batch.status} />
                                 <Badge variant="outline">
-                                    Cabang {batch.branch.code}
+                                    {batch.source_city ||
+                                        batch.branch.city ||
+                                        batch.branch.name}
+                                </Badge>
+                                <Badge variant="outline" className="font-mono">
+                                    PREFIX {batch.import_prefix || '---'}
                                 </Badge>
                             </div>
                             <h1 className="mt-3 max-w-3xl truncate text-2xl font-semibold tracking-tight">
@@ -304,7 +345,7 @@ export default function LegacyImportShow({
                         {nextAction && (
                             <Button
                                 onClick={runAction}
-                                disabled={activeAction !== null}
+                                disabled={activeAction !== null || targetDirty}
                                 variant={
                                     nextAction.key === 'execution'
                                         ? 'default'
@@ -337,6 +378,222 @@ export default function LegacyImportShow({
                         </div>
                     </div>
                 )}
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle className="flex items-center gap-2">
+                            <MapPin className="size-5" />
+                            Tujuan import & PREFIX
+                        </CardTitle>
+                        <CardDescription>
+                            Kota berasal dari master Cabang. PREFIX wajib tepat
+                            3 huruf dan menjadi identitas data legacy pada batch
+                            ini.
+                        </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                        {targetEditable ? (
+                            <Form
+                                action={`/legacy-imports/${batch.id}/target`}
+                                method="post"
+                                options={{ preserveScroll: true }}
+                                className="space-y-4"
+                            >
+                                {({ processing, errors }) => (
+                                    <>
+                                        <div className="grid gap-4 lg:grid-cols-[1fr_180px]">
+                                            <div className="grid gap-2">
+                                                <Label htmlFor="branch_id">
+                                                    Kota / cabang tujuan
+                                                </Label>
+                                                <select
+                                                    id="branch_id"
+                                                    name="branch_id"
+                                                    value={targetBranchId}
+                                                    onChange={(event) => {
+                                                        const branchId = Number(
+                                                            event.target.value,
+                                                        );
+                                                        setTargetBranchId(
+                                                            branchId,
+                                                        );
+                                                        const branch =
+                                                            targetBranches.find(
+                                                                (item) =>
+                                                                    item.id ===
+                                                                    branchId,
+                                                            );
+
+                                                        setTargetPrefix(
+                                                            branch?.suggested_prefix ??
+                                                                '',
+                                                        );
+                                                    }}
+                                                    className="h-10 rounded-md border border-input bg-background px-3 text-sm shadow-xs outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                                    required
+                                                >
+                                                    {targetBranches.map(
+                                                        (branch) => (
+                                                            <option
+                                                                key={branch.id}
+                                                                value={
+                                                                    branch.id
+                                                                }
+                                                            >
+                                                                {branch.city ||
+                                                                    'Kota belum diisi'}{' '}
+                                                                — {branch.code}{' '}
+                                                                · {branch.name}
+                                                            </option>
+                                                        ),
+                                                    )}
+                                                </select>
+                                                <InputError
+                                                    message={errors.branch_id}
+                                                />
+                                            </div>
+
+                                            <div className="grid gap-2">
+                                                <Label htmlFor="import_prefix">
+                                                    PREFIX import
+                                                </Label>
+                                                <Input
+                                                    id="import_prefix"
+                                                    name="import_prefix"
+                                                    value={targetPrefix}
+                                                    onChange={(event) =>
+                                                        setTargetPrefix(
+                                                            event.target.value
+                                                                .toUpperCase()
+                                                                .replace(
+                                                                    /[^A-Z]/g,
+                                                                    '',
+                                                                )
+                                                                .slice(0, 3),
+                                                        )
+                                                    }
+                                                    minLength={3}
+                                                    maxLength={3}
+                                                    pattern="[A-Z]{3}"
+                                                    className="font-mono uppercase"
+                                                    readOnly={
+                                                        selectedTargetBranch?.prefix_locked ??
+                                                        false
+                                                    }
+                                                    required
+                                                />
+                                                <InputError
+                                                    message={
+                                                        errors.import_prefix
+                                                    }
+                                                />
+                                                {selectedTargetBranch?.prefix_locked && (
+                                                    <p className="text-xs text-muted-foreground">
+                                                        PREFIX cabang ini sudah
+                                                        ditetapkan dari import
+                                                        sebelumnya dan harus
+                                                        tetap{' '}
+                                                        {
+                                                            selectedTargetBranch.suggested_prefix
+                                                        }
+                                                        .
+                                                    </p>
+                                                )}
+                                            </div>
+                                        </div>
+
+                                        {targetDirty && (
+                                            <div className="rounded-lg border border-amber-500/30 bg-amber-500/5 p-3 text-sm text-amber-800 dark:text-amber-300">
+                                                {targetSnapshotOutdated
+                                                    ? 'Identitas kota/PREFIX batch lama perlu dikonfirmasi ulang. Simpan tujuan import agar staging lama direset dengan aman sebelum proses dilanjutkan.'
+                                                    : 'Perubahan tujuan belum disimpan. Simpan kota/cabang dan PREFIX terlebih dahulu sebelum melanjutkan Preview, Validasi, Mapping, atau Execute.'}
+                                            </div>
+                                        )}
+
+                                        <div className="rounded-lg border bg-muted/30 p-3 text-sm">
+                                            <p className="font-medium">
+                                                {selectedTargetBranch?.city ||
+                                                    'Kota belum dipilih'}{' '}
+                                                · PREFIX{' '}
+                                                <span className="font-mono">
+                                                    {targetPrefix || '---'}
+                                                </span>
+                                            </p>
+                                            <p className="mt-1 text-xs leading-5 text-muted-foreground">
+                                                Mengubah kota/cabang atau PREFIX
+                                                setelah Preview akan menghapus
+                                                hasil staging, validasi, dan
+                                                mapping lama. File SQL asli
+                                                tetap tersimpan sehingga tidak
+                                                perlu upload ulang.
+                                            </p>
+                                        </div>
+
+                                        <label className="flex items-start gap-3 rounded-lg border p-3 text-sm">
+                                            <input
+                                                type="checkbox"
+                                                name="confirm_target"
+                                                value="1"
+                                                className="mt-0.5 size-4 rounded border-input"
+                                                required
+                                            />
+                                            <span>
+                                                Saya memastikan database ini
+                                                berasal dari operasional{' '}
+                                                <strong>
+                                                    {selectedTargetBranch?.city ||
+                                                        'kota yang dipilih'}
+                                                </strong>{' '}
+                                                dan PREFIX{' '}
+                                                <strong className="font-mono">
+                                                    {targetPrefix || '---'}
+                                                </strong>{' '}
+                                                sudah benar.
+                                            </span>
+                                        </label>
+                                        <InputError
+                                            message={errors.confirm_target}
+                                        />
+
+                                        <Button
+                                            type="submit"
+                                            variant="outline"
+                                            disabled={
+                                                processing ||
+                                                targetPrefix.length !== 3
+                                            }
+                                        >
+                                            <MapPin />
+                                            {processing
+                                                ? 'Menyimpan…'
+                                                : 'Simpan tujuan import'}
+                                        </Button>
+                                    </>
+                                )}
+                            </Form>
+                        ) : (
+                            <div className="grid gap-3 sm:grid-cols-3">
+                                <TargetSummary
+                                    label="Kota"
+                                    value={
+                                        batch.source_city ||
+                                        batch.branch.city ||
+                                        '—'
+                                    }
+                                />
+                                <TargetSummary
+                                    label="Cabang"
+                                    value={`${batch.branch.code} · ${batch.branch.name}`}
+                                />
+                                <TargetSummary
+                                    label="PREFIX"
+                                    value={batch.import_prefix || '---'}
+                                    mono
+                                />
+                            </div>
+                        )}
+                    </CardContent>
+                </Card>
 
                 <section className="grid gap-2 sm:grid-cols-3 xl:grid-cols-6">
                     {steps.map((step, index) => {
@@ -514,8 +771,9 @@ export default function LegacyImportShow({
                         <CardHeader>
                             <CardTitle>Mapping terkonfirmasi</CardTitle>
                             <CardDescription>
-                                Semua data operasional diarahkan ke cabang{' '}
-                                {batch.branch.code}.
+                                Semua data operasional diarahkan ke{' '}
+                                {batch.source_city || batch.branch.name} dengan
+                                PREFIX {batch.import_prefix || '---'}.
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
@@ -853,7 +1111,7 @@ function resolveAction(
         return {
             key: 'mapping',
             endpoint: 'map-branch',
-            label: `Konfirmasi Mapping ${batch.branch.code}`,
+            label: `Konfirmasi Mapping ${batch.source_city || batch.branch.code} · ${batch.import_prefix || '---'}`,
             icon: GitMerge,
         };
     }
@@ -877,6 +1135,55 @@ function resolveAction(
     }
 
     return null;
+}
+
+function canEditTarget(
+    batch: Batch,
+    permissions: Props['permissions'],
+): boolean {
+    if (!permissions.validate || batch.executed_at !== null) {
+        return false;
+    }
+
+    if (
+        batch.status.startsWith('queued_') ||
+        [
+            'previewing',
+            'validating',
+            'executing',
+            'verifying',
+            'executed',
+            'verified',
+        ].includes(batch.status)
+    ) {
+        return false;
+    }
+
+    return !(
+        batch.status === 'failed' &&
+        ['execution', 'verification'].includes(batch.options?.failed_step ?? '')
+    );
+}
+
+function TargetSummary({
+    label,
+    value,
+    mono = false,
+}: {
+    label: string;
+    value: string;
+    mono?: boolean;
+}) {
+    return (
+        <div className="rounded-lg border bg-muted/20 p-3">
+            <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                {label}
+            </p>
+            <p className={cn('mt-2 text-sm font-medium', mono && 'font-mono')}>
+                {value}
+            </p>
+        </div>
+    );
 }
 
 function Metric({

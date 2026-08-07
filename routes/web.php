@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\AssetAnalyticsController;
+use App\Http\Controllers\AssetCalendarController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\BranchController;
 use App\Http\Controllers\BranchPublicProfileController;
@@ -44,6 +45,10 @@ Route::prefix('rental')->name('public.catalog.')->group(function (): void {
     Route::get('/availability', [PublicCatalogController::class, 'availability'])
         ->middleware('throttle:60,1')
         ->name('availability');
+    Route::get('/products/{slug}/asset-calendar', [AssetCalendarController::class, 'publicProduct'])
+        ->where('slug', '[a-z0-9-]+')
+        ->middleware('throttle:60,1')
+        ->name('products.asset-calendar');
     Route::get('/products/{slug}', [PublicCatalogController::class, 'product'])
         ->where('slug', '[a-z0-9-]+')
         ->name('products.show');
@@ -110,6 +115,9 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
         Route::post('/products', [ProductController::class, 'store'])
             ->middleware('can:products.manage')
             ->name('products.store');
+        Route::get('/assets/{asset}/calendar', [AssetCalendarController::class, 'show'])
+            ->middleware('can:products.view')
+            ->name('assets.calendar');
         Route::get('/products/{product}', [CatalogController::class, 'product'])
             ->middleware('can:products.view')
             ->name('products.show');
@@ -420,6 +428,9 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
         Route::get('/{legacyImport}', [LegacyImportController::class, 'show'])
             ->middleware('can:imports.view')
             ->name('show');
+        Route::post('/{legacyImport}/target', [LegacyImportController::class, 'updateTarget'])
+            ->middleware('can:imports.validate')
+            ->name('target.update');
         Route::post('/{legacyImport}/preview', [LegacyImportController::class, 'preview'])
             ->middleware('can:imports.validate')
             ->name('preview');

@@ -60,6 +60,7 @@ export type BranchInventory = {
     quantity_reserved: number;
     quantity_rented: number;
     quantity_maintenance: number;
+    quantity_in_transfer: number;
     reorder_level: number;
     branch?: AccessBranch;
 };
@@ -92,10 +93,17 @@ export type Product = {
     rates?: ProductRate[];
     branch_inventories?: BranchInventory[];
     assets_count?: number;
+    available_assets_count?: number;
+    rented_assets_count?: number;
+    maintenance_assets_count?: number;
+    in_transit_assets_count?: number;
     rates_count?: number;
     package_items_count?: number;
     quantity_on_hand?: string | number | null;
+    quantity_reserved?: string | number | null;
     quantity_rented?: string | number | null;
+    quantity_maintenance?: string | number | null;
+    quantity_in_transfer?: string | number | null;
 };
 
 export type RatePlan = {
@@ -153,6 +161,39 @@ export type RentalPackage = {
     rates?: PackageRate[];
     items_count?: number;
     rates_count?: number;
+};
+
+export type CatalogInventorySummary = {
+    assets: number;
+    availableAssets: number;
+    rentedAssets: number;
+    maintenanceAssets: number;
+    inTransitAssets: number;
+    quantityOnHand: number;
+    quantityReserved: number;
+    quantityRented: number;
+    quantityMaintenance: number;
+    quantityInTransfer: number;
+};
+
+export type CatalogBranchStock = {
+    branch: AccessBranch;
+    assets: {
+        total: number;
+        available: number;
+        reserved: number;
+        rented: number;
+        maintenance: number;
+        lost: number;
+        in_transit: number;
+    };
+    inventory: {
+        quantity_on_hand: number;
+        quantity_reserved: number;
+        quantity_rented: number;
+        quantity_maintenance: number;
+        quantity_in_transfer: number;
+    };
 };
 
 export type CatalogPermissions = {

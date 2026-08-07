@@ -21,6 +21,7 @@ type Rental = {
     status: string;
     checked_out_at: string;
     due_at: string;
+    is_overdue: boolean;
     subtotal: string;
     total_amount: string;
     paid_amount: string;
@@ -138,6 +139,7 @@ export default function RentalShow({ rental, permissions }: Props) {
         operational.post(`/rentals/${rental.id}/operational-corrections`);
     };
     const refundDue = Number(rental.balance_due) < 0;
+    const overdue = rental.is_overdue;
 
     return (
         <>
@@ -175,6 +177,19 @@ export default function RentalShow({ rental, permissions }: Props) {
                         {rental.customer.name} · {rental.branch.name}
                     </p>
                 </header>
+                {overdue && (
+                    <Alert variant="destructive">
+                        <AlertTriangle className="size-4" />
+                        <AlertTitle>Rental melewati jatuh tempo</AlertTitle>
+                        <AlertDescription>
+                            Unit masih tercatat berada pada pelanggan setelah
+                            batas kembali. Prioritaskan konfirmasi pengembalian
+                            sebelum unit dianggap siap untuk transaksi
+                            berikutnya.
+                        </AlertDescription>
+                    </Alert>
+                )}
+
                 <section className="grid gap-4 lg:grid-cols-3">
                     <Card>
                         <CardHeader>

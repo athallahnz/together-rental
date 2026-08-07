@@ -648,6 +648,7 @@ class PublicCatalogService
             'brand' => $catalogBrand instanceof CatalogBrand ? $catalogBrand->name : $product->brand,
             'model' => $catalogModel instanceof CatalogModel ? $catalogModel->name : $product->model,
             'variant' => $product->variant,
+            'tracking_type' => $product->tracking_type,
             'short_description' => $description !== '' ? $description : null,
             'image_url' => $image,
             'category' => $category instanceof ProductCategory ? [

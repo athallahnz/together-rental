@@ -33,29 +33,77 @@ class BookingController extends Controller
         $user = $request->user();
         $search = trim($request->string('search')->toString());
         $status = $request->string('status')->toString();
+        $source = $request->string('source')->toString();
+        $period = $request->string('period')->toString();
         $branchId = $request->integer('branch_id') ?: null;
-        $base = Booking::query()->whereIn('branch_id', $user->accessibleBranches()->select('id'));
+        $branches = $user->accessibleBranches()->orderBy('name')->get(['id', 'code', 'name']);
+        $branchIds = $branches->pluck('id');
 
-        $bookings = (clone $base)
-            ->when($search !== '', fn (Builder $query) => $query->where(fn (Builder $nested) => $nested
-                ->where('booking_number', 'like', "%{$search}%")
-                ->orWhereHas('customer', fn (Builder $customer) => $customer->where('name', 'like', "%{$search}%"))))
+        if ($branchId !== null) {
+            abort_unless($branchIds->contains($branchId), 403);
+        }
+
+        $base = Booking::query()->whereIn('branch_id', $branchIds);
+        $scope = (clone $base)
+            ->when($branchId !== null, fn (Builder $query) => $query->where('branch_id', $branchId));
+
+        $bookings = (clone $scope)
+            ->when($search !== '', function (Builder $query) use ($search): void {
+                $query->where(function (Builder $nested) use ($search): void {
+                    $nested
+                        ->where('booking_number', 'like', "%{$search}%")
+                        ->orWhereHas('customer', fn (Builder $customer) => $customer
+                            ->where('name', 'like', "%{$search}%")
+                            ->orWhere('customer_number', 'like', "%{$search}%")
+                            ->orWhere('phone', 'like', "%{$search}%"))
+                        ->orWhereHas('items.product', fn (Builder $product) => $product
+                            ->where('name', 'like', "%{$search}%")
+                            ->orWhere('sku', 'like', "%{$search}%"))
+                        ->orWhereHas('items.package', fn (Builder $package) => $package
+                            ->where('name', 'like', "%{$search}%")
+                            ->orWhere('code', 'like', "%{$search}%"))
+                        ->orWhereHas('reservations.asset', fn (Builder $asset) => $asset
+                            ->where('asset_code', 'like', "%{$search}%")
+                            ->orWhere('serial_number', 'like', "%{$search}%"));
+                });
+            })
             ->when(in_array($status, Booking::STATUSES, true), fn (Builder $query) => $query->where('status', $status))
-            ->when($branchId !== null, fn (Builder $query) => $query->where('branch_id', $branchId))
+            ->when(in_array($source, ['counter', 'phone', 'whatsapp', 'website', 'other', 'direct'], true),
+                fn (Builder $query) => $query->where('source', $source))
+            ->when($period === 'today', fn (Builder $query) => $query->whereDate('starts_at', today()))
+            ->when($period === 'tomorrow', fn (Builder $query) => $query->whereDate('starts_at', today()->addDay()))
+            ->when($period === 'next7', fn (Builder $query) => $query
+                ->where('starts_at', '>=', now()->startOfDay())
+                ->where('starts_at', '<', now()->addDays(7)->endOfDay()))
+            ->when($period === 'upcoming', fn (Builder $query) => $query->where('starts_at', '>=', now()))
+            ->when($period === 'past', fn (Builder $query) => $query->where('ends_at', '<', now()))
             ->with(['branch:id,code,name', 'customer:id,customer_number,name,phone'])
             ->withCount(['items', 'reservations'])
-            ->orderByDesc('booked_at')->paginate(20)->withQueryString();
+            ->orderByDesc('booked_at')
+            ->paginate(20)
+            ->withQueryString();
 
         return Inertia::render('bookings/index', [
             'bookings' => $bookings,
             'summary' => [
-                'total' => (clone $base)->count(),
-                'draft' => (clone $base)->where('status', 'draft')->count(),
-                'confirmed' => (clone $base)->where('status', 'confirmed')->count(),
-                'today' => (clone $base)->whereDate('starts_at', today())->count(),
+                'total' => (clone $scope)->count(),
+                'draft' => (clone $scope)->where('status', 'draft')->count(),
+                'confirmed' => (clone $scope)->where('status', 'confirmed')->count(),
+                'today' => (clone $scope)->whereDate('starts_at', today())->count(),
+                'expired' => (clone $scope)->where('status', 'expired')->count(),
+                'upcoming' => (clone $scope)
+                    ->whereIn('status', ['draft', 'confirmed'])
+                    ->whereBetween('starts_at', [now(), now()->addDays(7)])
+                    ->count(),
             ],
-            'filters' => ['search' => $search, 'status' => $status, 'branch_id' => $branchId],
-            'branches' => $user->accessibleBranches()->orderBy('name')->get(['id', 'code', 'name']),
+            'filters' => [
+                'search' => $search,
+                'status' => $status,
+                'source' => $source,
+                'period' => $period,
+                'branch_id' => $branchId,
+            ],
+            'branches' => $branches,
             'permissions' => $this->permissions($user),
         ]);
     }
@@ -147,11 +195,15 @@ class BookingController extends Controller
                     'id' => $product->id,
                     'sku' => $product->sku,
                     'name' => $product->name,
-                    'brand' => $product->catalogBrand?->name ?? $product->brand,
+                    'brand' => $product->catalog_brand_id !== null
+                        ? $product->catalogBrand->name
+                        : $product->brand,
                     'model' => $product->model,
                     'variant' => $product->variant,
                     'image_url' => $this->mediaUrl($product->primary_image_path),
-                    'brand_logo_url' => $product->catalogBrand?->logo_url,
+                    'brand_logo_url' => $product->catalog_brand_id !== null
+                        ? $product->catalogBrand->logo_url
+                        : null,
                 ]);
 
             return response()->json(['data' => $products]);
@@ -336,9 +388,13 @@ class BookingController extends Controller
     public function availability(BookingAvailabilityRequest $request, BookingManager $manager): JsonResponse
     {
         return response()->json($manager->availability(
-            $request->integer('branch_id'), $request->integer('product_id'),
-            $request->string('starts_at')->toString(), $request->string('ends_at')->toString(),
-            $request->integer('quantity'), $request->integer('ignore_booking_id') ?: null,
+            $request->integer('branch_id'),
+            $request->integer('product_id'),
+            $request->string('starts_at')->toString(),
+            $request->integer('rate_plan_id'),
+            $request->integer('duration_units'),
+            $request->integer('quantity'),
+            $request->integer('ignore_booking_id') ?: null,
         ));
     }
 
@@ -354,7 +410,7 @@ class BookingController extends Controller
             'booking' => null,
             'branches' => $user->accessibleBranches()->orderBy('name')->get(['id', 'code', 'name']),
             'customers' => Customer::query()
-                ->whereKey($booking?->customer_id ?? 0)
+                ->whereKey($booking instanceof Booking ? $booking->customer_id : 0)
                 ->get(['id', 'customer_number', 'name', 'phone']),
             'ratePlans' => RatePlan::query()->where('company_id', $user->company_id)->where('is_active', true)
                 ->where(fn (Builder $query) => $query->whereNull('branch_id')->orWhereIn('branch_id', $branchIds))

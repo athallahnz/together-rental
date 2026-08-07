@@ -18,7 +18,11 @@ final class RentalV1Validator
         $this->recorder->transition($batch, 'validating', 'validation_started', $userId);
 
         try {
-            DB::transaction(function () use ($batch): void {
+            $targetLabel = trim((string) $batch->source_city) !== ''
+                ? (string) $batch->source_city
+                : ((string) $batch->import_prefix ?: 'tujuan import');
+
+            DB::transaction(function () use ($batch, $targetLabel): void {
                 DB::table('legacy_import_issues')->where('batch_id', $batch->id)->delete();
 
                 $referenceKeys = $this->referenceKeys($batch);
@@ -69,6 +73,7 @@ final class RentalV1Validator
                             $referenceKeys,
                             $duplicateValues,
                             $now,
+                            $targetLabel,
                         ): void {
                             foreach ($rows as $row) {
                                 $issues = $this->issuesForRow(
@@ -76,6 +81,7 @@ final class RentalV1Validator
                                     $definition,
                                     $referenceKeys,
                                     $duplicateValues,
+                                    $targetLabel,
                                 );
                                 $status = $this->statusFromIssues($issues);
 
@@ -168,6 +174,17 @@ final class RentalV1Validator
             && ! $retry
         ) {
             throw new RuntimeException("Batch berstatus [{$batch->status}] belum siap divalidasi.");
+        }
+
+        $options = $batch->options ?? [];
+
+        if (
+            ($options['import_prefix'] ?? null) !== $batch->import_prefix
+            || ($options['source_city'] ?? null) !== $batch->source_city
+        ) {
+            throw new RuntimeException(
+                'Preview belum memakai identitas kota/PREFIX terbaru. Simpan tujuan import lalu jalankan Preview ulang.',
+            );
         }
     }
 
@@ -262,6 +279,7 @@ final class RentalV1Validator
         array $definition,
         array $referenceKeys,
         array $duplicateValues,
+        string $targetLabel,
     ): array {
         $payload = $row->payload;
         $issues = [];
@@ -415,7 +433,7 @@ final class RentalV1Validator
                     'field' => 'rental_status',
                     'message' => sprintf(
                         'Rental lama masih aktif dan akan memengaruhi status aset di cabang %s.',
-                        (string) config('legacy-import.branch_code', 'PNG'),
+                        $targetLabel,
                     ),
                     'original_value' => $payload['rental_status'],
                 ];

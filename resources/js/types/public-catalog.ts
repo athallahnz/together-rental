@@ -59,6 +59,7 @@ export type PublicProduct = {
     brand: string | null;
     model: string | null;
     variant: string | null;
+    tracking_type: 'serialized' | 'bulk';
     short_description: string | null;
     image_url: string | null;
     category: {

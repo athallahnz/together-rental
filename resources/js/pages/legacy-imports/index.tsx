@@ -3,9 +3,11 @@ import {
     ArrowRight,
     DatabaseZap,
     FileCode2,
+    MapPin,
     ShieldCheck,
     UploadCloud,
 } from 'lucide-react';
+import { useMemo, useState } from 'react';
 import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -19,11 +21,22 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 
+type BranchOption = {
+    id: number;
+    code: string;
+    name: string;
+    city: string;
+    suggested_prefix: string;
+    prefix_locked: boolean;
+};
+
 type Batch = {
     id: string;
     source_filename: string;
     source_size: number;
     source_sha256: string;
+    source_city: string | null;
+    import_prefix: string | null;
     status: string;
     total_rows: number;
     valid_rows: number;
@@ -32,7 +45,7 @@ type Batch = {
     imported_rows: number;
     created_at: string;
     uploader: { name: string; email: string } | null;
-    branch: { code: string; name: string };
+    branch: { code: string; name: string; city: string | null };
 };
 
 type Pagination<T> = {
@@ -44,7 +57,8 @@ type Pagination<T> = {
 };
 
 type Props = {
-    branch: { id: number; code: string; name: string };
+    branches: BranchOption[];
+    defaultBranchId: number | null;
     batches: Pagination<Batch>;
     maxUploadMegabytes: number;
     permissions: {
@@ -74,11 +88,32 @@ const statusLabels: Record<string, string> = {
 };
 
 export default function LegacyImportIndex({
-    branch,
+    branches,
+    defaultBranchId,
     batches,
     maxUploadMegabytes,
     permissions,
 }: Props) {
+    const initialBranch =
+        branches.find((branch) => branch.id === defaultBranchId) ?? branches[0];
+    const [selectedBranchId, setSelectedBranchId] = useState(
+        initialBranch?.id ?? 0,
+    );
+    const [importPrefix, setImportPrefix] = useState(
+        initialBranch?.suggested_prefix ?? '',
+    );
+    const selectedBranch = useMemo(
+        () => branches.find((branch) => branch.id === selectedBranchId) ?? null,
+        [branches, selectedBranchId],
+    );
+
+    const changeBranch = (branchId: number) => {
+        setSelectedBranchId(branchId);
+        const branch = branches.find((item) => item.id === branchId);
+
+        setImportPrefix(branch?.suggested_prefix ?? '');
+    };
+
     return (
         <>
             <Head title="Legacy Import RentalV1" />
@@ -93,13 +128,13 @@ export default function LegacyImportIndex({
                             Legacy Import RentalV1
                         </h1>
                         <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-                            Migrasikan database desktop lama melalui tahapan
-                            Upload, Preview, Validasi, Mapping {branch.code},
-                            Execute, dan Verifikasi.
+                            Setiap import memiliki kota/cabang tujuan dan PREFIX
+                            tiga huruf sendiri. PREFIX menjadi identitas legacy
+                            agar data antar-kota tidak saling bertabrakan.
                         </p>
                     </div>
                     <Badge variant="outline" className="h-7 px-3">
-                        Cabang {branch.code} · {branch.name}
+                        {branches.length} cabang tersedia
                     </Badge>
                 </header>
 
@@ -111,74 +146,224 @@ export default function LegacyImportIndex({
                                 Upload SQL RentalV1
                             </CardTitle>
                             <CardDescription>
+                                Pilih kota/cabang yang benar sebelum upload.
                                 Maksimal {maxUploadMegabytes} MB. File disimpan
-                                privat dan tidak pernah dieksekusi ke MySQL.
+                                privat dan tidak pernah dieksekusi langsung ke
+                                MySQL.
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
                             {permissions.upload ? (
-                                <Form
-                                    action="/legacy-imports"
-                                    method="post"
-                                    options={{
-                                        preserveScroll: true,
-                                    }}
-                                    className="space-y-4"
-                                >
-                                    {({ processing, errors, progress }) => (
-                                        <>
-                                            <div className="grid gap-2">
-                                                <Label htmlFor="sql_file">
-                                                    File dump .sql
-                                                </Label>
-                                                <Input
-                                                    id="sql_file"
-                                                    name="sql_file"
-                                                    type="file"
-                                                    accept=".sql"
-                                                    required
-                                                />
-                                                <InputError
-                                                    message={errors.sql_file}
-                                                />
-                                            </div>
-
-                                            {progress && (
-                                                <div>
-                                                    <div className="mb-1 flex justify-between text-xs text-muted-foreground">
-                                                        <span>
-                                                            Mengunggah file
-                                                        </span>
-                                                        <span>
-                                                            {
-                                                                progress.percentage
+                                branches.length > 0 ? (
+                                    <Form
+                                        action="/legacy-imports"
+                                        method="post"
+                                        options={{ preserveScroll: true }}
+                                        className="space-y-4"
+                                    >
+                                        {({ processing, errors, progress }) => (
+                                            <>
+                                                <div className="grid gap-4 md:grid-cols-[1fr_180px]">
+                                                    <div className="grid gap-2">
+                                                        <Label htmlFor="branch_id">
+                                                            Kota / cabang tujuan
+                                                        </Label>
+                                                        <select
+                                                            id="branch_id"
+                                                            name="branch_id"
+                                                            value={
+                                                                selectedBranchId
                                                             }
-                                                            %
-                                                        </span>
-                                                    </div>
-                                                    <div className="h-2 overflow-hidden rounded-full bg-muted">
-                                                        <div
-                                                            className="h-full bg-primary transition-all"
-                                                            style={{
-                                                                width: `${progress.percentage}%`,
-                                                            }}
+                                                            onChange={(event) =>
+                                                                changeBranch(
+                                                                    Number(
+                                                                        event
+                                                                            .target
+                                                                            .value,
+                                                                    ),
+                                                                )
+                                                            }
+                                                            className="h-10 rounded-md border border-input bg-background px-3 text-sm shadow-xs outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                                            required
+                                                        >
+                                                            {branches.map(
+                                                                (branch) => (
+                                                                    <option
+                                                                        key={
+                                                                            branch.id
+                                                                        }
+                                                                        value={
+                                                                            branch.id
+                                                                        }
+                                                                    >
+                                                                        {branch.city ||
+                                                                            'Kota belum diisi'}{' '}
+                                                                        —{' '}
+                                                                        {
+                                                                            branch.code
+                                                                        }{' '}
+                                                                        ·{' '}
+                                                                        {
+                                                                            branch.name
+                                                                        }
+                                                                    </option>
+                                                                ),
+                                                            )}
+                                                        </select>
+                                                        <InputError
+                                                            message={
+                                                                errors.branch_id
+                                                            }
                                                         />
                                                     </div>
-                                                </div>
-                                            )}
 
-                                            <Button
-                                                type="submit"
-                                                disabled={processing}
-                                            >
-                                                <UploadCloud />
-                                                {processing
-                                                    ? 'Mengunggah…'
-                                                    : 'Upload dan buat batch'}
-                                            </Button>
-                                        </>
-                                    )}
-                                </Form>
+                                                    <div className="grid gap-2">
+                                                        <Label htmlFor="import_prefix">
+                                                            PREFIX import
+                                                        </Label>
+                                                        <Input
+                                                            id="import_prefix"
+                                                            name="import_prefix"
+                                                            value={importPrefix}
+                                                            onChange={(event) =>
+                                                                setImportPrefix(
+                                                                    event.target.value
+                                                                        .toUpperCase()
+                                                                        .replace(
+                                                                            /[^A-Z]/g,
+                                                                            '',
+                                                                        )
+                                                                        .slice(
+                                                                            0,
+                                                                            3,
+                                                                        ),
+                                                                )
+                                                            }
+                                                            maxLength={3}
+                                                            minLength={3}
+                                                            pattern="[A-Z]{3}"
+                                                            autoComplete="off"
+                                                            className="font-mono uppercase"
+                                                            placeholder="PNG"
+                                                            readOnly={
+                                                                selectedBranch?.prefix_locked ??
+                                                                false
+                                                            }
+                                                            required
+                                                        />
+                                                        <InputError
+                                                            message={
+                                                                errors.import_prefix
+                                                            }
+                                                        />
+                                                        {selectedBranch?.prefix_locked && (
+                                                            <p className="text-xs text-muted-foreground">
+                                                                PREFIX cabang
+                                                                ini sudah
+                                                                ditetapkan dari
+                                                                import
+                                                                sebelumnya dan
+                                                                harus tetap{' '}
+                                                                {
+                                                                    selectedBranch.suggested_prefix
+                                                                }
+                                                                .
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                </div>
+
+                                                {selectedBranch && (
+                                                    <div className="flex gap-3 rounded-lg border bg-muted/30 p-3 text-sm">
+                                                        <MapPin className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
+                                                        <div>
+                                                            <p className="font-medium">
+                                                                Tujuan:{' '}
+                                                                {selectedBranch.city ||
+                                                                    'Kota belum diisi'}
+                                                            </p>
+                                                            <p className="mt-1 text-xs text-muted-foreground">
+                                                                {
+                                                                    selectedBranch.code
+                                                                }{' '}
+                                                                ·{' '}
+                                                                {
+                                                                    selectedBranch.name
+                                                                }{' '}
+                                                                · PREFIX{' '}
+                                                                <span className="font-mono font-semibold">
+                                                                    {importPrefix ||
+                                                                        '---'}
+                                                                </span>
+                                                            </p>
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                <div className="grid gap-2">
+                                                    <Label htmlFor="sql_file">
+                                                        File dump .sql
+                                                    </Label>
+                                                    <Input
+                                                        id="sql_file"
+                                                        name="sql_file"
+                                                        type="file"
+                                                        accept=".sql"
+                                                        required
+                                                    />
+                                                    <InputError
+                                                        message={
+                                                            errors.sql_file
+                                                        }
+                                                    />
+                                                </div>
+
+                                                {progress && (
+                                                    <div>
+                                                        <div className="mb-1 flex justify-between text-xs text-muted-foreground">
+                                                            <span>
+                                                                Mengunggah file
+                                                            </span>
+                                                            <span>
+                                                                {
+                                                                    progress.percentage
+                                                                }
+                                                                %
+                                                            </span>
+                                                        </div>
+                                                        <div className="h-2 overflow-hidden rounded-full bg-muted">
+                                                            <div
+                                                                className="h-full bg-primary transition-all"
+                                                                style={{
+                                                                    width: `${progress.percentage}%`,
+                                                                }}
+                                                            />
+                                                        </div>
+                                                    </div>
+                                                )}
+
+                                                <Button
+                                                    type="submit"
+                                                    disabled={
+                                                        processing ||
+                                                        importPrefix.length !==
+                                                            3
+                                                    }
+                                                >
+                                                    <UploadCloud />
+                                                    {processing
+                                                        ? 'Mengunggah…'
+                                                        : 'Upload dan buat batch'}
+                                                </Button>
+                                            </>
+                                        )}
+                                    </Form>
+                                ) : (
+                                    <p className="text-sm text-muted-foreground">
+                                        Tidak ada cabang aktif dengan akses
+                                        import untuk akun ini.
+                                    </p>
+                                )
                             ) : (
                                 <p className="text-sm text-muted-foreground">
                                     Akun ini tidak memiliki izin untuk
@@ -204,13 +389,13 @@ export default function LegacyImportIndex({
                                 ],
                                 [
                                     ShieldCheck,
-                                    'Password tidak dipindahkan',
-                                    'Hash password dan API token lama dibuang sebelum staging.',
+                                    'Kota & PREFIX terkunci sebelum execute',
+                                    'Jika tujuan diubah setelah preview, hasil staging direset dan wajib dipreview ulang.',
                                 ],
                                 [
                                     DatabaseZap,
-                                    'SHA-256 & ID map',
-                                    'File duplikat dan eksekusi record ganda diblokir.',
+                                    'SHA-256 & ID map per cabang',
+                                    'File duplikat dan mapping ID record ganda diblokir.',
                                 ],
                             ].map(([Icon, title, description]) => (
                                 <div key={String(title)} className="flex gap-3">
@@ -235,16 +420,22 @@ export default function LegacyImportIndex({
                     <CardHeader>
                         <CardTitle>Riwayat batch import</CardTitle>
                         <CardDescription>
-                            Setiap keputusan mapping dan eksekusi tersimpan
-                            dalam audit event.
+                            Kota, PREFIX, keputusan mapping, dan eksekusi
+                            tersimpan dalam audit event.
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="overflow-x-auto">
-                        <table className="w-full min-w-[820px] text-sm">
+                        <table className="w-full min-w-[1040px] text-sm">
                             <thead>
                                 <tr className="border-b text-left text-xs tracking-wide text-muted-foreground uppercase">
                                     <th className="px-3 py-3 font-medium">
                                         Sumber
+                                    </th>
+                                    <th className="px-3 py-3 font-medium">
+                                        Kota
+                                    </th>
+                                    <th className="px-3 py-3 font-medium">
+                                        PREFIX
                                     </th>
                                     <th className="px-3 py-3 font-medium">
                                         Status
@@ -275,8 +466,27 @@ export default function LegacyImportIndex({
                                                 {batch.source_filename}
                                             </p>
                                             <p className="mt-1 font-mono text-xs text-muted-foreground">
+                                                {batch.branch.code} ·{' '}
                                                 {batch.id.slice(0, 13)}…
                                             </p>
+                                        </td>
+                                        <td className="px-3 py-4">
+                                            <p className="font-medium">
+                                                {batch.source_city ||
+                                                    batch.branch.city ||
+                                                    '—'}
+                                            </p>
+                                            <p className="mt-1 text-xs text-muted-foreground">
+                                                {batch.branch.name}
+                                            </p>
+                                        </td>
+                                        <td className="px-3 py-4">
+                                            <Badge
+                                                variant="outline"
+                                                className="font-mono"
+                                            >
+                                                {batch.import_prefix || '---'}
+                                            </Badge>
                                         </td>
                                         <td className="px-3 py-4">
                                             <StatusBadge
@@ -314,7 +524,7 @@ export default function LegacyImportIndex({
                                 {batches.data.length === 0 && (
                                     <tr>
                                         <td
-                                            colSpan={7}
+                                            colSpan={9}
                                             className="px-3 py-12 text-center text-muted-foreground"
                                         >
                                             Belum ada batch import.

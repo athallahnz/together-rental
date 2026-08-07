@@ -268,6 +268,104 @@ class CatalogManagementTest extends TestCase
         $this->assertNull($parent->fresh()->parent_id);
     }
 
+    public function test_catalog_branch_filter_scopes_asset_metrics_and_product_detail(): void
+    {
+        [$user, $ponorogo] = $this->superAdministrator();
+        $madiun = Branch::query()->create([
+            'company_id' => $user->company_id,
+            'code' => 'MDN',
+            'name' => 'Together Kamera Madiun',
+            'city' => 'Madiun',
+            'timezone' => 'Asia/Jakarta',
+            'is_active' => true,
+        ]);
+        $category = $this->category($user);
+        $product = $this->product($user, $category);
+
+        Asset::query()->create([
+            'product_id' => $product->id,
+            'owning_branch_id' => $ponorogo->id,
+            'current_branch_id' => $ponorogo->id,
+            'asset_code' => 'PNG-CAM-0001',
+            'serial_number' => 'PNG-SERIAL-0001',
+            'status' => 'available',
+            'condition' => 'good',
+            'purchase_price' => 20000000,
+            'replacement_value' => 25000000,
+            'is_active' => true,
+        ]);
+        Asset::query()->create([
+            'product_id' => $product->id,
+            'owning_branch_id' => $ponorogo->id,
+            'current_branch_id' => $madiun->id,
+            'asset_code' => 'PNG-CAM-0002',
+            'serial_number' => 'PNG-SERIAL-0002',
+            'status' => 'rented',
+            'condition' => 'good',
+            'purchase_price' => 20000000,
+            'replacement_value' => 25000000,
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('catalog.index', ['branch_id' => $madiun->id]))
+            ->assertOk()
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->where('filters.branch_id', $madiun->id)
+                ->where('inventorySummary.assets', 1)
+                ->where('inventorySummary.availableAssets', 0)
+                ->where('inventorySummary.rentedAssets', 1)
+                ->where('products.data.0.id', $product->id)
+                ->where('products.data.0.assets_count', 1)
+                ->where('products.data.0.available_assets_count', 0)
+                ->where('products.data.0.rented_assets_count', 1)
+                ->has('branches', 2));
+
+        $this->actingAs($user)
+            ->get(route('catalog.products.show', [
+                'product' => $product,
+                'branch_id' => $madiun->id,
+            ]))
+            ->assertOk()
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->where('filters.branch_id', $madiun->id)
+                ->where('assetSummary.rented', 1)
+                ->missing('assetSummary.available')
+                ->has('branchStock', 2)
+                ->where('branchStock.0.branch.id', $madiun->id)
+                ->where('branchStock.0.assets.rented', 1));
+    }
+
+    public function test_branch_scoped_catalog_user_cannot_filter_foreign_branch(): void
+    {
+        [$administrator, $ponorogo] = $this->superAdministrator();
+        $madiun = Branch::query()->create([
+            'company_id' => $administrator->company_id,
+            'code' => 'MDN',
+            'name' => 'Together Kamera Madiun',
+            'city' => 'Madiun',
+            'timezone' => 'Asia/Jakarta',
+            'is_active' => true,
+        ]);
+        $operator = $this->catalogOperator(
+            (int) $administrator->company_id,
+            $ponorogo,
+        );
+        $category = $this->category($administrator);
+        $product = $this->product($administrator, $category);
+
+        $this->actingAs($operator)
+            ->get(route('catalog.index', ['branch_id' => $madiun->id]))
+            ->assertForbidden();
+
+        $this->actingAs($operator)
+            ->get(route('catalog.products.show', [
+                'product' => $product,
+                'branch_id' => $madiun->id,
+            ]))
+            ->assertForbidden();
+    }
+
     public function test_user_without_product_permission_cannot_open_catalog(): void
     {
         $user = User::factory()->create([

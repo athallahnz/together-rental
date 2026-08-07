@@ -18,6 +18,8 @@ class StoreLegacyImportRequest extends FormRequest
     public function rules(): array
     {
         return [
+            'branch_id' => ['required', 'integer', 'exists:branches,id'],
+            'import_prefix' => ['required', 'string', 'size:3', 'regex:/^[A-Z]{3}$/'],
             'sql_file' => [
                 'required',
                 'file',
@@ -43,6 +45,11 @@ class StoreLegacyImportRequest extends FormRequest
             : UPLOAD_ERR_OK;
 
         return [
+            'branch_id.required' => 'Pilih kota/cabang tujuan import.',
+            'branch_id.exists' => 'Kota/cabang tujuan import tidak tersedia.',
+            'import_prefix.required' => 'PREFIX import wajib diisi.',
+            'import_prefix.size' => 'PREFIX import wajib tepat 3 huruf.',
+            'import_prefix.regex' => 'PREFIX import hanya boleh terdiri dari 3 huruf A-Z.',
             'sql_file.required' => 'Pilih file dump RentalV1 berformat .sql.',
             'sql_file.uploaded' => $this->uploadErrorMessage($errorCode),
             'sql_file.file' => 'Sumber yang dipilih tidak diterima sebagai file upload.',
@@ -52,8 +59,24 @@ class StoreLegacyImportRequest extends FormRequest
         ];
     }
 
+    /** @return array<string, string> */
+    public function attributes(): array
+    {
+        return [
+            'branch_id' => 'kota/cabang tujuan',
+            'import_prefix' => 'PREFIX import',
+            'sql_file' => 'file SQL RentalV1',
+        ];
+    }
+
     protected function prepareForValidation(): void
     {
+        if ($this->has('import_prefix')) {
+            $this->merge([
+                'import_prefix' => strtoupper(trim((string) $this->input('import_prefix'))),
+            ]);
+        }
+
         $upload = $_FILES['sql_file'] ?? null;
 
         if (! is_array($upload)) {

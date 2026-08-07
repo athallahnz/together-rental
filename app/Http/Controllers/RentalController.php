@@ -21,6 +21,7 @@ use App\Models\RatePlan;
 use App\Models\Rental;
 use App\Models\RentalPackage;
 use App\Models\User;
+use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -38,41 +39,130 @@ class RentalController extends Controller
         $user = $request->user();
         $search = trim($request->string('search')->toString());
         $status = $request->string('status')->toString();
+        $operationalState = $request->string('operational_state')->toString();
+        $paymentState = $request->string('payment_state')->toString();
+        $source = $request->string('source')->toString();
+        $checkoutPeriod = $request->string('checkout_period')->toString();
         $branchId = $request->integer('branch_id') ?: null;
-        $base = Rental::query()
-            ->whereIn('branch_id', $user->accessibleBranches()->select('id'));
+        $branches = $user->accessibleBranches()->orderBy('name')->get(['id', 'code', 'name']);
+        $branchIds = $branches->pluck('id');
 
-        $rentals = (clone $base)
-            ->when($search !== '', fn (Builder $query) => $query->where(
-                fn (Builder $nested) => $nested
-                    ->where('rental_number', 'like', "%{$search}%")
-                    ->orWhereHas('customer', fn (Builder $customer) => $customer->where('name', 'like', "%{$search}%")),
-            ))
+        if ($branchId !== null) {
+            abort_unless($branchIds->contains($branchId), 403);
+        }
+
+        $activeStatuses = ['active', 'partial_return', 'correction_pending'];
+        $base = Rental::query()->whereIn('branch_id', $branchIds);
+        $scope = (clone $base)
+            ->when($branchId !== null, fn (Builder $query) => $query->where('branch_id', $branchId));
+        $query = (clone $scope)
+            ->when($search !== '', function (Builder $query) use ($search): void {
+                $query->where(function (Builder $nested) use ($search): void {
+                    $nested
+                        ->where('rental_number', 'like', "%{$search}%")
+                        ->orWhere('legacy_number', 'like', "%{$search}%")
+                        ->orWhereHas('customer', fn (Builder $customer) => $customer
+                            ->where('name', 'like', "%{$search}%")
+                            ->orWhere('customer_number', 'like', "%{$search}%")
+                            ->orWhere('phone', 'like', "%{$search}%"))
+                        ->orWhereHas('booking', fn (Builder $booking) => $booking
+                            ->where('booking_number', 'like', "%{$search}%"))
+                        ->orWhereHas('items.product', fn (Builder $product) => $product
+                            ->where('name', 'like', "%{$search}%")
+                            ->orWhere('sku', 'like', "%{$search}%"))
+                        ->orWhereHas('items.assets.asset', fn (Builder $asset) => $asset
+                            ->where('asset_code', 'like', "%{$search}%")
+                            ->orWhere('serial_number', 'like', "%{$search}%"));
+                });
+            })
             ->when(in_array($status, ['active', 'partial_return', 'correction_pending', 'returned', 'completed'], true),
                 fn (Builder $query) => $query->where('status', $status))
-            ->when($branchId !== null,
-                fn (Builder $query) => $query->where('branch_id', $branchId))
+            ->when($source === 'direct', fn (Builder $query) => $query
+                ->whereHas('booking', fn (Builder $booking) => $booking->where('source', 'direct')))
+            ->when($source === 'booking', fn (Builder $query) => $query
+                ->whereHas('booking', fn (Builder $booking) => $booking->where('source', '!=', 'direct')))
+            ->when($paymentState === 'outstanding', fn (Builder $query) => $query->where('balance_due', '>', 0))
+            ->when($paymentState === 'paid', fn (Builder $query) => $query->where('balance_due', '=', 0))
+            ->when($paymentState === 'overpaid', fn (Builder $query) => $query->where('balance_due', '<', 0))
+            ->when($checkoutPeriod === 'today', fn (Builder $query) => $query->whereDate('checked_out_at', today()))
+            ->when($checkoutPeriod === 'last7', fn (Builder $query) => $query->where('checked_out_at', '>=', now()->subDays(7)))
+            ->when($checkoutPeriod === 'last30', fn (Builder $query) => $query->where('checked_out_at', '>=', now()->subDays(30)));
+
+        if ($operationalState === 'overdue') {
+            $query->whereIn('status', $activeStatuses)->where('due_at', '<', now());
+        } elseif ($operationalState === 'due_today') {
+            $query->whereIn('status', $activeStatuses)->whereDate('due_at', today());
+        } elseif ($operationalState === 'due_soon') {
+            $query->whereIn('status', $activeStatuses)
+                ->where('due_at', '>=', now())
+                ->where('due_at', '<=', now()->addHours(24));
+        } elseif ($operationalState === 'active') {
+            $query->whereIn('status', $activeStatuses)->where('due_at', '>=', now());
+        } elseif ($operationalState === 'closed') {
+            $query->whereIn('status', ['returned', 'completed']);
+        }
+
+        $rentals = $query
             ->with([
                 'branch:id,code,name',
                 'customer:id,customer_number,name,phone',
                 'booking:id,booking_number,source',
             ])
             ->withCount('items')
+            ->orderByRaw("CASE WHEN status IN ('active','partial_return','correction_pending') AND due_at < ? THEN 0 ELSE 1 END", [now()])
+            ->orderBy('due_at')
             ->orderByDesc('checked_out_at')
             ->paginate(20)
-            ->withQueryString();
+            ->withQueryString()
+            ->through(function (Rental $rental) use ($activeStatuses): Rental {
+                $isOperational = in_array($rental->status, $activeStatuses, true);
+                $dueAt = CarbonImmutable::parse((string) $rental->due_at);
+                $isOverdue = $isOperational && $dueAt->isPast();
+                $isDueToday = $isOperational && $dueAt->isToday();
+                $dueState = match (true) {
+                    $isOverdue => 'overdue',
+                    $isDueToday => 'due_today',
+                    $isOperational && $dueAt->between(now(), now()->addHours(24)) => 'due_soon',
+                    $isOperational => 'on_track',
+                    default => 'closed',
+                };
+
+                $rental->setAttribute('is_overdue', $isOverdue);
+                $rental->setAttribute('due_state', $dueState);
+                $rental->setAttribute(
+                    'source_label',
+                    $rental->booking?->source === 'direct'
+                        ? 'Rental Langsung'
+                        : ($rental->booking !== null ? 'Checkout Booking' : 'Rental tanpa booking'),
+                );
+
+                return $rental;
+            });
 
         return Inertia::render('rentals/index', [
             'rentals' => $rentals,
             'summary' => [
-                'active' => (clone $base)->where('status', 'active')->count(),
-                'overdue' => (clone $base)->whereIn('status', ['active', 'partial_return', 'correction_pending'])
-                    ->where('due_at', '<', now())->count(),
-                'today' => (clone $base)->whereDate('checked_out_at', today())->count(),
+                'active' => (clone $scope)->whereIn('status', $activeStatuses)->count(),
+                'overdue' => (clone $scope)->whereIn('status', $activeStatuses)->where('due_at', '<', now())->count(),
+                'dueToday' => (clone $scope)->whereIn('status', $activeStatuses)->whereDate('due_at', today())->count(),
+                'partialReturn' => (clone $scope)->where('status', 'partial_return')->count(),
+                'correctionPending' => (clone $scope)->where('status', 'correction_pending')->count(),
+                'closed' => (clone $scope)->whereIn('status', ['returned', 'completed'])->count(),
+                'outstandingAmount' => (float) (clone $scope)
+                    ->whereIn('status', $activeStatuses)
+                    ->where('balance_due', '>', 0)
+                    ->sum('balance_due'),
             ],
-            'filters' => compact('search', 'status', 'branchId'),
-            'branches' => $user->accessibleBranches()
-                ->orderBy('name')->get(['id', 'code', 'name']),
+            'filters' => [
+                'search' => $search,
+                'status' => $status,
+                'operational_state' => $operationalState,
+                'payment_state' => $paymentState,
+                'source' => $source,
+                'checkout_period' => $checkoutPeriod,
+                'branch_id' => $branchId,
+            ],
+            'branches' => $branches,
             'permissions' => $this->permissions($user),
         ]);
     }
@@ -175,6 +265,12 @@ class RentalController extends Controller
             'operationalCorrections.opener:id,name',
             'operationalCorrections.finalizer:id,name',
         ]);
+
+        $rental->setAttribute(
+            'is_overdue',
+            in_array($rental->status, ['active', 'partial_return', 'correction_pending'], true)
+                && CarbonImmutable::parse((string) $rental->due_at)->isPast(),
+        );
 
         return Inertia::render('rentals/show', [
             'rental' => $rental,

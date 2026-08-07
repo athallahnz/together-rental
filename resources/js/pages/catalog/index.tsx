@@ -46,6 +46,7 @@ import {
 import type {
     AccessBranch,
     CatalogBrand,
+    CatalogInventorySummary,
     CatalogModel,
     CatalogPermissions,
     Pagination,
@@ -71,6 +72,7 @@ type Props = {
         packages: number;
         withoutRate: number;
     };
+    inventorySummary: CatalogInventorySummary;
     filters: {
         search: string;
         category_id: number | null;
@@ -79,6 +81,7 @@ type Props = {
         tracking_type: string;
         status: string;
         section: Section;
+        branch_id: number | null;
     };
     branches: AccessBranch[];
     permissions: CatalogPermissions;
@@ -92,6 +95,7 @@ export default function CatalogIndex({
     ratePlans,
     packages,
     summary,
+    inventorySummary,
     filters,
     branches,
     permissions,
@@ -120,6 +124,7 @@ export default function CatalogIndex({
             catalog_model_id: number | null;
             tracking_type: string;
             status: string;
+            branch_id: number | null;
         }> = {},
     ) => {
         const categoryId =
@@ -140,6 +145,10 @@ export default function CatalogIndex({
                 : (next.catalog_model_id ??
                   filters.catalog_model_id ??
                   undefined);
+        const branchId =
+            next.branch_id === null
+                ? undefined
+                : (next.branch_id ?? filters.branch_id ?? undefined);
 
         router.get(
             '/catalog',
@@ -152,6 +161,7 @@ export default function CatalogIndex({
                 tracking_type:
                     tracking === 'all' ? undefined : tracking || undefined,
                 status: status === 'all' ? undefined : status || undefined,
+                branch_id: branchId,
             },
             { preserveState: true, replace: true },
         );
@@ -173,6 +183,11 @@ export default function CatalogIndex({
         setEditingPackage(rentalPackage);
         setPackageDialog(true);
     };
+    const selectedBranch =
+        branches.find((branch) => branch.id === filters.branch_id) ?? null;
+    const branchScopeLabel = selectedBranch
+        ? `${selectedBranch.code} · ${selectedBranch.name}`
+        : 'Semua cabang yang dapat diakses';
 
     return (
         <>
@@ -239,10 +254,19 @@ export default function CatalogIndex({
 
                 <CatalogErrors errors={errors} />
 
+                <BranchScopeFilter
+                    branches={branches}
+                    branchId={filters.branch_id}
+                    scopeLabel={branchScopeLabel}
+                    onChange={(branchId) =>
+                        navigate(filters.section, { branch_id: branchId })
+                    }
+                />
+
                 <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
                     {[
                         {
-                            label: 'Total produk',
+                            label: 'Master produk',
                             value: summary.products,
                             icon: Boxes,
                         },
@@ -285,6 +309,11 @@ export default function CatalogIndex({
                     ))}
                 </section>
 
+                <InventoryScopeSummary
+                    summary={inventorySummary}
+                    scopeLabel={branchScopeLabel}
+                />
+
                 <nav className="flex flex-wrap gap-2 rounded-xl border bg-card p-2">
                     {[
                         ['products', 'Produk', Boxes],
@@ -318,6 +347,8 @@ export default function CatalogIndex({
                         setSearch={setSearch}
                         navigate={navigate}
                         permissions={permissions}
+                        branchId={filters.branch_id}
+                        branchScopeLabel={branchScopeLabel}
                         onEdit={openProduct}
                     />
                 )}
@@ -374,6 +405,123 @@ export default function CatalogIndex({
     );
 }
 
+function BranchScopeFilter({
+    branches,
+    branchId,
+    scopeLabel,
+    onChange,
+}: {
+    branches: AccessBranch[];
+    branchId: number | null;
+    scopeLabel: string;
+    onChange: (branchId: number | null) => void;
+}) {
+    return (
+        <Card className="border-primary/20 bg-primary/[0.02]">
+            <CardContent className="grid gap-4 p-4 md:grid-cols-[minmax(0,1fr)_minmax(260px,360px)] md:items-center md:p-5">
+                <div>
+                    <p className="text-sm font-semibold">
+                        Lingkup cabang katalog
+                    </p>
+                    <p className="mt-1 text-sm text-muted-foreground">
+                        Master produk dan kategori tetap global. Filter ini
+                        mengubah ringkasan aset, stok, harga, paket, dan rate
+                        plan sesuai cabang yang dipilih.
+                    </p>
+                    <p className="mt-2 text-xs font-medium text-primary">
+                        Aktif: {scopeLabel}
+                    </p>
+                </div>
+                <Select
+                    value={branchId?.toString() ?? 'all'}
+                    onValueChange={(value) =>
+                        onChange(value === 'all' ? null : Number(value))
+                    }
+                >
+                    <SelectTrigger aria-label="Filter cabang katalog">
+                        <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                        <SelectItem value="all">
+                            Semua cabang yang dapat diakses
+                        </SelectItem>
+                        {branches.map((branch) => (
+                            <SelectItem
+                                key={branch.id}
+                                value={branch.id.toString()}
+                            >
+                                {branch.code} · {branch.name}
+                            </SelectItem>
+                        ))}
+                    </SelectContent>
+                </Select>
+            </CardContent>
+        </Card>
+    );
+}
+
+function InventoryScopeSummary({
+    summary,
+    scopeLabel,
+}: {
+    summary: CatalogInventorySummary;
+    scopeLabel: string;
+}) {
+    const metrics = [
+        { label: 'Aset serialized', value: summary.assets, icon: Boxes },
+        {
+            label: 'Aset tersedia',
+            value: summary.availableAssets,
+            icon: PackageCheck,
+        },
+        { label: 'Aset disewa', value: summary.rentedAssets, icon: BoxIcon },
+        {
+            label: 'Maintenance / transit',
+            value: summary.maintenanceAssets + summary.inTransitAssets,
+            icon: CircleOff,
+        },
+        {
+            label: 'Stok bulk',
+            value: summary.quantityOnHand,
+            icon: Layers3,
+        },
+    ];
+
+    return (
+        <Card>
+            <CardHeader className="pb-3">
+                <CardTitle className="text-base">
+                    Ringkasan inventaris per cabang
+                </CardTitle>
+                <CardDescription>{scopeLabel}</CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+                {metrics.map(({ label, value, icon: Icon }) => (
+                    <div key={label} className="rounded-lg border p-3">
+                        <div className="flex items-center justify-between gap-3">
+                            <p className="text-xs font-medium text-muted-foreground">
+                                {label}
+                            </p>
+                            <Icon className="size-4 text-muted-foreground" />
+                        </div>
+                        <p className="mt-2 text-2xl font-semibold">{value}</p>
+                    </div>
+                ))}
+                <div className="sm:col-span-2 xl:col-span-5">
+                    <p className="text-xs text-muted-foreground">
+                        Bulk: reservasi {summary.quantityReserved} · disewa{' '}
+                        {summary.quantityRented} · maintenance{' '}
+                        {summary.quantityMaintenance} · dalam transfer{' '}
+                        {summary.quantityInTransfer}. Serialized: maintenance{' '}
+                        {summary.maintenanceAssets} · in transit{' '}
+                        {summary.inTransitAssets}.
+                    </p>
+                </div>
+            </CardContent>
+        </Card>
+    );
+}
+
 function ProductsSection({
     products,
     categories,
@@ -384,6 +532,8 @@ function ProductsSection({
     setSearch,
     navigate,
     permissions,
+    branchId,
+    branchScopeLabel,
     onEdit,
 }: {
     products: Pagination<Product>;
@@ -401,9 +551,12 @@ function ProductsSection({
             catalog_model_id: number | null;
             tracking_type: string;
             status: string;
+            branch_id: number | null;
         }>,
     ) => void;
     permissions: CatalogPermissions;
+    branchId: number | null;
+    branchScopeLabel: string;
     onEdit: (product: Product) => void;
 }) {
     return (
@@ -412,8 +565,8 @@ function ProductsSection({
                 <div>
                     <CardTitle>Master produk rental</CardTitle>
                     <CardDescription>
-                        Produk hasil Legacy Import dan input baru menggunakan
-                        master yang sama.
+                        Master produk bersifat global. Angka aset, stok, dan
+                        harga di bawah mengikuti lingkup {branchScopeLabel}.
                     </CardDescription>
                 </div>
             </CardHeader>
@@ -472,7 +625,7 @@ function ProductsSection({
                                         <div className="min-w-0 flex-1">
                                             <div className="flex flex-wrap items-center gap-2">
                                                 <Link
-                                                    href={`/catalog/products/${product.id}`}
+                                                    href={`/catalog/products/${product.id}${branchId ? `?branch_id=${branchId}` : ''}`}
                                                     className="truncate font-semibold hover:underline"
                                                 >
                                                     {product.name}
@@ -526,20 +679,52 @@ function ProductsSection({
                                         <p className="text-muted-foreground">
                                             {product.tracking_type ===
                                             'serialized'
-                                                ? 'Per unit / serial'
-                                                : 'Kuantitas / bulk'}{' '}
-                                            · {product.assets_count ?? 0} aset
+                                                ? `Per unit / serial · ${product.assets_count ?? 0} aset`
+                                                : `Kuantitas / bulk · stok ${Number(product.quantity_on_hand ?? 0)}`}
                                         </p>
-                                        <p className="text-xs text-muted-foreground">
-                                            {product.rates_count ?? 0} harga ·
-                                            stok{' '}
-                                            {Number(
-                                                product.quantity_on_hand ?? 0,
-                                            )}{' '}
-                                            · disewa{' '}
-                                            {Number(
-                                                product.quantity_rented ?? 0,
-                                            )}
+                                        {product.tracking_type ===
+                                        'serialized' ? (
+                                            <p className="text-xs text-muted-foreground">
+                                                tersedia{' '}
+                                                {product.available_assets_count ??
+                                                    0}{' '}
+                                                · disewa{' '}
+                                                {product.rented_assets_count ??
+                                                    0}{' '}
+                                                · maintenance{' '}
+                                                {product.maintenance_assets_count ??
+                                                    0}{' '}
+                                                · in transit{' '}
+                                                {product.in_transit_assets_count ??
+                                                    0}
+                                            </p>
+                                        ) : (
+                                            <p className="text-xs text-muted-foreground">
+                                                reservasi{' '}
+                                                {Number(
+                                                    product.quantity_reserved ??
+                                                        0,
+                                                )}{' '}
+                                                · disewa{' '}
+                                                {Number(
+                                                    product.quantity_rented ??
+                                                        0,
+                                                )}{' '}
+                                                · maintenance{' '}
+                                                {Number(
+                                                    product.quantity_maintenance ??
+                                                        0,
+                                                )}{' '}
+                                                · transfer{' '}
+                                                {Number(
+                                                    product.quantity_in_transfer ??
+                                                        0,
+                                                )}
+                                            </p>
+                                        )}
+                                        <p className="text-xs font-medium text-muted-foreground">
+                                            {product.rates_count ?? 0} harga ·{' '}
+                                            {branchScopeLabel}
                                         </p>
                                     </div>
                                     <div className="flex flex-wrap gap-2 xl:justify-end">
@@ -549,7 +734,7 @@ function ProductsSection({
                                             variant="outline"
                                         >
                                             <Link
-                                                href={`/catalog/products/${product.id}`}
+                                                href={`/catalog/products/${product.id}${branchId ? `?branch_id=${branchId}` : ''}`}
                                             >
                                                 Detail & harga
                                             </Link>
@@ -602,6 +787,7 @@ function ProductFilterControls({
             catalog_model_id: number | null;
             tracking_type: string;
             status: string;
+            branch_id: number | null;
         }>,
     ) => void;
 }) {

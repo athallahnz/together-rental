@@ -11,6 +11,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 #[Fillable([
     'id',
     'branch_id',
+    'source_city',
+    'import_prefix',
     'uploaded_by',
     'source_system',
     'source_filename',

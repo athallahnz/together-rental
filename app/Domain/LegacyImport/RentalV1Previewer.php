@@ -19,12 +19,18 @@ final class RentalV1Previewer
     public function preview(LegacyImportBatch $batch, ?int $userId = null): LegacyImportBatch
     {
         $this->guardStatus($batch, ['uploaded', 'previewed', 'queued_preview', 'failed'], 'preview');
+        $prefix = strtoupper(trim((string) $batch->import_prefix));
+
+        if (! preg_match('/^[A-Z]{3}$/', $prefix)) {
+            throw new RuntimeException('PREFIX import belum valid. Tentukan 3 huruf PREFIX sebelum Preview.');
+        }
+
         $path = $this->sourcePath($batch);
 
         $this->recorder->transition($batch, 'previewing', 'preview_started', $userId);
 
         try {
-            $result = DB::transaction(function () use ($batch, $path): array {
+            $result = DB::transaction(function () use ($batch, $path, $prefix): array {
                 DB::table('legacy_import_issues')->where('batch_id', $batch->id)->delete();
                 DB::table('legacy_import_mappings')->where('batch_id', $batch->id)->delete();
                 DB::table('legacy_import_rows')->where('batch_id', $batch->id)->delete();
@@ -51,9 +57,10 @@ final class RentalV1Previewer
                         $chunkSize,
                         $now,
                         $flush,
+                        $prefix,
                     ): void {
                         $payload = $this->normalizer->sanitize($table, $payload);
-                        $normalized = $this->normalizer->normalize($table, $payload);
+                        $normalized = $this->normalizer->normalize($table, $payload, $prefix);
                         $definition = RentalV1Definition::table($table);
 
                         $buffer[] = [
@@ -114,6 +121,11 @@ final class RentalV1Previewer
 
             $options = $batch->options ?? [];
             unset($options['failed_step']);
+            $options['branch_code'] = (string) DB::table('branches')
+                ->where('id', $batch->branch_id)
+                ->value('code');
+            $options['source_city'] = $batch->source_city;
+            $options['import_prefix'] = $prefix;
 
             $batch->update([
                 'status' => 'previewed',

@@ -23,15 +23,17 @@ final class RentalV1Normalizer
     /** @param array<string, mixed> $payload
      * @return array<string, mixed>
      */
-    public function normalize(string $table, array $payload): array
+    public function normalize(string $table, array $payload, string $importPrefix): array
     {
-        $branchCode = strtoupper(trim(
-            (string) config('legacy-import.branch_code', 'PNG'),
-        ));
+        $prefix = strtoupper(trim($importPrefix));
+
+        if (! preg_match('/^[A-Z]{3}$/', $prefix)) {
+            throw new \InvalidArgumentException('PREFIX import wajib tepat 3 huruf A-Z.');
+        }
 
         return match ($table) {
             'customer' => [
-                'customer_number' => "LEG-{$branchCode}-".RentalV1Value::integer($payload['customer_id'] ?? null),
+                'customer_number' => "LEG-{$prefix}-".RentalV1Value::integer($payload['customer_id'] ?? null),
                 'name' => RentalV1Value::string($payload['customer_name'], 150),
                 'gender' => RentalV1Value::gender($payload['customer_jeniskelamin'] ?? null),
                 'phone' => RentalV1Value::string($payload['customer_nohp'] ?? null, 30),
@@ -44,8 +46,12 @@ final class RentalV1Normalizer
                 'member_number' => RentalV1Value::string($payload['customer_nomember'] ?? null, 40),
             ],
             'rent_product' => [
-                'sku' => RentalV1Value::string($payload['rentproduct_code'] ?? null, 50)
-                    ?? 'LEG-PRD-'.RentalV1Value::integer($payload['rentproduct_id'] ?? null),
+                'sku' => $this->prefixedCode(
+                    RentalV1Value::string($payload['rentproduct_code'] ?? null, 50)
+                        ?? 'LEG-PRD-'.RentalV1Value::integer($payload['rentproduct_id'] ?? null),
+                    $prefix,
+                    50,
+                ),
                 'name' => RentalV1Value::string($payload['rentproduct_name'] ?? null, 150),
                 'serial_number' => RentalV1Value::string($payload['rentproduct_serial_number'] ?? null, 120),
                 'tracking_type' => RentalV1Value::boolean($payload['rentproduct_is_serial'] ?? null)
@@ -73,6 +79,17 @@ final class RentalV1Normalizer
             ],
             default => $this->normalizeScalars($payload),
         };
+    }
+
+    private function prefixedCode(string $value, string $prefix, int $maxLength): string
+    {
+        $value = strtoupper(trim($value));
+
+        if (str_starts_with($value, $prefix.'-')) {
+            return mb_substr($value, 0, $maxLength);
+        }
+
+        return mb_substr($prefix.'-'.$value, 0, $maxLength);
     }
 
     /** @param array<string, mixed> $payload

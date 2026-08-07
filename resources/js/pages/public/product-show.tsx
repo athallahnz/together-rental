@@ -8,6 +8,7 @@ import {
     ShieldCheck,
 } from 'lucide-react';
 import AvailabilityPlanner from '@/components/public/availability-planner';
+import PublicAssetCalendar from '@/components/public/public-asset-calendar';
 import ProductCard from '@/components/public/product-card';
 import PublicShell from '@/components/public/public-shell';
 import type { PublicBranch, PublicProduct, PublicProductDetail } from '@/types';
@@ -262,6 +263,17 @@ export default function PublicProductShow({
                         </div>
                     </div>
                 </section>
+
+                {branch && product.tracking_type === 'serialized' && (
+                    <section className="mx-auto max-w-7xl px-5 pb-16 lg:px-8 lg:pb-24">
+                        <PublicAssetCalendar
+                            key={`${branch.code}:${product.slug}`}
+                            branch={branch}
+                            slug={product.slug}
+                            productName={product.name}
+                        />
+                    </section>
+                )}
 
                 {(product.description ||
                     Object.keys(product.specifications).length > 0) && (
