@@ -15,6 +15,7 @@ import {
     Wrench,
     Sparkles,
     ArrowLeftRight,
+    RotateCcw,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { BranchSwitcher } from '@/components/branch-switcher';
@@ -188,6 +189,15 @@ export function AppSidebar() {
                               title: 'Legacy Import',
                               href: '/legacy-imports',
                               icon: DatabaseZap,
+                          },
+                      ]
+                    : []),
+                ...(auth.canResetOperations
+                    ? [
+                          {
+                              title: 'Reset Data Operasional',
+                              href: '/operations/reset',
+                              icon: RotateCcw,
                           },
                       ]
                     : []),

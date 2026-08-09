@@ -2,6 +2,7 @@
 
 namespace App\Http\Middleware;
 
+use App\Domain\Access\UserAccessManager;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -42,6 +43,9 @@ class HandleInertiaRequests extends Middleware
             'name' => config('app.name'),
             'auth' => [
                 'user' => $user,
+                'canResetOperations' => $user !== null
+                    && app()->environment(['local', 'testing', 'staging'])
+                    && app(UserAccessManager::class)->isSuperAdministrator($user),
                 'permissions' => $user === null ? [] : [
                     'branches.view' => $user->can('branches.view'),
                     'branches.manage' => $user->can('branches.manage'),

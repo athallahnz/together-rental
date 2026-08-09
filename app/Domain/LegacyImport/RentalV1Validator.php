@@ -95,7 +95,7 @@ final class RentalV1Validator
                                 }
 
                                 DB::table('legacy_import_issues')->insert(array_map(
-                                    static fn (array $issue): array => [
+                                    static fn(array $issue): array => [
                                         'batch_id' => $batch->id,
                                         'legacy_import_row_id' => $row->id,
                                         'severity' => $issue['severity'],
@@ -209,7 +209,7 @@ final class RentalV1Validator
                     ->where('batch_id', $batch->id)
                     ->where('source_table', $table)
                     ->pluck('legacy_key')
-                    ->map(static fn ($value): string => (string) $value)
+                    ->map(static fn($value): string => (string) $value)
                     ->all(),
                 true,
             );
@@ -316,7 +316,7 @@ final class RentalV1Validator
 
         return [
             ...$issues,
-            ...$this->businessIssues($row->source_table, $payload, $duplicateValues),
+            ...$this->businessIssues($row->source_table, $payload, $duplicateValues, $targetLabel),
         ];
     }
 
@@ -325,7 +325,7 @@ final class RentalV1Validator
      * @param  array<string, array<string, int>>  $duplicates
      * @return list<array<string, mixed>>
      */
-    private function businessIssues(string $table, array $payload, array $duplicates): array
+    private function businessIssues(string $table, array $payload, array $duplicates, string $targetLabel): array
     {
         $issues = [];
 
@@ -341,10 +341,12 @@ final class RentalV1Validator
                 ];
             }
 
-            foreach ([
-                'customer_noid' => 'customer_identity',
-                'customer_nohp' => 'customer_phone',
-            ] as $field => $bucket) {
+            foreach (
+                [
+                    'customer_noid' => 'customer_identity',
+                    'customer_nohp' => 'customer_phone',
+                ] as $field => $bucket
+            ) {
                 $key = $this->duplicateKey($payload[$field] ?? null);
 
                 if ($key !== null && ($duplicates[$bucket][$key] ?? 0) > 1) {
@@ -371,7 +373,7 @@ final class RentalV1Validator
                     'message' => 'Nama produk kosong dan akan menggunakan nama fallback berbasis legacy ID.',
                     'original_value' => $payload['rentproduct_name'] ?? null,
                     'suggested_resolution' => [
-                        'value' => 'Legacy Product '.RentalV1Value::integer(
+                        'value' => 'Legacy Product ' . RentalV1Value::integer(
                             $payload['rentproduct_id'] ?? null,
                         ),
                     ],
@@ -402,11 +404,13 @@ final class RentalV1Validator
         }
 
         if ($table === 'trx_rental') {
-            foreach ([
-                'rental_date_start',
-                'rental_date_end',
-                'rental_date_kembali',
-            ] as $field) {
+            foreach (
+                [
+                    'rental_date_start',
+                    'rental_date_end',
+                    'rental_date_kembali',
+                ] as $field
+            ) {
                 $rawDateTime = $payload[$field] ?? null;
 
                 if (
@@ -470,7 +474,7 @@ final class RentalV1Validator
     /** @param list<array<string, mixed>> $issues */
     private function statusFromIssues(array $issues): string
     {
-        if (collect($issues)->contains(fn (array $issue): bool => $issue['severity'] === 'error')) {
+        if (collect($issues)->contains(fn(array $issue): bool => $issue['severity'] === 'error')) {
             return 'error';
         }
 

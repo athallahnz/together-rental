@@ -26,6 +26,7 @@ export type Auth = {
     permissions: Record<string, boolean>;
     currentBranch: BranchSummary | null;
     branches: BranchSummary[];
+    canResetOperations: boolean;
 };
 
 /* @chisel-passkeys */

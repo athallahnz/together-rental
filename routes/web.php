@@ -15,6 +15,7 @@ use App\Http\Controllers\CustomerLoyaltyController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\LegacyImportController;
 use App\Http\Controllers\MaintenanceController;
+use App\Http\Controllers\OperationalDataResetController;
 use App\Http\Controllers\PackageItemController;
 use App\Http\Controllers\PackageRateController;
 use App\Http\Controllers\PositionController;
@@ -293,6 +294,13 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
             ->middleware('can:transfers.expense')->name('expenses.pay');
         Route::post('/{transfer}/expenses/{expense}/void', [BranchTransferExpenseController::class, 'void'])
             ->middleware('can:transfers.expense')->name('expenses.void');
+    });
+
+    Route::prefix('operations')->name('operations.')->group(function () {
+        Route::get('/reset', [OperationalDataResetController::class, 'index'])
+            ->name('reset.index');
+        Route::post('/reset', [OperationalDataResetController::class, 'store'])
+            ->name('reset.store');
     });
 
     Route::prefix('maintenance')->name('maintenance.')->group(function () {
