@@ -1,6 +1,11 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { ArrowLeft, CheckCircle2, LogOut, Pencil, XCircle } from 'lucide-react';
 import { useState } from 'react';
+import { CashSessionSelect } from '@/components/finance/cash-session-select';
+import type {
+    CashSessionOption,
+    PaymentMethodOption,
+} from '@/components/finance/cash-session-select';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -26,11 +31,8 @@ type Props = {
         payment: boolean;
     };
     financialSummary: { rental_paid: number; deposit_paid: number };
-    paymentMethods: Array<{
-        id: number;
-        name: string;
-        requires_reference: boolean;
-    }>;
+    paymentMethods: PaymentMethodOption[];
+    cashSessions: CashSessionOption[];
 };
 const money = new Intl.NumberFormat('id-ID', {
     style: 'currency',
@@ -47,6 +49,7 @@ export default function BookingShow({
     permissions,
     financialSummary,
     paymentMethods,
+    cashSessions,
 }: Props) {
     const [reason, setReason] = useState('');
     const [cancelling, setCancelling] = useState(false);
@@ -55,6 +58,7 @@ export default function BookingShow({
         payment_amount: 0,
         deposit_paid: 0,
         payment_method_id: 0,
+        cash_session_id: null as number | null,
         payment_reference: '',
         payment_notes: '',
     });
@@ -346,12 +350,16 @@ export default function BookingShow({
                                                 paymentForm.data
                                                     .payment_method_id || '',
                                             )}
-                                            onValueChange={(value) =>
+                                            onValueChange={(value) => {
                                                 paymentForm.setData(
                                                     'payment_method_id',
                                                     Number(value),
-                                                )
-                                            }
+                                                );
+                                                paymentForm.setData(
+                                                    'cash_session_id',
+                                                    null,
+                                                );
+                                            }}
                                         >
                                             <SelectTrigger>
                                                 <SelectValue placeholder="Metode pembayaran" />
@@ -371,6 +379,28 @@ export default function BookingShow({
                                                 )}
                                             </SelectContent>
                                         </Select>
+                                        <CashSessionSelect
+                                            paymentMethods={paymentMethods}
+                                            cashSessions={cashSessions}
+                                            branchId={booking.branch_id}
+                                            paymentMethodId={
+                                                paymentForm.data
+                                                    .payment_method_id
+                                            }
+                                            value={
+                                                paymentForm.data.cash_session_id
+                                            }
+                                            onValueChange={(value) =>
+                                                paymentForm.setData(
+                                                    'cash_session_id',
+                                                    value,
+                                                )
+                                            }
+                                            error={
+                                                paymentForm.errors
+                                                    .cash_session_id
+                                            }
+                                        />
                                         <Input
                                             placeholder="Referensi transfer/QRIS"
                                             value={

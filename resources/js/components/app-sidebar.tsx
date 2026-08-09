@@ -1,6 +1,7 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
     BarChart3,
+    CreditCard,
     CalendarDays,
     Building2,
     ContactRound,
@@ -16,6 +17,9 @@ import {
     Sparkles,
     ArrowLeftRight,
     RotateCcw,
+    ReceiptText,
+    WalletCards,
+    SlidersHorizontal,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { BranchSwitcher } from '@/components/branch-switcher';
@@ -83,6 +87,47 @@ export function AppSidebar() {
                               title: 'Maintenance',
                               href: '/maintenance',
                               icon: Wrench,
+                          },
+                      ]
+                    : []),
+            ] satisfies NavItem[],
+        },
+        {
+            label: 'Keuangan',
+            items: [
+                ...(auth.permissions['finance.dashboard.view']
+                    ? [
+                          {
+                              title: 'Finance Dashboard',
+                              href: '/finance/dashboard',
+                              icon: WalletCards,
+                          },
+                      ]
+                    : []),
+                ...(auth.permissions['payments.view']
+                    ? [
+                          {
+                              title: 'Payment Center',
+                              href: '/finance/payments',
+                              icon: CreditCard,
+                          },
+                      ]
+                    : []),
+                ...(auth.permissions['refunds.view']
+                    ? [
+                          {
+                              title: 'Refund Center',
+                              href: '/finance/refunds',
+                              icon: ReceiptText,
+                          },
+                      ]
+                    : []),
+                ...(auth.permissions['finance.masters.view']
+                    ? [
+                          {
+                              title: 'Master Finance & Kasir',
+                              href: '/finance/master-data',
+                              icon: SlidersHorizontal,
                           },
                       ]
                     : []),

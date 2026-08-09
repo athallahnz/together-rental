@@ -1,6 +1,11 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import { AlertTriangle, ArrowLeft, PackageCheck } from 'lucide-react';
 import type { FormEvent, ReactNode } from 'react';
+import { CashSessionSelect } from '@/components/finance/cash-session-select';
+import type {
+    CashSessionOption,
+    PaymentMethodOption,
+} from '@/components/finance/cash-session-select';
 import InputError from '@/components/input-error';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -30,17 +35,13 @@ type Unit = {
 };
 type Rental = {
     id: number;
+    branch_id: number;
     rental_number: string;
     due_at: string;
     balance_due: string;
     customer: { name: string };
     branch: { name: string };
     items: Array<{ id: number; description: string; assets: Unit[] }>;
-};
-type PaymentMethod = {
-    id: number;
-    name: string;
-    requires_reference: boolean;
 };
 type OperationalCorrection = {
     correction_number: string;
@@ -72,6 +73,7 @@ type FormData = {
     discount_amount: number;
     payment_amount: number;
     payment_method_id: string | null;
+    cash_session_id: number | null;
     payment_reference: string;
     items: ReturnLine[];
 };
@@ -90,11 +92,13 @@ const localDateTime = () => {
 export default function RentalReturn({
     rental,
     paymentMethods,
+    cashSessions,
     operationalCorrection,
     replacementAssets,
 }: {
     rental: Rental;
-    paymentMethods: PaymentMethod[];
+    paymentMethods: PaymentMethodOption[];
+    cashSessions: CashSessionOption[];
     operationalCorrection: OperationalCorrection | null;
     replacementAssets: ReplacementAsset[];
 }) {
@@ -112,6 +116,7 @@ export default function RentalReturn({
         discount_amount: 0,
         payment_amount: 0,
         payment_method_id: '',
+        cash_session_id: null,
         payment_reference: '',
         items: units.map((unit) => ({
             rental_item_asset_id: unit.id,
@@ -463,12 +468,16 @@ export default function RentalReturn({
                                                 form.data.payment_method_id ??
                                                 ''
                                             }
-                                            onValueChange={(value) =>
+                                            onValueChange={(value) => {
                                                 form.setData(
                                                     'payment_method_id',
                                                     value,
-                                                )
-                                            }
+                                                );
+                                                form.setData(
+                                                    'cash_session_id',
+                                                    null,
+                                                );
+                                            }}
                                         >
                                             <SelectTrigger>
                                                 <SelectValue placeholder="Pilih metode" />
@@ -494,6 +503,22 @@ export default function RentalReturn({
                                             }
                                         />
                                     </Field>
+                                    <CashSessionSelect
+                                        paymentMethods={paymentMethods}
+                                        cashSessions={cashSessions}
+                                        branchId={rental.branch_id}
+                                        paymentMethodId={
+                                            form.data.payment_method_id
+                                        }
+                                        value={form.data.cash_session_id}
+                                        onValueChange={(value) =>
+                                            form.setData(
+                                                'cash_session_id',
+                                                value,
+                                            )
+                                        }
+                                        error={form.errors.cash_session_id}
+                                    />
                                     <div className="sm:col-span-2">
                                         <Label>Referensi pembayaran</Label>
                                         <Input

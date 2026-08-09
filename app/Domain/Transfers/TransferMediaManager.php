@@ -30,7 +30,8 @@ class TransferMediaManager
      * before a failed database commit is removed again.
      *
      * @template TResult
-     * @param Closure(): TResult $callback
+     *
+     * @param  Closure(): TResult  $callback
      * @return TResult
      */
     public function transactional(Closure $callback): mixed

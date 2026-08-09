@@ -2,17 +2,20 @@
 
 namespace Tests\Feature\Transfers;
 
+use App\Models\Branch;
 use App\Models\BranchTransfer;
 use App\Models\BranchTransferExpense;
 use App\Models\PaymentMethod;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Support\Facades\DB;
+use Tests\Feature\InteractsWithFinance;
 use Tests\TestCase;
 
 class BranchTransferExpenseTest extends TestCase
 {
-    use RefreshDatabase;
+    use InteractsWithFinance;
     use InteractsWithTransferFixtures;
+    use RefreshDatabase;
 
     public function test_transfer_expense_creates_one_outgoing_payment_and_void_is_append_only(): void
     {
@@ -40,13 +43,17 @@ class BranchTransferExpenseTest extends TestCase
 
         $expense = BranchTransferExpense::query()->firstOrFail();
         $method = PaymentMethod::query()->where('code', 'CASH')->firstOrFail();
+        $session = $this->openCashSession(
+            $fixture['originManager'],
+            $fixture['origin'],
+        );
         $payPayload = [
             'actual_amount' => 80000,
             'payment_method_id' => $method->id,
-            'cash_session_id' => null,
+            'cash_session_id' => $session->id,
             'paid_at' => now()->format('Y-m-d H:i:s'),
             'external_reference' => 'INV-KURIR-001',
-            'notes' => 'Dibayar tunai tanpa sesi kas.',
+            'notes' => 'Dibayar tunai melalui sesi kas aktif.',
         ];
 
         $this->actingAs($fixture['originManager'])
@@ -59,11 +66,13 @@ class BranchTransferExpenseTest extends TestCase
         $expense->refresh();
         $this->assertSame('paid', $expense->status);
         $this->assertDatabaseCount('payments', 1);
+        $this->assertDatabaseCount('cash_transactions', 1);
         $this->assertDatabaseHas('payments', [
             'id' => $expense->payment_id,
             'branch_id' => $fixture['origin']->id,
             'direction' => 'out',
             'type' => 'transfer_expense',
+            'source_context' => 'transfer_expense',
             'status' => 'completed',
             'amount' => 80000,
         ]);
@@ -80,12 +89,13 @@ class BranchTransferExpenseTest extends TestCase
             'status' => 'void',
         ]);
         $this->assertDatabaseCount('payments', 1);
+        $this->assertDatabaseCount('cash_transactions', 2);
     }
 
     public function test_expense_cannot_be_charged_to_uninvolved_branch(): void
     {
         $fixture = $this->transferFixture();
-        $other = \App\Models\Branch::query()->create([
+        $other = Branch::query()->create([
             'company_id' => $fixture['origin']->company_id,
             'code' => 'SBY',
             'name' => 'Together Kamera Surabaya',

@@ -11,8 +11,8 @@ use Tests\TestCase;
 
 class BranchTransferDispatchReceivingTest extends TestCase
 {
-    use RefreshDatabase;
     use InteractsWithTransferFixtures;
+    use RefreshDatabase;
 
     public function test_dispatch_then_good_receiving_moves_asset_atomically(): void
     {
@@ -144,7 +144,6 @@ class BranchTransferDispatchReceivingTest extends TestCase
         $this->assertSame($fixture['destination']->id, $fixture['asset']->fresh()->current_branch_id);
         $this->assertSame('available', $fixture['asset']->fresh()->status);
     }
-
 
     public function test_return_to_origin_resolution_does_not_mark_missing_asset_as_received(): void
     {

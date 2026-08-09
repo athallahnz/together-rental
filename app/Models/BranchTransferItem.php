@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
@@ -16,9 +17,9 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
  * @property int|null $asset_id
  * @property int $quantity
  * @property int $received_quantity
- * @property \App\Domain\Transfers\Enums\TransferItemStatus $status
- * @property \App\Domain\Transfers\Enums\ReceivingResult|null $receiving_result
- * @property \Illuminate\Support\Carbon|null $resolved_at
+ * @property TransferItemStatus $status
+ * @property ReceivingResult|null $receiving_result
+ * @property Carbon|null $resolved_at
  */
 #[Fillable([
     'branch_transfer_id',

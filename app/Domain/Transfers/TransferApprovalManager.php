@@ -5,7 +5,6 @@ namespace App\Domain\Transfers;
 use App\Domain\Transfers\Enums\ApprovalDecision;
 use App\Domain\Transfers\Enums\ApprovalSide;
 use App\Domain\Transfers\Enums\TransferStatus;
-use App\Models\Asset;
 use App\Models\BranchTransfer;
 use App\Models\BranchTransferApproval;
 use App\Models\BranchTransferItem;

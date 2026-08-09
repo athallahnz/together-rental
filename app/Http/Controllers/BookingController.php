@@ -20,6 +20,8 @@ use Illuminate\Filesystem\FilesystemAdapter;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Collection;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Storage;
 use Inertia\Inertia;
@@ -282,7 +284,7 @@ class BookingController extends Controller
             'items.product:id,sku,name', 'items.package:id,code,name',
             'items.reservations.asset:id,asset_code,serial_number,status,condition',
             'statusHistories.changer:id,name',
-            'payments:id,booking_id,payment_method_id,payment_number,type,status,amount,paid_at,external_reference',
+            'payments:id,booking_id,payment_method_id,cash_session_id,payment_number,type,source_context,status,amount,paid_at,external_reference,voided_at,void_reason',
             'payments.paymentMethod:id,name',
         ]);
 
@@ -300,7 +302,8 @@ class BookingController extends Controller
                 ->where('is_active', true)
                 ->orderBy('sort_order')
                 ->orderBy('name')
-                ->get(['id', 'code', 'name', 'requires_reference']),
+                ->get(['id', 'code', 'name', 'type', 'requires_reference']),
+            'cashSessions' => $this->cashSessions($request->user(), $booking->branch_id),
         ]);
     }
 
@@ -426,8 +429,28 @@ class BookingController extends Controller
                 ->where('is_active', true)
                 ->orderBy('sort_order')
                 ->orderBy('name')
-                ->get(['id', 'code', 'name', 'requires_reference']),
+                ->get(['id', 'code', 'name', 'type', 'requires_reference']),
+            'cashSessions' => $this->cashSessions($user),
         ];
+    }
+
+    /** @return Collection<int, \stdClass> */
+    private function cashSessions(User $user, ?int $branchId = null): Collection
+    {
+        $branchIds = $user->accessibleBranches()->pluck('id');
+
+        return DB::table('cash_sessions')
+            ->join('cash_registers', 'cash_registers.id', '=', 'cash_sessions.cash_register_id')
+            ->where('cash_sessions.status', 'open')
+            ->whereIn('cash_registers.branch_id', $branchIds)
+            ->when($branchId !== null, fn ($query) => $query->where('cash_registers.branch_id', $branchId))
+            ->orderBy('cash_registers.name')
+            ->get([
+                'cash_sessions.id',
+                'cash_registers.branch_id',
+                'cash_registers.name as register_name',
+                'cash_sessions.opened_at',
+            ]);
     }
 
     private function guardAccess(Request $request, Booking $booking): void

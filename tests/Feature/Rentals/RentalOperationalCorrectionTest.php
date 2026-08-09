@@ -16,10 +16,12 @@ use App\Models\Role;
 use App\Models\User;
 use Database\Seeders\RentalFoundationSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Feature\InteractsWithFinance;
 use Tests\TestCase;
 
 class RentalOperationalCorrectionTest extends TestCase
 {
+    use InteractsWithFinance;
     use RefreshDatabase;
 
     public function test_super_admin_can_reopen_and_refinalize_return_without_duplicating_financials(): void
@@ -194,22 +196,26 @@ class RentalOperationalCorrectionTest extends TestCase
             'checkout_condition' => 'good',
             'payment_amount' => 0,
             'deposit_paid' => 0,
-        ])->assertSessionHasNoErrors();
+        ])->assertSessionHasNoErrors()
+            ->assertRedirect();
 
         $rental = Rental::query()->with('items.assets')->firstOrFail();
         $unit = $rental->items->first()->assets->first();
         $method = PaymentMethod::query()->where('code', 'CASH')->firstOrFail();
+        $session = $this->openCashSession($user, $branch);
 
         $this->actingAs($user)->post(route('rentals.return.store', $rental), [
             'returned_at' => now()->format('Y-m-d H:i:s'),
             'payment_amount' => 50000,
             'payment_method_id' => $method->id,
+            'cash_session_id' => $session->id,
             'items' => [[
                 'rental_item_asset_id' => $unit->id,
                 'condition' => 'damaged',
                 'notes' => 'Kerusakan awal yang perlu dikoreksi.',
             ]],
-        ])->assertSessionHasNoErrors();
+        ])->assertSessionHasNoErrors()
+            ->assertRedirect();
 
         return [
             $user,

@@ -49,18 +49,19 @@ class SaveCustomerIdentityRequest extends FormRequest
         return [
             function (Validator $validator): void {
                 $target = $this->route('customerIdentity');
-                $duplicate = CustomerIdentity::query()
+                $query = CustomerIdentity::query()
                     ->where('type', $this->input('type'))
                     ->where('number', $this->input('number'))
                     ->whereHas(
                         'customer',
                         fn ($query) => $query->where('company_id', $this->user()->company_id),
-                    )
-                    ->when(
-                        $target instanceof CustomerIdentity,
-                        fn ($query) => $query->whereKeyNot($target->id),
-                    )
-                    ->exists();
+                    );
+
+                if ($target instanceof CustomerIdentity) {
+                    $query->whereKeyNot($target->id);
+                }
+
+                $duplicate = $query->exists();
 
                 if ($duplicate) {
                     $validator->errors()->add(

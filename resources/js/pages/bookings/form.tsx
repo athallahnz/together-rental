@@ -3,6 +3,11 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import { ArrowLeft, Plus, Save, Trash2 } from 'lucide-react';
 import { SearchPickerDialog } from '@/components/bookings/search-picker-dialog';
 import type { BookingSearchOption } from '@/components/bookings/search-picker-dialog';
+import { CashSessionSelect } from '@/components/finance/cash-session-select';
+import type {
+    CashSessionOption,
+    PaymentMethodOption,
+} from '@/components/finance/cash-session-select';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -27,12 +32,8 @@ type Props = {
     ratePlans: BookingRatePlan[];
     products: Option[];
     packages: Option[];
-    paymentMethods?: Array<{
-        id: number;
-        code: string;
-        name: string;
-        requires_reference: boolean;
-    }>;
+    paymentMethods?: PaymentMethodOption[];
+    cashSessions?: CashSessionOption[];
 };
 type FormData = {
     branch_id: number;
@@ -49,6 +50,7 @@ type FormData = {
     payment_amount: number;
     deposit_paid: number;
     payment_method_id: number;
+    cash_session_id: number | null;
     payment_reference: string;
 };
 
@@ -119,6 +121,7 @@ export default function BookingForm({
     products,
     packages,
     paymentMethods = [],
+    cashSessions = [],
 }: Props) {
     const direct = mode === 'direct';
     const [selectedCustomer, setSelectedCustomer] = useState<Option | null>(
@@ -158,6 +161,7 @@ export default function BookingForm({
         payment_amount: 0,
         deposit_paid: 0,
         payment_method_id: 0,
+        cash_session_id: null,
         payment_reference: '',
     });
     const updateLine = (index: number, patch: Partial<Line>) =>
@@ -607,12 +611,13 @@ export default function BookingForm({
                                 value={String(
                                     form.data.payment_method_id || '',
                                 )}
-                                onValueChange={(value) =>
+                                onValueChange={(value) => {
                                     form.setData(
                                         'payment_method_id',
                                         Number(value),
-                                    )
-                                }
+                                    );
+                                    form.setData('cash_session_id', null);
+                                }}
                             >
                                 <SelectTrigger>
                                     <SelectValue placeholder="Pilih bila ada pembayaran" />
@@ -629,6 +634,17 @@ export default function BookingForm({
                                 </SelectContent>
                             </Select>
                         </Field>
+                        <CashSessionSelect
+                            paymentMethods={paymentMethods}
+                            cashSessions={cashSessions}
+                            branchId={form.data.branch_id}
+                            paymentMethodId={form.data.payment_method_id}
+                            value={form.data.cash_session_id}
+                            onValueChange={(value) =>
+                                form.setData('cash_session_id', value)
+                            }
+                            error={form.errors.cash_session_id}
+                        />
                         <Field
                             label="Pembayaran rental"
                             error={form.errors.payment_amount}

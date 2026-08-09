@@ -175,6 +175,7 @@ class RentalController extends Controller
             ...$this->formOptions($request),
             'mode' => 'direct',
             'paymentMethods' => $this->paymentMethods($request->user()),
+            'cashSessions' => $this->cashSessions($request->user()),
         ]);
     }
 
@@ -211,9 +212,27 @@ class RentalController extends Controller
             'items.reservations.asset:id,product_id,asset_code,serial_number,status,condition',
         ]);
 
+        $rentalPaid = (float) $booking->payments()
+            ->where('status', 'completed')
+            ->where('direction', 'in')
+            ->where('type', 'rental')
+            ->sum('amount');
+        $depositPaid = (float) $booking->payments()
+            ->where('status', 'completed')
+            ->where('direction', 'in')
+            ->where('type', 'deposit')
+            ->sum('amount');
+
         return Inertia::render('rentals/checkout', [
             'booking' => $booking,
             'paymentMethods' => $this->paymentMethods($request->user()),
+            'cashSessions' => $this->cashSessions($request->user(), $booking->branch_id),
+            'financialSummary' => [
+                'rental_paid' => $rentalPaid,
+                'deposit_paid' => $depositPaid,
+                'balance_due' => max(0, (float) $booking->total_amount - $rentalPaid),
+                'deposit_due' => max(0, (float) $booking->deposit_required - $depositPaid),
+            ],
         ]);
     }
 
@@ -294,6 +313,7 @@ class RentalController extends Controller
         return Inertia::render('rentals/return', [
             'rental' => $rental,
             'paymentMethods' => $this->paymentMethods($request->user()),
+            'cashSessions' => $this->cashSessions($request->user(), $rental->branch_id),
             'operationalCorrection' => $rental->status === 'correction_pending'
                 ? $rental->operationalCorrections()
                     ->where('status', 'open')
@@ -456,6 +476,25 @@ class RentalController extends Controller
             ->orderBy('sort_order')
             ->orderBy('name')
             ->get(['id', 'code', 'name', 'type', 'requires_reference']);
+    }
+
+    /** @return Collection<int, \stdClass> */
+    private function cashSessions(User $user, ?int $branchId = null): Collection
+    {
+        $branchIds = $user->accessibleBranches()->pluck('id');
+
+        return DB::table('cash_sessions')
+            ->join('cash_registers', 'cash_registers.id', '=', 'cash_sessions.cash_register_id')
+            ->where('cash_sessions.status', 'open')
+            ->whereIn('cash_registers.branch_id', $branchIds)
+            ->when($branchId !== null, fn ($query) => $query->where('cash_registers.branch_id', $branchId))
+            ->orderBy('cash_registers.name')
+            ->get([
+                'cash_sessions.id',
+                'cash_registers.branch_id',
+                'cash_registers.name as register_name',
+                'cash_sessions.opened_at',
+            ]);
     }
 
     private function guardBookingAccess(Request $request, Booking $booking): void

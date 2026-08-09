@@ -5,10 +5,11 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 /**
  * @property array<string, mixed>|null $metadata
- * @property \Illuminate\Support\Carbon|null $captured_at
+ * @property Carbon|null $captured_at
  */
 #[Fillable([
     'branch_transfer_id',

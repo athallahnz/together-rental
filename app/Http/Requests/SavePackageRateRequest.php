@@ -71,19 +71,20 @@ class SavePackageRateRequest extends FormRequest
                 $packageId = $package instanceof RentalPackage
                     ? $package->id
                     : ($target instanceof PackageRate ? $target->package_id : 0);
-                $duplicate = PackageRate::query()
+                $query = PackageRate::query()
                     ->where('package_id', $packageId)
                     ->where('rate_plan_id', $this->integer('rate_plan_id'))
                     ->when(
                         $branchId === null,
                         fn ($query) => $query->whereNull('branch_id'),
                         fn ($query) => $query->where('branch_id', $branchId),
-                    )
-                    ->when(
-                        $target instanceof PackageRate,
-                        fn ($query) => $query->whereKeyNot($target->id),
-                    )
-                    ->exists();
+                    );
+
+                if ($target instanceof PackageRate) {
+                    $query->whereKeyNot($target->id);
+                }
+
+                $duplicate = $query->exists();
 
                 if ($duplicate) {
                     $validator->errors()->add(

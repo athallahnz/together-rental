@@ -3,13 +3,14 @@
 namespace Tests\Feature\Transfers;
 
 use App\Models\BranchTransfer;
+use App\Models\Role;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class BranchTransferApprovalTest extends TestCase
 {
-    use RefreshDatabase;
     use InteractsWithTransferFixtures;
+    use RefreshDatabase;
 
     public function test_two_side_approval_places_asset_on_realtime_transfer_hold(): void
     {
@@ -52,7 +53,6 @@ class BranchTransferApprovalTest extends TestCase
         ]);
     }
 
-
     public function test_submitting_existing_draft_also_records_active_branch_approval(): void
     {
         $fixture = $this->transferFixture();
@@ -86,7 +86,7 @@ class BranchTransferApprovalTest extends TestCase
             'is_default' => false,
             'is_active' => true,
         ]);
-        $managerRole = \App\Models\Role::query()
+        $managerRole = Role::query()
             ->where('company_id', $fixture['destination']->company_id)
             ->where('slug', 'branch-manager')
             ->firstOrFail();

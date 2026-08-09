@@ -14,10 +14,12 @@ use App\Models\Role;
 use App\Models\User;
 use Database\Seeders\RentalFoundationSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Feature\InteractsWithFinance;
 use Tests\TestCase;
 
 class RentalReturnTest extends TestCase
 {
+    use InteractsWithFinance;
     use RefreshDatabase;
 
     public function test_final_return_updates_units_financials_and_rental_atomically(): void
@@ -25,12 +27,14 @@ class RentalReturnTest extends TestCase
         [$user, $rental, $asset] = $this->activeRental();
         $unit = $rental->items()->firstOrFail()->assets()->firstOrFail();
         $method = PaymentMethod::query()->where('code', 'CASH')->firstOrFail();
+        $session = $this->openCashSession($user, $rental->branch);
 
         $this->actingAs($user)->post(route('rentals.return.store', $rental), [
             'returned_at' => now()->format('Y-m-d H:i:s'),
             'discount_amount' => 5000,
             'payment_amount' => 80000,
             'payment_method_id' => $method->id,
+            'cash_session_id' => $session->id,
             'items' => [[
                 'rental_item_asset_id' => $unit->id,
                 'condition' => 'damaged',
@@ -39,7 +43,8 @@ class RentalReturnTest extends TestCase
                 'cleaning_fee_amount' => 5000,
                 'notes' => 'Grip terkelupas dan perlu pemeriksaan.',
             ]],
-        ])->assertSessionHasNoErrors();
+        ])->assertSessionHasNoErrors()
+            ->assertRedirect();
 
         $rental->refresh();
         $this->assertSame('returned', $rental->status);
@@ -76,6 +81,13 @@ class RentalReturnTest extends TestCase
             'subject_id' => $rental->id,
             'event' => 'rental.return_completed',
         ]);
+        $this->assertDatabaseCount('cash_transactions', 1);
+        $this->assertDatabaseHas('payments', [
+            'rental_id' => $rental->id,
+            'source_context' => 'rental_return',
+            'cash_session_id' => $session->id,
+            'amount' => 80000,
+        ]);
     }
 
     public function test_partial_return_keeps_rental_open_until_last_unit_returns(): void
@@ -83,6 +95,7 @@ class RentalReturnTest extends TestCase
         [$user, $rental] = $this->activeRental(2);
         $units = $rental->items()->firstOrFail()->assets()->get();
         $method = PaymentMethod::query()->where('code', 'CASH')->firstOrFail();
+        $session = $this->openCashSession($user, $rental->branch);
 
         $this->actingAs($user)->post(route('rentals.return.store', $rental), [
             'returned_at' => now()->format('Y-m-d H:i:s'),
@@ -101,6 +114,7 @@ class RentalReturnTest extends TestCase
             'returned_at' => now()->addMinute()->format('Y-m-d H:i:s'),
             'payment_amount' => 100000,
             'payment_method_id' => $method->id,
+            'cash_session_id' => $session->id,
             'items' => [[
                 'rental_item_asset_id' => $units[1]->id,
                 'condition' => 'good',
@@ -116,6 +130,7 @@ class RentalReturnTest extends TestCase
     {
         [$user, $rental] = $this->activeRental();
         $unit = $rental->items()->firstOrFail()->assets()->firstOrFail();
+        $session = $this->openCashSession($user, $rental->branch);
         $payload = [
             'returned_at' => now()->format('Y-m-d H:i:s'),
             'payment_amount' => 50000,
@@ -123,6 +138,7 @@ class RentalReturnTest extends TestCase
                 ->where('code', 'CASH')
                 ->firstOrFail()
                 ->id,
+            'cash_session_id' => $session->id,
             'items' => [[
                 'rental_item_asset_id' => $unit->id,
                 'condition' => 'good',
@@ -234,7 +250,8 @@ class RentalReturnTest extends TestCase
             'checkout_condition' => 'good',
             'payment_amount' => 0,
             'deposit_paid' => 0,
-        ])->assertSessionHasNoErrors();
+        ])->assertSessionHasNoErrors()
+            ->assertRedirect();
 
         return [$user, Rental::query()->with('items.assets.asset')->firstOrFail(), $assets[0]];
     }

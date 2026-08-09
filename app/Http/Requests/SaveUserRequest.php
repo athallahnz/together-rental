@@ -89,7 +89,8 @@ class SaveUserRequest extends FormRequest
         return [
             function (Validator $validator): void {
                 $companyRoleId = $this->integer('company_role_id') ?: null;
-                $branchAccess = $this->input('branch_access', []);
+                $branchAccessInput = $this->input('branch_access', []);
+                $branchAccess = is_array($branchAccessInput) ? $branchAccessInput : [];
 
                 if ($companyRoleId === null && $branchAccess === []) {
                     $validator->errors()->add(
@@ -133,6 +134,9 @@ class SaveUserRequest extends FormRequest
 
     protected function prepareForValidation(): void
     {
+        $branchAccessInput = $this->input('branch_access', []);
+        $branchAccess = is_array($branchAccessInput) ? $branchAccessInput : [];
+
         $this->merge([
             'name' => trim((string) $this->input('name')),
             'email' => mb_strtolower(trim((string) $this->input('email'))),
@@ -142,7 +146,7 @@ class SaveUserRequest extends FormRequest
             'company_role_id' => $this->filled('company_role_id')
                 ? $this->integer('company_role_id')
                 : null,
-            'branch_access' => collect($this->input('branch_access', []))
+            'branch_access' => collect($branchAccess)
                 ->filter(fn (mixed $access): bool => is_array($access))
                 ->map(fn (array $access): array => [
                     'branch_id' => (int) ($access['branch_id'] ?? 0),

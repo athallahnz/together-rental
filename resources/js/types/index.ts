@@ -13,3 +13,4 @@ export type * from './public-catalog';
 export type * from './transfer';
 
 export type * from './asset-calendar';
+export type * from './finance';

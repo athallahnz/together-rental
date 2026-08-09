@@ -2,13 +2,16 @@
 
 namespace App\Http\Requests;
 
-use App\Models\PaymentMethod;
+use App\Http\Requests\Concerns\ValidatesPaymentInput;
+use App\Models\Rental;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
 
 class StoreRentalReturnRequest extends FormRequest
 {
+    use ValidatesPaymentInput;
+
     protected function prepareForValidation(): void
     {
         $this->merge([
@@ -17,6 +20,7 @@ class StoreRentalReturnRequest extends FormRequest
         ]);
     }
 
+    /** @return array<string, list<mixed>> */
     public function rules(): array
     {
         return [
@@ -25,6 +29,7 @@ class StoreRentalReturnRequest extends FormRequest
             'discount_amount' => ['nullable', 'numeric', 'min:0'],
             'payment_amount' => ['nullable', 'numeric', 'min:0'],
             'payment_method_id' => ['nullable', 'integer'],
+            'cash_session_id' => ['nullable', 'integer'],
             'payment_reference' => ['nullable', 'string', 'max:100'],
             'items' => ['required', 'array', 'min:1'],
             'items.*.rental_item_asset_id' => ['required', 'integer', 'distinct'],
@@ -40,46 +45,18 @@ class StoreRentalReturnRequest extends FormRequest
         ];
     }
 
+    /** @return list<callable(Validator): void> */
     public function after(): array
     {
         return [
             function (Validator $validator): void {
                 $payment = (float) $this->input('payment_amount', 0);
-                $methodId = $this->input('payment_method_id');
-
-                if ($payment > 0 && $methodId === null) {
-                    $validator->errors()->add(
-                        'payment_method_id',
-                        'Metode pembayaran wajib dipilih jika menerima pembayaran.',
-                    );
-
-                    return;
-                }
-
-                if ($methodId === null) {
-                    return;
-                }
-
-                $method = PaymentMethod::query()
-                    ->whereKey($methodId)
-                    ->where('company_id', $this->user()->company_id)
-                    ->where('is_active', true)
-                    ->first();
-
-                if ($method === null) {
-                    $validator->errors()->add(
-                        'payment_method_id',
-                        'Metode pembayaran tidak tersedia.',
-                    );
-
-                    return;
-                }
-
-                if ($payment > 0 && $method->requires_reference
-                    && blank($this->input('payment_reference'))) {
-                    $validator->errors()->add(
-                        'payment_reference',
-                        'Referensi pembayaran wajib diisi untuk metode ini.',
+                $rental = $this->route('rental');
+                if ($rental instanceof Rental) {
+                    $this->validatePaymentInput(
+                        $validator,
+                        $payment,
+                        $rental->branch_id,
                     );
                 }
             },

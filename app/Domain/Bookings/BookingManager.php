@@ -2,14 +2,13 @@
 
 namespace App\Domain\Bookings;
 
-use App\Domain\Rentals\RentalNumberGenerator;
+use App\Domain\Finance\PaymentManager;
 use App\Models\Asset;
 use App\Models\AssetReservation;
 use App\Models\Booking;
 use App\Models\BookingItem;
 use App\Models\Branch;
 use App\Models\PackageRate;
-use App\Models\Payment;
 use App\Models\Product;
 use App\Models\ProductRate;
 use App\Models\RatePlan;
@@ -25,7 +24,7 @@ class BookingManager
 {
     public function __construct(
         private readonly BookingNumberGenerator $numbers,
-        private readonly RentalNumberGenerator $rentalNumbers,
+        private readonly PaymentManager $payments,
     ) {}
 
     /** @param array<string, mixed> $data */
@@ -107,11 +106,6 @@ class BookingManager
             return;
         }
 
-        $categoryIds = DB::table('financial_categories')
-            ->where('company_id', $actor->company_id)
-            ->whereIn('code', ['RENTAL', 'DEPOSIT'])
-            ->pluck('id', 'code');
-
         foreach ([
             ['amount' => $rentalAmount, 'type' => 'rental', 'category' => 'RENTAL'],
             ['amount' => $depositAmount, 'type' => 'deposit', 'category' => 'DEPOSIT'],
@@ -120,22 +114,21 @@ class BookingManager
                 continue;
             }
 
-            Payment::query()->create([
-                'branch_id' => $booking->branch_id,
+            $this->payments->record($booking->branch, [
                 'customer_id' => $booking->customer_id,
                 'booking_id' => $booking->id,
                 'payment_method_id' => $methodId,
-                'financial_category_id' => $categoryIds->get($entry['category']),
-                'payment_number' => $this->rentalNumbers->nextPayment($booking->branch),
+                'financial_category_code' => $entry['category'],
+                'cash_session_id' => $data['cash_session_id'] ?? null,
                 'direction' => 'in',
                 'type' => $entry['type'],
-                'status' => 'completed',
+                'source_context' => 'booking',
                 'amount' => $entry['amount'],
                 'paid_at' => now(),
                 'external_reference' => $data['payment_reference'] ?? null,
-                'notes' => 'Pembayaran diterima saat booking dibuat.',
-                'received_by' => $actor->id,
-            ]);
+                'notes' => $data['payment_notes']
+                    ?? 'Pembayaran diterima pada booking.',
+            ], $actor);
         }
 
         $booking->update(['deposit_paid' => $depositPaid + $depositAmount]);

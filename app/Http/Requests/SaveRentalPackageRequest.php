@@ -45,19 +45,20 @@ class SaveRentalPackageRequest extends FormRequest
                 $branchId = $this->filled('branch_id') ? $this->integer('branch_id') : null;
                 app(CatalogScope::class)->validate($this->user(), $branchId, $validator);
                 $target = $this->route('rentalPackage');
-                $duplicate = RentalPackage::query()
+                $query = RentalPackage::query()
                     ->where('company_id', $this->user()->company_id)
                     ->where('code', $this->input('code'))
                     ->when(
                         $branchId === null,
                         fn ($query) => $query->whereNull('branch_id'),
                         fn ($query) => $query->where('branch_id', $branchId),
-                    )
-                    ->when(
-                        $target instanceof RentalPackage,
-                        fn ($query) => $query->whereKeyNot($target->id),
-                    )
-                    ->exists();
+                    );
+
+                if ($target instanceof RentalPackage) {
+                    $query->whereKeyNot($target->id);
+                }
+
+                $duplicate = $query->exists();
 
                 if ($duplicate) {
                     $validator->errors()->add('code', 'Kode paket sudah digunakan pada scope tersebut.');

@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class CompleteMaintenanceOrderRequest extends FormRequest
 {
@@ -12,6 +13,7 @@ class CompleteMaintenanceOrderRequest extends FormRequest
         return $this->user()?->can('maintenance.manage') === true;
     }
 
+    /** @return array<string, list<mixed>> */
     public function rules(): array
     {
         return [
@@ -22,10 +24,11 @@ class CompleteMaintenanceOrderRequest extends FormRequest
         ];
     }
 
+    /** @return list<callable(Validator): void> */
     public function after(): array
     {
         return [
-            function ($validator): void {
+            function (Validator $validator): void {
                 if ($this->input('asset_disposition') === 'available'
                     && $this->input('asset_condition') !== 'good') {
                     $validator->errors()->add(

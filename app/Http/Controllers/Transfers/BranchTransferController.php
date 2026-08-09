@@ -14,7 +14,6 @@ use App\Http\Controllers\Controller;
 use App\Http\Requests\Transfers\CancelBranchTransferRequest;
 use App\Http\Requests\Transfers\PreflightBranchTransferRequest;
 use App\Http\Requests\Transfers\SaveBranchTransferRequest;
-use App\Models\Asset;
 use App\Models\Branch;
 use App\Models\BranchTransfer;
 use App\Models\Product;

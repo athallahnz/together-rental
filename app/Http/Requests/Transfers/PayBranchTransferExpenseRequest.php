@@ -2,11 +2,16 @@
 
 namespace App\Http\Requests\Transfers;
 
+use App\Http\Requests\Concerns\ValidatesPaymentInput;
+use App\Models\BranchTransferExpense;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
+use Illuminate\Validation\Validator;
 
 class PayBranchTransferExpenseRequest extends FormRequest
 {
+    use ValidatesPaymentInput;
+
     public function authorize(): bool
     {
         return $this->user()?->can('transfers.expense') === true;
@@ -25,6 +30,23 @@ class PayBranchTransferExpenseRequest extends FormRequest
             'external_reference' => ['nullable', 'string', 'max:100'],
             'notes' => ['nullable', 'string', 'max:3000'],
             'proof' => ['nullable', 'file', 'mimes:pdf,jpg,jpeg,png,webp', 'max:10240'],
+        ];
+    }
+
+    /** @return list<callable(Validator): void> */
+    public function after(): array
+    {
+        return [
+            function (Validator $validator): void {
+                $expense = $this->route('expense');
+                if ($expense instanceof BranchTransferExpense) {
+                    $this->validatePaymentInput(
+                        $validator,
+                        $this->float('actual_amount'),
+                        $expense->expense_branch_id,
+                    );
+                }
+            },
         ];
     }
 }

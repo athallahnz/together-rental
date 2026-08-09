@@ -2,9 +2,9 @@
 
 namespace App\Http\Requests;
 
+use App\Http\Requests\Concerns\ValidatesPaymentInput;
 use App\Models\Booking;
 use App\Models\Branch;
-use App\Models\PaymentMethod;
 use App\Models\RatePlan;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Foundation\Http\FormRequest;
@@ -14,6 +14,8 @@ use Illuminate\Validation\Validator;
 
 class SaveBookingRequest extends FormRequest
 {
+    use ValidatesPaymentInput;
+
     public function authorize(): bool
     {
         $booking = $this->route('booking');
@@ -43,6 +45,7 @@ class SaveBookingRequest extends FormRequest
             'payment_amount' => ['nullable', 'numeric', 'min:0'],
             'deposit_paid' => ['nullable', 'numeric', 'min:0'],
             'payment_method_id' => ['nullable', 'integer'],
+            'cash_session_id' => ['nullable', 'integer'],
             'payment_reference' => ['nullable', 'string', 'max:100'],
         ];
     }
@@ -86,22 +89,11 @@ class SaveBookingRequest extends FormRequest
                     );
                 }
 
-                if ($hasPayment && ! $this->filled('payment_method_id')) {
-                    $validator->errors()->add('payment_method_id', 'Metode pembayaran wajib dipilih.');
-                }
-
-                if ($this->filled('payment_method_id')) {
-                    $method = PaymentMethod::query()
-                        ->where('company_id', $this->user()->company_id)
-                        ->where('is_active', true)
-                        ->find($this->integer('payment_method_id'));
-
-                    if ($method === null) {
-                        $validator->errors()->add('payment_method_id', 'Metode pembayaran tidak tersedia.');
-                    } elseif ($method->requires_reference && ! $this->filled('payment_reference')) {
-                        $validator->errors()->add('payment_reference', 'Referensi pembayaran wajib diisi.');
-                    }
-                }
+                $this->validatePaymentInput(
+                    $validator,
+                    $paymentAmount + $depositPaid,
+                    $this->integer('branch_id'),
+                );
             },
         ];
     }

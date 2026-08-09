@@ -85,9 +85,16 @@ class OperationalDataResetService
                 ->whereNotNull('payment_id'),
         );
         $paymentIds = $this->paymentIds($bookingIds, $rentalIds, $transferPaymentIds);
+        $refundIds = $this->refundIds($bookingIds, $rentalIds, $paymentIds);
         $maintenanceIds = $this->ids('maintenance_orders', 'id', static fn (Builder $query) => $query->whereIn('branch_id', $branchIds));
         $inspectionIds = $this->inspectionIds($branchIds, $rentalItemIds, $returnItemIds, $transferItemIds);
-        $filePaths = $this->filePaths($transferIds, $inspectionIds, $rentalIds, $paymentIds);
+        $filePaths = $this->filePaths(
+            $transferIds,
+            $inspectionIds,
+            $rentalIds,
+            $paymentIds,
+            $refundIds,
+        );
         $preview = $this->preview($companyId, $branch);
 
         DB::transaction(function () use (
@@ -96,6 +103,7 @@ class OperationalDataResetService
             $bookingIds,
             $rentalIds,
             $paymentIds,
+            $refundIds,
             $maintenanceIds,
             $inspectionIds,
             $normalizeCondition,
@@ -121,15 +129,13 @@ class OperationalDataResetService
                 ->whereIn('rental_id', $rentalIds)
                 ->delete();
 
-            DB::table('refunds')
-                ->where(function (Builder $query) use ($bookingIds, $rentalIds, $paymentIds): void {
-                    $query->whereIn('booking_id', $bookingIds)
-                        ->orWhereIn('rental_id', $rentalIds)
-                        ->orWhereIn('payment_id', $paymentIds);
+            DB::table('cash_transactions')
+                ->where(function (Builder $query) use ($paymentIds, $refundIds): void {
+                    $query->whereIn('payment_id', $paymentIds)
+                        ->orWhereIn('refund_id', $refundIds);
                 })
                 ->delete();
-
-            DB::table('cash_transactions')->whereIn('payment_id', $paymentIds)->delete();
+            DB::table('refunds')->whereIn('id', $refundIds)->delete();
             DB::table('payments')->whereIn('id', $paymentIds)->delete();
 
             DB::table('maintenance_orders')->whereIn('id', $maintenanceIds)->delete();
@@ -187,7 +193,7 @@ class OperationalDataResetService
     }
 
     /**
-     * @param list<int> $branchIds
+     * @param  list<int>  $branchIds
      * @return list<int>
      */
     private function transferIds(int $companyId, array $branchIds): array
@@ -207,9 +213,9 @@ class OperationalDataResetService
     }
 
     /**
-     * @param list<int> $bookingIds
-     * @param list<int> $rentalIds
-     * @param list<int> $transferPaymentIds
+     * @param  list<int>  $bookingIds
+     * @param  list<int>  $rentalIds
+     * @param  list<int>  $transferPaymentIds
      * @return list<int>
      */
     private function paymentIds(array $bookingIds, array $rentalIds, array $transferPaymentIds): array
@@ -229,10 +235,32 @@ class OperationalDataResetService
     }
 
     /**
-     * @param list<int> $branchIds
-     * @param list<int> $rentalItemIds
-     * @param list<int> $returnItemIds
-     * @param list<int> $transferItemIds
+     * @param  list<int>  $bookingIds
+     * @param  list<int>  $rentalIds
+     * @param  list<int>  $paymentIds
+     * @return list<int>
+     */
+    private function refundIds(array $bookingIds, array $rentalIds, array $paymentIds): array
+    {
+        $ids = DB::table('refunds')
+            ->where(function (Builder $query) use ($bookingIds, $rentalIds, $paymentIds): void {
+                $query->whereIn('booking_id', $bookingIds)
+                    ->orWhereIn('rental_id', $rentalIds)
+                    ->orWhereIn('payment_id', $paymentIds);
+            })
+            ->pluck('id')
+            ->map(static fn (mixed $id): int => (int) $id)
+            ->values()
+            ->all();
+
+        return array_values($ids);
+    }
+
+    /**
+     * @param  list<int>  $branchIds
+     * @param  list<int>  $rentalItemIds
+     * @param  list<int>  $returnItemIds
+     * @param  list<int>  $transferItemIds
      * @return list<int>
      */
     private function inspectionIds(
@@ -257,10 +285,11 @@ class OperationalDataResetService
     }
 
     /**
-     * @param list<int> $transferIds
-     * @param list<int> $inspectionIds
-     * @param list<int> $rentalIds
-     * @param list<int> $paymentIds
+     * @param  list<int>  $transferIds
+     * @param  list<int>  $inspectionIds
+     * @param  list<int>  $rentalIds
+     * @param  list<int>  $paymentIds
+     * @param  list<int>  $refundIds
      * @return list<string>
      */
     private function filePaths(
@@ -268,12 +297,14 @@ class OperationalDataResetService
         array $inspectionIds,
         array $rentalIds,
         array $paymentIds,
+        array $refundIds,
     ): array {
         $paths = collect()
             ->merge(DB::table('branch_transfer_documents')->whereIn('branch_transfer_id', $transferIds)->pluck('path'))
             ->merge(DB::table('asset_inspection_media')->whereIn('asset_inspection_id', $inspectionIds)->pluck('path'))
             ->merge(DB::table('rental_collaterals')->whereIn('rental_id', $rentalIds)->pluck('document_path'))
             ->merge(DB::table('payments')->whereIn('id', $paymentIds)->pluck('proof_path'))
+            ->merge(DB::table('refunds')->whereIn('id', $refundIds)->pluck('proof_path'))
             ->filter(static fn (mixed $path): bool => is_string($path) && $path !== '')
             ->map(static fn (mixed $path): string => (string) $path)
             ->unique()
@@ -284,7 +315,7 @@ class OperationalDataResetService
     }
 
     /**
-     * @param callable(Builder): mixed $scope
+     * @param  callable(Builder): mixed  $scope
      * @return list<int>
      */
     private function ids(string $table, string $column, callable $scope): array

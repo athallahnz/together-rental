@@ -13,6 +13,14 @@ use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\CustomerIdentityController;
 use App\Http\Controllers\CustomerLoyaltyController;
 use App\Http\Controllers\EmployeeController;
+use App\Http\Controllers\Finance\CashRegisterController;
+use App\Http\Controllers\Finance\CashSessionController;
+use App\Http\Controllers\Finance\FinanceDashboardController;
+use App\Http\Controllers\Finance\FinanceMasterController;
+use App\Http\Controllers\Finance\FinancialCategoryController;
+use App\Http\Controllers\Finance\PaymentController;
+use App\Http\Controllers\Finance\PaymentMethodController;
+use App\Http\Controllers\Finance\RefundController;
 use App\Http\Controllers\LegacyImportController;
 use App\Http\Controllers\MaintenanceController;
 use App\Http\Controllers\OperationalDataResetController;
@@ -60,6 +68,57 @@ Route::prefix('rental')->name('public.catalog.')->group(function (): void {
 
 Route::middleware(['auth', 'active', 'verified'])->group(function () {
     Route::inertia('dashboard', 'dashboard')->name('dashboard');
+
+    Route::prefix('finance')->name('finance.')->group(function (): void {
+        Route::get('/dashboard', FinanceDashboardController::class)
+            ->middleware('can:finance.dashboard.view')->name('dashboard');
+        Route::get('/master-data', FinanceMasterController::class)
+            ->middleware('can:finance.masters.view')->name('masters.index');
+        Route::post('/payment-methods', [PaymentMethodController::class, 'store'])
+            ->middleware('can:finance.payment_methods.manage')->name('payment-methods.store');
+        Route::put('/payment-methods/{paymentMethod}', [PaymentMethodController::class, 'update'])
+            ->middleware('can:finance.payment_methods.manage')->name('payment-methods.update');
+        Route::patch('/payment-methods/{paymentMethod}/status', [PaymentMethodController::class, 'toggleStatus'])
+            ->middleware('can:finance.payment_methods.manage')->name('payment-methods.toggle-status');
+        Route::post('/financial-categories', [FinancialCategoryController::class, 'store'])
+            ->middleware('can:finance.categories.manage')->name('financial-categories.store');
+        Route::put('/financial-categories/{financialCategory}', [FinancialCategoryController::class, 'update'])
+            ->middleware('can:finance.categories.manage')->name('financial-categories.update');
+        Route::patch('/financial-categories/{financialCategory}/status', [FinancialCategoryController::class, 'toggleStatus'])
+            ->middleware('can:finance.categories.manage')->name('financial-categories.toggle-status');
+        Route::post('/cash-registers', [CashRegisterController::class, 'store'])
+            ->middleware('can:finance.cash_registers.manage')->name('cash-registers.store');
+        Route::put('/cash-registers/{cashRegister}', [CashRegisterController::class, 'update'])
+            ->middleware('can:finance.cash_registers.manage')->name('cash-registers.update');
+        Route::patch('/cash-registers/{cashRegister}/status', [CashRegisterController::class, 'toggleStatus'])
+            ->middleware('can:finance.cash_registers.manage')->name('cash-registers.toggle-status');
+        Route::get('/payments', [PaymentController::class, 'index'])
+            ->middleware('can:payments.view')->name('payments.index');
+        Route::get('/payments/{payment}', [PaymentController::class, 'show'])
+            ->middleware('can:payments.view')->name('payments.show');
+        Route::post('/payments/{payment}/refunds', [RefundController::class, 'store'])
+            ->middleware('can:refunds.request')->name('payments.refunds.store');
+        Route::get('/refunds', [RefundController::class, 'index'])
+            ->middleware('can:refunds.view')->name('refunds.index');
+        Route::get('/refunds/{refund}', [RefundController::class, 'show'])
+            ->middleware('can:refunds.view')->name('refunds.show');
+        Route::get('/refunds/{refund}/proof', [RefundController::class, 'proof'])
+            ->middleware('can:refunds.view')->name('refunds.proof');
+        Route::post('/refunds/{refund}/approve', [RefundController::class, 'approve'])
+            ->middleware('can:refunds.approve')->name('refunds.approve');
+        Route::post('/refunds/{refund}/reject', [RefundController::class, 'reject'])
+            ->middleware('can:refunds.approve')->name('refunds.reject');
+        Route::post('/refunds/{refund}/process', [RefundController::class, 'process'])
+            ->middleware('can:refunds.process')->name('refunds.process');
+        Route::post('/refunds/{refund}/cancel', [RefundController::class, 'cancel'])
+            ->middleware('can:refunds.cancel')->name('refunds.cancel');
+        Route::post('/cash-registers/{cashRegister}/sessions', [CashSessionController::class, 'store'])
+            ->middleware('can:cash.manage')->name('cash-sessions.store');
+        Route::post('/cash-sessions/{cashSession}/close', [CashSessionController::class, 'close'])
+            ->middleware('can:cash.manage')->name('cash-sessions.close');
+        Route::post('/payments/{payment}/void', [PaymentController::class, 'void'])
+            ->middleware('can:payments.void')->name('payments.void');
+    });
 
     Route::prefix('catalog')->name('catalog.')->group(function () {
         Route::get('/', [CatalogController::class, 'index'])

@@ -73,11 +73,13 @@ class SaveRoleRequest extends FormRequest
     protected function prepareForValidation(): void
     {
         $name = trim((string) $this->input('name'));
+        $permissionIds = $this->input('permission_ids', []);
+        $permissionIds = is_array($permissionIds) ? $permissionIds : [];
 
         $this->merge([
             'name' => $name,
             'slug' => Str::slug((string) ($this->input('slug') ?: $name)),
-            'permission_ids' => collect($this->input('permission_ids', []))
+            'permission_ids' => collect($permissionIds)
                 ->map(fn (mixed $id): int => (int) $id)
                 ->filter()
                 ->unique()

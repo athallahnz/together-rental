@@ -2,10 +2,10 @@
 
 namespace App\Domain\Rentals;
 
+use App\Domain\Finance\PaymentManager;
 use App\Models\Asset;
 use App\Models\AssetInspection;
 use App\Models\MaintenanceOrder;
-use App\Models\Payment;
 use App\Models\Rental;
 use App\Models\RentalItem;
 use App\Models\RentalItemAsset;
@@ -22,6 +22,7 @@ class RentalReturnManager
     public function __construct(
         private readonly RentalNumberGenerator $numbers,
         private readonly RentalOperationalCorrectionManager $corrections,
+        private readonly PaymentManager $payments,
     ) {}
 
     /** @param array<string, mixed> $data */
@@ -47,7 +48,23 @@ class RentalReturnManager
                 throw new ConflictHttpException('Sesi koreksi operasional tidak ditemukan.');
             }
 
-            $inputItems = collect($data['items'])->keyBy('rental_item_asset_id');
+            $rawItemInputs = $data['items'] ?? [];
+            /** @var list<array<string, mixed>> $itemInputs */
+            $itemInputs = [];
+            if (is_array($rawItemInputs)) {
+                foreach ($rawItemInputs as $input) {
+                    if (is_array($input)) {
+                        $itemInputs[] = $input;
+                    }
+                }
+            }
+            /** @var array<int, array<string, mixed>> $indexedItemInputs */
+            $indexedItemInputs = [];
+            foreach ($itemInputs as $input) {
+                $indexedItemInputs[(int) ($input['rental_item_asset_id'] ?? 0)] = $input;
+            }
+            /** @var Collection<int, array<string, mixed>> $inputItems */
+            $inputItems = collect($indexedItemInputs);
 
             if ($correction !== null) {
                 $this->swapCorrectedAssets($locked, $correction, $inputItems, $actor);
@@ -68,7 +85,20 @@ class RentalReturnManager
             }
 
             if ($correction !== null) {
-                $expectedAssignmentIds = collect($correction->snapshot_before['units'])
+                $snapshot = $this->correctionSnapshot($correction);
+                $rawSnapshotUnits = is_array($snapshot)
+                    ? ($snapshot['units'] ?? [])
+                    : [];
+                /** @var list<array<string, mixed>> $snapshotUnits */
+                $snapshotUnits = [];
+                if (is_array($rawSnapshotUnits)) {
+                    foreach ($rawSnapshotUnits as $unit) {
+                        if (is_array($unit)) {
+                            $snapshotUnits[] = $unit;
+                        }
+                    }
+                }
+                $expectedAssignmentIds = collect($snapshotUnits)
                     ->pluck('rental_item_asset_id')->sort()->values()->all();
                 $submittedAssignmentIds = $units->pluck('id')->sort()->values()->all();
 
@@ -144,6 +174,11 @@ class RentalReturnManager
 
             foreach ($units as $unit) {
                 $input = $inputItems->get($unit->id);
+                if ($input === null) {
+                    throw new ConflictHttpException(
+                        'Data pengembalian unit tidak ditemukan.',
+                    );
+                }
                 $condition = $input['condition'];
                 $returnItem = $return->items()->create([
                     'rental_item_id' => $unit->rental_item_id,
@@ -256,6 +291,11 @@ class RentalReturnManager
         }, 3);
     }
 
+    private function correctionSnapshot(RentalOperationalCorrection $correction): mixed
+    {
+        return $correction->getAttribute('snapshot_before');
+    }
+
     private function syncMaintenanceInventory(int $branchId, int $productId): void
     {
         $quantity = DB::table('assets')
@@ -275,6 +315,7 @@ class RentalReturnManager
         );
     }
 
+    /** @param Collection<int, array<string, mixed>> $assignments */
     private function swapCorrectedAssets(
         Rental $rental,
         RentalOperationalCorrection $correction,
@@ -437,26 +478,20 @@ class RentalReturnManager
         }
 
         if ($payment > 0) {
-            $categoryId = DB::table('financial_categories')
-                ->where('company_id', $actor->company_id)
-                ->where('code', 'RENTAL')
-                ->value('id');
-            Payment::query()->create([
-                'branch_id' => $rental->branch_id,
+            $this->payments->record($rental->branch, [
                 'customer_id' => $rental->customer_id,
                 'rental_id' => $rental->id,
                 'payment_method_id' => $data['payment_method_id'],
-                'financial_category_id' => $categoryId,
-                'payment_number' => $this->numbers->nextPayment($rental->branch),
+                'financial_category_code' => 'RENTAL',
+                'cash_session_id' => $data['cash_session_id'] ?? null,
                 'direction' => 'in',
                 'type' => 'rental',
-                'status' => 'completed',
+                'source_context' => 'rental_return',
                 'amount' => $payment,
                 'paid_at' => $return->returned_at,
                 'external_reference' => $data['payment_reference'] ?? null,
                 'notes' => "Pembayaran saat pengembalian {$return->return_number}.",
-                'received_by' => $actor->id,
-            ]);
+            ], $actor);
         }
 
         $rental->update([

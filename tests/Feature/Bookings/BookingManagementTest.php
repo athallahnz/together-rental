@@ -14,10 +14,12 @@ use App\Models\Role;
 use App\Models\User;
 use Database\Seeders\RentalFoundationSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Feature\InteractsWithFinance;
 use Tests\TestCase;
 
 class BookingManagementTest extends TestCase
 {
+    use InteractsWithFinance;
     use RefreshDatabase;
 
     public function test_booking_is_priced_and_assets_are_reserved_by_the_server(): void
@@ -50,10 +52,12 @@ class BookingManagementTest extends TestCase
     {
         [$user, $branch, $customer, $plan, $product] = $this->fixture();
         $method = PaymentMethod::query()->where('code', 'CASH')->firstOrFail();
+        $session = $this->openCashSession($user, $branch);
         $payload = $this->payload($branch, $customer, $plan, $product);
         $payload['payment_amount'] = 50000;
         $payload['deposit_paid'] = 200000;
         $payload['payment_method_id'] = $method->id;
+        $payload['cash_session_id'] = $session->id;
 
         $this->actingAs($user)->post(route('bookings.store'), $payload)
             ->assertSessionHasNoErrors();
@@ -72,12 +76,13 @@ class BookingManagementTest extends TestCase
             'amount' => 200000,
         ]);
         $this->assertSame('200000.00', $booking->deposit_paid);
+        $this->assertDatabaseCount('cash_transactions', 2);
     }
 
     public function test_booking_rejects_payment_above_remaining_bill(): void
     {
         [$user, $branch, $customer, $plan, $product] = $this->fixture();
-        $method = PaymentMethod::query()->where('code', 'CASH')->firstOrFail();
+        $method = PaymentMethod::query()->where('code', 'TRANSFER')->firstOrFail();
         $this->actingAs($user)->post(
             route('bookings.store'),
             $this->payload($branch, $customer, $plan, $product),
@@ -88,6 +93,7 @@ class BookingManagementTest extends TestCase
             'payment_amount' => 200000,
             'deposit_paid' => 0,
             'payment_method_id' => $method->id,
+            'payment_reference' => 'TRX-OVERPAYMENT-TEST',
         ])->assertSessionHasErrors('payment_amount');
 
         $this->assertDatabaseCount('payments', 0);

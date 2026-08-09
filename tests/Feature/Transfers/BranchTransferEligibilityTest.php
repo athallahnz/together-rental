@@ -12,8 +12,8 @@ use Tests\TestCase;
 
 class BranchTransferEligibilityTest extends TestCase
 {
-    use RefreshDatabase;
     use InteractsWithTransferFixtures;
+    use RefreshDatabase;
 
     public function test_future_booking_conflict_blocks_transfer_approval_without_auto_cancelling_booking(): void
     {

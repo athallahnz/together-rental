@@ -7,6 +7,7 @@ use Illuminate\Validation\Rule;
 
 class StoreRentalFinancialAdjustmentRequest extends FormRequest
 {
+    /** @return array<string, list<mixed>> */
     public function rules(): array
     {
         return [

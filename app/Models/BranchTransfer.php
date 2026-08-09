@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\MorphMany;
+use Illuminate\Support\Carbon;
 
 /**
  * @property int $id
@@ -15,16 +16,16 @@ use Illuminate\Database\Eloquent\Relations\MorphMany;
  * @property int $from_branch_id
  * @property int $to_branch_id
  * @property string $transfer_number
- * @property \App\Domain\Transfers\Enums\TransferStatus $status
+ * @property TransferStatus $status
  * @property int $revision_number
  * @property int $lock_version
- * @property \Illuminate\Support\Carbon|null $planned_dispatch_at
- * @property \Illuminate\Support\Carbon|null $expected_arrival_at
- * @property \Illuminate\Support\Carbon|null $requested_at
- * @property \Illuminate\Support\Carbon|null $approved_at
- * @property \Illuminate\Support\Carbon|null $shipped_at
- * @property \Illuminate\Support\Carbon|null $received_at
- * @property \Illuminate\Support\Carbon|null $completed_at
+ * @property Carbon|null $planned_dispatch_at
+ * @property Carbon|null $expected_arrival_at
+ * @property Carbon|null $requested_at
+ * @property Carbon|null $approved_at
+ * @property Carbon|null $shipped_at
+ * @property Carbon|null $received_at
+ * @property Carbon|null $completed_at
  */
 #[Fillable([
     'company_id',

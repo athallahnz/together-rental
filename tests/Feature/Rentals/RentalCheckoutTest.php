@@ -15,10 +15,12 @@ use App\Models\Role;
 use App\Models\User;
 use Database\Seeders\RentalFoundationSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Tests\Feature\InteractsWithFinance;
 use Tests\TestCase;
 
 class RentalCheckoutTest extends TestCase
 {
+    use InteractsWithFinance;
     use RefreshDatabase;
 
     public function test_confirmed_booking_is_checked_out_atomically(): void
@@ -32,6 +34,7 @@ class RentalCheckoutTest extends TestCase
             $product,
         );
         $method = PaymentMethod::query()->where('code', 'CASH')->firstOrFail();
+        $session = $this->openCashSession($user, $branch);
 
         $this->actingAs($user)->post(route('rentals.checkout.store', $booking), [
             'checked_out_at' => now()->format('Y-m-d H:i:s'),
@@ -43,7 +46,9 @@ class RentalCheckoutTest extends TestCase
             'payment_amount' => 100000,
             'deposit_paid' => 500000,
             'payment_method_id' => $method->id,
-        ])->assertSessionHasNoErrors();
+            'cash_session_id' => $session->id,
+        ])->assertSessionHasNoErrors()
+            ->assertRedirect();
 
         $rental = Rental::query()->firstOrFail();
 
@@ -68,6 +73,7 @@ class RentalCheckoutTest extends TestCase
             'condition' => 'excellent',
         ]);
         $this->assertDatabaseCount('payments', 2);
+        $this->assertDatabaseCount('cash_transactions', 2);
         $this->assertDatabaseHas('activity_logs', [
             'subject_id' => $rental->id,
             'event' => 'rental.booking_checked_out',
@@ -77,14 +83,19 @@ class RentalCheckoutTest extends TestCase
     public function test_direct_rental_creates_internal_booking_and_checks_out(): void
     {
         [$user, $branch, $customer, $plan, $product, $asset] = $this->fixture();
+        $method = PaymentMethod::query()->where('code', 'CASH')->firstOrFail();
+        $session = $this->openCashSession($user, $branch);
 
         $this->actingAs($user)->post(route('rentals.direct.store'), [
             ...$this->bookingPayload($branch, $customer, $plan, $product),
             'checked_out_at' => now()->format('Y-m-d H:i:s'),
             'checkout_condition' => 'good',
-            'payment_amount' => 0,
+            'payment_amount' => 50000,
             'deposit_paid' => 0,
-        ])->assertSessionHasNoErrors();
+            'payment_method_id' => $method->id,
+            'cash_session_id' => $session->id,
+        ])->assertSessionHasNoErrors()
+            ->assertRedirect();
 
         $booking = Booking::query()->firstOrFail();
         $rental = Rental::query()->firstOrFail();
@@ -93,7 +104,15 @@ class RentalCheckoutTest extends TestCase
         $this->assertSame('converted', $booking->status);
         $this->assertSame($booking->id, $rental->booking_id);
         $this->assertSame('active', $rental->status);
+        $this->assertSame('50000.00', $rental->paid_amount);
         $this->assertSame('rented', $asset->fresh()->status);
+        $this->assertDatabaseHas('payments', [
+            'rental_id' => $rental->id,
+            'source_context' => 'rental_checkout',
+            'cash_session_id' => $session->id,
+            'amount' => 50000,
+        ]);
+        $this->assertDatabaseCount('cash_transactions', 1);
         $this->assertDatabaseHas('rental_status_histories', [
             'rental_id' => $rental->id,
             'to_status' => 'active',
@@ -104,10 +123,12 @@ class RentalCheckoutTest extends TestCase
     {
         [$user, $branch, $customer, $plan, $product] = $this->fixture();
         $method = PaymentMethod::query()->where('code', 'CASH')->firstOrFail();
+        $session = $this->openCashSession($user, $branch);
         $payload = $this->bookingPayload($branch, $customer, $plan, $product);
         $payload['payment_amount'] = 50000;
         $payload['deposit_paid'] = 200000;
         $payload['payment_method_id'] = $method->id;
+        $payload['cash_session_id'] = $session->id;
 
         $this->actingAs($user)->post(route('bookings.store'), $payload)
             ->assertSessionHasNoErrors();
@@ -121,7 +142,9 @@ class RentalCheckoutTest extends TestCase
             'payment_amount' => 25000,
             'deposit_paid' => 300000,
             'payment_method_id' => $method->id,
-        ])->assertSessionHasNoErrors();
+            'cash_session_id' => $session->id,
+        ])->assertSessionHasNoErrors()
+            ->assertRedirect();
 
         $rental = Rental::query()->firstOrFail();
 
@@ -133,6 +156,13 @@ class RentalCheckoutTest extends TestCase
             'booking_id' => $booking->id,
             'rental_id' => null,
             'status' => 'completed',
+        ]);
+        $this->assertDatabaseCount('cash_transactions', 4);
+        $this->assertDatabaseHas('payments', [
+            'rental_id' => $rental->id,
+            'source_context' => 'rental_checkout',
+            'type' => 'deposit',
+            'amount' => 300000,
         ]);
     }
 

@@ -2,14 +2,15 @@
 
 namespace Tests\Feature\Transfers;
 
+use App\Models\Branch;
 use App\Models\BranchTransfer;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Tests\TestCase;
 
 class BranchTransferAccessTest extends TestCase
 {
-    use RefreshDatabase;
     use InteractsWithTransferFixtures;
+    use RefreshDatabase;
 
     public function test_inventory_staff_can_dispatch_but_cannot_create_or_approve(): void
     {
@@ -44,7 +45,7 @@ class BranchTransferAccessTest extends TestCase
             ->get(route('transfers.show', $transfer))
             ->assertOk();
 
-        $other = \App\Models\Branch::query()->create([
+        $other = Branch::query()->create([
             'company_id' => $fixture['origin']->company_id,
             'code' => 'KDR',
             'name' => 'Together Kamera Kediri',

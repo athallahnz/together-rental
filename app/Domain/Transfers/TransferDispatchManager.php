@@ -6,7 +6,6 @@ use App\Domain\Transfers\Enums\CaptureMode;
 use App\Domain\Transfers\Enums\TransferStatus;
 use App\Models\AssetInspection;
 use App\Models\BranchTransfer;
-use App\Models\BranchTransferItem;
 use App\Models\User;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Arr;
@@ -196,7 +195,7 @@ class TransferDispatchManager
     }
 
     /**
-     * @param array{capture_mode: string, min_photos: int, require_waybill: bool, allow_gallery_override: bool} $policy
+     * @param  array{capture_mode: string, min_photos: int, require_waybill: bool, allow_gallery_override: bool}  $policy
      */
     private function guardCapturePolicy(
         string $captureSource,

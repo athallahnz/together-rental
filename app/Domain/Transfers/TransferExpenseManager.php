@@ -2,7 +2,7 @@
 
 namespace App\Domain\Transfers;
 
-use App\Domain\Rentals\RentalNumberGenerator;
+use App\Domain\Finance\PaymentManager;
 use App\Models\Branch;
 use App\Models\BranchTransfer;
 use App\Models\BranchTransferExpense;
@@ -16,8 +16,8 @@ use Illuminate\Validation\ValidationException;
 class TransferExpenseManager
 {
     public function __construct(
-        private readonly RentalNumberGenerator $numbers,
         private readonly TransferMediaManager $media,
+        private readonly PaymentManager $payments,
     ) {}
 
     /** @param array<string, mixed> $data */
@@ -139,30 +139,18 @@ class TransferExpenseManager
             }
 
             $branch = Branch::query()->lockForUpdate()->findOrFail($locked->expense_branch_id);
-            $payment = Payment::query()->create([
-                'branch_id' => $branch->id,
+            $payment = $this->payments->record($branch, [
                 'payment_method_id' => $data['payment_method_id'],
                 'financial_category_id' => $locked->financial_category_id,
                 'cash_session_id' => $data['cash_session_id'] ?? null,
-                'payment_number' => $this->numbers->nextPayment($branch),
                 'direction' => 'out',
                 'type' => 'transfer_expense',
-                'status' => 'completed',
+                'source_context' => 'transfer_expense',
                 'amount' => $amount,
                 'paid_at' => $data['paid_at'] ?? now(),
                 'external_reference' => $data['external_reference'] ?? $locked->external_reference,
                 'notes' => $data['notes'] ?? "Biaya transfer {$transfer->transfer_number}",
-                'received_by' => $actor->id,
-            ]);
-
-            if (! empty($data['cash_session_id'])) {
-                $this->recordCashTransaction(
-                    (int) $data['cash_session_id'],
-                    $payment,
-                    $locked,
-                    $actor,
-                );
-            }
+            ], $actor);
 
             $locked->forceFill([
                 'payment_method_id' => $data['payment_method_id'],
@@ -199,26 +187,22 @@ class TransferExpenseManager
         User $actor,
     ): BranchTransferExpense {
         return DB::transaction(function () use ($transfer, $expense, $reason, $actor): BranchTransferExpense {
-            $locked = BranchTransferExpense::query()->lockForUpdate()->findOrFail($expense->id);
-            $this->guardBelongs($transfer, $locked);
-            $this->guardExpenseBranch($transfer, $locked->expense_branch_id, $actor);
+            $current = BranchTransferExpense::query()->findOrFail($expense->id);
+            $this->guardBelongs($transfer, $current);
+            $this->guardExpenseBranch($transfer, $current->expense_branch_id, $actor);
 
-            if ($locked->status === 'void') {
-                return $locked;
+            if ($current->status === 'void') {
+                return $current;
             }
 
-            if ($locked->payment_id !== null) {
-                $payment = Payment::query()->lockForUpdate()->findOrFail($locked->payment_id);
-                if ($locked->cash_session_id !== null) {
-                    $this->reverseCashTransaction($locked, $payment, $actor, $reason);
-                }
-                $payment->forceFill([
-                    'status' => 'void',
-                    'voided_by' => $actor->id,
-                    'voided_at' => now(),
-                    'void_reason' => $reason,
-                ])->save();
+            if ($current->payment_id !== null) {
+                $payment = Payment::query()->findOrFail($current->payment_id);
+                $this->payments->void($payment, $reason, $actor);
             }
+
+            $locked = BranchTransferExpense::query()
+                ->lockForUpdate()
+                ->findOrFail($current->id);
 
             $locked->forceFill([
                 'status' => 'void',
@@ -271,115 +255,5 @@ class TransferExpenseManager
         }
 
         abort(403, 'Aktifkan cabang penanggung biaya sebelum mencatat pengeluaran.');
-    }
-
-    private function reverseCashTransaction(
-        BranchTransferExpense $expense,
-        Payment $payment,
-        User $actor,
-        string $reason,
-    ): void {
-        $cashSessionId = (int) $expense->cash_session_id;
-        $session = DB::table('cash_sessions')
-            ->where('id', $cashSessionId)
-            ->lockForUpdate()
-            ->first();
-        if ($session === null || $session->status !== 'open') {
-            throw ValidationException::withMessages([
-                'expense' => 'Biaya kas hanya dapat dibatalkan ketika sesi kas terkait masih terbuka.',
-            ]);
-        }
-
-        $alreadyReversed = DB::table('cash_transactions')
-            ->where('cash_session_id', $cashSessionId)
-            ->where('type', 'transfer_expense_void')
-            ->where('description', 'like', "%Payment {$payment->payment_number}%")
-            ->exists();
-        if ($alreadyReversed) {
-            return;
-        }
-
-        $incoming = (float) DB::table('cash_transactions')
-            ->where('cash_session_id', $cashSessionId)
-            ->where('direction', 'in')
-            ->sum('amount');
-        $outgoing = (float) DB::table('cash_transactions')
-            ->where('cash_session_id', $cashSessionId)
-            ->where('direction', 'out')
-            ->sum('amount');
-        $balanceAfter = (float) $session->opening_balance + $incoming - $outgoing + (float) $payment->amount;
-        $sequence = DB::table('cash_transactions')
-            ->where('cash_session_id', $cashSessionId)
-            ->lockForUpdate()
-            ->count() + 1;
-
-        DB::table('cash_transactions')->insert([
-            'cash_session_id' => $cashSessionId,
-            'payment_id' => $payment->id,
-            'financial_category_id' => $expense->financial_category_id,
-            'transaction_number' => 'CTX-'.str_pad((string) $sequence, 6, '0', STR_PAD_LEFT),
-            'direction' => 'in',
-            'type' => 'transfer_expense_void',
-            'amount' => $payment->amount,
-            'balance_after' => $balanceAfter,
-            'occurred_at' => now(),
-            'description' => "Pembalikan Payment {$payment->payment_number}: {$reason}",
-            'created_by' => $actor->id,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
-    }
-
-    private function recordCashTransaction(
-        int $cashSessionId,
-        Payment $payment,
-        BranchTransferExpense $expense,
-        User $actor,
-    ): void {
-        $session = DB::table('cash_sessions')
-            ->join('cash_registers', 'cash_registers.id', '=', 'cash_sessions.cash_register_id')
-            ->where('cash_sessions.id', $cashSessionId)
-            ->lockForUpdate()
-            ->first([
-                'cash_sessions.*',
-                'cash_registers.branch_id as register_branch_id',
-            ]);
-        if ($session === null || $session->status !== 'open') {
-            throw ValidationException::withMessages([
-                'cash_session_id' => 'Sesi kas tidak aktif.',
-            ]);
-        }
-        if ((int) $session->register_branch_id !== $payment->branch_id) {
-            throw ValidationException::withMessages([
-                'cash_session_id' => 'Sesi kas harus berasal dari cabang penanggung biaya.',
-            ]);
-        }
-
-        $incoming = (float) DB::table('cash_transactions')
-            ->where('cash_session_id', $cashSessionId)
-            ->where('direction', 'in')
-            ->sum('amount');
-        $outgoing = (float) DB::table('cash_transactions')
-            ->where('cash_session_id', $cashSessionId)
-            ->where('direction', 'out')
-            ->sum('amount');
-        $balanceAfter = (float) $session->opening_balance + $incoming - $outgoing - (float) $payment->amount;
-        $sequence = DB::table('cash_transactions')->where('cash_session_id', $cashSessionId)->lockForUpdate()->count() + 1;
-
-        DB::table('cash_transactions')->insert([
-            'cash_session_id' => $cashSessionId,
-            'payment_id' => $payment->id,
-            'financial_category_id' => $expense->financial_category_id,
-            'transaction_number' => 'CTX-'.str_pad((string) $sequence, 6, '0', STR_PAD_LEFT),
-            'direction' => 'out',
-            'type' => 'transfer_expense',
-            'amount' => $payment->amount,
-            'balance_after' => $balanceAfter,
-            'occurred_at' => $payment->paid_at,
-            'description' => $payment->notes,
-            'created_by' => $actor->id,
-            'created_at' => now(),
-            'updated_at' => now(),
-        ]);
     }
 }

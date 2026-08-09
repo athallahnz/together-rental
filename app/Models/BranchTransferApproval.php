@@ -7,12 +7,13 @@ use App\Domain\Transfers\Enums\ApprovalSide;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
 /**
- * @property \App\Domain\Transfers\Enums\ApprovalSide $side
- * @property \App\Domain\Transfers\Enums\ApprovalDecision $decision
+ * @property ApprovalSide $side
+ * @property ApprovalDecision $decision
  * @property array<string, mixed>|null $payload_snapshot
- * @property \Illuminate\Support\Carbon|null $decided_at
+ * @property Carbon|null $decided_at
  */
 #[Fillable([
     'branch_transfer_id',

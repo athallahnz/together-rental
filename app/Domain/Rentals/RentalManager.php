@@ -3,6 +3,7 @@
 namespace App\Domain\Rentals;
 
 use App\Domain\Bookings\BookingManager;
+use App\Domain\Finance\PaymentManager;
 use App\Models\Asset;
 use App\Models\AssetInspection;
 use App\Models\AssetReservation;
@@ -20,6 +21,7 @@ class RentalManager
     public function __construct(
         private readonly RentalNumberGenerator $numbers,
         private readonly BookingManager $bookings,
+        private readonly PaymentManager $payments,
     ) {}
 
     /** @param array<string, mixed> $data */
@@ -197,7 +199,18 @@ class RentalManager
         array $data,
         User $actor,
     ): void {
-        $conditions = collect($data['assets'] ?? [])->keyBy('asset_id');
+        $rawAssetInputs = $data['assets'] ?? [];
+        /** @var list<array<string, mixed>> $assetInputs */
+        $assetInputs = [];
+        if (is_array($rawAssetInputs)) {
+            foreach ($rawAssetInputs as $input) {
+                if (is_array($input)) {
+                    $assetInputs[] = $input;
+                }
+            }
+        }
+        $conditions = collect($assetInputs)
+            ->keyBy(fn (array $input): int => (int) ($input['asset_id'] ?? 0));
 
         foreach ($reservations->groupBy(
             fn (AssetReservation $item): string => $item->booking_item_id
@@ -264,11 +277,6 @@ class RentalManager
             return;
         }
 
-        $categoryIds = DB::table('financial_categories')
-            ->where('company_id', $actor->company_id)
-            ->whereIn('code', ['RENTAL', 'DEPOSIT'])
-            ->pluck('id', 'code');
-
         foreach ([
             [
                 'amount' => (float) ($data['payment_amount'] ?? 0),
@@ -285,23 +293,21 @@ class RentalManager
                 continue;
             }
 
-            Payment::query()->create([
-                'branch_id' => $rental->branch_id,
+            $this->payments->record($rental->branch, [
                 'customer_id' => $rental->customer_id,
                 'booking_id' => $rental->booking_id,
                 'rental_id' => $rental->id,
                 'payment_method_id' => $methodId,
-                'financial_category_id' => $categoryIds->get($entry['category']),
-                'payment_number' => $this->numbers->nextPayment($rental->branch),
+                'financial_category_code' => $entry['category'],
+                'cash_session_id' => $data['cash_session_id'] ?? null,
                 'direction' => 'in',
                 'type' => $entry['type'],
-                'status' => 'completed',
+                'source_context' => 'rental_checkout',
                 'amount' => $entry['amount'],
                 'paid_at' => $rental->checked_out_at,
                 'external_reference' => $data['payment_reference'] ?? null,
                 'notes' => $data['payment_notes'] ?? null,
-                'received_by' => $actor->id,
-            ]);
+            ], $actor);
         }
     }
 }

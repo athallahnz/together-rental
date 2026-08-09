@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Transfers;
 
+use App\Models\Asset;
 use App\Models\AssetInspectionMedia;
 use App\Models\Branch;
 use App\Models\BranchTransfer;
@@ -13,8 +14,8 @@ use Tests\TestCase;
 
 class BranchTransferMediaSettingsTest extends TestCase
 {
-    use RefreshDatabase;
     use InteractsWithTransferFixtures;
+    use RefreshDatabase;
 
     public function test_camera_required_policy_rejects_gallery_dispatch_without_override(): void
     {
@@ -100,7 +101,7 @@ class BranchTransferMediaSettingsTest extends TestCase
     {
         Storage::fake('local');
         $fixture = $this->transferFixture();
-        $secondAsset = \App\Models\Asset::query()->create([
+        $secondAsset = Asset::query()->create([
             'product_id' => $fixture['product']->id,
             'owning_branch_id' => $fixture['origin']->id,
             'current_branch_id' => $fixture['origin']->id,

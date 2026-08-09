@@ -1,5 +1,10 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import { AlertTriangle, ArrowLeft, LogOut } from 'lucide-react';
+import { CashSessionSelect } from '@/components/finance/cash-session-select';
+import type {
+    CashSessionOption,
+    PaymentMethodOption,
+} from '@/components/finance/cash-session-select';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -14,11 +19,6 @@ import {
 } from '@/components/ui/select';
 import type { Booking } from '@/types';
 
-type PaymentMethod = {
-    id: number;
-    name: string;
-    requires_reference: boolean;
-};
 type AssetInput = {
     asset_id: number;
     condition: 'excellent' | 'good' | 'fair';
@@ -26,7 +26,8 @@ type AssetInput = {
 };
 type Props = {
     booking: Booking;
-    paymentMethods: PaymentMethod[];
+    paymentMethods: PaymentMethodOption[];
+    cashSessions: CashSessionOption[];
     financialSummary: {
         rental_paid: number;
         deposit_paid: number;
@@ -50,6 +51,7 @@ const money = new Intl.NumberFormat('id-ID', {
 export default function RentalCheckout({
     booking,
     paymentMethods,
+    cashSessions,
     financialSummary,
 }: Props) {
     const reservedAssets = booking.items.flatMap((item) =>
@@ -73,6 +75,7 @@ export default function RentalCheckout({
         payment_amount: 0,
         deposit_paid: 0,
         payment_method_id: 0,
+        cash_session_id: null as number | null,
         payment_reference: '',
         payment_notes: '',
     });
@@ -226,12 +229,13 @@ export default function RentalCheckout({
                                 value={String(
                                     form.data.payment_method_id || '',
                                 )}
-                                onValueChange={(value) =>
+                                onValueChange={(value) => {
                                     form.setData(
                                         'payment_method_id',
                                         Number(value),
-                                    )
-                                }
+                                    );
+                                    form.setData('cash_session_id', null);
+                                }}
                             >
                                 <SelectTrigger>
                                     <SelectValue placeholder="Metode pembayaran" />
@@ -247,6 +251,17 @@ export default function RentalCheckout({
                                     ))}
                                 </SelectContent>
                             </Select>
+                            <CashSessionSelect
+                                paymentMethods={paymentMethods}
+                                cashSessions={cashSessions}
+                                branchId={booking.branch_id}
+                                paymentMethodId={form.data.payment_method_id}
+                                value={form.data.cash_session_id}
+                                onValueChange={(value) =>
+                                    form.setData('cash_session_id', value)
+                                }
+                                error={form.errors.cash_session_id}
+                            />
                             <Input
                                 placeholder="Referensi transfer/QRIS"
                                 value={form.data.payment_reference}

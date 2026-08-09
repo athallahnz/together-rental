@@ -72,7 +72,7 @@ class SaveProductRateRequest extends FormRequest
                     ? $product->id
                     : ($target instanceof ProductRate ? $target->product_id : 0);
                 $validFrom = $this->filled('valid_from') ? $this->input('valid_from') : null;
-                $duplicate = ProductRate::query()
+                $query = ProductRate::query()
                     ->where('product_id', $productId)
                     ->where('rate_plan_id', $this->integer('rate_plan_id'))
                     ->when(
@@ -84,12 +84,13 @@ class SaveProductRateRequest extends FormRequest
                         $validFrom === null,
                         fn ($query) => $query->whereNull('valid_from'),
                         fn ($query) => $query->whereDate('valid_from', $validFrom),
-                    )
-                    ->when(
-                        $target instanceof ProductRate,
-                        fn ($query) => $query->whereKeyNot($target->id),
-                    )
-                    ->exists();
+                    );
+
+                if ($target instanceof ProductRate) {
+                    $query->whereKeyNot($target->id);
+                }
+
+                $duplicate = $query->exists();
 
                 if ($duplicate) {
                     $validator->errors()->add(

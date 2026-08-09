@@ -256,7 +256,7 @@ class BranchTransferManager
     }
 
     /**
-     * @param array<string, mixed> $data
+     * @param  array<string, mixed>  $data
      * @return array{0: Branch, 1: Branch}
      */
     private function branches(array $data, User $actor): array

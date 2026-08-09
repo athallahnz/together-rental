@@ -13,6 +13,7 @@ use App\Models\AssetInspection;
 use App\Models\BranchTransfer;
 use App\Models\BranchTransferItem;
 use App\Models\User;
+use Illuminate\Database\Eloquent\Collection;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\DB;
@@ -246,8 +247,8 @@ class TransferReceivingManager
     }
 
     /**
-     * @param array<string, mixed> $payload
-     * @param list<UploadedFile> $photos
+     * @param  array<string, mixed>  $payload
+     * @param  list<UploadedFile>  $photos
      */
     private function receiveSerialized(
         BranchTransfer $transfer,
@@ -334,8 +335,8 @@ class TransferReceivingManager
     }
 
     /**
-     * @param array<string, mixed> $payload
-     * @param list<UploadedFile> $photos
+     * @param  array<string, mixed>  $payload
+     * @param  list<UploadedFile>  $photos
      */
     private function receivePooled(
         BranchTransfer $transfer,
@@ -442,7 +443,7 @@ class TransferReceivingManager
 
     private function refreshStatus(BranchTransfer $transfer): void
     {
-        /** @var \Illuminate\Database\Eloquent\Collection<int, BranchTransferItem> $items */
+        /** @var Collection<int, BranchTransferItem> $items */
         $items = BranchTransferItem::query()
             ->where('branch_transfer_id', $transfer->id)
             ->get(['id', 'status']);
@@ -487,7 +488,7 @@ class TransferReceivingManager
     }
 
     /**
-     * @param array{capture_mode: string, min_photos: int, require_waybill: bool, allow_gallery_override: bool} $policy
+     * @param  array{capture_mode: string, min_photos: int, require_waybill: bool, allow_gallery_override: bool}  $policy
      */
     private function guardCapturePolicy(
         string $captureSource,

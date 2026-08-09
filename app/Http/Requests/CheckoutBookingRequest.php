@@ -2,8 +2,8 @@
 
 namespace App\Http\Requests;
 
+use App\Http\Requests\Concerns\ValidatesPaymentInput;
 use App\Models\Booking;
-use App\Models\PaymentMethod;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
@@ -11,6 +11,8 @@ use Illuminate\Validation\Validator;
 
 class CheckoutBookingRequest extends FormRequest
 {
+    use ValidatesPaymentInput;
+
     public function authorize(): bool
     {
         return Gate::allows('rentals.create');
@@ -30,6 +32,7 @@ class CheckoutBookingRequest extends FormRequest
             'payment_amount' => ['nullable', 'numeric', 'min:0'],
             'deposit_paid' => ['nullable', 'numeric', 'min:0'],
             'payment_method_id' => ['nullable', 'integer', 'min:1'],
+            'cash_session_id' => ['nullable', 'integer'],
             'payment_reference' => ['nullable', 'string', 'max:100'],
             'payment_notes' => ['nullable', 'string', 'max:1000'],
         ];
@@ -47,23 +50,12 @@ class CheckoutBookingRequest extends FormRequest
                     $validator->errors()->add('booking', 'Booking tidak ditemukan pada cabang yang dapat diakses.');
                 }
 
-                $hasPayment = $this->float('payment_amount') > 0 || $this->float('deposit_paid') > 0;
-
-                if ($hasPayment && ! $this->filled('payment_method_id')) {
-                    $validator->errors()->add('payment_method_id', 'Metode pembayaran wajib dipilih.');
-                }
-
-                if ($this->filled('payment_method_id')) {
-                    $method = PaymentMethod::query()
-                        ->where('company_id', $this->user()->company_id)
-                        ->where('is_active', true)
-                        ->find($this->integer('payment_method_id'));
-
-                    if ($method === null) {
-                        $validator->errors()->add('payment_method_id', 'Metode pembayaran tidak tersedia.');
-                    } elseif ($method->requires_reference && ! $this->filled('payment_reference')) {
-                        $validator->errors()->add('payment_reference', 'Referensi pembayaran wajib diisi.');
-                    }
+                if ($booking instanceof Booking) {
+                    $this->validatePaymentInput(
+                        $validator,
+                        $this->float('payment_amount') + $this->float('deposit_paid'),
+                        $booking->branch_id,
+                    );
                 }
             },
         ];

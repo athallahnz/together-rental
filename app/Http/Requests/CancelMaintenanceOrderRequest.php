@@ -11,6 +11,7 @@ class CancelMaintenanceOrderRequest extends FormRequest
         return $this->user()?->can('maintenance.manage') === true;
     }
 
+    /** @return array<string, list<mixed>> */
     public function rules(): array
     {
         return [
