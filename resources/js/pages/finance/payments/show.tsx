@@ -128,6 +128,7 @@ const sourceLabels: Record<string, string> = {
     booking: 'Booking',
     rental_checkout: 'Checkout Rental',
     rental_return: 'Pengembalian Rental',
+    rental_extension: 'Perpanjangan Rental',
     transfer_expense: 'Biaya Transfer Aset',
 };
 const typeLabels: Record<string, string> = {
@@ -804,6 +805,13 @@ function sourceReference(payment: PaymentDetail): {
     label: string;
     href: string | null;
 } {
+    if (payment.rental_extension && payment.rental) {
+        return {
+            label: payment.rental_extension.extension_number,
+            href: `/rentals/${payment.rental.id}`,
+        };
+    }
+
     if (payment.rental) {
         return {
             label: payment.rental.rental_number,

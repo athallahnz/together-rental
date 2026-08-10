@@ -22,6 +22,7 @@ class RentalManager
         private readonly RentalNumberGenerator $numbers,
         private readonly BookingManager $bookings,
         private readonly PaymentManager $payments,
+        private readonly RentalCollateralManager $collaterals,
     ) {}
 
     /** @param array<string, mixed> $data */
@@ -131,6 +132,7 @@ class RentalManager
             'customer_id' => $booking->customer_id,
             'checked_out_by_employee_id' => $actor->employee?->id,
             'rate_plan_id' => $booking->rate_plan_id,
+            'promotion_id' => $booking->promotion_id,
             'rental_number' => $this->numbers->nextRental($booking->branch),
             'status' => 'active',
             'checked_out_at' => $checkedOutAt,
@@ -143,12 +145,29 @@ class RentalManager
             'total_amount' => $booking->total_amount,
             'paid_amount' => $totalRentalPaid,
             'balance_due' => max(0, (float) $booking->total_amount - $totalRentalPaid),
+            'pricing_snapshot' => $booking->pricing_snapshot,
             'notes' => $data['checkout_notes'] ?? $booking->notes,
             'created_by' => $actor->id,
             'updated_by' => $actor->id,
         ]);
 
         $this->createRentalItems($rental, $reservations, $data, $actor);
+        $rawCollaterals = $data['collaterals'] ?? [];
+        /** @var list<array<string, mixed>> $collateralInputs */
+        $collateralInputs = [];
+        if (is_array($rawCollaterals)) {
+            foreach ($rawCollaterals as $input) {
+                if (is_array($input)) {
+                    $collateralInputs[] = $input;
+                }
+            }
+        }
+        $this->collaterals->receiveManyLocked(
+            $rental,
+            $collateralInputs,
+            $actor,
+            $checkedOutAt,
+        );
         Payment::query()
             ->where('booking_id', $booking->id)
             ->whereNull('rental_id')
@@ -180,13 +199,19 @@ class RentalManager
             'from_status' => null,
             'to_status' => 'active',
             'reason' => $booking->source === 'direct'
-                ? 'Rental langsung berhasil di-checkout.'
+                ? 'Rental In Store berhasil di-checkout.'
                 : "Checkout dari booking {$booking->booking_number}.",
             'changed_by' => $actor->id,
             'changed_at' => now(),
         ]);
 
-        return $rental->fresh(['items.assets.asset', 'booking', 'customer', 'payments']);
+        return $rental->fresh([
+            'items.assets.asset',
+            'booking',
+            'customer',
+            'payments',
+            'collaterals.receiver:id,name',
+        ]);
     }
 
     /**

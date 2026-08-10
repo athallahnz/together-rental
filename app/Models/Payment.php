@@ -9,7 +9,8 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 
 #[Fillable([
-    'branch_id', 'customer_id', 'booking_id', 'rental_id', 'payment_method_id',
+    'branch_id', 'customer_id', 'booking_id', 'rental_id', 'rental_extension_id',
+    'payment_method_id',
     'financial_category_id', 'cash_session_id', 'payment_number', 'direction',
     'type', 'source_context', 'status', 'amount', 'paid_at', 'external_reference',
     'proof_path', 'notes', 'received_by', 'voided_by', 'voided_at', 'void_reason',
@@ -38,6 +39,12 @@ class Payment extends Model
     public function rental(): BelongsTo
     {
         return $this->belongsTo(Rental::class);
+    }
+
+    /** @return BelongsTo<RentalExtension, $this> */
+    public function rentalExtension(): BelongsTo
+    {
+        return $this->belongsTo(RentalExtension::class);
     }
 
     /** @return BelongsTo<PaymentMethod, $this> */

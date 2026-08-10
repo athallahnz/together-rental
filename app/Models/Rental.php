@@ -14,6 +14,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
     'customer_id',
     'checked_out_by_employee_id',
     'rate_plan_id',
+    'promotion_id',
     'rental_number',
     'legacy_number',
     'status',
@@ -30,6 +31,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
     'balance_due',
     'late_fee_amount',
     'damage_fee_amount',
+    'pricing_snapshot',
     'notes',
     'created_by',
     'updated_by',
@@ -62,10 +64,28 @@ class Rental extends Model
         return $this->belongsTo(RatePlan::class);
     }
 
+    /** @return BelongsTo<Promotion, $this> */
+    public function promotion(): BelongsTo
+    {
+        return $this->belongsTo(Promotion::class);
+    }
+
     /** @return HasMany<RentalItem, $this> */
     public function items(): HasMany
     {
         return $this->hasMany(RentalItem::class);
+    }
+
+    /** @return HasMany<RentalExtension, $this> */
+    public function extensions(): HasMany
+    {
+        return $this->hasMany(RentalExtension::class);
+    }
+
+    /** @return HasMany<RentalCollateral, $this> */
+    public function collaterals(): HasMany
+    {
+        return $this->hasMany(RentalCollateral::class);
     }
 
     /** @return HasMany<RentalStatusHistory, $this> */
@@ -114,6 +134,7 @@ class Rental extends Model
             'balance_due' => 'decimal:2',
             'late_fee_amount' => 'decimal:2',
             'damage_fee_amount' => 'decimal:2',
+            'pricing_snapshot' => 'array',
         ];
     }
 }

@@ -327,7 +327,7 @@ class OperationalDashboardService
         if ($actor->can('rentals.create')) {
             $actions[] = [
                 'key' => 'direct-rental',
-                'title' => 'Rental Langsung',
+                'title' => 'Rental In Store',
                 'description' => 'Checkout transaksi tanpa booking.',
                 'href' => '/rentals/direct/create',
             ];
@@ -577,8 +577,7 @@ class OperationalDashboardService
             ]);
         }
 
-        usort($items, static fn (array $first, array $second): int =>
-            [$second['priority'], $second['count']] <=> [$first['priority'], $first['count']]);
+        usort($items, static fn (array $first, array $second): int => [$second['priority'], $second['count']] <=> [$first['priority'], $first['count']]);
 
         return array_values(array_map(static function (array $item): array {
             unset($item['priority']);
@@ -787,8 +786,7 @@ class OperationalDashboardService
             }
         }
 
-        usort($items, static fn (array $first, array $second): int =>
-            $first['scheduled_at'] <=> $second['scheduled_at']);
+        usort($items, static fn (array $first, array $second): int => $first['scheduled_at'] <=> $second['scheduled_at']);
 
         return array_slice($items, 0, 8);
     }
@@ -1017,8 +1015,7 @@ class OperationalDashboardService
             }
         }
 
-        usort($items, static fn (array $first, array $second): int =>
-            $second['occurred_at'] <=> $first['occurred_at']);
+        usort($items, static fn (array $first, array $second): int => $second['occurred_at'] <=> $first['occurred_at']);
 
         return array_slice($items, 0, 8);
     }

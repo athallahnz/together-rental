@@ -42,6 +42,8 @@ class StoreRentalReturnRequest extends FormRequest
             'items.*.damage_fee_amount' => ['nullable', 'numeric', 'min:0'],
             'items.*.cleaning_fee_amount' => ['nullable', 'numeric', 'min:0'],
             'items.*.notes' => ['nullable', 'string', 'max:2000'],
+            'returned_collateral_ids' => ['nullable', 'array'],
+            'returned_collateral_ids.*' => ['integer', 'distinct'],
         ];
     }
 

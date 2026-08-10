@@ -41,6 +41,13 @@ type Rental = {
     balance_due: string;
     customer: { name: string };
     branch: { name: string };
+    collaterals: Array<{
+        id: number;
+        type: string;
+        number: string;
+        holder_name: string | null;
+        received_at: string | null;
+    }>;
     items: Array<{ id: number; description: string; assets: Unit[] }>;
 };
 type OperationalCorrection = {
@@ -75,6 +82,7 @@ type FormData = {
     payment_method_id: string | null;
     cash_session_id: number | null;
     payment_reference: string;
+    returned_collateral_ids: number[];
     items: ReturnLine[];
 };
 
@@ -118,6 +126,7 @@ export default function RentalReturn({
         payment_method_id: '',
         cash_session_id: null,
         payment_reference: '',
+        returned_collateral_ids: [],
         items: units.map((unit) => ({
             rental_item_asset_id: unit.id,
             replacement_asset_id: unit.asset.id,
@@ -148,6 +157,20 @@ export default function RentalReturn({
         finalCharge -
         Number(form.data.payment_amount);
     const finalReturnHasBalance = isFinalReturn && projectedBalance > 0.009;
+    const finalReturnHasHeldCollateral =
+        !correctionMode &&
+        isFinalReturn &&
+        form.data.returned_collateral_ids.length !== rental.collaterals.length;
+    const toggleCollateral = (id: number, checked: boolean) => {
+        form.setData(
+            'returned_collateral_ids',
+            checked
+                ? [...form.data.returned_collateral_ids, id]
+                : form.data.returned_collateral_ids.filter(
+                      (collateralId) => collateralId !== id,
+                  ),
+        );
+    };
     const setLine = (index: number, patch: Partial<ReturnLine>) => {
         const items = [...form.data.items];
         items[index] = { ...items[index], ...patch };
@@ -219,6 +242,72 @@ export default function RentalReturn({
                 <InputError
                     message={(form.errors as Record<string, string>).rental}
                 />
+                <InputError
+                    message={
+                        (form.errors as Record<string, string>)
+                            .returned_collateral_ids
+                    }
+                />
+
+                {!correctionMode && rental.collaterals.length > 0 && (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Pengembalian jaminan fisik</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                            <p className="text-sm text-muted-foreground">
+                                Centang hanya jaminan yang benar-benar
+                                diserahkan kembali ke pelanggan pada proses ini.
+                            </p>
+                            {rental.collaterals.map((collateral) => {
+                                const checked =
+                                    form.data.returned_collateral_ids.includes(
+                                        collateral.id,
+                                    );
+
+                                return (
+                                    <label
+                                        key={collateral.id}
+                                        className="flex items-start gap-3 rounded-lg border p-4"
+                                    >
+                                        <Checkbox
+                                            checked={checked}
+                                            onCheckedChange={(value) =>
+                                                toggleCollateral(
+                                                    collateral.id,
+                                                    value === true,
+                                                )
+                                            }
+                                        />
+                                        <span className="text-sm">
+                                            <span className="block font-medium">
+                                                {collateral.type} ·{' '}
+                                                {collateral.number}
+                                            </span>
+                                            <span className="text-muted-foreground">
+                                                {collateral.holder_name ??
+                                                    rental.customer.name}
+                                            </span>
+                                        </span>
+                                    </label>
+                                );
+                            })}
+                            {finalReturnHasHeldCollateral && (
+                                <Alert variant="destructive">
+                                    <AlertTriangle />
+                                    <AlertTitle>
+                                        Jaminan masih ditahan
+                                    </AlertTitle>
+                                    <AlertDescription>
+                                        Karena ini pengembalian unit terakhir,
+                                        seluruh jaminan fisik wajib dikonfirmasi
+                                        sudah dikembalikan.
+                                    </AlertDescription>
+                                </Alert>
+                            )}
+                        </CardContent>
+                    </Card>
+                )}
 
                 <Card>
                     <CardHeader>
@@ -602,7 +691,8 @@ export default function RentalReturn({
                         disabled={
                             form.processing ||
                             selected.length === 0 ||
-                            finalReturnHasBalance
+                            finalReturnHasBalance ||
+                            finalReturnHasHeldCollateral
                         }
                     >
                         <PackageCheck />

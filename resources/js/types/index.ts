@@ -19,3 +19,5 @@ export type * from './reporting';
 export type * from './inventory-audit';
 export type * from './notification';
 export type * from './dashboard';
+
+export type * from './pricing';

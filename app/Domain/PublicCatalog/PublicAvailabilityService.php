@@ -428,15 +428,16 @@ class PublicAvailabilityService
         CarbonImmutable $startsAt,
         CarbonImmutable $endsAt,
     ): int {
-        $extensions = DB::table('rental_extensions')
-            ->selectRaw('rental_id, MAX(extended_due_at) AS extended_due_at')
-            ->whereIn('status', ['approved', 'completed'])
-            ->groupBy('rental_id');
+        $extensions = DB::table('rental_extension_items')
+            ->join('rental_extensions', 'rental_extensions.id', '=', 'rental_extension_items.rental_extension_id')
+            ->selectRaw('rental_extension_items.rental_item_id, MAX(rental_extension_items.extended_due_at) AS extended_due_at')
+            ->whereIn('rental_extensions.status', ['approved', 'completed'])
+            ->groupBy('rental_extension_items.rental_item_id');
         $effectiveDueSql = <<<'SQL'
 CASE
     WHEN rental_extensions_max.extended_due_at IS NULL
-        OR rentals.due_at >= rental_extensions_max.extended_due_at
-    THEN rentals.due_at
+        OR COALESCE(rental_items.due_at, rentals.due_at) >= rental_extensions_max.extended_due_at
+    THEN COALESCE(rental_items.due_at, rentals.due_at)
     ELSE rental_extensions_max.extended_due_at
 END
 SQL;
@@ -446,9 +447,9 @@ SQL;
             ->leftJoinSub(
                 $extensions,
                 'rental_extensions_max',
-                'rental_extensions_max.rental_id',
+                'rental_extensions_max.rental_item_id',
                 '=',
-                'rentals.id',
+                'rental_items.id',
             )
             ->where('rentals.branch_id', $branch->id)
             ->where('rental_items.product_id', $product->id)

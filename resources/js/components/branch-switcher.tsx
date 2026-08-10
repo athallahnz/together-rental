@@ -48,7 +48,7 @@ export function BranchSwitcher() {
                                 <span className="truncate font-medium">
                                     {current.code}
                                 </span>
-                                <span className="truncate text-xs text-muted-foreground">
+                                <span className="truncate text-xs text-sidebar-foreground/60">
                                     {current.name}
                                 </span>
                             </div>

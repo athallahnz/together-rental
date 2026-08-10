@@ -34,11 +34,14 @@ use App\Http\Controllers\PositionController;
 use App\Http\Controllers\ProductCategoryController;
 use App\Http\Controllers\ProductController;
 use App\Http\Controllers\ProductRateController;
+use App\Http\Controllers\PromotionController;
 use App\Http\Controllers\PublicCatalogContentController;
 use App\Http\Controllers\PublicCatalogController;
 use App\Http\Controllers\PublicSitemapController;
 use App\Http\Controllers\RatePlanController;
+use App\Http\Controllers\RentalCollateralController;
 use App\Http\Controllers\RentalController;
+use App\Http\Controllers\RentalExtensionController;
 use App\Http\Controllers\RentalPackageController;
 use App\Http\Controllers\RoleController;
 use App\Http\Controllers\Transfers\BranchTransferApprovalController;
@@ -128,6 +131,18 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
         Route::get('/', [CatalogController::class, 'index'])
             ->middleware('can:products.view')
             ->name('index');
+        Route::get('/promotions', [PromotionController::class, 'index'])
+            ->middleware('can:products.view')
+            ->name('promotions.index');
+        Route::post('/promotions', [PromotionController::class, 'store'])
+            ->middleware('can:products.manage')
+            ->name('promotions.store');
+        Route::put('/promotions/{promotion}', [PromotionController::class, 'update'])
+            ->middleware('can:products.manage')
+            ->name('promotions.update');
+        Route::delete('/promotions/{promotion}', [PromotionController::class, 'archive'])
+            ->middleware('can:products.manage')
+            ->name('promotions.archive');
         Route::get('/public-content', [PublicCatalogContentController::class, 'index'])
             ->middleware('can:products.manage')
             ->name('public-content.index');
@@ -300,6 +315,16 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
             ->middleware('can:rentals.create')->name('checkout.create');
         Route::post('/checkout/{booking}', [RentalController::class, 'storeCheckout'])
             ->middleware('can:rentals.create')->name('checkout.store');
+        Route::get('/{rental}/extend', [RentalExtensionController::class, 'create'])
+            ->middleware('can:rentals.extend')->name('extend.create');
+        Route::post('/{rental}/extensions', [RentalExtensionController::class, 'store'])
+            ->middleware('can:rentals.extend')->name('extensions.store');
+        Route::post('/{rental}/collaterals', [RentalCollateralController::class, 'store'])
+            ->middleware('can:rentals.update')->name('collaterals.store');
+        Route::post('/{rental}/collaterals/{collateral}/return', [RentalCollateralController::class, 'markReturned'])
+            ->middleware('can:rentals.return')->name('collaterals.return');
+        Route::get('/{rental}/collaterals/{collateral}/document', [RentalCollateralController::class, 'document'])
+            ->middleware('can:rentals.view')->name('collaterals.document');
         Route::get('/{rental}/return', [RentalController::class, 'createReturn'])
             ->middleware('can:rentals.return')->name('return.create');
         Route::post('/{rental}/return', [RentalController::class, 'storeReturn'])

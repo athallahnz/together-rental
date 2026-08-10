@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Domain\Access\ActivityRecorder;
+use App\Domain\Rentals\RentalCollateralDocumentStorage;
 use App\Domain\Rentals\RentalFinancialCorrectionManager;
 use App\Domain\Rentals\RentalManager;
 use App\Domain\Rentals\RentalOperationalCorrectionManager;
@@ -19,6 +20,7 @@ use App\Models\PaymentMethod;
 use App\Models\Product;
 use App\Models\RatePlan;
 use App\Models\Rental;
+use App\Models\RentalCollateral;
 use App\Models\RentalPackage;
 use App\Models\User;
 use Carbon\CarbonImmutable;
@@ -30,6 +32,7 @@ use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
 use Inertia\Inertia;
 use Inertia\Response;
+use Throwable;
 
 class RentalController extends Controller
 {
@@ -132,7 +135,7 @@ class RentalController extends Controller
                 $rental->setAttribute(
                     'source_label',
                     $rental->booking?->source === 'direct'
-                        ? 'Rental Langsung'
+                        ? 'Rental In Store'
                         : ($rental->booking !== null ? 'Checkout Booking' : 'Rental tanpa booking'),
                 );
 
@@ -182,9 +185,18 @@ class RentalController extends Controller
     public function storeDirect(
         StoreDirectRentalRequest $request,
         RentalManager $manager,
+        RentalCollateralDocumentStorage $documents,
         ActivityRecorder $recorder,
     ): RedirectResponse {
-        $rental = $manager->createDirect($request->validated(), $request->user());
+        $prepared = $documents->prepareCheckoutPayload($request->validated());
+
+        try {
+            $rental = $manager->createDirect($prepared['payload'], $request->user());
+        } catch (Throwable $exception) {
+            $documents->cleanup($prepared['paths']);
+            throw $exception;
+        }
+
         $recorder->record(
             $request,
             'rental.direct_checked_out',
@@ -193,10 +205,11 @@ class RentalController extends Controller
             $this->audit($rental),
             $rental->branch_id,
         );
+        $this->recordReceivedCollaterals($request, $rental, $recorder);
 
         return to_route('rentals.show', $rental)->with('toast', [
             'type' => 'success',
-            'message' => "Rental langsung {$rental->rental_number} berhasil di-checkout.",
+            'message' => "Rental In Store {$rental->rental_number} berhasil di-checkout.",
         ]);
     }
 
@@ -209,6 +222,7 @@ class RentalController extends Controller
             'branch:id,code,name',
             'customer:id,customer_number,name,phone',
             'ratePlan:id,code,name,duration_unit,duration_value',
+            'promotion:id,code,name,type,value,bonus_duration',
             'items.reservations.asset:id,product_id,asset_code,serial_number,status,condition',
         ]);
 
@@ -240,10 +254,19 @@ class RentalController extends Controller
         CheckoutBookingRequest $request,
         Booking $booking,
         RentalManager $manager,
+        RentalCollateralDocumentStorage $documents,
         ActivityRecorder $recorder,
     ): RedirectResponse {
         $this->guardBookingAccess($request, $booking);
-        $rental = $manager->checkout($booking, $request->validated(), $request->user());
+        $prepared = $documents->prepareCheckoutPayload($request->validated());
+
+        try {
+            $rental = $manager->checkout($booking, $prepared['payload'], $request->user());
+        } catch (Throwable $exception) {
+            $documents->cleanup($prepared['paths']);
+            throw $exception;
+        }
+
         $recorder->record(
             $request,
             'rental.booking_checked_out',
@@ -252,6 +275,7 @@ class RentalController extends Controller
             $this->audit($rental),
             $rental->branch_id,
         );
+        $this->recordReceivedCollaterals($request, $rental, $recorder);
 
         return to_route('rentals.show', $rental)->with('toast', [
             'type' => 'success',
@@ -268,12 +292,21 @@ class RentalController extends Controller
         );
         $rental->load([
             'branch:id,code,name',
-            'customer:id,customer_number,name,phone,email,risk_level',
+            'customer:id,customer_number,name,phone,email,risk_level,is_member,member_number,member_since',
             'booking:id,booking_number,source',
             'ratePlan:id,code,name,duration_unit,duration_value',
+            'promotion:id,code,name,type,value,maximum_discount,minimum_transaction,bonus_duration,rules',
             'items.product:id,sku,name',
             'items.assets.asset:id,product_id,asset_code,serial_number,status,condition',
             'returns:id,rental_id,return_number,type,status,returned_at,total_charge_amount',
+            'extensions' => fn ($query) => $query->latest('approved_at')->latest('id'),
+            'extensions.items.rentalItem.product:id,sku,name',
+            'extensions.creator:id,name',
+            'extensions.approver:id,name',
+            'extensions.promotion:id,code,name,type,value,bonus_duration',
+            'collaterals' => fn ($query) => $query->latest('received_at')->latest('id'),
+            'collaterals.receiver:id,name',
+            'collaterals.returner:id,name',
             'statusHistories.changer:id,name',
             'payments:id,rental_id,type,amount,status,paid_at,external_reference',
             'financialAdjustments' => fn ($query) => $query->latest(),
@@ -308,6 +341,10 @@ class RentalController extends Controller
             'items' => fn ($query) => $query->whereIn('status', ['out', 'partial_return']),
             'items.assets' => fn ($query) => $query->where('status', 'out'),
             'items.assets.asset:id,product_id,asset_code,serial_number,status,condition',
+            'collaterals' => fn ($query) => $query
+                ->where('status', 'held')
+                ->orderBy('received_at')
+                ->orderBy('id'),
         ]);
 
         return Inertia::render('rentals/return', [
@@ -371,7 +408,22 @@ class RentalController extends Controller
     ): RedirectResponse {
         $this->guardRentalAccess($request, $rental);
         $wasOperationalCorrection = $rental->status === 'correction_pending';
-        $return = $manager->process($rental, $request->validated(), $request->user());
+        $validated = $request->validated();
+        $rawCollateralIds = $validated['returned_collateral_ids'] ?? [];
+        /** @var list<int> $collateralIds */
+        $collateralIds = [];
+        if (is_array($rawCollateralIds)) {
+            foreach ($rawCollateralIds as $id) {
+                $collateralIds[] = (int) $id;
+            }
+            $collateralIds = array_values(array_unique($collateralIds));
+        }
+        $collateralBefore = RentalCollateral::query()
+            ->where('rental_id', $rental->id)
+            ->whereIn('id', $collateralIds)
+            ->get()
+            ->keyBy('id');
+        $return = $manager->process($rental, $validated, $request->user());
         $recorder->record(
             $request,
             $wasOperationalCorrection
@@ -387,6 +439,22 @@ class RentalController extends Controller
             ],
             $rental->branch_id,
         );
+
+        foreach ($collateralIds as $collateralId) {
+            $before = $collateralBefore->get($collateralId);
+            $after = RentalCollateral::query()->find($collateralId);
+            if ($before === null || $after === null || $after->status !== 'returned') {
+                continue;
+            }
+            $recorder->record(
+                $request,
+                'rental.collateral_returned',
+                $after,
+                $before->toArray(),
+                $after->toArray(),
+                $rental->branch_id,
+            );
+        }
 
         return to_route('rentals.show', $rental)->with('toast', [
             'type' => 'success',
@@ -519,19 +587,41 @@ class RentalController extends Controller
         return [
             'create' => $user->can('rentals.create'),
             'update' => $user->can('rentals.update'),
+            'extend' => $user->can('rentals.extend'),
             'return' => $user->can('rentals.return'),
             'correctCompleted' => $user->can('rentals.correct_completed'),
             'reopenReturn' => $user->can('rentals.reopen_return'),
         ];
     }
 
+    private function recordReceivedCollaterals(
+        Request $request,
+        Rental $rental,
+        ActivityRecorder $recorder,
+    ): void {
+        foreach ($rental->collaterals as $collateral) {
+            $recorder->record(
+                $request,
+                'rental.collateral_received',
+                $collateral,
+                null,
+                $collateral->only([
+                    'id', 'rental_id', 'customer_id', 'type', 'number',
+                    'holder_name', 'status', 'received_at', 'received_by',
+                    'document_path',
+                ]),
+                $rental->branch_id,
+            );
+        }
+    }
+
     /** @return array<string, mixed> */
     private function audit(Rental $rental): array
     {
         return $rental->only([
-            'id', 'rental_number', 'branch_id', 'booking_id', 'customer_id',
-            'status', 'checked_out_at', 'due_at', 'total_amount', 'paid_amount',
-            'deposit_amount', 'balance_due',
+            'id', 'rental_number', 'branch_id', 'booking_id', 'customer_id', 'promotion_id',
+            'status', 'checked_out_at', 'due_at', 'subtotal', 'discount_amount', 'total_amount',
+            'paid_amount', 'deposit_amount', 'balance_due',
         ]);
     }
 }

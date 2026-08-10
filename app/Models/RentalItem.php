@@ -32,6 +32,12 @@ class RentalItem extends Model
         return $this->belongsTo(Product::class);
     }
 
+    /** @return HasMany<RentalExtensionItem, $this> */
+    public function extensionItems(): HasMany
+    {
+        return $this->hasMany(RentalExtensionItem::class);
+    }
+
     /** @return HasMany<RentalItemAsset, $this> */
     public function assets(): HasMany
     {

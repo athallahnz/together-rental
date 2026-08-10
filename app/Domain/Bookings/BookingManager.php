@@ -3,14 +3,17 @@
 namespace App\Domain\Bookings;
 
 use App\Domain\Finance\PaymentManager;
+use App\Domain\Pricing\RentalPricingEngine;
 use App\Models\Asset;
 use App\Models\AssetReservation;
 use App\Models\Booking;
 use App\Models\BookingItem;
 use App\Models\Branch;
+use App\Models\Customer;
 use App\Models\PackageRate;
 use App\Models\Product;
 use App\Models\ProductRate;
+use App\Models\Promotion;
 use App\Models\RatePlan;
 use App\Models\RentalPackage;
 use App\Models\User;
@@ -25,6 +28,7 @@ class BookingManager
     public function __construct(
         private readonly BookingNumberGenerator $numbers,
         private readonly PaymentManager $payments,
+        private readonly RentalPricingEngine $pricing,
     ) {}
 
     /** @param array<string, mixed> $data */
@@ -36,13 +40,31 @@ class BookingManager
                 ->whereKey($data['branch_id'])
                 ->lockForUpdate()
                 ->firstOrFail();
-            [$plan, $startsAt, $endsAt] = $this->resolvePeriod($data, $actor, $branch);
+            $customer = Customer::query()
+                ->where('company_id', $actor->company_id)
+                ->whereKey($data['customer_id'])
+                ->lockForUpdate()
+                ->firstOrFail();
+            $promotion = $this->pricing->resolvePromotion(
+                $data['promotion_code'] ?? null,
+                $branch,
+                $customer,
+            );
+            $requestedDuration = max(1, (int) $data['duration_units']);
+            $effectiveDuration = $requestedDuration + $this->pricing->bonusDurationUnits($promotion);
+            [$plan, $startsAt, $endsAt] = $this->resolvePeriod(
+                $data,
+                $actor,
+                $branch,
+                $effectiveDuration,
+            );
 
             $booking = Booking::query()->create([
                 'branch_id' => $branch->id,
-                'customer_id' => $data['customer_id'],
+                'customer_id' => $customer->id,
                 'handled_by_employee_id' => $actor->employee?->id,
                 'rate_plan_id' => $plan->id,
+                'promotion_id' => $promotion?->id,
                 'booking_number' => $this->numbers->next($branch),
                 'status' => 'draft',
                 'source' => $data['source'],
@@ -54,7 +76,7 @@ class BookingManager
                 'updated_by' => $actor->id,
             ]);
 
-            $this->replaceItems($booking, $data, $plan);
+            $this->replaceItems($booking, $data, $plan, $customer, $promotion, $requestedDuration);
             $this->recordInitialPayments($booking, $data, $actor);
             $this->history($booking, null, 'draft', 'Booking dibuat.', $actor);
 
@@ -144,12 +166,31 @@ class BookingManager
         }
 
         return DB::transaction(function () use ($booking, $data, $actor): Booking {
-            $locked = Booking::query()->lockForUpdate()->findOrFail($booking->id);
-            [$plan, $startsAt, $endsAt] = $this->resolvePeriod($data, $actor, $locked->branch);
+            $locked = Booking::query()->with('branch')->lockForUpdate()->findOrFail($booking->id);
+            $customer = Customer::query()
+                ->where('company_id', $actor->company_id)
+                ->whereKey($data['customer_id'])
+                ->lockForUpdate()
+                ->firstOrFail();
+            $promotion = $this->pricing->resolvePromotion(
+                $data['promotion_code'] ?? null,
+                $locked->branch,
+                $customer,
+                $locked->id,
+            );
+            $requestedDuration = max(1, (int) $data['duration_units']);
+            $effectiveDuration = $requestedDuration + $this->pricing->bonusDurationUnits($promotion);
+            [$plan, $startsAt, $endsAt] = $this->resolvePeriod(
+                $data,
+                $actor,
+                $locked->branch,
+                $effectiveDuration,
+            );
 
             $locked->update([
-                'customer_id' => $data['customer_id'],
+                'customer_id' => $customer->id,
                 'rate_plan_id' => $plan->id,
+                'promotion_id' => $promotion?->id,
                 'source' => $data['source'],
                 'starts_at' => $startsAt,
                 'ends_at' => $endsAt,
@@ -158,9 +199,10 @@ class BookingManager
             ]);
             $locked->reservations()->delete();
             $locked->items()->delete();
-            $this->replaceItems($locked, $data, $plan);
+            $this->replaceItems($locked, $data, $plan, $customer, $promotion, $requestedDuration);
+            $this->assertExistingPaymentsFitPricing($locked);
 
-            return $locked->fresh(['items', 'reservations']);
+            return $locked->fresh(['items', 'reservations', 'promotion']);
         }, 3);
     }
 
@@ -269,9 +311,15 @@ class BookingManager
     }
 
     /** @param array<string, mixed> $data */
-    private function replaceItems(Booking $booking, array $data, RatePlan $plan): void
-    {
-        $units = (int) $data['duration_units'];
+    private function replaceItems(
+        Booking $booking,
+        array $data,
+        RatePlan $plan,
+        Customer $customer,
+        ?Promotion $promotion,
+        int $requestedDuration,
+    ): void {
+        $units = $requestedDuration;
         $subtotal = 0.0;
         $deposit = 0.0;
 
@@ -295,12 +343,22 @@ class BookingManager
             $deposit += $depositRate * (int) $payload['quantity'];
         }
 
+        $pricing = $this->pricing->price(
+            $subtotal,
+            $requestedDuration,
+            $customer,
+            $plan,
+            $promotion,
+        );
+
         $booking->update([
-            'subtotal' => $subtotal,
-            'discount_amount' => 0,
+            'promotion_id' => $promotion?->id,
+            'subtotal' => $pricing['subtotal'],
+            'discount_amount' => $pricing['discount_amount'],
             'tax_amount' => 0,
-            'total_amount' => $subtotal,
+            'total_amount' => $pricing['total_amount'],
             'deposit_required' => $deposit,
+            'pricing_snapshot' => $pricing['snapshot'],
         ]);
     }
 
@@ -429,8 +487,12 @@ class BookingManager
      * @param  array<string, mixed>  $data
      * @return array{RatePlan, CarbonImmutable, CarbonImmutable}
      */
-    private function resolvePeriod(array $data, User $actor, Branch $branch): array
-    {
+    private function resolvePeriod(
+        array $data,
+        User $actor,
+        Branch $branch,
+        ?int $durationUnits = null,
+    ): array {
         $plan = RatePlan::query()
             ->where('company_id', $actor->company_id)
             ->where('is_active', true)
@@ -444,7 +506,11 @@ class BookingManager
         return [
             $plan,
             $startsAt,
-            $this->calculateEndsAt($startsAt, $plan, (int) $data['duration_units']),
+            $this->calculateEndsAt(
+                $startsAt,
+                $plan,
+                $durationUnits ?? (int) $data['duration_units'],
+            ),
         ];
     }
 
@@ -461,6 +527,32 @@ class BookingManager
         };
 
         return $startsAt->addMinutes($plan->duration_value * $durationUnits * $unitMinutes);
+    }
+
+    private function assertExistingPaymentsFitPricing(Booking $booking): void
+    {
+        $rentalPaid = (float) $booking->payments()
+            ->where('status', 'completed')
+            ->where('direction', 'in')
+            ->where('type', 'rental')
+            ->sum('amount');
+        $depositPaid = (float) $booking->payments()
+            ->where('status', 'completed')
+            ->where('direction', 'in')
+            ->where('type', 'deposit')
+            ->sum('amount');
+
+        if ($rentalPaid > (float) $booking->total_amount + 0.009) {
+            throw ValidationException::withMessages([
+                'promotion_code' => 'Perubahan harga membuat pembayaran sewa yang sudah masuk melebihi total booking.',
+            ]);
+        }
+
+        if ($depositPaid > (float) $booking->deposit_required + 0.009) {
+            throw ValidationException::withMessages([
+                'promotion_code' => 'Perubahan harga membuat deposit yang sudah masuk melebihi deposit wajib.',
+            ]);
+        }
     }
 
     private function history(Booking $booking, ?string $from, string $to, ?string $reason, User $actor): void

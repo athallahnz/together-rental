@@ -23,6 +23,7 @@ class RentalReturnManager
         private readonly RentalNumberGenerator $numbers,
         private readonly RentalOperationalCorrectionManager $corrections,
         private readonly PaymentManager $payments,
+        private readonly RentalCollateralManager $collaterals,
     ) {}
 
     /** @param array<string, mixed> $data */
@@ -153,6 +154,24 @@ class RentalReturnManager
                         number_format($balanceAfterReturn, 0, ',', '.'),
                     ),
                 ]);
+            }
+
+            if ($correction === null) {
+                $rawCollateralIds = $data['returned_collateral_ids'] ?? [];
+                /** @var list<int> $collateralIds */
+                $collateralIds = [];
+                if (is_array($rawCollateralIds)) {
+                    foreach ($rawCollateralIds as $id) {
+                        $collateralIds[] = (int) $id;
+                    }
+                }
+                $this->collaterals->returnSelectedLocked(
+                    $locked,
+                    $collateralIds,
+                    $actor,
+                    $returnedAt,
+                    $isFinalReturn,
+                );
             }
 
             $return = RentalReturn::query()->create([
@@ -518,8 +537,15 @@ class RentalReturnManager
             ->exists();
         $from = $rental->status;
         $to = $remaining ? 'partial_return' : 'returned';
+        $nextDueAt = $remaining
+            ? RentalItem::query()
+                ->where('rental_id', $rental->id)
+                ->whereHas('assets', fn ($query) => $query->where('status', 'out'))
+                ->min('due_at')
+            : null;
         $rental->update([
             'status' => $to,
+            'due_at' => $nextDueAt ?? $rental->due_at,
             'returned_at' => $remaining ? null : $return->returned_at,
         ]);
         $rental->statusHistories()->create([

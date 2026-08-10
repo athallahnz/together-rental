@@ -12,6 +12,11 @@ class RentalNumberGenerator
         return $this->next('rentals', 'rental_number', 'RNT', $branch);
     }
 
+    public function nextExtension(Branch $branch): string
+    {
+        return $this->next('rental_extensions', 'extension_number', 'EXT', $branch);
+    }
+
     public function nextPayment(Branch $branch): string
     {
         return $this->next('payments', 'payment_number', 'PAY', $branch);

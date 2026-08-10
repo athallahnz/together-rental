@@ -11,6 +11,7 @@ use App\Models\FinancialCategory;
 use App\Models\Payment;
 use App\Models\PaymentMethod;
 use App\Models\Rental;
+use App\Models\RentalExtension;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -78,6 +79,7 @@ class PaymentManager
                 'booking',
                 'rental_checkout',
                 'rental_return',
+                'rental_extension',
                 'transfer_expense',
             ], true)) {
                 throw ValidationException::withMessages([
@@ -90,6 +92,7 @@ class PaymentManager
                 'customer_id' => $data['customer_id'] ?? null,
                 'booking_id' => $data['booking_id'] ?? null,
                 'rental_id' => $data['rental_id'] ?? null,
+                'rental_extension_id' => $data['rental_extension_id'] ?? null,
                 'payment_method_id' => $method->id,
                 'financial_category_id' => $categoryId,
                 'cash_session_id' => $cashSession?->id,
@@ -233,6 +236,22 @@ class PaymentManager
             ])->save();
 
             return;
+        }
+
+        if ($payment->source_context === 'rental_extension') {
+            $extension = $payment->rental_extension_id === null
+                ? null
+                : RentalExtension::query()->lockForUpdate()->find($payment->rental_extension_id);
+
+            if ($extension === null) {
+                throw ValidationException::withMessages([
+                    'payment' => 'Perpanjangan sumber payment tidak ditemukan.',
+                ]);
+            }
+
+            $extension->forceFill([
+                'paid_amount' => max(0, (float) $extension->paid_amount - (float) $payment->amount),
+            ])->save();
         }
 
         $booking = $payment->booking_id === null

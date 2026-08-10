@@ -119,6 +119,33 @@ class RentalCheckoutTest extends TestCase
         ]);
     }
 
+    public function test_direct_rental_copies_member_pricing_snapshot_from_internal_booking(): void
+    {
+        [$user, $branch, $customer, $plan, $product] = $this->fixture();
+        $customer->update([
+            'is_member' => true,
+            'member_number' => 'MBR-DIRECT',
+            'member_since' => now()->subMonth()->toDateString(),
+        ]);
+
+        $this->actingAs($user)->post(route('rentals.direct.store'), [
+            ...$this->bookingPayload($branch, $customer, $plan, $product),
+            'checked_out_at' => now()->format('Y-m-d H:i:s'),
+            'checkout_condition' => 'good',
+            'payment_amount' => 0,
+            'deposit_paid' => 0,
+        ])->assertSessionHasNoErrors();
+
+        $booking = Booking::query()->firstOrFail();
+        $rental = Rental::query()->firstOrFail();
+        $this->assertSame('150000.00', $booking->subtotal);
+        $this->assertSame('15000.00', $booking->discount_amount);
+        $this->assertSame('135000.00', $booking->total_amount);
+        $this->assertSame('135000.00', $rental->total_amount);
+        $this->assertSame($booking->pricing_snapshot, $rental->pricing_snapshot);
+        $this->assertSame('membership', $rental->pricing_snapshot['discount_strategy']);
+    }
+
     public function test_booking_payments_are_carried_into_rental_balance(): void
     {
         [$user, $branch, $customer, $plan, $product] = $this->fixture();

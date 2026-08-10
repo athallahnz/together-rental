@@ -23,6 +23,7 @@ import {
     SlidersHorizontal,
     FileSpreadsheet,
     BellRing,
+    BadgePercent,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { BranchSwitcher } from '@/components/branch-switcher';
@@ -78,7 +79,7 @@ export function AppSidebar() {
                 ...(auth.permissions['rentals.view']
                     ? [
                           {
-                              title: 'Rental',
+                              title: 'Rental Control Center',
                               href: '/rentals',
                               icon: ShoppingBag,
                           },
@@ -87,7 +88,7 @@ export function AppSidebar() {
                 ...(auth.permissions['rentals.create']
                     ? [
                           {
-                              title: 'Rental Langsung',
+                              title: 'Rental In Store',
                               href: '/rentals/direct/create',
                               icon: ShoppingBag,
                           },
@@ -163,6 +164,11 @@ export function AppSidebar() {
                               title: 'Katalog & Harga',
                               href: '/catalog',
                               icon: PackageSearch,
+                          },
+                          {
+                              title: 'Promosi & Diskon',
+                              href: '/catalog/promotions',
+                              icon: BadgePercent,
                           },
                       ]
                     : []),

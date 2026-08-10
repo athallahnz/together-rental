@@ -1,6 +1,19 @@
-import { Camera } from 'lucide-react';
-import type { SVGAttributes } from 'react';
+import type { ComponentProps } from 'react';
 
-export default function AppLogoIcon(props: SVGAttributes<SVGElement>) {
-    return <Camera {...props} fill="none" />;
+type AppLogoIconProps = Omit<ComponentProps<'img'>, 'src'>;
+
+export default function AppLogoIcon({
+    alt = 'Together Kamera',
+    className = '',
+    ...props
+}: AppLogoIconProps) {
+    return (
+        <img
+            src="/primary-logos.png"
+            alt={alt}
+            className={`object-contain ${className}`}
+            draggable={false}
+            {...props}
+        />
+    );
 }

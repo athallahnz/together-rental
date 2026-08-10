@@ -6,7 +6,11 @@ export type RefundStatus =
     'requested' | 'approved' | 'rejected' | 'paid' | 'cancelled';
 
 export type PaymentSourceContext =
-    'booking' | 'rental_checkout' | 'rental_return' | 'transfer_expense';
+    | 'booking'
+    | 'rental_checkout'
+    | 'rental_return'
+    | 'rental_extension'
+    | 'transfer_expense';
 
 export type FinanceBranch = {
     id: number;
@@ -64,6 +68,13 @@ export type PaymentCenterPayment = {
         status: string;
         total_amount?: string;
         balance_due?: string;
+    } | null;
+    rental_extension: {
+        id: number;
+        rental_id: number;
+        extension_number: string;
+        status: string;
+        extended_due_at: string;
     } | null;
     payment_method: FinancePaymentMethod;
     transfer_expense: {

@@ -62,6 +62,7 @@ class PaymentVoidEligibility
             'booking',
             'rental_checkout',
             'rental_return',
+            'rental_extension',
             'transfer_expense',
         ], true)) {
             return $this->blocked(

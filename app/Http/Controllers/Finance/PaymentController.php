@@ -37,6 +37,7 @@ class PaymentController extends Controller
                 'booking',
                 'rental_checkout',
                 'rental_return',
+                'rental_extension',
                 'transfer_expense',
             ])],
         ]);
@@ -115,6 +116,7 @@ class PaymentController extends Controller
                 'customer:id,customer_number,name,phone',
                 'booking:id,booking_number,status',
                 'rental:id,rental_number,status',
+                'rentalExtension:id,rental_id,extension_number,status,extended_due_at',
                 'paymentMethod:id,code,name,type',
                 'transferExpense:id,branch_transfer_id,payment_id,status',
                 'transferExpense.transfer:id,transfer_number,status',
@@ -177,6 +179,7 @@ class PaymentController extends Controller
             'customer:id,customer_number,name,phone,email',
             'booking:id,booking_number,status,total_amount',
             'rental:id,rental_number,status,total_amount,balance_due',
+            'rentalExtension:id,rental_id,extension_number,status,extended_due_at',
             'paymentMethod:id,code,name,type,requires_reference',
             'financialCategory:id,code,name,type',
             'cashSession:id,cash_register_id,status,opened_at,closed_at',

@@ -46,6 +46,7 @@ const sourceLabels: Record<string, string> = {
     booking: 'Booking',
     rental_checkout: 'Checkout Rental',
     rental_return: 'Pengembalian',
+    rental_extension: 'Perpanjangan Rental',
     transfer_expense: 'Biaya Transfer',
 };
 const typeLabels: Record<string, string> = {
@@ -454,6 +455,12 @@ function signedAmount(payment: PaymentCenterPayment): number {
 }
 
 function sourceReference(payment: PaymentCenterPayment): { label: string } {
+    if (payment.rental_extension && payment.rental) {
+        return {
+            label: payment.rental_extension.extension_number,
+        };
+    }
+
     if (payment.rental) {
         return { label: payment.rental.rental_number };
     }

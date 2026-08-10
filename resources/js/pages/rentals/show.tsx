@@ -2,6 +2,8 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import {
     ArrowLeft,
     AlertTriangle,
+    CalendarPlus,
+    FileText,
     PackageCheck,
     RotateCcw,
     ShieldCheck,
@@ -23,11 +25,52 @@ type Rental = {
     due_at: string;
     is_overdue: boolean;
     subtotal: string;
+    discount_amount: string;
     total_amount: string;
+    promotion?: { code: string; name: string; type: string } | null;
     paid_amount: string;
     deposit_amount: string;
     balance_due: string;
     notes: string | null;
+    extensions: Array<{
+        id: number;
+        extension_number: string;
+        previous_due_at: string;
+        extended_due_at: string;
+        status: string;
+        discount_amount: string;
+        total_amount: string;
+        paid_amount: string;
+        promotion?: { code: string; name: string; type: string } | null;
+        notes: string | null;
+        approved_at: string;
+        creator?: { name: string } | null;
+        approver?: { name: string } | null;
+        items: Array<{
+            id: number;
+            quantity: number;
+            previous_due_at: string;
+            extended_due_at: string;
+            total_amount: string;
+            rental_item: {
+                description: string;
+                product?: { name: string } | null;
+            };
+        }>;
+    }>;
+    collaterals: Array<{
+        id: number;
+        type: string;
+        number: string;
+        holder_name: string | null;
+        status: 'held' | 'returned' | string;
+        received_at: string | null;
+        returned_at: string | null;
+        document_path: string | null;
+        notes: string | null;
+        receiver?: { name: string } | null;
+        returner?: { name: string } | null;
+    }>;
     returns: Array<{
         id: number;
         return_number: string;
@@ -37,7 +80,13 @@ type Rental = {
         total_charge_amount: string;
     }>;
     branch: { name: string };
-    customer: { name: string; customer_number: string; phone: string | null };
+    customer: {
+        name: string;
+        customer_number: string;
+        phone: string | null;
+        is_member?: boolean;
+        member_number?: string | null;
+    };
     booking?: { booking_number: string; source: string } | null;
     rate_plan?: { name: string } | null;
     items: Array<{
@@ -92,6 +141,8 @@ type Rental = {
 type Props = {
     rental: Rental;
     permissions: {
+        update: boolean;
+        extend: boolean;
         return: boolean;
         correctCompleted: boolean;
         reopenReturn: boolean;
@@ -127,6 +178,36 @@ export default function RentalShow({ rental, permissions }: Props) {
                 ?.id.toString() ?? '',
         reason: '',
     });
+    const collateral = useForm<{
+        type: string;
+        number: string;
+        holder_name: string;
+        notes: string;
+        document: File | null;
+    }>({
+        type: 'KTP',
+        number: '',
+        holder_name: rental.customer.name,
+        notes: '',
+        document: null,
+    });
+    const collateralReturn = useForm<{ returned_at: string }>({
+        returned_at: '',
+    });
+    const submitCollateral = (event: FormEvent) => {
+        event.preventDefault();
+        collateral.post(`/rentals/${rental.id}/collaterals`, {
+            preserveScroll: true,
+            forceFormData: true,
+            onSuccess: () => collateral.reset('number', 'notes', 'document'),
+        });
+    };
+    const returnCollateral = (collateralId: number) => {
+        collateralReturn.post(
+            `/rentals/${rental.id}/collaterals/${collateralId}/return`,
+            { preserveScroll: true },
+        );
+    };
     const submitCorrection = (event: FormEvent) => {
         event.preventDefault();
         correction.post(`/rentals/${rental.id}/financial-corrections`, {
@@ -159,19 +240,36 @@ export default function RentalShow({ rental, permissions }: Props) {
                             </h1>
                             <Badge>{rental.status}</Badge>
                         </div>
-                        {permissions.return &&
-                            [
-                                'active',
-                                'partial_return',
-                                'correction_pending',
-                            ].includes(rental.status) && (
-                                <Button asChild>
-                                    <Link href={`/rentals/${rental.id}/return`}>
-                                        <PackageCheck />
-                                        Proses pengembalian
-                                    </Link>
-                                </Button>
-                            )}
+                        <div className="flex flex-wrap gap-2">
+                            {permissions.extend &&
+                                ['active', 'partial_return'].includes(
+                                    rental.status,
+                                ) && (
+                                    <Button variant="outline" asChild>
+                                        <Link
+                                            href={`/rentals/${rental.id}/extend`}
+                                        >
+                                            <CalendarPlus />
+                                            Perpanjang
+                                        </Link>
+                                    </Button>
+                                )}
+                            {permissions.return &&
+                                [
+                                    'active',
+                                    'partial_return',
+                                    'correction_pending',
+                                ].includes(rental.status) && (
+                                    <Button asChild>
+                                        <Link
+                                            href={`/rentals/${rental.id}/return`}
+                                        >
+                                            <PackageCheck />
+                                            Proses pengembalian
+                                        </Link>
+                                    </Button>
+                                )}
+                        </div>
                     </div>
                     <p className="mt-1 text-sm text-muted-foreground">
                         {rental.customer.name} · {rental.branch.name}
@@ -220,7 +318,7 @@ export default function RentalShow({ rental, permissions }: Props) {
                         <CardContent className="space-y-2 text-sm">
                             <p>
                                 {rental.booking?.source === 'direct'
-                                    ? 'Rental langsung'
+                                    ? 'Rental In Store'
                                     : 'Checkout booking'}
                             </p>
                             <p>{rental.booking?.booking_number}</p>
@@ -241,6 +339,23 @@ export default function RentalShow({ rental, permissions }: Props) {
                                     {money.format(Number(rental.total_amount))}
                                 </b>
                             </p>
+                            {Number(rental.discount_amount) > 0 && (
+                                <p className="flex justify-between text-emerald-600">
+                                    <span>Diskon akumulatif</span>
+                                    <b>
+                                        -
+                                        {money.format(
+                                            Number(rental.discount_amount),
+                                        )}
+                                    </b>
+                                </p>
+                            )}
+                            {rental.promotion && (
+                                <p className="flex justify-between text-muted-foreground">
+                                    <span>Promo awal</span>
+                                    <b>{rental.promotion.code}</b>
+                                </p>
+                            )}
                             <p className="flex justify-between">
                                 <span>Dibayar</span>
                                 <b>
@@ -314,6 +429,316 @@ export default function RentalShow({ rental, permissions }: Props) {
                         ))}
                     </CardContent>
                 </Card>
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Jaminan fisik / dokumen</CardTitle>
+                    </CardHeader>
+                    <CardContent className="space-y-4">
+                        {rental.collaterals.length === 0 ? (
+                            <p className="text-sm text-muted-foreground">
+                                Tidak ada jaminan fisik yang tercatat pada
+                                rental ini. Deposit uang tetap berada pada
+                                ledger pembayaran dan tidak ditampilkan di sini.
+                            </p>
+                        ) : (
+                            <div className="space-y-3">
+                                {rental.collaterals.map((item) => (
+                                    <div
+                                        key={item.id}
+                                        className="flex flex-col justify-between gap-3 rounded-lg border p-4 md:flex-row"
+                                    >
+                                        <div>
+                                            <div className="flex flex-wrap items-center gap-2">
+                                                <p className="font-medium">
+                                                    {item.type} · {item.number}
+                                                </p>
+                                                <Badge
+                                                    variant={
+                                                        item.status === 'held'
+                                                            ? 'default'
+                                                            : 'outline'
+                                                    }
+                                                >
+                                                    {item.status === 'held'
+                                                        ? 'Ditahan'
+                                                        : 'Dikembalikan'}
+                                                </Badge>
+                                            </div>
+                                            <p className="mt-1 text-sm text-muted-foreground">
+                                                Atas nama{' '}
+                                                {item.holder_name ??
+                                                    rental.customer.name}
+                                            </p>
+                                            <p className="mt-1 text-xs text-muted-foreground">
+                                                Diterima{' '}
+                                                {item.received_at
+                                                    ? new Date(
+                                                          item.received_at,
+                                                      ).toLocaleString('id-ID')
+                                                    : '-'}
+                                                {item.receiver?.name
+                                                    ? ` · ${item.receiver.name}`
+                                                    : ''}
+                                                {item.returned_at
+                                                    ? ` · Dikembalikan ${new Date(
+                                                          item.returned_at,
+                                                      ).toLocaleString(
+                                                          'id-ID',
+                                                      )}`
+                                                    : ''}
+                                                {item.returner?.name
+                                                    ? ` oleh ${item.returner.name}`
+                                                    : ''}
+                                            </p>
+                                            {item.notes && (
+                                                <p className="mt-2 text-sm">
+                                                    {item.notes}
+                                                </p>
+                                            )}
+                                        </div>
+                                        <div className="flex flex-wrap items-center gap-2">
+                                            {item.document_path && (
+                                                <Button
+                                                    variant="outline"
+                                                    size="sm"
+                                                    asChild
+                                                >
+                                                    <a
+                                                        href={`/rentals/${rental.id}/collaterals/${item.id}/document`}
+                                                    >
+                                                        <FileText />
+                                                        Dokumen
+                                                    </a>
+                                                </Button>
+                                            )}
+                                            {permissions.return &&
+                                                item.status === 'held' && (
+                                                    <Button
+                                                        type="button"
+                                                        size="sm"
+                                                        onClick={() =>
+                                                            returnCollateral(
+                                                                item.id,
+                                                            )
+                                                        }
+                                                        disabled={
+                                                            collateralReturn.processing
+                                                        }
+                                                    >
+                                                        <ShieldCheck />
+                                                        Kembalikan jaminan
+                                                    </Button>
+                                                )}
+                                        </div>
+                                    </div>
+                                ))}
+                            </div>
+                        )}
+
+                        {permissions.update &&
+                            ['active', 'partial_return'].includes(
+                                rental.status,
+                            ) && (
+                                <form
+                                    className="grid gap-4 rounded-lg border border-dashed p-4 md:grid-cols-2 xl:grid-cols-4"
+                                    onSubmit={submitCollateral}
+                                >
+                                    <div>
+                                        <Label>Jenis</Label>
+                                        <Input
+                                            value={collateral.data.type}
+                                            onChange={(event) =>
+                                                collateral.setData(
+                                                    'type',
+                                                    event.target.value,
+                                                )
+                                            }
+                                            placeholder="KTP / SIM / kartu lain"
+                                        />
+                                        {collateral.errors.type && (
+                                            <p className="mt-1 text-sm text-destructive">
+                                                {collateral.errors.type}
+                                            </p>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <Label>Nomor</Label>
+                                        <Input
+                                            value={collateral.data.number}
+                                            onChange={(event) =>
+                                                collateral.setData(
+                                                    'number',
+                                                    event.target.value,
+                                                )
+                                            }
+                                            placeholder="Nomor identitas/barang"
+                                        />
+                                        {collateral.errors.number && (
+                                            <p className="mt-1 text-sm text-destructive">
+                                                {collateral.errors.number}
+                                            </p>
+                                        )}
+                                    </div>
+                                    <div>
+                                        <Label>Atas nama</Label>
+                                        <Input
+                                            value={collateral.data.holder_name}
+                                            onChange={(event) =>
+                                                collateral.setData(
+                                                    'holder_name',
+                                                    event.target.value,
+                                                )
+                                            }
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label>Dokumen/foto</Label>
+                                        <Input
+                                            type="file"
+                                            accept="image/jpeg,image/png,image/webp,application/pdf"
+                                            onChange={(event) =>
+                                                collateral.setData(
+                                                    'document',
+                                                    event.target.files?.[0] ??
+                                                        null,
+                                                )
+                                            }
+                                        />
+                                    </div>
+                                    <div className="md:col-span-2 xl:col-span-3">
+                                        <Label>Catatan</Label>
+                                        <Input
+                                            value={collateral.data.notes}
+                                            onChange={(event) =>
+                                                collateral.setData(
+                                                    'notes',
+                                                    event.target.value,
+                                                )
+                                            }
+                                            placeholder="Kondisi dan lokasi penyimpanan"
+                                        />
+                                    </div>
+                                    {(
+                                        collateral.errors as Record<
+                                            string,
+                                            string
+                                        >
+                                    ).collaterals && (
+                                        <p className="text-sm text-destructive md:col-span-2 xl:col-span-4">
+                                            {
+                                                (
+                                                    collateral.errors as Record<
+                                                        string,
+                                                        string
+                                                    >
+                                                ).collaterals
+                                            }
+                                        </p>
+                                    )}
+                                    <div className="flex items-end">
+                                        <Button
+                                            type="submit"
+                                            disabled={collateral.processing}
+                                        >
+                                            <ShieldCheck />
+                                            Terima jaminan
+                                        </Button>
+                                    </div>
+                                </form>
+                            )}
+                    </CardContent>
+                </Card>
+                {rental.extensions.length > 0 && (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Riwayat perpanjangan</CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-3">
+                            {rental.extensions.map((extension) => (
+                                <div
+                                    key={extension.id}
+                                    className="rounded-lg border p-4"
+                                >
+                                    <div className="flex flex-wrap items-start justify-between gap-3">
+                                        <div>
+                                            <p className="font-medium">
+                                                {extension.extension_number}
+                                            </p>
+                                            <p className="text-sm text-muted-foreground">
+                                                {new Date(
+                                                    extension.previous_due_at,
+                                                ).toLocaleString('id-ID')}
+                                                {' → '}
+                                                {new Date(
+                                                    extension.extended_due_at,
+                                                ).toLocaleString('id-ID')}
+                                            </p>
+                                        </div>
+                                        <div className="text-right">
+                                            <b>
+                                                {money.format(
+                                                    Number(
+                                                        extension.total_amount,
+                                                    ),
+                                                )}
+                                            </b>
+                                            {Number(extension.discount_amount) >
+                                                0 && (
+                                                <p className="text-xs text-emerald-600">
+                                                    Diskon{' '}
+                                                    {money.format(
+                                                        Number(
+                                                            extension.discount_amount,
+                                                        ),
+                                                    )}
+                                                    {extension.promotion
+                                                        ? ` · ${extension.promotion.code}`
+                                                        : ''}
+                                                </p>
+                                            )}
+                                            <p className="text-xs text-muted-foreground">
+                                                Dibayar{' '}
+                                                {money.format(
+                                                    Number(
+                                                        extension.paid_amount,
+                                                    ),
+                                                )}
+                                            </p>
+                                        </div>
+                                    </div>
+                                    <div className="mt-3 space-y-2">
+                                        {extension.items.map((item) => (
+                                            <div
+                                                key={item.id}
+                                                className="flex flex-wrap justify-between gap-2 rounded-md bg-muted p-3 text-sm"
+                                            >
+                                                <span>
+                                                    {
+                                                        item.rental_item
+                                                            .description
+                                                    }{' '}
+                                                    · {item.quantity} unit
+                                                </span>
+                                                <span>
+                                                    {new Date(
+                                                        item.extended_due_at,
+                                                    ).toLocaleString('id-ID')}
+                                                </span>
+                                            </div>
+                                        ))}
+                                    </div>
+                                    <p className="mt-3 text-xs text-muted-foreground">
+                                        Disetujui oleh{' '}
+                                        {extension.approver?.name ?? '-'}
+                                        {extension.notes
+                                            ? ` · ${extension.notes}`
+                                            : ''}
+                                    </p>
+                                </div>
+                            ))}
+                        </CardContent>
+                    </Card>
+                )}
                 {rental.returns.length > 0 && (
                     <Card>
                         <CardHeader>

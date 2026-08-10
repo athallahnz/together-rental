@@ -30,6 +30,7 @@ export type Booking = {
     branch_id: number;
     customer_id: number;
     rate_plan_id: number;
+    promotion_id?: number | null;
     booking_number: string;
     status: BookingStatus;
     source: string;
@@ -52,6 +53,9 @@ export type Booking = {
         phone: string | null;
         email?: string | null;
         risk_level?: string;
+        is_member?: boolean;
+        member_number?: string | null;
+        member_since?: string | null;
     };
     rate_plan?: {
         id: number;
@@ -60,6 +64,18 @@ export type Booking = {
         duration_unit: string;
         duration_value: number;
     };
+    promotion?: {
+        id: number;
+        code: string;
+        name: string;
+        type: 'percentage' | 'fixed' | 'bonus_duration';
+        value: string;
+        maximum_discount: string | null;
+        minimum_transaction: string;
+        bonus_duration: number;
+        rules?: Record<string, unknown> | null;
+    } | null;
+    pricing_snapshot?: Record<string, unknown> | null;
     items: BookingItem[];
     items_count?: number;
     reservations_count?: number;

@@ -4,6 +4,8 @@ import { ArrowLeft, Plus, Save, Trash2 } from 'lucide-react';
 import { SearchPickerDialog } from '@/components/bookings/search-picker-dialog';
 import type { BookingSearchOption } from '@/components/bookings/search-picker-dialog';
 import { CashSessionSelect } from '@/components/finance/cash-session-select';
+import { CollateralFields } from '@/components/rentals/collateral-fields';
+import type { CollateralInput } from '@/components/rentals/collateral-fields';
 import type {
     CashSessionOption,
     PaymentMethodOption,
@@ -42,6 +44,7 @@ type FormData = {
     source: string;
     starts_at: string;
     duration_units: number;
+    promotion_code: string;
     notes: string;
     items: Line[];
     checked_out_at: string;
@@ -52,6 +55,7 @@ type FormData = {
     payment_method_id: number;
     cash_session_id: number | null;
     payment_reference: string;
+    collaterals: CollateralInput[];
 };
 
 const localDate = (value?: string) =>
@@ -147,6 +151,7 @@ export default function BookingForm({
         source: booking?.source ?? 'counter',
         starts_at: localDate(booking?.starts_at),
         duration_units: initialDurationUnits(booking, ratePlans),
+        promotion_code: booking?.promotion?.code ?? '',
         notes: booking?.notes ?? '',
         items: booking?.items?.map((item) => ({
             type: item.product_id ? 'product' : 'package',
@@ -163,6 +168,7 @@ export default function BookingForm({
         payment_method_id: 0,
         cash_session_id: null,
         payment_reference: '',
+        collaterals: [],
     });
     const updateLine = (index: number, patch: Partial<Line>) =>
         form.setData(
@@ -221,7 +227,7 @@ export default function BookingForm({
         event.preventDefault();
 
         if (direct) {
-            form.post('/rentals/direct');
+            form.post('/rentals/direct', { forceFormData: true });
         } else if (booking) {
             form.put(`/bookings/${booking.id}`);
         } else {
@@ -234,7 +240,7 @@ export default function BookingForm({
             <Head
                 title={
                     direct
-                        ? 'Rental langsung'
+                        ? 'Rental In Store'
                         : booking
                           ? `Edit ${booking.booking_number}`
                           : 'Booking baru'
@@ -262,7 +268,7 @@ export default function BookingForm({
                         </Button>
                         <h1 className="mt-3 text-2xl font-semibold">
                             {direct
-                                ? 'Rental langsung'
+                                ? 'Rental In Store'
                                 : booking
                                   ? 'Edit booking draft'
                                   : 'Booking baru'}
@@ -318,6 +324,26 @@ export default function BookingForm({
                                     form.setData('customer_id', option.id);
                                 }}
                             />
+                        </Field>
+                        <Field
+                            label="Kode promo"
+                            error={form.errors.promotion_code}
+                        >
+                            <Input
+                                value={form.data.promotion_code}
+                                onChange={(event) =>
+                                    form.setData(
+                                        'promotion_code',
+                                        event.target.value.toUpperCase(),
+                                    )
+                                }
+                                placeholder="Opsional, contoh: MEMBERDAY"
+                            />
+                            <p className="text-xs text-muted-foreground">
+                                {selectedCustomer?.is_member
+                                    ? 'Member aktif: diskon 10% otomatis. Promo diskon memakai nilai terbaik kecuali promo mengizinkan stacking.'
+                                    : 'Promo divalidasi server berdasarkan cabang, periode, minimum transaksi, dan kuota.'}
+                            </p>
                         </Field>
                         <Field
                             label="Rate plan"
@@ -392,7 +418,8 @@ export default function BookingForm({
                             />
                             <p className="text-xs text-muted-foreground">
                                 Dihitung otomatis dari rate plan dan jumlah
-                                durasi.
+                                durasi. Promo bonus durasi akan ditambahkan
+                                server setelah kode promo tervalidasi.
                             </p>
                         </Field>
                         <Field label="Sumber" error={form.errors.source}>
@@ -700,6 +727,27 @@ export default function BookingForm({
                         )}
                     </CardContent>
                 </Card>
+                {direct && (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>Jaminan fisik / dokumen</CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <CollateralFields
+                                value={form.data.collaterals}
+                                onChange={(collaterals) =>
+                                    form.setData('collaterals', collaterals)
+                                }
+                                errors={form.errors as Record<string, string>}
+                            />
+                            {form.errors.collaterals && (
+                                <p className="mt-2 text-sm text-destructive">
+                                    {form.errors.collaterals}
+                                </p>
+                            )}
+                        </CardContent>
+                    </Card>
+                )}
                 <Card>
                     <CardHeader>
                         <CardTitle>Catatan</CardTitle>

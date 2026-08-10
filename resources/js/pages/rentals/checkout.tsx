@@ -1,6 +1,8 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import { AlertTriangle, ArrowLeft, LogOut } from 'lucide-react';
 import { CashSessionSelect } from '@/components/finance/cash-session-select';
+import { CollateralFields } from '@/components/rentals/collateral-fields';
+import type { CollateralInput } from '@/components/rentals/collateral-fields';
 import type {
     CashSessionOption,
     PaymentMethodOption,
@@ -78,6 +80,7 @@ export default function RentalCheckout({
         cash_session_id: null as number | null,
         payment_reference: '',
         payment_notes: '',
+        collaterals: [] as CollateralInput[],
     });
     const updateAsset = (index: number, patch: Partial<AssetInput>) =>
         form.setData(
@@ -100,7 +103,9 @@ export default function RentalCheckout({
                 className="flex flex-1 flex-col gap-6 p-4 md:p-6"
                 onSubmit={(event) => {
                     event.preventDefault();
-                    form.post(`/rentals/checkout/${booking.id}`);
+                    form.post(`/rentals/checkout/${booking.id}`, {
+                        forceFormData: true,
+                    });
                 }}
             >
                 <header className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
@@ -359,6 +364,26 @@ export default function RentalCheckout({
                                 />
                             </div>
                         ))}
+                    </CardContent>
+                </Card>
+
+                <Card>
+                    <CardHeader>
+                        <CardTitle>Jaminan fisik / dokumen</CardTitle>
+                    </CardHeader>
+                    <CardContent>
+                        <CollateralFields
+                            value={form.data.collaterals}
+                            onChange={(collaterals) =>
+                                form.setData('collaterals', collaterals)
+                            }
+                            errors={form.errors as Record<string, string>}
+                        />
+                        {form.errors.collaterals && (
+                            <p className="mt-2 text-sm text-destructive">
+                                {form.errors.collaterals}
+                            </p>
+                        )}
                     </CardContent>
                 </Card>
 

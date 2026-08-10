@@ -106,10 +106,11 @@ class AssetScheduleService
         CarbonImmutable $endsAt,
         bool $public,
     ): array {
-        $extensions = DB::table('rental_extensions')
-            ->selectRaw('rental_id, MAX(extended_due_at) AS extended_due_at')
-            ->whereIn('status', ['approved', 'completed'])
-            ->groupBy('rental_id');
+        $extensions = DB::table('rental_extension_items')
+            ->join('rental_extensions', 'rental_extensions.id', '=', 'rental_extension_items.rental_extension_id')
+            ->selectRaw('rental_extension_items.rental_item_id, MAX(rental_extension_items.extended_due_at) AS extended_due_at')
+            ->whereIn('rental_extensions.status', ['approved', 'completed'])
+            ->groupBy('rental_extension_items.rental_item_id');
 
         return array_values(DB::table('rental_item_assets')
             ->join('rental_items', 'rental_items.id', '=', 'rental_item_assets.rental_item_id')
@@ -117,9 +118,9 @@ class AssetScheduleService
             ->leftJoinSub(
                 $extensions,
                 'rental_extensions_max',
-                'rental_extensions_max.rental_id',
+                'rental_extensions_max.rental_item_id',
                 '=',
-                'rentals.id',
+                'rental_items.id',
             )
             ->where('rental_item_assets.asset_id', $asset->id)
             ->whereNull('rentals.deleted_at')
@@ -144,6 +145,7 @@ class AssetScheduleService
                 'rentals.status as rental_status',
                 'rentals.checked_out_at',
                 'rentals.due_at',
+                'rental_items.due_at as item_due_at',
                 'rentals.returned_at',
                 'rental_extensions_max.extended_due_at',
             ])
@@ -155,7 +157,15 @@ class AssetScheduleService
                 }
 
                 $start = CarbonImmutable::parse((string) $startValue);
-                $due = CarbonImmutable::parse((string) ($row->extended_due_at ?? $row->due_at));
+                $effectiveDue = $row->item_due_at ?? $row->due_at;
+                if ($row->extended_due_at !== null) {
+                    $extensionDue = CarbonImmutable::parse((string) $row->extended_due_at);
+                    $itemDue = CarbonImmutable::parse((string) $effectiveDue);
+                    $effectiveDue = $extensionDue->isAfter($itemDue) ? $extensionDue : $itemDue;
+                }
+                $due = $effectiveDue instanceof CarbonImmutable
+                    ? $effectiveDue
+                    : CarbonImmutable::parse((string) $effectiveDue);
                 $returnedValue = $row->asset_returned_at ?? $row->returned_at;
                 $isOpen = $returnedValue === null
                     && in_array((string) $row->rental_status, [

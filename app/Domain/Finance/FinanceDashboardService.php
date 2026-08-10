@@ -431,6 +431,7 @@ class FinanceDashboardService
             'booking' => 'Booking',
             'rental_checkout' => 'Checkout Rental',
             'rental_return' => 'Pengembalian Rental',
+            'rental_extension' => 'Perpanjangan Rental',
             'transfer_expense' => 'Biaya Transfer Aset',
             'unknown' => 'Tanpa konteks',
         ];

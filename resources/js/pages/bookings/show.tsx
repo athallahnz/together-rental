@@ -183,6 +183,30 @@ export default function BookingShow({
                                 <span>Subtotal</span>
                                 <b>{money.format(Number(booking.subtotal))}</b>
                             </p>
+                            {Number(booking.discount_amount) > 0 && (
+                                <p className="flex justify-between text-emerald-600">
+                                    <span>Diskon</span>
+                                    <b>
+                                        -
+                                        {money.format(
+                                            Number(booking.discount_amount),
+                                        )}
+                                    </b>
+                                </p>
+                            )}
+                            {booking.promotion && (
+                                <p className="flex justify-between text-muted-foreground">
+                                    <span>Promo</span>
+                                    <b>{booking.promotion.code}</b>
+                                </p>
+                            )}
+                            {!booking.promotion &&
+                                booking.customer?.is_member && (
+                                    <p className="text-xs text-muted-foreground">
+                                        Member Together · diskon 10% flat
+                                        diterapkan.
+                                    </p>
+                                )}
                             <p className="flex justify-between">
                                 <span>Deposit wajib</span>
                                 <b>

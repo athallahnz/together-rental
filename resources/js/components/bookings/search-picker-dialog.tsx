@@ -24,6 +24,8 @@ export type BookingSearchOption = {
     sku?: string;
     customer_number?: string;
     phone?: string | null;
+    is_member?: boolean;
+    member_number?: string | null;
     branch_id?: number | null;
     brand?: string | null;
     model?: string | null;

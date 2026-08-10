@@ -201,7 +201,7 @@ export default function RentalIndex({
                     {permissions.create && (
                         <Button asChild>
                             <Link href="/rentals/direct/create">
-                                <Plus /> Rental langsung
+                                <Plus /> Rental In Store
                             </Link>
                         </Button>
                     )}
@@ -394,7 +394,7 @@ export default function RentalIndex({
                                     Semua sumber
                                 </SelectItem>
                                 <SelectItem value="direct">
-                                    Rental langsung
+                                    Rental In Store
                                 </SelectItem>
                                 <SelectItem value="booking">
                                     Checkout booking

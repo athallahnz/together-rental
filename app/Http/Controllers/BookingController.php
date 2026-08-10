@@ -141,7 +141,7 @@ class BookingController extends Controller
                     ->orWhere('phone', 'like', "%{$search}%"))
                 ->orderBy('name')
                 ->limit(15)
-                ->get(['id', 'customer_number', 'name', 'phone']);
+                ->get(['id', 'customer_number', 'name', 'phone', 'is_member', 'member_number']);
 
             return response()->json(['data' => $customers]);
         }
@@ -278,8 +278,9 @@ class BookingController extends Controller
         Gate::authorize('bookings.view');
         $this->guardAccess($request, $booking);
         $booking->load([
-            'branch:id,code,name', 'customer:id,customer_number,name,phone,email,risk_level',
+            'branch:id,code,name', 'customer:id,customer_number,name,phone,email,risk_level,is_member,member_number,member_since',
             'ratePlan:id,code,name,duration_unit,duration_value',
+            'promotion:id,code,name,type,value,maximum_discount,minimum_transaction,bonus_duration,rules',
             'handler:id,name', 'creator:id,name', 'canceller:id,name',
             'items.product:id,sku,name', 'items.package:id,code,name',
             'items.reservations.asset:id,asset_code,serial_number,status,condition',
@@ -406,6 +407,7 @@ class BookingController extends Controller
     {
         $user = $request->user();
         $branchIds = $user->accessibleBranches()->pluck('id');
+        $booking?->loadMissing('promotion');
         $productIds = $booking?->items->pluck('product_id')->filter()->values() ?? collect();
         $packageIds = $booking?->items->pluck('package_id')->filter()->values() ?? collect();
 
@@ -414,7 +416,7 @@ class BookingController extends Controller
             'branches' => $user->accessibleBranches()->orderBy('name')->get(['id', 'code', 'name']),
             'customers' => Customer::query()
                 ->whereKey($booking instanceof Booking ? $booking->customer_id : 0)
-                ->get(['id', 'customer_number', 'name', 'phone']),
+                ->get(['id', 'customer_number', 'name', 'phone', 'is_member', 'member_number']),
             'ratePlans' => RatePlan::query()->where('company_id', $user->company_id)->where('is_active', true)
                 ->where(fn (Builder $query) => $query->whereNull('branch_id')->orWhereIn('branch_id', $branchIds))
                 ->orderBy('name')->get(['id', 'branch_id', 'code', 'name', 'duration_unit', 'duration_value']),
@@ -473,6 +475,6 @@ class BookingController extends Controller
     /** @return array<string, mixed> */
     private function audit(Booking $booking): array
     {
-        return $booking->only(['id', 'booking_number', 'branch_id', 'customer_id', 'status', 'starts_at', 'ends_at', 'total_amount']);
+        return $booking->only(['id', 'booking_number', 'branch_id', 'customer_id', 'promotion_id', 'status', 'starts_at', 'ends_at', 'subtotal', 'discount_amount', 'total_amount']);
     }
 }

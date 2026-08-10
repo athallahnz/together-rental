@@ -28,6 +28,7 @@ use Illuminate\Database\Eloquent\SoftDeletes;
     'total_amount',
     'deposit_required',
     'deposit_paid',
+    'pricing_snapshot',
     'notes',
     'cancelled_at',
     'cancelled_by',
@@ -59,6 +60,12 @@ class Booking extends Model
     public function ratePlan(): BelongsTo
     {
         return $this->belongsTo(RatePlan::class);
+    }
+
+    /** @return BelongsTo<Promotion, $this> */
+    public function promotion(): BelongsTo
+    {
+        return $this->belongsTo(Promotion::class);
     }
 
     /** @return BelongsTo<Employee, $this> */
@@ -122,6 +129,7 @@ class Booking extends Model
             'total_amount' => 'decimal:2',
             'deposit_required' => 'decimal:2',
             'deposit_paid' => 'decimal:2',
+            'pricing_snapshot' => 'array',
         ];
     }
 }

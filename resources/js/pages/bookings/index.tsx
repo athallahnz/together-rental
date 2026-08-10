@@ -306,7 +306,7 @@ export default function BookingIndex({
                                 <SelectItem value="website">Website</SelectItem>
                                 <SelectItem value="other">Lainnya</SelectItem>
                                 <SelectItem value="direct">
-                                    Rental langsung
+                                    Rental In Store
                                 </SelectItem>
                             </SelectContent>
                         </Select>

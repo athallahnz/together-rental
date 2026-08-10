@@ -37,6 +37,7 @@ class SaveBookingRequest extends FormRequest
             'source' => ['required', Rule::in(['counter', 'phone', 'whatsapp', 'website', 'other'])],
             'starts_at' => ['required', 'date', 'after_or_equal:today'],
             'duration_units' => ['required', 'integer', 'min:1', 'max:365'],
+            'promotion_code' => ['nullable', 'string', 'max:40'],
             'notes' => ['nullable', 'string', 'max:3000'],
             'items' => ['required', 'array', 'min:1', 'max:30'],
             'items.*.type' => ['required', Rule::in(['product', 'package'])],
@@ -102,6 +103,9 @@ class SaveBookingRequest extends FormRequest
     {
         $this->merge([
             'source' => $this->input('source', 'counter'),
+            'promotion_code' => $this->filled('promotion_code')
+                ? mb_strtoupper(trim((string) $this->input('promotion_code')))
+                : null,
             'notes' => $this->filled('notes') ? trim((string) $this->input('notes')) : null,
             'payment_amount' => $this->input('payment_amount', 0),
             'deposit_paid' => $this->input('deposit_paid', 0),
