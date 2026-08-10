@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -75,6 +76,18 @@ class User extends Authenticatable implements PasskeyUser
     public function employee(): HasOne
     {
         return $this->hasOne(Employee::class);
+    }
+
+    /** @return HasOne<NotificationPreference, $this> */
+    public function notificationPreference(): HasOne
+    {
+        return $this->hasOne(NotificationPreference::class);
+    }
+
+    /** @return HasMany<NotificationMessage, $this> */
+    public function notificationMessages(): HasMany
+    {
+        return $this->hasMany(NotificationMessage::class);
     }
 
     public function hasPermission(string $permission): bool

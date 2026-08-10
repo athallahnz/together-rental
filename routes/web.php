@@ -12,6 +12,7 @@ use App\Http\Controllers\CustomerAddressController;
 use App\Http\Controllers\CustomerController;
 use App\Http\Controllers\CustomerIdentityController;
 use App\Http\Controllers\CustomerLoyaltyController;
+use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\EmployeeController;
 use App\Http\Controllers\Finance\CashRegisterController;
 use App\Http\Controllers\Finance\CashSessionController;
@@ -21,8 +22,11 @@ use App\Http\Controllers\Finance\FinancialCategoryController;
 use App\Http\Controllers\Finance\PaymentController;
 use App\Http\Controllers\Finance\PaymentMethodController;
 use App\Http\Controllers\Finance\RefundController;
+use App\Http\Controllers\IntegratedReportController;
+use App\Http\Controllers\InventoryAuditController;
 use App\Http\Controllers\LegacyImportController;
 use App\Http\Controllers\MaintenanceController;
+use App\Http\Controllers\NotificationCenterController;
 use App\Http\Controllers\OperationalDataResetController;
 use App\Http\Controllers\PackageItemController;
 use App\Http\Controllers\PackageRateController;
@@ -67,7 +71,7 @@ Route::prefix('rental')->name('public.catalog.')->group(function (): void {
 });
 
 Route::middleware(['auth', 'active', 'verified'])->group(function () {
-    Route::inertia('dashboard', 'dashboard')->name('dashboard');
+    Route::get('dashboard', DashboardController::class)->name('dashboard');
 
     Route::prefix('finance')->name('finance.')->group(function (): void {
         Route::get('/dashboard', FinanceDashboardController::class)
@@ -377,6 +381,54 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
             ->middleware('can:maintenance.manage')->name('cancel');
     });
 
+    Route::prefix('inventory-audits')->name('inventory-audits.')->group(function () {
+        Route::get('/', [InventoryAuditController::class, 'index'])
+            ->middleware('can:inventory-audits.view')->name('index');
+        Route::post('/', [InventoryAuditController::class, 'store'])
+            ->middleware('can:inventory-audits.create')->name('store');
+        Route::get('/media/{media}', [InventoryAuditController::class, 'media'])
+            ->middleware('can:inventory-audits.view')->name('media');
+        Route::get('/{inventoryAudit}', [InventoryAuditController::class, 'show'])
+            ->middleware('can:inventory-audits.view')->name('show');
+        Route::post('/{inventoryAudit}/start', [InventoryAuditController::class, 'start'])
+            ->middleware('can:inventory-audits.count')->name('start');
+        Route::post('/{inventoryAudit}/scan', [InventoryAuditController::class, 'scan'])
+            ->middleware('can:inventory-audits.count')->name('scan');
+        Route::post('/{inventoryAudit}/items/{item}/count', [InventoryAuditController::class, 'recordCount'])
+            ->middleware('can:inventory-audits.count')->name('items.count');
+        Route::post('/{inventoryAudit}/submit', [InventoryAuditController::class, 'submit'])
+            ->middleware('can:inventory-audits.count')->name('submit');
+        Route::post('/{inventoryAudit}/approve', [InventoryAuditController::class, 'approve'])
+            ->middleware('can:inventory-audits.approve')->name('approve');
+        Route::post('/{inventoryAudit}/items/{item}/resolve', [InventoryAuditController::class, 'resolve'])
+            ->middleware('can:inventory-audits.resolve')->name('items.resolve');
+        Route::post('/{inventoryAudit}/close', [InventoryAuditController::class, 'close'])
+            ->middleware('can:inventory-audits.resolve')->name('close');
+        Route::post('/{inventoryAudit}/cancel', [InventoryAuditController::class, 'cancel'])
+            ->middleware('can:inventory-audits.cancel')->name('cancel');
+    });
+
+    Route::prefix('notifications')->name('notifications.')->group(function () {
+        Route::get('/', [NotificationCenterController::class, 'index'])
+            ->middleware('can:notifications.view')->name('index');
+        Route::post('/generate', [NotificationCenterController::class, 'generate'])
+            ->middleware(['can:notifications.manage', 'throttle:6,1'])->name('generate');
+        Route::post('/mark-all-read', [NotificationCenterController::class, 'markAllRead'])
+            ->middleware('can:notifications.view')->name('mark-all-read');
+        Route::put('/preferences', [NotificationCenterController::class, 'updatePreferences'])
+            ->middleware('can:notifications.view')->name('preferences.update');
+        Route::put('/rules/{notificationRule}', [NotificationCenterController::class, 'updateRule'])
+            ->middleware('can:notifications.manage')->name('rules.update');
+        Route::patch('/{notification}/read', [NotificationCenterController::class, 'markRead'])
+            ->middleware('can:notifications.view')->name('read');
+        Route::patch('/{notification}/unread', [NotificationCenterController::class, 'markUnread'])
+            ->middleware('can:notifications.view')->name('unread');
+        Route::post('/{notification}/snooze', [NotificationCenterController::class, 'snooze'])
+            ->middleware('can:notifications.view')->name('snooze');
+        Route::delete('/{notification}', [NotificationCenterController::class, 'dismiss'])
+            ->middleware('can:notifications.view')->name('dismiss');
+    });
+
     Route::prefix('customer-identities')->name('customer-identities.')->group(function () {
         Route::put('/{customerIdentity}', [CustomerIdentityController::class, 'update'])
             ->middleware('can:customers.update')
@@ -477,6 +529,12 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
     });
 
     Route::prefix('reports')->name('reports.')->group(function () {
+        Route::get('/', [IntegratedReportController::class, 'index'])
+            ->middleware('can:reports.view')
+            ->name('index');
+        Route::get('/export', [IntegratedReportController::class, 'export'])
+            ->middleware('can:reports.export')
+            ->name('export');
         Route::get('/asset-analytics', [AssetAnalyticsController::class, 'index'])
             ->middleware('can:reports.view')
             ->name('asset-analytics.index');

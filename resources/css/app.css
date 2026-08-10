@@ -138,6 +138,69 @@
     }
 
     body {
-        @apply bg-background text-foreground;
+        @apply bg-background text-foreground antialiased;
+        font-feature-settings: 'cv02', 'cv03', 'cv04', 'cv11';
+    }
+
+    ::selection {
+        @apply bg-primary/15 text-foreground;
+    }
+
+    :focus-visible {
+        scroll-margin-block: 5rem;
+    }
+}
+
+@layer utilities {
+    .scrollbar-subtle {
+        scrollbar-color: color-mix(
+                in oklab,
+                var(--muted-foreground) 35%,
+                transparent
+            )
+            transparent;
+        scrollbar-width: thin;
+    }
+}
+
+@keyframes app-page-enter {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.app-page-enter {
+    animation: app-page-enter 240ms cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+[data-slot='metric-grid'] > * {
+    min-width: 0;
+}
+
+[data-slot='filter-grid'] > *,
+[data-slot='filter-field'] [data-slot='select-trigger'] {
+    width: 100%;
+    min-width: 0;
+}
+
+[data-slot='filter-bar'] [data-slot='input'],
+[data-slot='filter-bar'] [data-slot='select-trigger'] {
+    height: 2.5rem;
+    background-color: var(--background);
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .app-page-enter {
+        animation: none;
+    }
+
+    [data-slot='metric-card'] {
+        transition: none;
     }
 }

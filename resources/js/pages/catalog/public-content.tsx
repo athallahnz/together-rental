@@ -34,6 +34,8 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { FilterBar } from '@/components/ui/filter-bar';
+import { MetricCard } from '@/components/ui/metric-card';
 import {
     Select,
     SelectContent,
@@ -223,53 +225,49 @@ export default function PublicCatalogContent({
                     />
                 </section>
 
-                <Card>
-                    <CardContent className="grid gap-3 p-4 lg:grid-cols-[minmax(0,1fr)_220px_auto]">
-                        <div className="relative">
-                            <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-                            <Input
-                                value={search}
-                                onChange={(event) =>
-                                    setSearch(event.target.value)
+                <FilterBar
+                    title="Filter konten publik"
+                    description="Cari konten katalog dan persempit berdasarkan kesiapan publikasinya."
+                    contentClassName="lg:grid-cols-[minmax(0,1fr)_220px_auto]"
+                >
+                    <div className="relative">
+                        <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+                        <Input
+                            value={search}
+                            onChange={(event) => setSearch(event.target.value)}
+                            onKeyDown={(event) => {
+                                if (event.key === 'Enter') {
+                                    navigate(filters.section);
                                 }
-                                onKeyDown={(event) => {
-                                    if (event.key === 'Enter') {
-                                        navigate(filters.section);
-                                    }
-                                }}
-                                placeholder="Cari produk, paket, SKU, atau kode"
-                                className="pl-9"
-                            />
-                        </div>
-                        <Select
-                            value={filters.status}
-                            onValueChange={(value) =>
-                                navigate(filters.section, value)
-                            }
-                        >
-                            <SelectTrigger>
-                                <SelectValue />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">
-                                    Semua status
-                                </SelectItem>
-                                <SelectItem value="public">
-                                    Tampil publik
-                                </SelectItem>
-                                <SelectItem value="draft">
-                                    Disembunyikan
-                                </SelectItem>
-                                <SelectItem value="incomplete">
-                                    Konten belum lengkap
-                                </SelectItem>
-                            </SelectContent>
-                        </Select>
-                        <Button onClick={() => navigate(filters.section)}>
-                            Terapkan
-                        </Button>
-                    </CardContent>
-                </Card>
+                            }}
+                            placeholder="Cari produk, paket, SKU, atau kode"
+                            className="pl-9"
+                        />
+                    </div>
+                    <Select
+                        value={filters.status}
+                        onValueChange={(value) =>
+                            navigate(filters.section, value)
+                        }
+                    >
+                        <SelectTrigger>
+                            <SelectValue />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">Semua status</SelectItem>
+                            <SelectItem value="public">
+                                Tampil publik
+                            </SelectItem>
+                            <SelectItem value="draft">Disembunyikan</SelectItem>
+                            <SelectItem value="incomplete">
+                                Konten belum lengkap
+                            </SelectItem>
+                        </SelectContent>
+                    </Select>
+                    <Button onClick={() => navigate(filters.section)}>
+                        Terapkan
+                    </Button>
+                </FilterBar>
 
                 <nav className="flex flex-wrap gap-2 rounded-xl border bg-card p-2">
                     {(
@@ -404,19 +402,7 @@ function Metric({
     value: number;
     icon: typeof Tags;
 }) {
-    return (
-        <Card>
-            <CardContent className="flex items-center justify-between p-5">
-                <div>
-                    <p className="text-xs text-muted-foreground">{label}</p>
-                    <p className="mt-2 text-3xl font-semibold">{value}</p>
-                </div>
-                <div className="flex size-11 items-center justify-center rounded-xl bg-muted">
-                    <Icon className="size-5" />
-                </div>
-            </CardContent>
-        </Card>
-    );
+    return <MetricCard label={label} value={value} icon={Icon} />;
 }
 
 function PaginatedSection<T>({

@@ -46,6 +46,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { MetricCard } from '@/components/ui/metric-card';
 import {
     Select,
     SelectContent,
@@ -1177,23 +1178,7 @@ function StatisticCard({
     value: string;
     icon: typeof ReceiptText;
 }) {
-    return (
-        <Card>
-            <CardContent className="flex items-center justify-between p-5">
-                <div className="min-w-0">
-                    <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                        {label}
-                    </p>
-                    <p className="mt-2 truncate text-xl font-semibold">
-                        {value}
-                    </p>
-                </div>
-                <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-muted">
-                    <Icon className="size-5" />
-                </div>
-            </CardContent>
-        </Card>
-    );
+    return <MetricCard label={label} value={value} icon={Icon} compact />;
 }
 
 function Info({

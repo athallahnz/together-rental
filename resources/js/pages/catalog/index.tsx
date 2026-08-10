@@ -36,6 +36,8 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { FilterBar, FilterField } from '@/components/ui/filter-bar';
+import { MetricCard } from '@/components/ui/metric-card';
 import {
     Select,
     SelectContent,
@@ -291,21 +293,18 @@ export default function CatalogIndex({
                             icon: CircleDollarSign,
                         },
                     ].map(({ label, value, icon: Icon }) => (
-                        <Card key={label}>
-                            <CardContent className="flex items-center justify-between p-5">
-                                <div>
-                                    <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                                        {label}
-                                    </p>
-                                    <p className="mt-2 text-3xl font-semibold">
-                                        {value}
-                                    </p>
-                                </div>
-                                <div className="flex size-11 items-center justify-center rounded-xl bg-muted">
-                                    <Icon className="size-5" />
-                                </div>
-                            </CardContent>
-                        </Card>
+                        <MetricCard
+                            key={label}
+                            label={label}
+                            value={value}
+                            icon={Icon}
+                            tone={
+                                label === 'Belum punya harga' &&
+                                Number(value) > 0
+                                    ? 'warning'
+                                    : 'neutral'
+                            }
+                        />
                     ))}
                 </section>
 
@@ -417,21 +416,13 @@ function BranchScopeFilter({
     onChange: (branchId: number | null) => void;
 }) {
     return (
-        <Card className="border-primary/20 bg-primary/[0.02]">
-            <CardContent className="grid gap-4 p-4 md:grid-cols-[minmax(0,1fr)_minmax(260px,360px)] md:items-center md:p-5">
-                <div>
-                    <p className="text-sm font-semibold">
-                        Lingkup cabang katalog
-                    </p>
-                    <p className="mt-1 text-sm text-muted-foreground">
-                        Master produk dan kategori tetap global. Filter ini
-                        mengubah ringkasan aset, stok, harga, paket, dan rate
-                        plan sesuai cabang yang dipilih.
-                    </p>
-                    <p className="mt-2 text-xs font-medium text-primary">
-                        Aktif: {scopeLabel}
-                    </p>
-                </div>
+        <FilterBar
+            title="Lingkup cabang katalog"
+            description="Master produk dan kategori tetap global; pilihan cabang mengubah ringkasan aset, stok, harga, paket, dan rate plan."
+            context={<Badge variant="outline">Aktif: {scopeLabel}</Badge>}
+            contentClassName="grid-cols-1 md:grid-cols-[minmax(260px,360px)]"
+        >
+            <FilterField label="Cabang operasional">
                 <Select
                     value={branchId?.toString() ?? 'all'}
                     onValueChange={(value) =>
@@ -455,8 +446,8 @@ function BranchScopeFilter({
                         ))}
                     </SelectContent>
                 </Select>
-            </CardContent>
-        </Card>
+            </FilterField>
+        </FilterBar>
     );
 }
 
@@ -488,37 +479,34 @@ function InventoryScopeSummary({
     ];
 
     return (
-        <Card>
-            <CardHeader className="pb-3">
-                <CardTitle className="text-base">
+        <section className="space-y-3">
+            <div>
+                <h2 className="text-base font-semibold">
                     Ringkasan inventaris per cabang
-                </CardTitle>
-                <CardDescription>{scopeLabel}</CardDescription>
-            </CardHeader>
-            <CardContent className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
+                </h2>
+                <p className="mt-1 text-sm text-muted-foreground">
+                    {scopeLabel}
+                </p>
+            </div>
+            <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
                 {metrics.map(({ label, value, icon: Icon }) => (
-                    <div key={label} className="rounded-lg border p-3">
-                        <div className="flex items-center justify-between gap-3">
-                            <p className="text-xs font-medium text-muted-foreground">
-                                {label}
-                            </p>
-                            <Icon className="size-4 text-muted-foreground" />
-                        </div>
-                        <p className="mt-2 text-2xl font-semibold">{value}</p>
-                    </div>
+                    <MetricCard
+                        key={label}
+                        label={label}
+                        value={value}
+                        icon={Icon}
+                    />
                 ))}
-                <div className="sm:col-span-2 xl:col-span-5">
-                    <p className="text-xs text-muted-foreground">
-                        Bulk: reservasi {summary.quantityReserved} · disewa{' '}
-                        {summary.quantityRented} · maintenance{' '}
-                        {summary.quantityMaintenance} · dalam transfer{' '}
-                        {summary.quantityInTransfer}. Serialized: maintenance{' '}
-                        {summary.maintenanceAssets} · in transit{' '}
-                        {summary.inTransitAssets}.
-                    </p>
-                </div>
-            </CardContent>
-        </Card>
+            </div>
+            <p className="text-xs leading-5 text-muted-foreground">
+                Bulk: reservasi {summary.quantityReserved} · disewa{' '}
+                {summary.quantityRented} · maintenance{' '}
+                {summary.quantityMaintenance} · dalam transfer{' '}
+                {summary.quantityInTransfer}. Serialized: maintenance{' '}
+                {summary.maintenanceAssets} · in transit{' '}
+                {summary.inTransitAssets}.
+            </p>
+        </section>
     );
 }
 
@@ -792,7 +780,10 @@ function ProductFilterControls({
     ) => void;
 }) {
     return (
-        <div className="grid gap-3 rounded-xl border bg-muted/15 p-3 sm:p-4 md:grid-cols-2 2xl:grid-cols-[minmax(260px,1fr)_repeat(4,minmax(140px,auto))]">
+        <div
+            data-slot="filter-grid"
+            className="grid items-end gap-3 rounded-xl border bg-muted/25 p-4 md:grid-cols-2 2xl:grid-cols-[minmax(260px,1fr)_repeat(4,minmax(140px,auto))]"
+        >
             <form
                 className="flex gap-2 md:col-span-2 2xl:col-span-1"
                 onSubmit={(event) => {

@@ -2,11 +2,13 @@ import { Head, Link, router } from '@inertiajs/react';
 import { RefreshCcw, RotateCcw, Search } from 'lucide-react';
 import { useState } from 'react';
 import { PaginationLinks } from '@/components/pagination-links';
+import { MetricCard } from '@/components/ui/metric-card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { FilterBar } from '@/components/ui/filter-bar';
 import {
     Select,
     SelectContent,
@@ -120,165 +122,152 @@ export default function RefundCenterIndex({
                     />
                 </section>
 
-                <Card>
-                    <CardHeader>
-                        <CardTitle>Filter refund</CardTitle>
-                    </CardHeader>
-                    <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
-                        <div className="flex gap-2 md:col-span-2">
-                            <Input
-                                value={search}
-                                onChange={(event) =>
-                                    setSearch(event.target.value)
+                <FilterBar
+                    title="Filter refund"
+                    description="Cari refund dan payment sumber lalu persempit berdasarkan status, cabang, metode, dan tanggal."
+                    contentClassName="md:grid-cols-2 xl:grid-cols-4"
+                >
+                    <div className="flex gap-2 md:col-span-2">
+                        <Input
+                            value={search}
+                            onChange={(event) => setSearch(event.target.value)}
+                            onKeyDown={(event) => {
+                                if (event.key === 'Enter') {
+                                    applyFilters();
                                 }
-                                onKeyDown={(event) => {
-                                    if (event.key === 'Enter') {
-                                        applyFilters();
-                                    }
-                                }}
-                                placeholder="Refund, payment, pelanggan, referensi..."
-                            />
-                            <Button
-                                type="button"
-                                variant="secondary"
-                                onClick={() => applyFilters()}
-                            >
-                                <Search className="size-4" />
-                                Cari
-                            </Button>
-                        </div>
-                        <Select
-                            value={filters.status || 'all'}
-                            onValueChange={(value) =>
-                                applyFilters({
-                                    status: value === 'all' ? '' : value,
-                                })
-                            }
-                        >
-                            <SelectTrigger>
-                                <SelectValue placeholder="Semua status" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">
-                                    Semua status
-                                </SelectItem>
-                                {Object.entries(statusLabels).map(
-                                    ([value, label]) => (
-                                        <SelectItem key={value} value={value}>
-                                            {label}
-                                        </SelectItem>
-                                    ),
-                                )}
-                            </SelectContent>
-                        </Select>
-                        <Select
-                            value={
-                                filters.branch_id === null
-                                    ? 'all'
-                                    : String(filters.branch_id)
-                            }
-                            onValueChange={(value) =>
-                                applyFilters({
-                                    branch_id:
-                                        value === 'all' ? null : Number(value),
-                                })
-                            }
-                        >
-                            <SelectTrigger>
-                                <SelectValue placeholder="Semua cabang" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">
-                                    Semua cabang
-                                </SelectItem>
-                                {branches.map((branch) => (
-                                    <SelectItem
-                                        key={branch.id}
-                                        value={String(branch.id)}
-                                    >
-                                        {branch.code} — {branch.name}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                        <Select
-                            value={
-                                filters.payment_method_id === null
-                                    ? 'all'
-                                    : String(filters.payment_method_id)
-                            }
-                            onValueChange={(value) =>
-                                applyFilters({
-                                    payment_method_id:
-                                        value === 'all' ? null : Number(value),
-                                })
-                            }
-                        >
-                            <SelectTrigger>
-                                <SelectValue placeholder="Semua metode" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">
-                                    Semua metode
-                                </SelectItem>
-                                {paymentMethods.map((method) => (
-                                    <SelectItem
-                                        key={method.id}
-                                        value={String(method.id)}
-                                    >
-                                        {method.name}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                        <div className="space-y-1.5">
-                            <Label htmlFor="refund-date-from">
-                                Dari tanggal
-                            </Label>
-                            <Input
-                                id="refund-date-from"
-                                type="date"
-                                value={filters.date_from}
-                                onChange={(event) =>
-                                    applyFilters({
-                                        date_from: event.target.value,
-                                    })
-                                }
-                            />
-                        </div>
-                        <div className="space-y-1.5">
-                            <Label htmlFor="refund-date-to">
-                                Sampai tanggal
-                            </Label>
-                            <Input
-                                id="refund-date-to"
-                                type="date"
-                                min={filters.date_from || undefined}
-                                value={filters.date_to}
-                                onChange={(event) =>
-                                    applyFilters({
-                                        date_to: event.target.value,
-                                    })
-                                }
-                            />
-                        </div>
+                            }}
+                            placeholder="Refund, payment, pelanggan, referensi..."
+                        />
                         <Button
                             type="button"
-                            variant="outline"
-                            onClick={() => {
-                                setSearch('');
-                                router.get(
-                                    '/finance/refunds',
-                                    {},
-                                    { replace: true },
-                                );
-                            }}
+                            variant="secondary"
+                            onClick={() => applyFilters()}
                         >
-                            <RefreshCcw className="size-4" />
-                            Reset filter
+                            <Search className="size-4" />
+                            Cari
                         </Button>
-                    </CardContent>
-                </Card>
+                    </div>
+                    <Select
+                        value={filters.status || 'all'}
+                        onValueChange={(value) =>
+                            applyFilters({
+                                status: value === 'all' ? '' : value,
+                            })
+                        }
+                    >
+                        <SelectTrigger>
+                            <SelectValue placeholder="Semua status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">Semua status</SelectItem>
+                            {Object.entries(statusLabels).map(
+                                ([value, label]) => (
+                                    <SelectItem key={value} value={value}>
+                                        {label}
+                                    </SelectItem>
+                                ),
+                            )}
+                        </SelectContent>
+                    </Select>
+                    <Select
+                        value={
+                            filters.branch_id === null
+                                ? 'all'
+                                : String(filters.branch_id)
+                        }
+                        onValueChange={(value) =>
+                            applyFilters({
+                                branch_id:
+                                    value === 'all' ? null : Number(value),
+                            })
+                        }
+                    >
+                        <SelectTrigger>
+                            <SelectValue placeholder="Semua cabang" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">Semua cabang</SelectItem>
+                            {branches.map((branch) => (
+                                <SelectItem
+                                    key={branch.id}
+                                    value={String(branch.id)}
+                                >
+                                    {branch.code} — {branch.name}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    <Select
+                        value={
+                            filters.payment_method_id === null
+                                ? 'all'
+                                : String(filters.payment_method_id)
+                        }
+                        onValueChange={(value) =>
+                            applyFilters({
+                                payment_method_id:
+                                    value === 'all' ? null : Number(value),
+                            })
+                        }
+                    >
+                        <SelectTrigger>
+                            <SelectValue placeholder="Semua metode" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">Semua metode</SelectItem>
+                            {paymentMethods.map((method) => (
+                                <SelectItem
+                                    key={method.id}
+                                    value={String(method.id)}
+                                >
+                                    {method.name}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    <div className="space-y-1.5">
+                        <Label htmlFor="refund-date-from">Dari tanggal</Label>
+                        <Input
+                            id="refund-date-from"
+                            type="date"
+                            value={filters.date_from}
+                            onChange={(event) =>
+                                applyFilters({
+                                    date_from: event.target.value,
+                                })
+                            }
+                        />
+                    </div>
+                    <div className="space-y-1.5">
+                        <Label htmlFor="refund-date-to">Sampai tanggal</Label>
+                        <Input
+                            id="refund-date-to"
+                            type="date"
+                            min={filters.date_from || undefined}
+                            value={filters.date_to}
+                            onChange={(event) =>
+                                applyFilters({
+                                    date_to: event.target.value,
+                                })
+                            }
+                        />
+                    </div>
+                    <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                            setSearch('');
+                            router.get(
+                                '/finance/refunds',
+                                {},
+                                { replace: true },
+                            );
+                        }}
+                    >
+                        <RefreshCcw className="size-4" />
+                        Reset filter
+                    </Button>
+                </FilterBar>
 
                 <Card>
                     <CardHeader>
@@ -394,29 +383,14 @@ function SummaryCard({
     description: string;
     tone?: 'default' | 'primary' | 'warning' | 'success';
 }) {
-    const toneClass =
-        tone === 'primary'
-            ? 'text-primary'
-            : tone === 'warning'
-              ? 'text-amber-600 dark:text-amber-400'
-              : tone === 'success'
-                ? 'text-emerald-600 dark:text-emerald-400'
-                : '';
-
     return (
-        <Card className="gap-3 py-5">
-            <CardContent>
-                <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                    {title}
-                </p>
-                <p className={`mt-2 text-xl font-semibold ${toneClass}`}>
-                    {value}
-                </p>
-                <p className="mt-1 text-xs text-muted-foreground">
-                    {description}
-                </p>
-            </CardContent>
-        </Card>
+        <MetricCard
+            label={title}
+            value={value}
+            detail={description}
+            compact
+            tone={tone === 'default' ? 'neutral' : tone}
+        />
     );
 }
 

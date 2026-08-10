@@ -4,6 +4,8 @@ import type { FormEvent, ReactNode } from 'react';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { FilterBar } from '@/components/ui/filter-bar';
+import { MetricCard } from '@/components/ui/metric-card';
 import { Label } from '@/components/ui/label';
 import { RupiahInput } from '@/components/ui/rupiah-input';
 import {
@@ -145,68 +147,65 @@ export default function MaintenanceIndex({
                     />
                 </div>
 
-                <Card>
-                    <CardContent className="grid gap-3 pt-6 md:grid-cols-4">
-                        <Input
-                            value={search}
-                            onChange={(event) => setSearch(event.target.value)}
-                            onKeyDown={(event) =>
-                                event.key === 'Enter' && filter({})
-                            }
-                            placeholder="Nomor, aset, produk, vendor..."
-                        />
-                        <Select
-                            value={filters.status || 'all'}
-                            onValueChange={(value) =>
-                                filter({ status: value === 'all' ? '' : value })
-                            }
-                        >
-                            <SelectTrigger>
-                                <SelectValue placeholder="Semua status" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">
-                                    Semua status
-                                </SelectItem>
-                                {Object.entries(statusLabel).map(
-                                    ([value, label]) => (
-                                        <SelectItem key={value} value={value}>
-                                            {label}
-                                        </SelectItem>
-                                    ),
-                                )}
-                            </SelectContent>
-                        </Select>
-                        <Select
-                            value={filters.branchId?.toString() ?? 'all'}
-                            onValueChange={(value) =>
-                                filter({
-                                    branch_id: value === 'all' ? '' : value,
-                                })
-                            }
-                        >
-                            <SelectTrigger>
-                                <SelectValue placeholder="Semua cabang" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">
-                                    Semua cabang
-                                </SelectItem>
-                                {branches.map((branch) => (
-                                    <SelectItem
-                                        key={branch.id}
-                                        value={branch.id.toString()}
-                                    >
-                                        {branch.code} — {branch.name}
+                <FilterBar
+                    title="Filter work order"
+                    description="Temukan maintenance berdasarkan nomor, aset, produk, vendor, status, atau cabang."
+                >
+                    <Input
+                        value={search}
+                        onChange={(event) => setSearch(event.target.value)}
+                        onKeyDown={(event) =>
+                            event.key === 'Enter' && filter({})
+                        }
+                        placeholder="Nomor, aset, produk, vendor..."
+                    />
+                    <Select
+                        value={filters.status || 'all'}
+                        onValueChange={(value) =>
+                            filter({ status: value === 'all' ? '' : value })
+                        }
+                    >
+                        <SelectTrigger>
+                            <SelectValue placeholder="Semua status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">Semua status</SelectItem>
+                            {Object.entries(statusLabel).map(
+                                ([value, label]) => (
+                                    <SelectItem key={value} value={value}>
+                                        {label}
                                     </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                        <Button variant="outline" onClick={() => filter({})}>
-                            Cari
-                        </Button>
-                    </CardContent>
-                </Card>
+                                ),
+                            )}
+                        </SelectContent>
+                    </Select>
+                    <Select
+                        value={filters.branchId?.toString() ?? 'all'}
+                        onValueChange={(value) =>
+                            filter({
+                                branch_id: value === 'all' ? '' : value,
+                            })
+                        }
+                    >
+                        <SelectTrigger>
+                            <SelectValue placeholder="Semua cabang" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">Semua cabang</SelectItem>
+                            {branches.map((branch) => (
+                                <SelectItem
+                                    key={branch.id}
+                                    value={branch.id.toString()}
+                                >
+                                    {branch.code} — {branch.name}
+                                </SelectItem>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    <Button variant="outline" onClick={() => filter({})}>
+                        Cari
+                    </Button>
+                </FilterBar>
 
                 <Card>
                     <CardHeader>
@@ -407,18 +406,7 @@ export default function MaintenanceIndex({
 }
 
 function Summary({ title, value }: { title: string; value: string | number }) {
-    return (
-        <Card>
-            <CardHeader className="pb-2">
-                <CardTitle className="text-sm text-muted-foreground">
-                    {title}
-                </CardTitle>
-            </CardHeader>
-            <CardContent className="text-2xl font-semibold">
-                {value}
-            </CardContent>
-        </Card>
-    );
+    return <MetricCard label={title} value={value} />;
 }
 
 function Field({

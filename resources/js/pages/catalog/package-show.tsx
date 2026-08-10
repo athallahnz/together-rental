@@ -25,6 +25,7 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
+import { MetricCard } from '@/components/ui/metric-card';
 import type {
     AccessBranch,
     CatalogPermissions,
@@ -463,21 +464,7 @@ function Metric({
     value: string;
     icon: typeof Layers3;
 }) {
-    return (
-        <Card>
-            <CardContent className="flex items-center justify-between p-5">
-                <div>
-                    <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                        {label}
-                    </p>
-                    <p className="mt-2 text-3xl font-semibold">{value}</p>
-                </div>
-                <div className="flex size-11 items-center justify-center rounded-xl bg-muted">
-                    <Icon className="size-5" />
-                </div>
-            </CardContent>
-        </Card>
-    );
+    return <MetricCard label={label} value={value} icon={Icon} />;
 }
 
 function Info({ label, value }: { label: string; value: string }) {

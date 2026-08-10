@@ -26,6 +26,7 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { MetricCard } from '@/components/ui/metric-card';
 import {
     Select,
     SelectContent,
@@ -179,21 +180,17 @@ export default function CustomerIndex({
                             icon: IdCard,
                         },
                     ].map(({ label, value, icon: Icon }) => (
-                        <Card key={label}>
-                            <CardContent className="flex items-center justify-between p-5">
-                                <div>
-                                    <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                                        {label}
-                                    </p>
-                                    <p className="mt-2 text-3xl font-semibold">
-                                        {value}
-                                    </p>
-                                </div>
-                                <div className="flex size-11 items-center justify-center rounded-xl bg-muted">
-                                    <Icon className="size-5" />
-                                </div>
-                            </CardContent>
-                        </Card>
+                        <MetricCard
+                            key={label}
+                            label={label}
+                            value={value}
+                            icon={Icon}
+                            tone={
+                                label === 'Risiko tinggi' && Number(value) > 0
+                                    ? 'danger'
+                                    : 'neutral'
+                            }
+                        />
                     ))}
                 </section>
 
@@ -206,7 +203,10 @@ export default function CustomerIndex({
                                 pelanggan, nomor member, dan nomor identitas.
                             </CardDescription>
                         </div>
-                        <div className="grid gap-2 xl:grid-cols-[minmax(260px,1fr)_repeat(4,minmax(140px,auto))]">
+                        <div
+                            data-slot="filter-grid"
+                            className="grid items-end gap-3 rounded-xl border bg-muted/25 p-4 sm:grid-cols-2 xl:grid-cols-[minmax(260px,1fr)_repeat(4,minmax(140px,auto))]"
+                        >
                             <form
                                 className="flex gap-2"
                                 onSubmit={(event) => {

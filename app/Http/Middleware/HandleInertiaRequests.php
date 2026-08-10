@@ -3,6 +3,7 @@
 namespace App\Http\Middleware;
 
 use App\Domain\Access\UserAccessManager;
+use App\Domain\Notifications\NotificationInboxService;
 use Illuminate\Http\Request;
 use Inertia\Middleware;
 
@@ -94,12 +95,20 @@ class HandleInertiaRequests extends Middleware
                     'transfers.resolve_discrepancy' => $user->can('transfers.resolve_discrepancy'),
                     'transfers.settings' => $user->can('transfers.settings'),
                     'transfers.override' => $user->can('transfers.override'),
+                    'inventory-audits.view' => $user->can('inventory-audits.view'),
+                    'inventory-audits.create' => $user->can('inventory-audits.create'),
+                    'inventory-audits.count' => $user->can('inventory-audits.count'),
+                    'inventory-audits.approve' => $user->can('inventory-audits.approve'),
+                    'inventory-audits.resolve' => $user->can('inventory-audits.resolve'),
+                    'inventory-audits.cancel' => $user->can('inventory-audits.cancel'),
                     'imports.view' => $user->can('imports.view'),
                     'imports.upload' => $user->can('imports.upload'),
                     'imports.validate' => $user->can('imports.validate'),
                     'imports.execute' => $user->can('imports.execute'),
                     'reports.view' => $user->can('reports.view'),
                     'reports.export' => $user->can('reports.export'),
+                    'notifications.view' => $user->can('notifications.view'),
+                    'notifications.manage' => $user->can('notifications.manage'),
                 ],
                 'currentBranch' => $user?->currentBranch()
                     ->first(['id', 'code', 'name', 'city', 'is_active']),
@@ -109,6 +118,9 @@ class HandleInertiaRequests extends Middleware
                         ->orderBy('name')
                         ->get(['id', 'code', 'name', 'city']),
             ],
+            'notificationCenter' => $user === null
+                ? ['unread_count' => 0, 'critical_count' => 0, 'recent' => []]
+                : app(NotificationInboxService::class)->header($user),
             'sidebarOpen' => ! $request->hasCookie('sidebar_state') || $request->cookie('sidebar_state') === 'true',
         ];
     }

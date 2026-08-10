@@ -14,6 +14,8 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { PaginationLinks } from '@/components/pagination-links';
+import { FilterBar } from '@/components/ui/filter-bar';
+import { MetricCard } from '@/components/ui/metric-card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -275,206 +277,194 @@ export default function RentalIndex({
                     />
                 </section>
 
-                <Card className="border-primary/15">
-                    <CardHeader className="pb-4">
-                        <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                            <div>
-                                <CardTitle className="text-base">
-                                    Search engine operasional
-                                </CardTitle>
-                                <CardDescription>
-                                    Cari rental, pelanggan, booking asal,
-                                    produk, kode aset, atau serial number.
-                                </CardDescription>
-                            </div>
-                            <Badge variant="outline" className="w-fit">
-                                <Building2 />{' '}
-                                {selectedBranch?.name ?? 'Semua cabang'}
-                            </Badge>
+                <FilterBar
+                    title="Search engine operasional"
+                    description="Cari rental, pelanggan, booking asal, produk, kode aset, atau serial number."
+                    context={
+                        <Badge variant="outline" className="w-fit">
+                            <Building2 />{' '}
+                            {selectedBranch?.name ?? 'Semua cabang'}
+                        </Badge>
+                    }
+                    contentClassName="grid-cols-1"
+                >
+                    <form
+                        className="grid items-end gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(260px,1.5fr)_190px_210px_190px_180px_180px_230px_auto]"
+                        onSubmit={(event) => {
+                            event.preventDefault();
+                            apply();
+                        }}
+                    >
+                        <div className="relative">
+                            <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+                            <Input
+                                value={search}
+                                onChange={(event) =>
+                                    setSearch(event.target.value)
+                                }
+                                className="pl-9"
+                                placeholder="Rental, pelanggan, booking, aset..."
+                            />
                         </div>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                        <form
-                            className="grid gap-2 xl:grid-cols-[minmax(260px,1.5fr)_190px_210px_190px_180px_180px_230px_auto]"
-                            onSubmit={(event) => {
-                                event.preventDefault();
-                                apply();
-                            }}
+                        <Select
+                            value={filters.operational_state || 'all'}
+                            onValueChange={(value) =>
+                                apply({ operational_state: value })
+                            }
                         >
-                            <div className="relative">
-                                <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-                                <Input
-                                    value={search}
-                                    onChange={(event) =>
-                                        setSearch(event.target.value)
-                                    }
-                                    className="pl-9"
-                                    placeholder="Rental, pelanggan, booking, aset..."
-                                />
-                            </div>
-                            <Select
-                                value={filters.operational_state || 'all'}
-                                onValueChange={(value) =>
-                                    apply({ operational_state: value })
-                                }
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Kondisi harian" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">
-                                        Semua kondisi
+                            <SelectTrigger>
+                                <SelectValue placeholder="Kondisi harian" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">
+                                    Semua kondisi
+                                </SelectItem>
+                                <SelectItem value="active">
+                                    Aktif & belum jatuh tempo
+                                </SelectItem>
+                                <SelectItem value="overdue">
+                                    Lewat jatuh tempo
+                                </SelectItem>
+                                <SelectItem value="due_today">
+                                    Jatuh tempo hari ini
+                                </SelectItem>
+                                <SelectItem value="due_soon">
+                                    Jatuh tempo &lt; 24 jam
+                                </SelectItem>
+                                <SelectItem value="closed">
+                                    Sudah ditutup
+                                </SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <Select
+                            value={filters.status || 'all'}
+                            onValueChange={(value) => apply({ status: value })}
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder="Status transaksi" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">
+                                    Semua status
+                                </SelectItem>
+                                {[
+                                    'active',
+                                    'partial_return',
+                                    'correction_pending',
+                                    'returned',
+                                    'completed',
+                                ].map((status) => (
+                                    <SelectItem key={status} value={status}>
+                                        {statusLabel[status]}
                                     </SelectItem>
-                                    <SelectItem value="active">
-                                        Aktif & belum jatuh tempo
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <Select
+                            value={filters.payment_state || 'all'}
+                            onValueChange={(value) =>
+                                apply({ payment_state: value })
+                            }
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder="Pembayaran" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">
+                                    Semua pembayaran
+                                </SelectItem>
+                                <SelectItem value="outstanding">
+                                    Masih ada tagihan
+                                </SelectItem>
+                                <SelectItem value="paid">Lunas</SelectItem>
+                                <SelectItem value="overpaid">
+                                    Kelebihan bayar
+                                </SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <Select
+                            value={filters.source || 'all'}
+                            onValueChange={(value) => apply({ source: value })}
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder="Sumber" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">
+                                    Semua sumber
+                                </SelectItem>
+                                <SelectItem value="direct">
+                                    Rental langsung
+                                </SelectItem>
+                                <SelectItem value="booking">
+                                    Checkout booking
+                                </SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <Select
+                            value={filters.checkout_period || 'all'}
+                            onValueChange={(value) =>
+                                apply({ checkout_period: value })
+                            }
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder="Checkout" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">
+                                    Semua checkout
+                                </SelectItem>
+                                <SelectItem value="today">Hari ini</SelectItem>
+                                <SelectItem value="last7">
+                                    7 hari terakhir
+                                </SelectItem>
+                                <SelectItem value="last30">
+                                    30 hari terakhir
+                                </SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <Select
+                            value={filters.branch_id?.toString() ?? 'all'}
+                            onValueChange={(value) =>
+                                apply({
+                                    branch_id:
+                                        value === 'all' ? null : Number(value),
+                                })
+                            }
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder="Semua cabang" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">
+                                    Semua cabang
+                                </SelectItem>
+                                {branches.map((branch) => (
+                                    <SelectItem
+                                        key={branch.id}
+                                        value={String(branch.id)}
+                                    >
+                                        {branch.code} · {branch.name}
                                     </SelectItem>
-                                    <SelectItem value="overdue">
-                                        Lewat jatuh tempo
-                                    </SelectItem>
-                                    <SelectItem value="due_today">
-                                        Jatuh tempo hari ini
-                                    </SelectItem>
-                                    <SelectItem value="due_soon">
-                                        Jatuh tempo &lt; 24 jam
-                                    </SelectItem>
-                                    <SelectItem value="closed">
-                                        Sudah ditutup
-                                    </SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <Select
-                                value={filters.status || 'all'}
-                                onValueChange={(value) =>
-                                    apply({ status: value })
-                                }
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Status transaksi" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">
-                                        Semua status
-                                    </SelectItem>
-                                    {[
-                                        'active',
-                                        'partial_return',
-                                        'correction_pending',
-                                        'returned',
-                                        'completed',
-                                    ].map((status) => (
-                                        <SelectItem key={status} value={status}>
-                                            {statusLabel[status]}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            <Select
-                                value={filters.payment_state || 'all'}
-                                onValueChange={(value) =>
-                                    apply({ payment_state: value })
-                                }
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Pembayaran" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">
-                                        Semua pembayaran
-                                    </SelectItem>
-                                    <SelectItem value="outstanding">
-                                        Masih ada tagihan
-                                    </SelectItem>
-                                    <SelectItem value="paid">Lunas</SelectItem>
-                                    <SelectItem value="overpaid">
-                                        Kelebihan bayar
-                                    </SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <Select
-                                value={filters.source || 'all'}
-                                onValueChange={(value) =>
-                                    apply({ source: value })
-                                }
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Sumber" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">
-                                        Semua sumber
-                                    </SelectItem>
-                                    <SelectItem value="direct">
-                                        Rental langsung
-                                    </SelectItem>
-                                    <SelectItem value="booking">
-                                        Checkout booking
-                                    </SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <Select
-                                value={filters.checkout_period || 'all'}
-                                onValueChange={(value) =>
-                                    apply({ checkout_period: value })
-                                }
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Checkout" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">
-                                        Semua checkout
-                                    </SelectItem>
-                                    <SelectItem value="today">
-                                        Hari ini
-                                    </SelectItem>
-                                    <SelectItem value="last7">
-                                        7 hari terakhir
-                                    </SelectItem>
-                                    <SelectItem value="last30">
-                                        30 hari terakhir
-                                    </SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <Select
-                                value={filters.branch_id?.toString() ?? 'all'}
-                                onValueChange={(value) =>
-                                    apply({
-                                        branch_id:
-                                            value === 'all'
-                                                ? null
-                                                : Number(value),
-                                    })
-                                }
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Semua cabang" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">
-                                        Semua cabang
-                                    </SelectItem>
-                                    {branches.map((branch) => (
-                                        <SelectItem
-                                            key={branch.id}
-                                            value={String(branch.id)}
-                                        >
-                                            {branch.code} · {branch.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            <Button type="submit">
-                                <Search />
-                                Cari
-                            </Button>
-                        </form>
-                        {hasFilters && (
-                            <Button variant="ghost" size="sm" onClick={reset}>
-                                <X /> Reset semua filter
-                            </Button>
-                        )}
-                    </CardContent>
-                </Card>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <Button type="submit">
+                            <Search />
+                            Cari
+                        </Button>
+                    </form>
+                    {hasFilters && (
+                        <Button
+                            className="w-fit"
+                            variant="ghost"
+                            size="sm"
+                            onClick={reset}
+                        >
+                            <X /> Reset semua filter
+                        </Button>
+                    )}
+                </FilterBar>
 
                 <Card>
                     <CardHeader>
@@ -624,32 +614,12 @@ function SummaryCard({
     compact?: boolean;
 }) {
     return (
-        <Card className={attention ? 'border-destructive/30' : undefined}>
-            <CardContent className="flex items-center justify-between p-5">
-                <div>
-                    <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                        {label}
-                    </p>
-                    <p
-                        className={
-                            compact
-                                ? 'mt-2 text-base font-semibold'
-                                : 'mt-2 text-2xl font-semibold'
-                        }
-                    >
-                        {value}
-                    </p>
-                </div>
-                <div className="flex size-10 items-center justify-center rounded-xl bg-muted">
-                    <Icon
-                        className={
-                            attention
-                                ? 'size-5 text-destructive'
-                                : 'size-5 text-muted-foreground'
-                        }
-                    />
-                </div>
-            </CardContent>
-        </Card>
+        <MetricCard
+            label={label}
+            value={value}
+            icon={Icon}
+            compact={compact}
+            tone={attention ? 'danger' : 'neutral'}
+        />
     );
 }

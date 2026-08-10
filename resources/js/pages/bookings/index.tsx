@@ -12,6 +12,8 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import { PaginationLinks } from '@/components/pagination-links';
+import { FilterBar } from '@/components/ui/filter-bar';
+import { MetricCard } from '@/components/ui/metric-card';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -199,175 +201,157 @@ export default function BookingIndex({
                     />
                 </section>
 
-                <Card className="border-primary/15">
-                    <CardHeader className="pb-4">
-                        <div className="flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-                            <div>
-                                <CardTitle className="text-base">
-                                    Pusat pencarian operasional
-                                </CardTitle>
-                                <CardDescription>
-                                    Cari nomor booking, pelanggan, produk,
-                                    paket, kode aset, atau serial number.
-                                </CardDescription>
-                            </div>
-                            <Badge variant="outline" className="w-fit">
-                                <Building2 />
-                                {selectedBranch?.name ?? 'Semua cabang'}
-                            </Badge>
+                <FilterBar
+                    title="Pusat pencarian operasional"
+                    description="Cari nomor booking, pelanggan, produk, paket, kode aset, atau serial number."
+                    context={
+                        <Badge variant="outline" className="w-fit">
+                            <Building2 />
+                            {selectedBranch?.name ?? 'Semua cabang'}
+                        </Badge>
+                    }
+                    contentClassName="grid-cols-1"
+                >
+                    <form
+                        className="grid items-end gap-3 sm:grid-cols-2 xl:grid-cols-[minmax(260px,1.4fr)_190px_210px_190px_230px_auto]"
+                        onSubmit={(event) => {
+                            event.preventDefault();
+                            apply();
+                        }}
+                    >
+                        <div className="relative">
+                            <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
+                            <Input
+                                value={search}
+                                onChange={(event) =>
+                                    setSearch(event.target.value)
+                                }
+                                className="pl-9"
+                                placeholder="Booking, pelanggan, produk, aset..."
+                            />
                         </div>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                        <form
-                            className="grid gap-2 xl:grid-cols-[minmax(260px,1.4fr)_190px_210px_190px_230px_auto]"
-                            onSubmit={(event) => {
-                                event.preventDefault();
-                                apply();
-                            }}
+                        <Select
+                            value={filters.status || 'all'}
+                            onValueChange={(value) => apply({ status: value })}
                         >
-                            <div className="relative">
-                                <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
-                                <Input
-                                    value={search}
-                                    onChange={(event) =>
-                                        setSearch(event.target.value)
-                                    }
-                                    className="pl-9"
-                                    placeholder="Booking, pelanggan, produk, aset..."
-                                />
-                            </div>
-                            <Select
-                                value={filters.status || 'all'}
-                                onValueChange={(value) =>
-                                    apply({ status: value })
-                                }
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Semua status" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">
-                                        Semua status
+                            <SelectTrigger>
+                                <SelectValue placeholder="Semua status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">
+                                    Semua status
+                                </SelectItem>
+                                {(
+                                    [
+                                        'draft',
+                                        'confirmed',
+                                        'converted',
+                                        'completed',
+                                        'cancelled',
+                                        'expired',
+                                    ] as BookingStatus[]
+                                ).map((status) => (
+                                    <SelectItem key={status} value={status}>
+                                        {statusLabels[status]}
                                     </SelectItem>
-                                    {(
-                                        [
-                                            'draft',
-                                            'confirmed',
-                                            'converted',
-                                            'completed',
-                                            'cancelled',
-                                            'expired',
-                                        ] as BookingStatus[]
-                                    ).map((status) => (
-                                        <SelectItem key={status} value={status}>
-                                            {statusLabels[status]}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            <Select
-                                value={filters.period || 'all'}
-                                onValueChange={(value) =>
-                                    apply({ period: value })
-                                }
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Periode" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">
-                                        Semua periode
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <Select
+                            value={filters.period || 'all'}
+                            onValueChange={(value) => apply({ period: value })}
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder="Periode" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">
+                                    Semua periode
+                                </SelectItem>
+                                <SelectItem value="today">
+                                    Mulai hari ini
+                                </SelectItem>
+                                <SelectItem value="tomorrow">
+                                    Mulai besok
+                                </SelectItem>
+                                <SelectItem value="next7">
+                                    7 hari ke depan
+                                </SelectItem>
+                                <SelectItem value="upcoming">
+                                    Semua mendatang
+                                </SelectItem>
+                                <SelectItem value="past">
+                                    Sudah lewat
+                                </SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <Select
+                            value={filters.source || 'all'}
+                            onValueChange={(value) => apply({ source: value })}
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder="Sumber" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">
+                                    Semua sumber
+                                </SelectItem>
+                                <SelectItem value="counter">
+                                    Booking counter
+                                </SelectItem>
+                                <SelectItem value="phone">Telepon</SelectItem>
+                                <SelectItem value="whatsapp">
+                                    WhatsApp
+                                </SelectItem>
+                                <SelectItem value="website">Website</SelectItem>
+                                <SelectItem value="other">Lainnya</SelectItem>
+                                <SelectItem value="direct">
+                                    Rental langsung
+                                </SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <Select
+                            value={filters.branch_id?.toString() ?? 'all'}
+                            onValueChange={(value) =>
+                                apply({
+                                    branch_id:
+                                        value === 'all' ? null : Number(value),
+                                })
+                            }
+                        >
+                            <SelectTrigger>
+                                <SelectValue placeholder="Semua cabang" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">
+                                    Semua cabang
+                                </SelectItem>
+                                {branches.map((branch) => (
+                                    <SelectItem
+                                        key={branch.id}
+                                        value={String(branch.id)}
+                                    >
+                                        {branch.code} · {branch.name}
                                     </SelectItem>
-                                    <SelectItem value="today">
-                                        Mulai hari ini
-                                    </SelectItem>
-                                    <SelectItem value="tomorrow">
-                                        Mulai besok
-                                    </SelectItem>
-                                    <SelectItem value="next7">
-                                        7 hari ke depan
-                                    </SelectItem>
-                                    <SelectItem value="upcoming">
-                                        Semua mendatang
-                                    </SelectItem>
-                                    <SelectItem value="past">
-                                        Sudah lewat
-                                    </SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <Select
-                                value={filters.source || 'all'}
-                                onValueChange={(value) =>
-                                    apply({ source: value })
-                                }
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Sumber" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">
-                                        Semua sumber
-                                    </SelectItem>
-                                    <SelectItem value="counter">
-                                        Booking counter
-                                    </SelectItem>
-                                    <SelectItem value="phone">
-                                        Telepon
-                                    </SelectItem>
-                                    <SelectItem value="whatsapp">
-                                        WhatsApp
-                                    </SelectItem>
-                                    <SelectItem value="website">
-                                        Website
-                                    </SelectItem>
-                                    <SelectItem value="other">
-                                        Lainnya
-                                    </SelectItem>
-                                    <SelectItem value="direct">
-                                        Rental langsung
-                                    </SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <Select
-                                value={filters.branch_id?.toString() ?? 'all'}
-                                onValueChange={(value) =>
-                                    apply({
-                                        branch_id:
-                                            value === 'all'
-                                                ? null
-                                                : Number(value),
-                                    })
-                                }
-                            >
-                                <SelectTrigger>
-                                    <SelectValue placeholder="Semua cabang" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">
-                                        Semua cabang
-                                    </SelectItem>
-                                    {branches.map((branch) => (
-                                        <SelectItem
-                                            key={branch.id}
-                                            value={String(branch.id)}
-                                        >
-                                            {branch.code} · {branch.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            <Button type="submit">
-                                <Search />
-                                Cari
-                            </Button>
-                        </form>
-                        {hasFilters && (
-                            <Button variant="ghost" size="sm" onClick={reset}>
-                                <X /> Reset semua filter
-                            </Button>
-                        )}
-                    </CardContent>
-                </Card>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <Button type="submit">
+                            <Search />
+                            Cari
+                        </Button>
+                    </form>
+                    {hasFilters && (
+                        <Button
+                            className="w-fit"
+                            variant="ghost"
+                            size="sm"
+                            onClick={reset}
+                        >
+                            <X /> Reset semua filter
+                        </Button>
+                    )}
+                </FilterBar>
 
                 <Card>
                     <CardHeader>
@@ -530,24 +514,11 @@ function SummaryCard({
     attention?: boolean;
 }) {
     return (
-        <Card className={attention ? 'border-destructive/30' : undefined}>
-            <CardContent className="flex items-center justify-between p-5">
-                <div>
-                    <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                        {label}
-                    </p>
-                    <p className="mt-2 text-2xl font-semibold">{value}</p>
-                </div>
-                <div className="flex size-10 items-center justify-center rounded-xl bg-muted">
-                    <Icon
-                        className={
-                            attention
-                                ? 'size-5 text-destructive'
-                                : 'size-5 text-muted-foreground'
-                        }
-                    />
-                </div>
-            </CardContent>
-        </Card>
+        <MetricCard
+            label={label}
+            value={value}
+            icon={Icon}
+            tone={attention ? 'danger' : 'neutral'}
+        />
     );
 }

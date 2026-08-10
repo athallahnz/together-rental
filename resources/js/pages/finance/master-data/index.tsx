@@ -41,6 +41,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { MetricCard } from '@/components/ui/metric-card';
 import { RupiahInput } from '@/components/ui/rupiah-input';
 import {
     Select,
@@ -589,21 +590,12 @@ export default function FinanceMasterIndex({
                             icon: Clock3,
                         },
                     ].map(({ label, value, icon: Icon }) => (
-                        <Card key={label}>
-                            <CardContent className="flex items-center justify-between p-5">
-                                <div>
-                                    <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                                        {label}
-                                    </p>
-                                    <p className="mt-2 text-3xl font-semibold">
-                                        {value}
-                                    </p>
-                                </div>
-                                <div className="flex size-11 items-center justify-center rounded-xl bg-muted">
-                                    <Icon className="size-5" />
-                                </div>
-                            </CardContent>
-                        </Card>
+                        <MetricCard
+                            key={label}
+                            label={label}
+                            value={value}
+                            icon={Icon}
+                        />
                     ))}
                 </section>
 

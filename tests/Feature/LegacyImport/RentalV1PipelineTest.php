@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\LegacyImport;
 
+use App\Domain\LegacyImport\LegacyImportIssueResolver;
 use App\Domain\LegacyImport\LegacyImportTargetManager;
 use App\Domain\LegacyImport\RentalV1Executor;
 use App\Domain\LegacyImport\RentalV1Mapper;
@@ -21,6 +22,61 @@ use Tests\TestCase;
 class RentalV1PipelineTest extends TestCase
 {
     use RefreshDatabase;
+
+    public function test_known_booking_reference_errors_can_be_resolved_with_audited_safe_actions(): void
+    {
+        $this->seed(RentalFoundationSeeder::class);
+        $user = User::factory()->create();
+        $branch = Branch::query()->where('code', 'PNG')->firstOrFail();
+        $batch = LegacyImportBatch::query()->create([
+            'id' => '0191a000-0000-7000-8000-000000000099',
+            'branch_id' => $branch->id,
+            'source_city' => 'Ponorogo',
+            'import_prefix' => 'PNG',
+            'uploaded_by' => $user->id,
+            'source_system' => 'RentalV1',
+            'source_filename' => 'broken-booking.sql',
+            'source_sha256' => str_repeat('9', 64),
+            'source_size' => 100,
+            'status' => 'validated',
+            'total_rows' => 2,
+            'error_rows' => 2,
+        ]);
+        DB::table('legacy_import_tables')->insert([
+            'batch_id' => $batch->id, 'source_table' => 'trx_booking_detail', 'target_table' => 'booking_items',
+            'status' => 'validated', 'parsed_rows' => 2, 'error_rows' => 2, 'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $orphanRow = DB::table('legacy_import_rows')->insertGetId([
+            'batch_id' => $batch->id, 'source_table' => 'trx_booking_detail', 'legacy_key' => '1', 'row_number' => 1,
+            'payload' => json_encode(['bookingdet_booking_id' => 404]), 'status' => 'error', 'issue_count' => 1,
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+        $productRow = DB::table('legacy_import_rows')->insertGetId([
+            'batch_id' => $batch->id, 'source_table' => 'trx_booking_detail', 'legacy_key' => '2', 'row_number' => 2,
+            'payload' => json_encode(['bookingdet_booking_id' => 155, 'bookingdet_rentproduct_id' => 411]), 'status' => 'error', 'issue_count' => 1,
+            'created_at' => now(), 'updated_at' => now(),
+        ]);
+        foreach ([[$orphanRow, 'bookingdet_booking_id', '404'], [$productRow, 'bookingdet_rentproduct_id', '411']] as [$rowId, $field, $value]) {
+            DB::table('legacy_import_issues')->insert([
+                'batch_id' => $batch->id, 'legacy_import_row_id' => $rowId, 'severity' => 'error',
+                'code' => 'REFERENCE_NOT_FOUND', 'field' => $field, 'message' => 'Missing reference',
+                'original_value' => $value, 'status' => 'open', 'created_at' => now(), 'updated_at' => now(),
+            ]);
+        }
+
+        $resolver = app(LegacyImportIssueResolver::class);
+        $this->assertSame(1, $resolver->skipOrphanBookingDetails($batch->fresh(), $user->id, 'Booking induk tidak tersedia di dump sumber.'));
+        $this->assertSame(1, $resolver->createMissingProductPlaceholder($batch->fresh(), $user->id, 'Produk sumber hilang; pertahankan histori transaksi.'));
+
+        $this->assertDatabaseHas('legacy_import_rows', ['id' => $orphanRow, 'status' => 'skipped']);
+        $this->assertDatabaseHas('legacy_import_rows', ['id' => $productRow, 'status' => 'valid']);
+        $this->assertDatabaseHas('products', ['sku' => 'LEG-PNG-MISSING-411', 'is_active' => false, 'is_rentable' => false]);
+        $this->assertDatabaseHas('legacy_id_maps', ['batch_id' => $batch->id, 'source_table' => 'rent_product', 'legacy_id' => '411']);
+        $this->assertSame(0, $batch->fresh()->error_rows);
+        $this->assertSame(1, $batch->fresh()->skipped_rows);
+        $this->assertDatabaseHas('legacy_import_events', ['batch_id' => $batch->id, 'event' => 'orphan_booking_details_skipped']);
+        $this->assertDatabaseHas('legacy_import_events', ['batch_id' => $batch->id, 'event' => 'missing_products_resolved']);
+    }
 
     public function test_minimal_rental_v1_dump_completes_the_full_pipeline(): void
     {

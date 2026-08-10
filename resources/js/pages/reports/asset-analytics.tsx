@@ -29,6 +29,8 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { FilterBar } from '@/components/ui/filter-bar';
+import { MetricCard } from '@/components/ui/metric-card';
 import {
     Select,
     SelectContent,
@@ -381,157 +383,131 @@ export default function AssetAnalytics({
                     )}
                 </header>
 
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="text-base">
-                            Filter analitik
-                        </CardTitle>
-                        <CardDescription>
-                            Periode memengaruhi pendapatan periode, tren,
-                            utilisasi, dan estimasi BEP. ROI serta BEP memakai
-                            data lifetime.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="space-y-4">
-                        <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-[minmax(220px,1.35fr)_minmax(155px,0.85fr)_minmax(155px,0.85fr)_minmax(240px,1.25fr)_minmax(180px,1fr)_minmax(155px,0.8fr)_minmax(155px,0.8fr)]">
-                            <Input
-                                className="min-w-0"
-                                value={search}
-                                onChange={(event) =>
-                                    setSearch(event.target.value)
+                <FilterBar
+                    title="Filter analitik"
+                    description="Periode memengaruhi pendapatan, tren, utilisasi, dan estimasi BEP; ROI serta BEP memakai data lifetime."
+                    contentClassName="grid-cols-1"
+                >
+                    <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-[minmax(220px,1.35fr)_minmax(155px,0.85fr)_minmax(155px,0.85fr)_minmax(240px,1.25fr)_minmax(180px,1fr)_minmax(155px,0.8fr)_minmax(155px,0.8fr)]">
+                        <Input
+                            className="min-w-0"
+                            value={search}
+                            onChange={(event) => setSearch(event.target.value)}
+                            placeholder="Cari aset atau produk"
+                            onKeyDown={(event) => {
+                                if (event.key === 'Enter') {
+                                    applyFilters();
                                 }
-                                placeholder="Cari aset atau produk"
-                                onKeyDown={(event) => {
-                                    if (event.key === 'Enter') {
-                                        applyFilters();
-                                    }
-                                }}
-                            />
-                            <Input
-                                className="min-w-0"
-                                type="date"
-                                value={from}
-                                onChange={(event) =>
-                                    setFrom(event.target.value)
-                                }
-                            />
-                            <Input
-                                className="min-w-0"
-                                type="date"
-                                value={to}
-                                onChange={(event) => setTo(event.target.value)}
-                            />
-                            <Select
-                                value={branchId}
-                                onValueChange={setBranchId}
-                            >
-                                <SelectTrigger className="w-full min-w-0">
-                                    <SelectValue placeholder="Semua cabang" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">
-                                        Semua cabang
+                            }}
+                        />
+                        <Input
+                            className="min-w-0"
+                            type="date"
+                            value={from}
+                            onChange={(event) => setFrom(event.target.value)}
+                        />
+                        <Input
+                            className="min-w-0"
+                            type="date"
+                            value={to}
+                            onChange={(event) => setTo(event.target.value)}
+                        />
+                        <Select value={branchId} onValueChange={setBranchId}>
+                            <SelectTrigger className="w-full min-w-0">
+                                <SelectValue placeholder="Semua cabang" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">
+                                    Semua cabang
+                                </SelectItem>
+                                {branches.map((branch) => (
+                                    <SelectItem
+                                        key={branch.id}
+                                        value={branch.id.toString()}
+                                    >
+                                        {branch.code} · {branch.name}
                                     </SelectItem>
-                                    {branches.map((branch) => (
-                                        <SelectItem
-                                            key={branch.id}
-                                            value={branch.id.toString()}
-                                        >
-                                            {branch.code} · {branch.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            <Select
-                                value={categoryId}
-                                onValueChange={setCategoryId}
-                            >
-                                <SelectTrigger className="w-full min-w-0">
-                                    <SelectValue placeholder="Semua kategori" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">
-                                        Semua kategori
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <Select
+                            value={categoryId}
+                            onValueChange={setCategoryId}
+                        >
+                            <SelectTrigger className="w-full min-w-0">
+                                <SelectValue placeholder="Semua kategori" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">
+                                    Semua kategori
+                                </SelectItem>
+                                {categories.map((category) => (
+                                    <SelectItem
+                                        key={category.id}
+                                        value={category.id.toString()}
+                                    >
+                                        {category.code} · {category.name}
                                     </SelectItem>
-                                    {categories.map((category) => (
-                                        <SelectItem
-                                            key={category.id}
-                                            value={category.id.toString()}
-                                        >
-                                            {category.code} · {category.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            <Select value={status} onValueChange={setStatus}>
-                                <SelectTrigger className="w-full min-w-0">
-                                    <SelectValue placeholder="Semua status" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">
-                                        Semua status
-                                    </SelectItem>
-                                    <SelectItem value="available">
-                                        Tersedia
-                                    </SelectItem>
-                                    <SelectItem value="reserved">
-                                        Direservasi
-                                    </SelectItem>
-                                    <SelectItem value="rented">
-                                        Disewa
-                                    </SelectItem>
-                                    <SelectItem value="maintenance">
-                                        Maintenance
-                                    </SelectItem>
-                                    <SelectItem value="retired">
-                                        Pensiun
-                                    </SelectItem>
-                                    <SelectItem value="lost">Hilang</SelectItem>
-                                </SelectContent>
-                            </Select>
-                            <Select
-                                value={condition}
-                                onValueChange={setCondition}
-                            >
-                                <SelectTrigger className="w-full min-w-0">
-                                    <SelectValue placeholder="Semua kondisi" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">
-                                        Semua kondisi
-                                    </SelectItem>
-                                    <SelectItem value="good">Baik</SelectItem>
-                                    <SelectItem value="fair">Cukup</SelectItem>
-                                    <SelectItem value="poor">Buruk</SelectItem>
-                                    <SelectItem value="damaged">
-                                        Rusak
-                                    </SelectItem>
-                                    <SelectItem value="critical">
-                                        Kritis
-                                    </SelectItem>
-                                </SelectContent>
-                            </Select>
-                        </div>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <Select value={status} onValueChange={setStatus}>
+                            <SelectTrigger className="w-full min-w-0">
+                                <SelectValue placeholder="Semua status" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">
+                                    Semua status
+                                </SelectItem>
+                                <SelectItem value="available">
+                                    Tersedia
+                                </SelectItem>
+                                <SelectItem value="reserved">
+                                    Direservasi
+                                </SelectItem>
+                                <SelectItem value="rented">Disewa</SelectItem>
+                                <SelectItem value="maintenance">
+                                    Maintenance
+                                </SelectItem>
+                                <SelectItem value="retired">Pensiun</SelectItem>
+                                <SelectItem value="lost">Hilang</SelectItem>
+                            </SelectContent>
+                        </Select>
+                        <Select value={condition} onValueChange={setCondition}>
+                            <SelectTrigger className="w-full min-w-0">
+                                <SelectValue placeholder="Semua kondisi" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">
+                                    Semua kondisi
+                                </SelectItem>
+                                <SelectItem value="good">Baik</SelectItem>
+                                <SelectItem value="fair">Cukup</SelectItem>
+                                <SelectItem value="poor">Buruk</SelectItem>
+                                <SelectItem value="damaged">Rusak</SelectItem>
+                                <SelectItem value="critical">Kritis</SelectItem>
+                            </SelectContent>
+                        </Select>
+                    </div>
 
-                        <div className="flex flex-col gap-2 border-t pt-4 sm:flex-row sm:items-center sm:justify-end">
-                            <Button
-                                className="w-full sm:w-auto"
-                                variant="outline"
-                                onClick={resetFilters}
-                            >
-                                <RotateCcw />
-                                Reset
-                            </Button>
-                            <Button
-                                className="w-full sm:w-auto"
-                                onClick={applyFilters}
-                            >
-                                <Search />
-                                Terapkan
-                            </Button>
-                        </div>
-                    </CardContent>
-                </Card>
+                    <div className="flex flex-col gap-2 border-t pt-4 sm:flex-row sm:items-center sm:justify-end">
+                        <Button
+                            className="w-full sm:w-auto"
+                            variant="outline"
+                            onClick={resetFilters}
+                        >
+                            <RotateCcw />
+                            Reset
+                        </Button>
+                        <Button
+                            className="w-full sm:w-auto"
+                            onClick={applyFilters}
+                        >
+                            <Search />
+                            Terapkan
+                        </Button>
+                    </div>
+                </FilterBar>
 
                 <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
                     {kpis.map((item) => {
@@ -542,13 +518,16 @@ export default function AssetAnalytics({
                                 : null;
 
                         return (
-                            <Card key={item.label}>
-                                <CardContent className="p-5">
-                                    <div className="flex items-start justify-between gap-3">
-                                        <div className="flex size-10 items-center justify-center rounded-lg bg-muted">
-                                            <Icon className="size-5" />
-                                        </div>
-                                        {Direction && (
+                            <MetricCard
+                                key={item.label}
+                                label={item.label}
+                                value={item.value}
+                                detail={item.note}
+                                icon={Icon}
+                                compact={item.value.length > 18}
+                                footer={
+                                    Direction ? (
+                                        <span className="flex items-center gap-1 text-xs text-muted-foreground">
                                             <Direction
                                                 className={`size-4 ${
                                                     (summary.roi_percent ??
@@ -557,19 +536,11 @@ export default function AssetAnalytics({
                                                         : 'text-destructive'
                                                 }`}
                                             />
-                                        )}
-                                    </div>
-                                    <p className="mt-5 text-xs text-muted-foreground">
-                                        {item.label}
-                                    </p>
-                                    <p className="mt-1 text-xl font-semibold tracking-tight">
-                                        {item.value}
-                                    </p>
-                                    <p className="mt-2 text-xs text-muted-foreground">
-                                        {item.note}
-                                    </p>
-                                </CardContent>
-                            </Card>
+                                            Arah ROI keseluruhan
+                                        </span>
+                                    ) : undefined
+                                }
+                            />
                         );
                     })}
                 </section>

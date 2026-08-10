@@ -14,3 +14,8 @@ export type * from './transfer';
 
 export type * from './asset-calendar';
 export type * from './finance';
+
+export type * from './reporting';
+export type * from './inventory-audit';
+export type * from './notification';
+export type * from './dashboard';

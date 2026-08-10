@@ -23,6 +23,8 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { FilterBar } from '@/components/ui/filter-bar';
+import { MetricCard } from '@/components/ui/metric-card';
 import {
     Select,
     SelectContent,
@@ -105,29 +107,22 @@ function KpiCard({
     inverseDelta?: boolean;
     href?: string;
 }) {
-    const content = (
-        <Card className="h-full transition-colors hover:border-primary/40">
-            <CardHeader className="flex flex-row items-start justify-between gap-4 pb-3">
-                <div>
-                    <CardDescription>{label}</CardDescription>
-                    <CardTitle className="mt-2 text-2xl">{value}</CardTitle>
-                </div>
-                <div className="flex size-10 shrink-0 items-center justify-center rounded-lg bg-primary/10 text-primary">
-                    <Icon className="size-5" />
-                </div>
-            </CardHeader>
-            <CardContent className="space-y-2">
-                {delta !== undefined && (
+    return (
+        <MetricCard
+            label={label}
+            value={value}
+            detail={note}
+            icon={Icon}
+            href={href}
+            tone="primary"
+            compact={value.length > 18}
+            footer={
+                delta !== undefined ? (
                     <Delta value={delta} inverse={inverseDelta} />
-                )}
-                <p className="text-xs leading-5 text-muted-foreground">
-                    {note}
-                </p>
-            </CardContent>
-        </Card>
+                ) : undefined
+            }
+        />
     );
-
-    return href ? <Link href={href}>{content}</Link> : content;
 }
 
 function TrendChart({ data }: { data: FinanceDashboardTrendPoint[] }) {
@@ -357,7 +352,7 @@ export default function FinanceDashboard({
                 <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                     <div>
                         <p className="text-sm font-medium text-primary">
-                            Finance · Phase 5
+                            Finance Center
                         </p>
                         <h1 className="mt-1 text-2xl font-semibold tracking-tight">
                             Finance Dashboard
@@ -373,60 +368,47 @@ export default function FinanceDashboard({
                     </p>
                 </header>
 
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="text-base">
-                            Filter dashboard
-                        </CardTitle>
-                        <CardDescription>
-                            Periode memengaruhi transaksi, tren, dan
-                            perbandingan. Piutang, deposit aktif, refund
-                            outstanding, serta sesi kas adalah posisi saat ini.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                        <div className="grid gap-3 md:grid-cols-[minmax(160px,0.8fr)_minmax(160px,0.8fr)_minmax(240px,1.2fr)_auto_auto]">
-                            <Input
-                                type="date"
-                                value={from}
-                                onChange={(event) =>
-                                    setFrom(event.target.value)
-                                }
-                            />
-                            <Input
-                                type="date"
-                                value={to}
-                                onChange={(event) => setTo(event.target.value)}
-                            />
-                            <Select
-                                value={branchId}
-                                onValueChange={setBranchId}
-                            >
-                                <SelectTrigger className="w-full">
-                                    <SelectValue placeholder="Semua cabang" />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    <SelectItem value="all">
-                                        Semua cabang yang dapat diakses
+                <FilterBar
+                    title="Filter dashboard"
+                    description="Periode memengaruhi transaksi, tren, dan perbandingan; piutang, deposit, refund outstanding, serta sesi kas adalah posisi saat ini."
+                    contentClassName="grid-cols-1"
+                >
+                    <div className="grid items-end gap-3 sm:grid-cols-2 md:grid-cols-[minmax(160px,0.8fr)_minmax(160px,0.8fr)_minmax(240px,1.2fr)_auto_auto]">
+                        <Input
+                            type="date"
+                            value={from}
+                            onChange={(event) => setFrom(event.target.value)}
+                        />
+                        <Input
+                            type="date"
+                            value={to}
+                            onChange={(event) => setTo(event.target.value)}
+                        />
+                        <Select value={branchId} onValueChange={setBranchId}>
+                            <SelectTrigger className="w-full">
+                                <SelectValue placeholder="Semua cabang" />
+                            </SelectTrigger>
+                            <SelectContent>
+                                <SelectItem value="all">
+                                    Semua cabang yang dapat diakses
+                                </SelectItem>
+                                {branches.map((branch) => (
+                                    <SelectItem
+                                        key={branch.id}
+                                        value={branch.id.toString()}
+                                    >
+                                        {branch.code} · {branch.name}
                                     </SelectItem>
-                                    {branches.map((branch) => (
-                                        <SelectItem
-                                            key={branch.id}
-                                            value={branch.id.toString()}
-                                        >
-                                            {branch.code} · {branch.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                            <Button onClick={applyFilters}>Terapkan</Button>
-                            <Button variant="outline" onClick={resetFilters}>
-                                <RotateCcw />
-                                Reset
-                            </Button>
-                        </div>
-                    </CardContent>
-                </Card>
+                                ))}
+                            </SelectContent>
+                        </Select>
+                        <Button onClick={applyFilters}>Terapkan</Button>
+                        <Button variant="outline" onClick={resetFilters}>
+                            <RotateCcw />
+                            Reset
+                        </Button>
+                    </div>
+                </FilterBar>
 
                 <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                     <KpiCard
@@ -479,53 +461,34 @@ export default function FinanceDashboard({
                 </section>
 
                 <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                    <Card>
-                        <CardContent className="pt-6">
-                            <p className="text-xs text-muted-foreground">
-                                Payment completed
-                            </p>
-                            <p className="mt-2 text-xl font-semibold">
-                                {number.format(summary.completed_payment_count)}
-                            </p>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardContent className="pt-6">
-                            <p className="text-xs text-muted-foreground">
-                                Payment void
-                            </p>
-                            <p className="mt-2 text-xl font-semibold">
-                                {number.format(summary.void_count)} ·{' '}
-                                {money.format(summary.void_amount)}
-                            </p>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardContent className="pt-6">
-                            <p className="text-xs text-muted-foreground">
-                                Refund outstanding
-                            </p>
-                            <p className="mt-2 text-xl font-semibold">
-                                {number.format(
-                                    summary.outstanding_refund_count,
-                                )}{' '}
-                                ·{' '}
-                                {money.format(
-                                    summary.outstanding_refund_amount,
-                                )}
-                            </p>
-                        </CardContent>
-                    </Card>
-                    <Card>
-                        <CardContent className="pt-6">
-                            <p className="text-xs text-muted-foreground">
-                                Sesi kas terbuka
-                            </p>
-                            <p className="mt-2 text-xl font-semibold">
-                                {number.format(summary.open_cash_session_count)}
-                            </p>
-                        </CardContent>
-                    </Card>
+                    <MetricCard
+                        label="Payment completed"
+                        value={number.format(summary.completed_payment_count)}
+                        icon={WalletCards}
+                    />
+                    <MetricCard
+                        label="Payment void"
+                        value={`${number.format(summary.void_count)} · ${money.format(summary.void_amount)}`}
+                        icon={CreditCard}
+                        tone={summary.void_count > 0 ? 'danger' : 'neutral'}
+                        compact
+                    />
+                    <MetricCard
+                        label="Refund outstanding"
+                        value={`${number.format(summary.outstanding_refund_count)} · ${money.format(summary.outstanding_refund_amount)}`}
+                        icon={ReceiptText}
+                        tone={
+                            summary.outstanding_refund_count > 0
+                                ? 'warning'
+                                : 'neutral'
+                        }
+                        compact
+                    />
+                    <MetricCard
+                        label="Sesi kas terbuka"
+                        value={number.format(summary.open_cash_session_count)}
+                        icon={ShieldCheck}
+                    />
                 </section>
 
                 <Card>

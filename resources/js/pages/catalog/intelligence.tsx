@@ -30,6 +30,7 @@ import {
     CardTitle,
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { MetricCard } from '@/components/ui/metric-card';
 import {
     Select,
     SelectContent,
@@ -251,21 +252,17 @@ export default function CatalogIntelligence({
                             icon: ShieldCheck,
                         },
                     ].map(({ label, value, icon: Icon }) => (
-                        <Card key={label}>
-                            <CardContent className="flex items-center justify-between p-5">
-                                <div>
-                                    <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                                        {label}
-                                    </p>
-                                    <p className="mt-2 text-3xl font-semibold">
-                                        {value}
-                                    </p>
-                                </div>
-                                <div className="flex size-11 items-center justify-center rounded-xl bg-muted">
-                                    <Icon className="size-5" />
-                                </div>
-                            </CardContent>
-                        </Card>
+                        <MetricCard
+                            key={label}
+                            label={label}
+                            value={value}
+                            icon={Icon}
+                            tone={
+                                label === 'Perlu review' && Number(value) > 0
+                                    ? 'warning'
+                                    : 'neutral'
+                            }
+                        />
                     ))}
                 </section>
 
@@ -299,7 +296,10 @@ export default function CatalogIntelligence({
                                             Execute.
                                         </CardDescription>
                                     </div>
-                                    <div className="grid gap-2 sm:grid-cols-[12rem_minmax(14rem,1fr)_auto]">
+                                    <div
+                                        data-slot="filter-grid"
+                                        className="grid items-end gap-3 rounded-xl border bg-muted/25 p-3 sm:grid-cols-[12rem_minmax(14rem,1fr)_auto]"
+                                    >
                                         <Select
                                             value={filters.status || 'all'}
                                             onValueChange={filter}
@@ -775,7 +775,9 @@ function BrandVisualCard({ brand }: { brand: CatalogBrand }) {
 
                                 router.delete(
                                     `/catalog/brands/${brand.id}/logo`,
-                                    { preserveScroll: true },
+                                    {
+                                        preserveScroll: true,
+                                    },
                                 );
                             }}
                         >

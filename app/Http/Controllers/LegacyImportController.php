@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Domain\LegacyImport\LegacyImportIssueResolver;
 use App\Domain\LegacyImport\LegacyImportRecorder;
 use App\Domain\LegacyImport\LegacyImportTargetManager;
 use App\Domain\LegacyImport\RentalV1Mapper;
@@ -176,6 +177,18 @@ class LegacyImportController extends Controller
                 ->selectRaw('severity, status, COUNT(*) as aggregate')
                 ->groupBy('severity', 'status')
                 ->get(),
+            'resolutionOptions' => [
+                'orphan_booking_details' => $legacyImport->issues()
+                    ->where('status', 'open')->where('severity', 'error')->where('code', 'REFERENCE_NOT_FOUND')
+                    ->where('field', 'bookingdet_booking_id')
+                    ->whereHas('row', fn ($query) => $query->where('source_table', 'trx_booking_detail'))
+                    ->count(),
+                'missing_booking_products' => $legacyImport->issues()
+                    ->where('status', 'open')->where('severity', 'error')->where('code', 'REFERENCE_NOT_FOUND')
+                    ->where('field', 'bookingdet_rentproduct_id')
+                    ->whereHas('row', fn ($query) => $query->where('source_table', 'trx_booking_detail'))
+                    ->count(),
+            ],
             'filters' => [
                 'source_table' => $sourceTable,
                 'row_status' => $rowStatus,
@@ -210,6 +223,26 @@ class LegacyImportController extends Controller
             'type' => $reset ? 'warning' : 'success',
             'message' => $message,
         ]);
+    }
+
+    public function skipOrphanBookingDetails(Request $request, LegacyImportBatch $legacyImport, LegacyImportIssueResolver $resolver): RedirectResponse
+    {
+        Gate::authorize('imports.validate');
+        $this->guardBranch($legacyImport, $request->user());
+        $validated = $request->validate(['reason' => ['required', 'string', 'min:10', 'max:500']]);
+        $count = $resolver->skipOrphanBookingDetails($legacyImport, $request->user()->id, $validated['reason']);
+
+        return back()->with('toast', ['type' => 'success', 'message' => "{$count} detail booking yatim telah ditandai skipped."]);
+    }
+
+    public function createMissingProductPlaceholder(Request $request, LegacyImportBatch $legacyImport, LegacyImportIssueResolver $resolver): RedirectResponse
+    {
+        Gate::authorize('imports.validate');
+        $this->guardBranch($legacyImport, $request->user());
+        $validated = $request->validate(['reason' => ['required', 'string', 'min:10', 'max:500']]);
+        $count = $resolver->createMissingProductPlaceholder($legacyImport, $request->user()->id, $validated['reason']);
+
+        return back()->with('toast', ['type' => 'success', 'message' => "{$count} produk placeholder nonaktif berhasil dibuat."]);
     }
 
     public function preview(

@@ -38,13 +38,13 @@ export function BranchSwitcher() {
                     <DropdownMenuTrigger asChild>
                         <SidebarMenuButton
                             size="lg"
-                            className="data-[state=open]:bg-sidebar-accent"
+                            className="rounded-xl border border-sidebar-border/70 bg-sidebar-accent/35 shadow-xs data-[state=open]:bg-sidebar-accent"
                             tooltip={{ children: current.name }}
                         >
-                            <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
+                            <div className="flex aspect-square size-8 shrink-0 items-center justify-center rounded-lg border border-sidebar-border bg-sidebar text-sidebar-foreground">
                                 <Building2 className="size-4" />
                             </div>
-                            <div className="grid flex-1 text-left text-sm leading-tight">
+                            <div className="grid flex-1 text-left text-sm leading-tight transition-opacity duration-200 group-data-[collapsible=icon]:opacity-0">
                                 <span className="truncate font-medium">
                                     {current.code}
                                 </span>
@@ -52,7 +52,7 @@ export function BranchSwitcher() {
                                     {current.name}
                                 </span>
                             </div>
-                            <ChevronsUpDown className="ml-auto size-4" />
+                            <ChevronsUpDown className="ml-auto size-4 transition-opacity duration-200 group-data-[collapsible=icon]:opacity-0" />
                         </SidebarMenuButton>
                     </DropdownMenuTrigger>
                     <DropdownMenuContent

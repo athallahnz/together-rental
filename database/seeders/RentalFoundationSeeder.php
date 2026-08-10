@@ -3,6 +3,7 @@
 namespace Database\Seeders;
 
 use App\Domain\Catalog\Intelligence\CatalogTextNormalizer;
+use App\Domain\Notifications\NotificationRuleCatalog;
 use App\Models\User;
 use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
@@ -55,10 +56,26 @@ class RentalFoundationSeeder extends Seeder
 
             $this->seedBranchSettings($branchId, $now);
             $this->seedAccessControl($companyId, $now);
+            $this->seedNotificationRules($companyId, $now);
             $this->seedOperationalDefaults($companyId, $branchId, $branchCode, $now);
             $this->seedCatalogIntelligence($companyId, $now);
             $this->attachInitialAdministrator($companyId, $branchId, $now);
         });
+    }
+
+    private function seedNotificationRules(int $companyId, mixed $now): void
+    {
+        foreach (NotificationRuleCatalog::definitions() as $definition) {
+            DB::table('notification_rules')->updateOrInsert(
+                ['company_id' => $companyId, 'code' => $definition['code']],
+                [
+                    ...$definition,
+                    'is_enabled' => true,
+                    'created_at' => $now,
+                    'updated_at' => $now,
+                ],
+            );
+        }
     }
 
     private function seedBranchSettings(int $branchId, mixed $now): void
@@ -154,8 +171,16 @@ class RentalFoundationSeeder extends Seeder
             ['transfers.override', 'Override branch transfer guardrails', 'transfers'],
             ['maintenance.view', 'View maintenance', 'maintenance'],
             ['maintenance.manage', 'Manage maintenance', 'maintenance'],
+            ['inventory-audits.view', 'View stock opname and inventory audits', 'inventory-audits'],
+            ['inventory-audits.create', 'Create stock opname schedules', 'inventory-audits'],
+            ['inventory-audits.count', 'Record physical inventory counts', 'inventory-audits'],
+            ['inventory-audits.approve', 'Approve inventory audit results', 'inventory-audits'],
+            ['inventory-audits.resolve', 'Resolve inventory audit findings', 'inventory-audits'],
+            ['inventory-audits.cancel', 'Cancel inventory audits', 'inventory-audits'],
             ['reports.view', 'View reports', 'reports'],
             ['reports.export', 'Export reports', 'reports'],
+            ['notifications.view', 'View Notification & Reminder Center', 'notifications'],
+            ['notifications.manage', 'Manage notification rules and reminder scans', 'notifications'],
             ['imports.view', 'View legacy imports', 'imports'],
             ['imports.upload', 'Upload legacy imports', 'imports'],
             ['imports.validate', 'Validate and map legacy imports', 'imports'],
@@ -233,8 +258,13 @@ class RentalFoundationSeeder extends Seeder
                 'cash.view',
                 'transfers.view',
                 'maintenance.view',
+                'inventory-audits.view',
+                'inventory-audits.approve',
+                'inventory-audits.resolve',
                 'reports.view',
                 'reports.export',
+                'notifications.view',
+                'notifications.manage',
                 'imports.view',
                 'audit.view',
             ],
@@ -286,8 +316,15 @@ class RentalFoundationSeeder extends Seeder
                 'transfers.resolve_discrepancy',
                 'maintenance.view',
                 'maintenance.manage',
+                'inventory-audits.view',
+                'inventory-audits.create',
+                'inventory-audits.count',
+                'inventory-audits.approve',
+                'inventory-audits.resolve',
+                'inventory-audits.cancel',
                 'reports.view',
                 'reports.export',
+                'notifications.view',
                 'imports.view',
             ],
             'rental-operator' => [
@@ -313,6 +350,7 @@ class RentalFoundationSeeder extends Seeder
                 'payments.create',
                 'refunds.view',
                 'refunds.request',
+                'notifications.view',
             ],
             'cashier' => [
                 'branches.switch',
@@ -331,6 +369,7 @@ class RentalFoundationSeeder extends Seeder
                 'reports.view',
                 'transfers.view',
                 'transfers.expense',
+                'notifications.view',
             ],
             'inventory-staff' => [
                 'branches.switch',
@@ -344,7 +383,11 @@ class RentalFoundationSeeder extends Seeder
                 'transfers.receive',
                 'maintenance.view',
                 'maintenance.manage',
+                'inventory-audits.view',
+                'inventory-audits.create',
+                'inventory-audits.count',
                 'reports.view',
+                'notifications.view',
             ],
         ];
 

@@ -35,6 +35,8 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
+import { FilterBar, FilterField } from '@/components/ui/filter-bar';
+import { MetricCard } from '@/components/ui/metric-card';
 import type {
     AccessBranch,
     CatalogBranchStock,
@@ -183,20 +185,15 @@ export default function ProductShow({
 
                 <ProductErrors errors={errors} />
 
-                <Card className="border-primary/20 bg-primary/[0.02]">
-                    <CardContent className="grid gap-4 p-4 md:grid-cols-[minmax(0,1fr)_minmax(260px,360px)] md:items-center md:p-5">
-                        <div>
-                            <p className="text-sm font-semibold">
-                                Lingkup inventaris produk
-                            </p>
-                            <p className="mt-1 text-sm text-muted-foreground">
-                                Aset, stok, dan daftar harga mengikuti cabang
-                                yang dipilih. Master produk tetap global.
-                            </p>
-                            <p className="mt-2 text-xs font-medium text-primary">
-                                Aktif: {scopeLabel}
-                            </p>
-                        </div>
+                <FilterBar
+                    title="Lingkup inventaris produk"
+                    description="Aset, stok, dan daftar harga mengikuti cabang yang dipilih; master produk tetap global."
+                    context={
+                        <Badge variant="outline">Aktif: {scopeLabel}</Badge>
+                    }
+                    contentClassName="grid-cols-1 md:grid-cols-[minmax(260px,360px)]"
+                >
+                    <FilterField label="Cabang operasional">
                         <Select
                             value={filters.branch_id?.toString() ?? 'all'}
                             onValueChange={(value) =>
@@ -232,8 +229,8 @@ export default function ProductShow({
                                 ))}
                             </SelectContent>
                         </Select>
-                    </CardContent>
-                </Card>
+                    </FilterField>
+                </FilterBar>
 
                 <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                     <Metric
@@ -700,21 +697,7 @@ function Metric({
     value: string;
     icon: typeof Boxes;
 }) {
-    return (
-        <Card>
-            <CardContent className="flex items-center justify-between p-5">
-                <div>
-                    <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                        {label}
-                    </p>
-                    <p className="mt-2 text-2xl font-semibold">{value}</p>
-                </div>
-                <div className="flex size-11 items-center justify-center rounded-xl bg-muted">
-                    <Icon className="size-5" />
-                </div>
-            </CardContent>
-        </Card>
-    );
+    return <MetricCard label={label} value={value} icon={Icon} />;
 }
 
 function Info({ label, value }: { label: string; value: string }) {

@@ -6,6 +6,7 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { cn } from '@/lib/utils';
 import type { NavItem } from '@/types';
 
 export type NavMainGroup = {
@@ -57,9 +58,18 @@ export function NavMain({ groups = [] }: { groups: NavMainGroup[] }) {
 
     return (
         <>
-            {visibleGroups.map((group) => (
-                <SidebarGroup className="px-2 py-0" key={group.label}>
-                    <SidebarGroupLabel>{group.label}</SidebarGroupLabel>
+            {visibleGroups.map((group, groupIndex) => (
+                <SidebarGroup
+                    className={cn(
+                        'px-2 py-1 group-data-[collapsible=icon]:py-2',
+                        groupIndex > 0 &&
+                            'group-data-[collapsible=icon]:border-t group-data-[collapsible=icon]:border-sidebar-border/60',
+                    )}
+                    key={group.label}
+                >
+                    <SidebarGroupLabel className="px-2 text-[10px] font-semibold tracking-[0.12em] text-sidebar-foreground/50 uppercase">
+                        {group.label}
+                    </SidebarGroupLabel>
 
                     <SidebarMenu>
                         {group.items.map((item) => {
@@ -71,6 +81,7 @@ export function NavMain({ groups = [] }: { groups: NavMainGroup[] }) {
                                         asChild
                                         isActive={path === activePath}
                                         tooltip={{ children: item.title }}
+                                        className="h-9 rounded-lg px-2.5 group-data-[collapsible=icon]:mx-auto data-[active=true]:bg-sidebar-primary data-[active=true]:text-sidebar-primary-foreground data-[active=true]:shadow-sm"
                                     >
                                         <Link href={item.href} prefetch>
                                             {item.icon && <item.icon />}

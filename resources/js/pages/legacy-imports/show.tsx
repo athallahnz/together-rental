@@ -30,6 +30,7 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { MetricCard } from '@/components/ui/metric-card';
 import { cn } from '@/lib/utils';
 
 type SourceTable = {
@@ -172,6 +173,10 @@ type Props = {
         status: string;
         aggregate: number;
     }>;
+    resolutionOptions: {
+        orphan_booking_details: number;
+        missing_booking_products: number;
+    };
     filters: {
         source_table: string;
         row_status: string;
@@ -217,6 +222,7 @@ export default function LegacyImportShow({
     rows,
     issues,
     issueSummary,
+    resolutionOptions,
     filters,
     permissions,
 }: Props) {
@@ -224,6 +230,9 @@ export default function LegacyImportShow({
     const [activeAction, setActiveAction] = useState<string | null>(null);
     const [targetBranchId, setTargetBranchId] = useState(batch.branch.id);
     const [targetPrefix, setTargetPrefix] = useState(batch.import_prefix ?? '');
+    const [resolutionReason, setResolutionReason] = useState(
+        'Resolusi terverifikasi berdasarkan audit referensi dump legacy.',
+    );
     const targetEditable = canEditTarget(batch, permissions);
     const selectedTargetBranch =
         targetBranches.find((branch) => branch.id === targetBranchId) ?? null;
@@ -302,6 +311,35 @@ export default function LegacyImportShow({
             `/legacy-imports/${batch.id}`,
             { ...filters, [key]: value },
             { preserveState: true, preserveScroll: true, replace: true },
+        );
+    };
+
+    const resolveIssues = async (
+        action:
+            | 'skip-orphan-booking-details'
+            | 'create-missing-product-placeholder',
+        title: string,
+        description: string,
+    ) => {
+        const confirmed = await confirm({
+            title,
+            description,
+            confirmLabel: 'Terapkan resolusi',
+            variant:
+                action === 'skip-orphan-booking-details'
+                    ? 'destructive'
+                    : 'default',
+        });
+
+        if (!confirmed) {
+            return;
+        }
+
+        setActiveAction(action);
+        router.post(
+            `/legacy-imports/${batch.id}/issues/${action}`,
+            { reason: resolutionReason },
+            { preserveScroll: true, onFinish: () => setActiveAction(null) },
         );
     };
 
@@ -659,7 +697,7 @@ export default function LegacyImportShow({
                 {batch.status === 'validated' && batch.error_rows > 0 && (
                     <div className="flex gap-3 rounded-xl border border-destructive/30 bg-destructive/5 p-4 text-sm">
                         <AlertTriangle className="mt-0.5 size-5 shrink-0 text-destructive" />
-                        <div>
+                        <div className="w-full">
                             <p className="font-medium">
                                 Mapping belum dapat dikonfirmasi
                             </p>
@@ -668,6 +706,90 @@ export default function LegacyImportShow({
                                 Periksa referensi atau kolom wajib pada antrean
                                 isu.
                             </p>
+                            {permissions.validate &&
+                                (resolutionOptions.orphan_booking_details > 0 ||
+                                    resolutionOptions.missing_booking_products >
+                                        0) && (
+                                    <div className="mt-4 space-y-3 rounded-lg border bg-background/80 p-4">
+                                        <div className="space-y-1.5">
+                                            <Label htmlFor="resolution-reason">
+                                                Alasan resolusi (tersimpan di
+                                                audit)
+                                            </Label>
+                                            <Input
+                                                id="resolution-reason"
+                                                value={resolutionReason}
+                                                onChange={(event) =>
+                                                    setResolutionReason(
+                                                        event.target.value,
+                                                    )
+                                                }
+                                                minLength={10}
+                                                maxLength={500}
+                                            />
+                                        </div>
+                                        <div className="flex flex-wrap gap-2">
+                                            {resolutionOptions.orphan_booking_details >
+                                                0 && (
+                                                <Button
+                                                    type="button"
+                                                    variant="destructive"
+                                                    disabled={
+                                                        resolutionReason.trim()
+                                                            .length < 10 ||
+                                                        activeAction !== null
+                                                    }
+                                                    onClick={() =>
+                                                        resolveIssues(
+                                                            'skip-orphan-booking-details',
+                                                            `Abaikan ${number(resolutionOptions.orphan_booking_details)} detail booking yatim?`,
+                                                            'Baris tanpa booking induk akan ditandai skipped dan tidak pernah ditulis saat Execute.',
+                                                        )
+                                                    }
+                                                >
+                                                    {activeAction ===
+                                                        'skip-orphan-booking-details' && (
+                                                        <LoaderCircle className="animate-spin" />
+                                                    )}
+                                                    Abaikan{' '}
+                                                    {number(
+                                                        resolutionOptions.orphan_booking_details,
+                                                    )}{' '}
+                                                    baris yatim
+                                                </Button>
+                                            )}
+                                            {resolutionOptions.missing_booking_products >
+                                                0 && (
+                                                <Button
+                                                    type="button"
+                                                    variant="outline"
+                                                    disabled={
+                                                        resolutionReason.trim()
+                                                            .length < 10 ||
+                                                        activeAction !== null
+                                                    }
+                                                    onClick={() =>
+                                                        resolveIssues(
+                                                            'create-missing-product-placeholder',
+                                                            'Buat produk placeholder nonaktif?',
+                                                            'Produk placeholder hanya menjaga detail transaksi historis, berstatus nonaktif, dan tidak dapat disewakan.',
+                                                        )
+                                                    }
+                                                >
+                                                    {activeAction ===
+                                                        'create-missing-product-placeholder' && (
+                                                        <LoaderCircle className="animate-spin" />
+                                                    )}
+                                                    Buat placeholder untuk{' '}
+                                                    {number(
+                                                        resolutionOptions.missing_booking_products,
+                                                    )}{' '}
+                                                    referensi
+                                                </Button>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
                         </div>
                     </div>
                 )}
@@ -868,7 +990,10 @@ export default function LegacyImportShow({
                                 Data ternormalisasi; password legacy tidak
                                 disimpan.
                             </CardDescription>
-                            <div className="mt-3 flex flex-wrap gap-2">
+                            <div
+                                data-slot="filter-grid"
+                                className="mt-4 grid items-end gap-3 rounded-xl border bg-muted/25 p-3 sm:grid-cols-2"
+                            >
                                 <NativeFilter
                                     value={filters.source_table}
                                     onChange={(value) =>
@@ -966,7 +1091,10 @@ export default function LegacyImportShow({
                                     )
                                     .join(' · ') || 'belum divalidasi'}
                             </CardDescription>
-                            <div className="mt-3">
+                            <div
+                                data-slot="filter-grid"
+                                className="mt-4 grid items-end gap-3 rounded-xl border bg-muted/25 p-3 sm:max-w-xs"
+                            >
                                 <NativeFilter
                                     value={filters.issue_severity}
                                     onChange={(value) =>
@@ -1196,21 +1324,11 @@ function Metric({
     tone?: 'default' | 'success' | 'warning' | 'danger';
 }) {
     return (
-        <div className="rounded-xl border bg-card p-4">
-            <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                {label}
-            </p>
-            <p
-                className={cn(
-                    'mt-2 text-2xl font-semibold tabular-nums',
-                    tone === 'success' && 'text-emerald-600',
-                    tone === 'warning' && 'text-amber-600',
-                    tone === 'danger' && 'text-destructive',
-                )}
-            >
-                {number(value)}
-            </p>
-        </div>
+        <MetricCard
+            label={label}
+            value={number(value)}
+            tone={tone === 'default' ? 'neutral' : tone}
+        />
     );
 }
 
@@ -1244,7 +1362,7 @@ function NativeFilter({
         <select
             value={value}
             onChange={(event) => onChange(event.target.value)}
-            className="h-9 rounded-md border border-input bg-background px-3 text-sm shadow-xs outline-none focus-visible:ring-2 focus-visible:ring-ring"
+            className="h-10 w-full min-w-0 rounded-md border border-input bg-background px-3 text-sm shadow-xs transition-[border-color,box-shadow] outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50"
         >
             {options.map(([optionValue, label]) => (
                 <option key={optionValue} value={optionValue}>

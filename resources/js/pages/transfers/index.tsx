@@ -5,6 +5,8 @@ import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
+import { FilterBar } from '@/components/ui/filter-bar';
+import { MetricCard } from '@/components/ui/metric-card';
 import { PaginationLinks } from '@/components/pagination-links';
 import {
     Select,
@@ -122,79 +124,74 @@ export default function TransferIndex({
                     <Summary label="Discrepancy" value={summary.discrepancy} />
                 </div>
 
-                <Card>
-                    <CardContent className="grid gap-3 pt-6 md:grid-cols-4">
-                        <Input
-                            value={search}
-                            onChange={(event) => setSearch(event.target.value)}
-                            onKeyDown={(event) => {
-                                if (event.key === 'Enter') {
-                                    applyFilters({});
-                                }
-                            }}
-                            placeholder="Nomor transfer, aset, produk..."
-                        />
-                        <Select
-                            value={filters.status || 'all'}
-                            onValueChange={(value) =>
-                                applyFilters({
-                                    status: value === 'all' ? '' : value,
-                                })
+                <FilterBar
+                    title="Filter transfer aset"
+                    description="Cari dokumen, aset, atau produk lalu persempit berdasarkan status dan cabang."
+                >
+                    <Input
+                        value={search}
+                        onChange={(event) => setSearch(event.target.value)}
+                        onKeyDown={(event) => {
+                            if (event.key === 'Enter') {
+                                applyFilters({});
                             }
-                        >
-                            <SelectTrigger>
-                                <SelectValue placeholder="Semua status" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">
-                                    Semua status
+                        }}
+                        placeholder="Nomor transfer, aset, produk..."
+                    />
+                    <Select
+                        value={filters.status || 'all'}
+                        onValueChange={(value) =>
+                            applyFilters({
+                                status: value === 'all' ? '' : value,
+                            })
+                        }
+                    >
+                        <SelectTrigger>
+                            <SelectValue placeholder="Semua status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">Semua status</SelectItem>
+                            {Object.entries(labels).map(([value, label]) => (
+                                <SelectItem key={value} value={value}>
+                                    {label}
                                 </SelectItem>
-                                {Object.entries(labels).map(
-                                    ([value, label]) => (
-                                        <SelectItem key={value} value={value}>
-                                            {label}
-                                        </SelectItem>
-                                    ),
-                                )}
-                            </SelectContent>
-                        </Select>
-                        <Select
-                            value={
-                                filters.branchId === null
-                                    ? 'all'
-                                    : String(filters.branchId)
-                            }
-                            onValueChange={(value) =>
-                                applyFilters({
-                                    branch_id: value === 'all' ? '' : value,
-                                })
-                            }
-                        >
-                            <SelectTrigger>
-                                <SelectValue placeholder="Semua cabang" />
-                            </SelectTrigger>
-                            <SelectContent>
-                                <SelectItem value="all">
-                                    Semua cabang
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    <Select
+                        value={
+                            filters.branchId === null
+                                ? 'all'
+                                : String(filters.branchId)
+                        }
+                        onValueChange={(value) =>
+                            applyFilters({
+                                branch_id: value === 'all' ? '' : value,
+                            })
+                        }
+                    >
+                        <SelectTrigger>
+                            <SelectValue placeholder="Semua cabang" />
+                        </SelectTrigger>
+                        <SelectContent>
+                            <SelectItem value="all">Semua cabang</SelectItem>
+                            {branches.map((branch) => (
+                                <SelectItem
+                                    key={branch.id}
+                                    value={String(branch.id)}
+                                >
+                                    {branch.code} — {branch.name}
                                 </SelectItem>
-                                {branches.map((branch) => (
-                                    <SelectItem
-                                        key={branch.id}
-                                        value={String(branch.id)}
-                                    >
-                                        {branch.code} — {branch.name}
-                                    </SelectItem>
-                                ))}
-                            </SelectContent>
-                        </Select>
-                        <Button
-                            variant="secondary"
-                            onClick={() => applyFilters({})}
-                        >
-                            Cari
-                        </Button>
-                    </CardContent>
-                </Card>
+                            ))}
+                        </SelectContent>
+                    </Select>
+                    <Button
+                        variant="secondary"
+                        onClick={() => applyFilters({})}
+                    >
+                        Cari
+                    </Button>
+                </FilterBar>
 
                 <Card>
                     <CardContent className="p-0">
@@ -295,12 +292,5 @@ export default function TransferIndex({
 }
 
 function Summary({ label, value }: { label: string; value: number }) {
-    return (
-        <Card>
-            <CardContent className="pt-6">
-                <p className="text-sm text-muted-foreground">{label}</p>
-                <p className="mt-1 text-2xl font-semibold">{value}</p>
-            </CardContent>
-        </Card>
-    );
+    return <MetricCard label={label} value={value} icon={ArrowLeftRight} />;
 }

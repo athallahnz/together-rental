@@ -27,6 +27,7 @@ import {
 import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { MetricCard } from '@/components/ui/metric-card';
 import {
     Select,
     SelectContent,
@@ -52,6 +53,8 @@ type ResetSummary = {
     refunds: number;
     financial_adjustments: number;
     maintenance: number;
+    inventory_audits: number;
+    notifications: number;
     transfers: number;
     transfer_expenses: number;
     inspections: number;
@@ -87,22 +90,13 @@ function SummaryCard({
     icon: typeof CalendarDays;
 }) {
     return (
-        <Card>
-            <CardContent className="flex items-start justify-between gap-4 p-5">
-                <div>
-                    <p className="text-sm text-muted-foreground">{label}</p>
-                    <p className="mt-1 text-2xl font-semibold tabular-nums">
-                        {value.toLocaleString('id-ID')}
-                    </p>
-                    <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                        {detail}
-                    </p>
-                </div>
-                <div className="flex size-10 shrink-0 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                    <Icon className="size-5" />
-                </div>
-            </CardContent>
-        </Card>
+        <MetricCard
+            label={label}
+            value={value.toLocaleString('id-ID')}
+            detail={detail}
+            icon={Icon}
+            tone="primary"
+        />
     );
 }
 
@@ -138,7 +132,7 @@ export default function OperationalDataReset({
 
         const approved = await confirm({
             title: 'Reset data operasional sekarang?',
-            description: `Booking, rental, transaksi keuangan terkait, return, maintenance, dan transfer pada ${scopeLabel} akan dihapus permanen dari environment ${environment}. Master pelanggan, katalog, aset, harga, cabang, pengguna, dan role tetap dipertahankan.`,
+            description: `Booking, rental, transaksi keuangan terkait, return, maintenance, stock opname, dan transfer pada ${scopeLabel} akan dihapus permanen dari environment ${environment}. Master pelanggan, katalog, aset, harga, cabang, pengguna, dan role tetap dipertahankan.`,
             confirmLabel: 'Ya, reset operasional',
             variant: 'destructive',
         });
@@ -239,6 +233,15 @@ export default function OperationalDataReset({
                         value={summary.maintenance}
                         detail={`${summary.inspections.toLocaleString('id-ID')} inspection pada lingkup reset`}
                         icon={Wrench}
+                    />
+                    <SummaryCard
+                        label="Stock opname"
+                        value={summary.inventory_audits}
+                        detail={
+                            summary.notifications.toLocaleString('id-ID') +
+                            ' reminder operasional terkait ikut dibersihkan'
+                        }
+                        icon={ClipboardCheck}
                     />
                     <SummaryCard
                         label="Transfer aset"

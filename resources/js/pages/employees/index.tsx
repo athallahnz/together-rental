@@ -37,6 +37,7 @@ import {
 } from '@/components/ui/dialog';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { MetricCard } from '@/components/ui/metric-card';
 import {
     Select,
     SelectContent,
@@ -404,26 +405,17 @@ export default function EmployeeIndex({
                             icon: CircleOff,
                         },
                     ].map(({ label, value, icon: Icon }) => (
-                        <Card key={label}>
-                            <CardContent className="flex items-center justify-between p-5">
-                                <div>
-                                    <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                                        {label}
-                                    </p>
-                                    <p className="mt-2 text-3xl font-semibold">
-                                        {value}
-                                    </p>
-                                </div>
-                                <div className="flex size-11 items-center justify-center rounded-xl bg-muted">
-                                    <Icon className="size-5" />
-                                </div>
-                            </CardContent>
-                        </Card>
+                        <MetricCard
+                            key={label}
+                            label={label}
+                            value={value}
+                            icon={Icon}
+                        />
                     ))}
                 </section>
 
                 <Card>
-                    <CardHeader className="gap-4 lg:flex-row lg:items-center lg:justify-between">
+                    <CardHeader className="gap-4">
                         <div>
                             <CardTitle>Daftar karyawan</CardTitle>
                             <CardDescription>
@@ -431,7 +423,10 @@ export default function EmployeeIndex({
                                 akun login.
                             </CardDescription>
                         </div>
-                        <div className="flex flex-col gap-2 sm:flex-row">
+                        <div
+                            data-slot="filter-grid"
+                            className="grid items-end gap-3 rounded-xl border bg-muted/25 p-4 sm:grid-cols-2 lg:grid-cols-[minmax(260px,1fr)_minmax(180px,0.45fr)_minmax(160px,0.4fr)]"
+                        >
                             <form
                                 className="flex gap-2"
                                 onSubmit={(event) => {
@@ -446,7 +441,7 @@ export default function EmployeeIndex({
                                         onChange={(event) =>
                                             setSearch(event.target.value)
                                         }
-                                        className="w-full pl-9 sm:w-64"
+                                        className="w-full pl-9"
                                         placeholder="Nama, nomor, telepon"
                                     />
                                 </div>
@@ -468,7 +463,7 @@ export default function EmployeeIndex({
                                     )
                                 }
                             >
-                                <SelectTrigger className="w-full sm:w-48">
+                                <SelectTrigger className="w-full">
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
@@ -491,7 +486,7 @@ export default function EmployeeIndex({
                                     applyFilters(value === 'all' ? '' : value)
                                 }
                             >
-                                <SelectTrigger className="w-full sm:w-40">
+                                <SelectTrigger className="w-full">
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>

@@ -6,6 +6,7 @@ use App\Domain\Catalog\Intelligence\CatalogAiSuggestionProvider;
 use App\Domain\Catalog\Intelligence\DisabledCatalogAiSuggestionProvider;
 use App\Models\User;
 use Carbon\CarbonImmutable;
+use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\DevCommands;
 use Illuminate\Support\Facades\Date;
 use Illuminate\Support\Facades\DB;
@@ -33,6 +34,7 @@ class AppServiceProvider extends ServiceProvider
     {
         $this->configureDevelopmentCommands();
         $this->configureAuthorization();
+        $this->configureNotificationSchedule();
         $this->configureDefaults();
     }
 
@@ -81,6 +83,12 @@ class AppServiceProvider extends ServiceProvider
             'transfers.override',
             'maintenance.view',
             'maintenance.manage',
+            'inventory-audits.view',
+            'inventory-audits.create',
+            'inventory-audits.count',
+            'inventory-audits.approve',
+            'inventory-audits.resolve',
+            'inventory-audits.cancel',
             'finance.dashboard.view',
             'finance.masters.view',
             'finance.payment_methods.manage',
@@ -103,12 +111,26 @@ class AppServiceProvider extends ServiceProvider
             'imports.execute',
             'reports.view',
             'reports.export',
+            'notifications.view',
+            'notifications.manage',
         ] as $permission) {
             Gate::define(
                 $permission,
                 static fn (User $user): bool => $user->hasPermission($permission),
             );
         }
+    }
+
+    protected function configureNotificationSchedule(): void
+    {
+        $this->callAfterResolving(
+            Schedule::class,
+            static function (Schedule $schedule): void {
+                $schedule->command('notifications:generate')
+                    ->everyFiveMinutes()
+                    ->withoutOverlapping(10);
+            },
+        );
     }
 
     /**
