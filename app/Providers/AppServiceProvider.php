@@ -44,6 +44,8 @@ class AppServiceProvider extends ServiceProvider
     protected function configureAuthorization(): void
     {
         foreach ([
+            'company.view',
+            'company.manage',
             'branches.view',
             'branches.manage',
             'branches.switch',

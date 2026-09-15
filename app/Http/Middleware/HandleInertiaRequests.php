@@ -48,6 +48,8 @@ class HandleInertiaRequests extends Middleware
                     && app()->environment(['local', 'testing', 'staging'])
                     && app(UserAccessManager::class)->isSuperAdministrator($user),
                 'permissions' => $user === null ? [] : [
+                    'company.view' => $user->can('company.view'),
+                    'company.manage' => $user->can('company.manage'),
                     'branches.view' => $user->can('branches.view'),
                     'branches.manage' => $user->can('branches.manage'),
                     'branches.switch' => $user->can('branches.switch'),

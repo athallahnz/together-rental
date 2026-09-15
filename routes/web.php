@@ -46,6 +46,7 @@ use App\Http\Controllers\RentalController;
 use App\Http\Controllers\RentalExtensionController;
 use App\Http\Controllers\RentalPackageController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\SettingsCenterController;
 use App\Http\Controllers\TransactionDocumentController;
 use App\Http\Controllers\Transfers\BranchTransferApprovalController;
 use App\Http\Controllers\Transfers\BranchTransferController;
@@ -557,6 +558,14 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
         Route::put('/{role}', [RoleController::class, 'update'])
             ->middleware('can:roles.manage')
             ->name('update');
+    });
+
+    Route::prefix('settings-center')->name('settings-center.')->group(function () {
+        Route::get('/', [SettingsCenterController::class, 'index'])
+            ->name('index');
+        Route::put('/company', [SettingsCenterController::class, 'updateCompany'])
+            ->middleware('can:company.manage')
+            ->name('company.update');
     });
 
     Route::prefix('branches')->name('branches.')->group(function () {
