@@ -27,6 +27,18 @@ class RentalNumberGenerator
         return $this->next('operational_expenses', 'expense_number', 'EXP', $branch);
     }
 
+    public function nextTransactionDocument(Branch $branch, string $documentType): string
+    {
+        $label = match ($documentType) {
+            'invoice' => 'INV',
+            'receipt' => 'NOTA',
+            'agreement' => 'AGR',
+            default => 'DOC',
+        };
+
+        return $this->next('transaction_documents', 'document_number', $label, $branch);
+    }
+
     public function nextReturn(Branch $branch): string
     {
         return $this->next('rental_returns', 'return_number', 'RTN', $branch);

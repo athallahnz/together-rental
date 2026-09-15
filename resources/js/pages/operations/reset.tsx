@@ -58,6 +58,7 @@ type ResetSummary = {
     transfers: number;
     transfer_expenses: number;
     operational_expenses: number;
+    transaction_documents: number;
     inspections: number;
     serialized_assets: number;
     bulk_inventory_rows: number;
@@ -133,7 +134,7 @@ export default function OperationalDataReset({
 
         const approved = await confirm({
             title: 'Reset data operasional sekarang?',
-            description: `Booking, rental, transaksi keuangan terkait, return, maintenance, stock opname, dan transfer pada ${scopeLabel} akan dihapus permanen dari environment ${environment}. Master pelanggan, katalog, aset, harga, cabang, pengguna, dan role tetap dipertahankan.`,
+            description: `Booking, rental, transaksi keuangan terkait, dokumen transaksi, return, maintenance, stock opname, dan transfer pada ${scopeLabel} akan dihapus permanen dari environment ${environment}. Master pelanggan, katalog, aset, harga, cabang, pengguna, dan role tetap dipertahankan.`,
             confirmLabel: 'Ya, reset operasional',
             variant: 'destructive',
         });
@@ -151,7 +152,8 @@ export default function OperationalDataReset({
         summary.payments +
         summary.refunds +
         summary.financial_adjustments +
-        summary.operational_expenses;
+        summary.operational_expenses +
+        summary.transaction_documents;
 
     return (
         <>
@@ -229,7 +231,7 @@ export default function OperationalDataReset({
                     <SummaryCard
                         label="Keuangan transaksi"
                         value={totalFinance}
-                        detail={`${summary.payments.toLocaleString('id-ID')} payment · ${summary.refunds.toLocaleString('id-ID')} refund · ${summary.operational_expenses.toLocaleString('id-ID')} expense`}
+                        detail={`${summary.payments.toLocaleString('id-ID')} payment · ${summary.refunds.toLocaleString('id-ID')} refund · ${summary.operational_expenses.toLocaleString('id-ID')} expense · ${summary.transaction_documents.toLocaleString('id-ID')} dokumen`}
                         icon={CircleDollarSign}
                     />
                     <SummaryCard

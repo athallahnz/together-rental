@@ -84,6 +84,8 @@ class HandleInertiaRequests extends Middleware
                     'refunds.cancel' => $user->can('refunds.cancel'),
                     'cash.view' => $user->can('cash.view'),
                     'cash.manage' => $user->can('cash.manage'),
+                    'documents.view' => $user->can('documents.view'),
+                    'documents.issue' => $user->can('documents.issue'),
                     'transfers.view' => $user->can('transfers.view'),
                     'transfers.create' => $user->can('transfers.create'),
                     'transfers.update' => $user->can('transfers.update'),
