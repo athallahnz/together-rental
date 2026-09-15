@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AssetAnalyticsController;
 use App\Http\Controllers\AssetCalendarController;
+use App\Http\Controllers\AssetLifecycleController;
 use App\Http\Controllers\AuditTrailController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\BranchController;
@@ -362,6 +363,15 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
             ->middleware('can:documents.issue')->name('issue');
         Route::get('/{document}/pdf', [TransactionDocumentController::class, 'pdf'])
             ->middleware('can:documents.view')->name('pdf');
+    });
+
+    Route::prefix('assets')->name('assets.')->group(function (): void {
+        Route::get('/lifecycle', [AssetLifecycleController::class, 'index'])
+            ->middleware('can:assets.view')->name('lifecycle.index');
+        Route::post('/acquisitions', [AssetLifecycleController::class, 'storeAcquisition'])
+            ->middleware('can:assets.manage')->name('acquisitions.store');
+        Route::post('/{asset}/dispose', [AssetLifecycleController::class, 'dispose'])
+            ->middleware('can:assets.manage')->name('disposals.store');
     });
 
     Route::prefix('transfers')->name('transfers.')->group(function () {
