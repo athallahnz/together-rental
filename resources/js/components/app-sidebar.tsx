@@ -12,6 +12,7 @@ import {
     LayoutGrid,
     PackageSearch,
     ShieldCheck,
+    Settings2,
     ShoppingBag,
     UserRound,
     UsersRound,
@@ -47,6 +48,13 @@ import type { NavItem } from '@/types';
 
 export function AppSidebar() {
     const { auth } = usePage().props;
+    const canOpenSettingsCenter =
+        auth.permissions['company.view'] ||
+        auth.permissions['company.manage'] ||
+        auth.permissions['branches.manage'] ||
+        auth.permissions['transfers.settings'] ||
+        auth.permissions['notifications.manage'] ||
+        auth.permissions['roles.view'];
     const navGroups: NavMainGroup[] = [
         {
             label: 'Ringkasan',
@@ -249,6 +257,15 @@ export function AppSidebar() {
         {
             label: 'Administrasi',
             items: [
+                ...(canOpenSettingsCenter
+                    ? [
+                          {
+                              title: 'Settings Center',
+                              href: '/settings-center',
+                              icon: Settings2,
+                          },
+                      ]
+                    : []),
                 ...(auth.permissions['branches.view']
                     ? [
                           {
