@@ -270,7 +270,7 @@ export function AppSidebar() {
                 ...(canOpenSettingsCenter
                     ? [
                           {
-                              title: 'Settings Center',
+                              title: 'Pengaturan',
                               href: '/settings-center',
                               icon: Settings2,
                           },

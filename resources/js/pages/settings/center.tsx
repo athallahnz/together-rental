@@ -5,12 +5,10 @@ import {
     Building2,
     Globe2,
     History,
-    Palette,
     Save,
     Settings2,
     ShieldCheck,
     Truck,
-    UserRound,
 } from 'lucide-react';
 import type { FormEvent, ReactNode } from 'react';
 import InputError from '@/components/input-error';
@@ -148,55 +146,66 @@ export default function SettingsCenter({
 
     return (
         <>
-            <Head title="Settings Center" />
+            <Head title="Pusat Pengaturan" />
 
             <div className="space-y-6">
-                <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
-                    <div>
-                        <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
-                            <Settings2 className="size-4" />
-                            Konfigurasi terpusat
-                        </div>
-                        <h1 className="mt-2 text-3xl font-semibold tracking-tight">
-                            Settings Center
-                        </h1>
-                        <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-                            Pusat konfigurasi Together Kamera tanpa menduplikasi
-                            source-of-truth. Pengaturan cabang, transfer,
-                            notifikasi, akses, dan akun tetap disimpan oleh
-                            domain masing-masing.
-                        </p>
-                    </div>
+                <Card className="overflow-hidden border-border/70 bg-gradient-to-br from-card via-card to-muted/30">
+                    <CardContent className="p-6 sm:p-7">
+                        <header className="flex flex-col gap-6 xl:flex-row xl:items-end xl:justify-between">
+                            <div className="max-w-3xl">
+                                <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
+                                    <Settings2 className="size-4" />
+                                    Konfigurasi operasional
+                                </div>
+                                <h2 className="mt-2 text-2xl font-semibold tracking-tight">
+                                    Pusat Pengaturan
+                                </h2>
+                                <p className="mt-2 text-sm leading-6 text-muted-foreground">
+                                    Kelola identitas perusahaan dan pantau
+                                    konfigurasi cabang, transfer, notifikasi,
+                                    serta governance tanpa menduplikasi
+                                    source-of-truth domain yang sudah ada.
+                                </p>
+                            </div>
 
-                    {branches.length > 0 && selectedBranchId !== null && (
-                        <div className="w-full max-w-sm space-y-2">
-                            <Label htmlFor="settings-branch">
-                                Konteks cabang
-                            </Label>
-                            <Select
-                                value={String(selectedBranchId)}
-                                onValueChange={switchBranch}
-                            >
-                                <SelectTrigger id="settings-branch">
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {branches.map((branch) => (
-                                        <SelectItem
-                                            key={branch.id}
-                                            value={String(branch.id)}
+                            {branches.length > 0 &&
+                                selectedBranchId !== null && (
+                                    <div className="w-full space-y-2 xl:max-w-sm">
+                                        <Label htmlFor="settings-branch">
+                                            Konteks cabang
+                                        </Label>
+                                        <Select
+                                            value={String(selectedBranchId)}
+                                            onValueChange={switchBranch}
                                         >
-                                            {branch.code} · {branch.name}
-                                            {!branch.is_active
-                                                ? ' · Nonaktif'
-                                                : ''}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </div>
-                    )}
-                </header>
+                                            <SelectTrigger
+                                                id="settings-branch"
+                                                className="bg-background"
+                                            >
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {branches.map((branch) => (
+                                                    <SelectItem
+                                                        key={branch.id}
+                                                        value={String(
+                                                            branch.id,
+                                                        )}
+                                                    >
+                                                        {branch.code} ·{' '}
+                                                        {branch.name}
+                                                        {!branch.is_active
+                                                            ? ' · Nonaktif'
+                                                            : ''}
+                                                    </SelectItem>
+                                                ))}
+                                            </SelectContent>
+                                        </Select>
+                                    </div>
+                                )}
+                        </header>
+                    </CardContent>
+                </Card>
 
                 <div className="grid gap-4 md:grid-cols-3">
                     <SummaryCard
@@ -365,8 +374,8 @@ export default function SettingsCenter({
                     </Card>
                 )}
 
-                <div className="grid gap-6 xl:grid-cols-2">
-                    <Card>
+                <div className="grid gap-6 xl:grid-cols-3">
+                    <Card className="h-full">
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <Globe2 className="size-5" />
@@ -434,7 +443,7 @@ export default function SettingsCenter({
                         </CardContent>
                     </Card>
 
-                    <Card>
+                    <Card className="h-full">
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <Truck className="size-5" />
@@ -493,11 +502,11 @@ export default function SettingsCenter({
                         </CardContent>
                     </Card>
 
-                    <Card>
+                    <Card className="h-full">
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <BellRing className="size-5" />
-                                Notification & Reminder
+                                Notifikasi & reminder
                             </CardTitle>
                             <CardDescription>
                                 Rules tetap disimpan di notification_rules;
@@ -543,7 +552,7 @@ export default function SettingsCenter({
                         </CardContent>
                     </Card>
 
-                    <Card>
+                    <Card className="xl:col-span-3">
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <ShieldCheck className="size-5" />
@@ -576,40 +585,19 @@ export default function SettingsCenter({
                         </CardContent>
                     </Card>
                 </div>
-
-                <Card>
-                    <CardHeader>
-                        <CardTitle className="flex items-center gap-2">
-                            <UserRound className="size-5" />
-                            Akun & tampilan
-                        </CardTitle>
-                        <CardDescription>
-                            Setting personal tetap terpisah dari konfigurasi
-                            operasional perusahaan.
-                        </CardDescription>
-                    </CardHeader>
-                    <CardContent className="grid gap-3 md:grid-cols-3">
-                        <Shortcut
-                            icon={<UserRound className="size-4" />}
-                            title="Profil akun"
-                            href="/settings/profile"
-                        />
-                        <Shortcut
-                            icon={<ShieldCheck className="size-4" />}
-                            title="Security, 2FA & Passkey"
-                            href="/settings/security"
-                        />
-                        <Shortcut
-                            icon={<Palette className="size-4" />}
-                            title="Appearance"
-                            href="/settings/appearance"
-                        />
-                    </CardContent>
-                </Card>
             </div>
         </>
     );
 }
+
+SettingsCenter.layout = {
+    breadcrumbs: [
+        {
+            title: 'Pusat Pengaturan',
+            href: '/settings-center',
+        },
+    ],
+};
 
 function SummaryCard({
     title,
