@@ -19,6 +19,7 @@ use App\Http\Controllers\Finance\CashSessionController;
 use App\Http\Controllers\Finance\FinanceDashboardController;
 use App\Http\Controllers\Finance\FinanceMasterController;
 use App\Http\Controllers\Finance\FinancialCategoryController;
+use App\Http\Controllers\Finance\OperationalExpenseController;
 use App\Http\Controllers\Finance\PaymentController;
 use App\Http\Controllers\Finance\PaymentMethodController;
 use App\Http\Controllers\Finance\RefundController;
@@ -99,6 +100,20 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
             ->middleware('can:finance.cash_registers.manage')->name('cash-registers.update');
         Route::patch('/cash-registers/{cashRegister}/status', [CashRegisterController::class, 'toggleStatus'])
             ->middleware('can:finance.cash_registers.manage')->name('cash-registers.toggle-status');
+        Route::get('/expenses', [OperationalExpenseController::class, 'index'])
+            ->middleware('can:expenses.view')->name('expenses.index');
+        Route::post('/expenses', [OperationalExpenseController::class, 'store'])
+            ->middleware('can:expenses.manage')->name('expenses.store');
+        Route::get('/expenses/{expense}', [OperationalExpenseController::class, 'show'])
+            ->middleware('can:expenses.view')->name('expenses.show');
+        Route::put('/expenses/{expense}', [OperationalExpenseController::class, 'update'])
+            ->middleware('can:expenses.manage')->name('expenses.update');
+        Route::post('/expenses/{expense}/pay', [OperationalExpenseController::class, 'pay'])
+            ->middleware('can:expenses.pay')->name('expenses.pay');
+        Route::post('/expenses/{expense}/void', [OperationalExpenseController::class, 'void'])
+            ->middleware('can:expenses.void')->name('expenses.void');
+        Route::get('/expenses/{expense}/proof', [OperationalExpenseController::class, 'proof'])
+            ->middleware('can:expenses.view')->name('expenses.proof');
         Route::get('/payments', [PaymentController::class, 'index'])
             ->middleware('can:payments.view')->name('payments.index');
         Route::get('/payments/{payment}', [PaymentController::class, 'show'])

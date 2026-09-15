@@ -24,6 +24,7 @@ import {
     FileSpreadsheet,
     BellRing,
     BadgePercent,
+    Banknote,
 } from 'lucide-react';
 import AppLogo from '@/components/app-logo';
 import { BranchSwitcher } from '@/components/branch-switcher';
@@ -123,6 +124,15 @@ export function AppSidebar() {
                               title: 'Payment Center',
                               href: '/finance/payments',
                               icon: CreditCard,
+                          },
+                      ]
+                    : []),
+                ...(auth.permissions['expenses.view']
+                    ? [
+                          {
+                              title: 'Expense & Cash Center',
+                              href: '/finance/expenses',
+                              icon: Banknote,
                           },
                       ]
                     : []),

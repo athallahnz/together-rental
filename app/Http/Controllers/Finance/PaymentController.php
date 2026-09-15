@@ -39,6 +39,7 @@ class PaymentController extends Controller
                 'rental_return',
                 'rental_extension',
                 'transfer_expense',
+                'operational_expense',
             ])],
         ]);
         $user = $request->user();
@@ -106,7 +107,10 @@ class PaymentController extends Controller
                         ->orWhereHas('rental', fn (Builder $rental) => $rental
                             ->where('rental_number', 'like', "%{$search}%"))
                         ->orWhereHas('transferExpense.transfer', fn (Builder $transfer) => $transfer
-                            ->where('transfer_number', 'like', "%{$search}%"));
+                            ->where('transfer_number', 'like', "%{$search}%"))
+                        ->orWhereHas('operationalExpense', fn (Builder $expense) => $expense
+                            ->where('expense_number', 'like', "%{$search}%")
+                            ->orWhere('vendor_name', 'like', "%{$search}%"));
                 });
             });
 
@@ -120,6 +124,7 @@ class PaymentController extends Controller
                 'paymentMethod:id,code,name,type',
                 'transferExpense:id,branch_transfer_id,payment_id,status',
                 'transferExpense.transfer:id,transfer_number,status',
+                'operationalExpense:id,branch_id,payment_id,expense_number,status,vendor_name',
             ])
             ->latest('paid_at')
             ->latest('id')
@@ -200,6 +205,7 @@ class PaymentController extends Controller
                 ->latest('id'),
             'transferExpense:id,branch_transfer_id,payment_id,status,expense_type,vendor_name',
             'transferExpense.transfer:id,transfer_number,status',
+            'operationalExpense:id,branch_id,payment_id,expense_number,status,vendor_name',
         ]);
         $eligibility = $voidEligibility->evaluate($payment, $request->user());
         $refund = $refundEligibility->forPayment($payment, $request->user());

@@ -433,6 +433,7 @@ class FinanceDashboardService
             'rental_return' => 'Pengembalian Rental',
             'rental_extension' => 'Perpanjangan Rental',
             'transfer_expense' => 'Biaya Transfer Aset',
+            'operational_expense' => 'Pengeluaran Operasional',
             'unknown' => 'Tanpa konteks',
         ];
 

@@ -29,7 +29,7 @@ class FinanceMasterController extends Controller
 
         $categories = FinancialCategory::query()
             ->where('company_id', $user->company_id)
-            ->withCount(['payments', 'cashTransactions', 'transferExpenses'])
+            ->withCount(['payments', 'cashTransactions', 'transferExpenses', 'operationalExpenses'])
             ->orderByRaw("CASE type WHEN 'income' THEN 1 WHEN 'liability' THEN 2 ELSE 3 END")
             ->orderBy('name')
             ->get();

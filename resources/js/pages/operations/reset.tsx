@@ -57,6 +57,7 @@ type ResetSummary = {
     notifications: number;
     transfers: number;
     transfer_expenses: number;
+    operational_expenses: number;
     inspections: number;
     serialized_assets: number;
     bulk_inventory_rows: number;
@@ -147,7 +148,10 @@ export default function OperationalDataReset({
     };
 
     const totalFinance =
-        summary.payments + summary.refunds + summary.financial_adjustments;
+        summary.payments +
+        summary.refunds +
+        summary.financial_adjustments +
+        summary.operational_expenses;
 
     return (
         <>
@@ -225,7 +229,7 @@ export default function OperationalDataReset({
                     <SummaryCard
                         label="Keuangan transaksi"
                         value={totalFinance}
-                        detail={`${summary.payments.toLocaleString('id-ID')} payment · ${summary.refunds.toLocaleString('id-ID')} refund`}
+                        detail={`${summary.payments.toLocaleString('id-ID')} payment · ${summary.refunds.toLocaleString('id-ID')} refund · ${summary.operational_expenses.toLocaleString('id-ID')} expense`}
                         icon={CircleDollarSign}
                     />
                     <SummaryCard

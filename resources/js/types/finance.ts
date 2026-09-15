@@ -10,7 +10,8 @@ export type PaymentSourceContext =
     | 'rental_checkout'
     | 'rental_return'
     | 'rental_extension'
-    | 'transfer_expense';
+    | 'transfer_expense'
+    | 'operational_expense';
 
 export type FinanceBranch = {
     id: number;
@@ -87,6 +88,13 @@ export type PaymentCenterPayment = {
             transfer_number: string;
             status: string;
         } | null;
+    } | null;
+    operational_expense: {
+        id: number;
+        branch_id: number;
+        expense_number: string;
+        status: string;
+        vendor_name: string | null;
     } | null;
 };
 
@@ -296,3 +304,125 @@ export type FinanceDashboardPageProps = {
         comparison: string;
     };
 };
+
+export type OperationalExpenseStatus = 'recorded' | 'paid' | 'void';
+
+export type OperationalExpense = {
+    id: number;
+    branch_id: number;
+    financial_category_id: number;
+    payment_method_id: number | null;
+    cash_session_id: number | null;
+    payment_id: number | null;
+    expense_number: string;
+    status: OperationalExpenseStatus;
+    amount: string;
+    incurred_at: string;
+    vendor_name: string | null;
+    external_reference: string | null;
+    proof_original_name: string | null;
+    proof_mime_type: string | null;
+    proof_size: number | null;
+    notes: string | null;
+    paid_at: string | null;
+    voided_at: string | null;
+    void_reason: string | null;
+    created_at: string;
+    updated_at: string;
+    branch: FinanceBranch;
+    financial_category: {
+        id: number;
+        code: string;
+        name: string;
+        type: string;
+    };
+    payment_method: FinancePaymentMethod | null;
+    cash_session: {
+        id: number;
+        status: string;
+        register?: {
+            id: number;
+            branch_id: number;
+            code: string;
+            name: string;
+        } | null;
+    } | null;
+    payment: {
+        id: number;
+        payment_number: string;
+        status: PaymentStatus;
+        amount: string;
+        paid_at: string;
+        direction: 'out';
+        source_context: PaymentSourceContext;
+        voided_at?: string | null;
+        void_reason?: string | null;
+    } | null;
+    creator?: { id: number; name: string } | null;
+    updater?: { id: number; name: string } | null;
+    payer?: { id: number; name: string } | null;
+    voider?: { id: number; name: string } | null;
+};
+
+export type OperationalExpensePagination = Pagination<OperationalExpense>;
+
+export type OperationalExpenseFilters = {
+    search: string;
+    branch_id: number | null;
+    status: string;
+    financial_category_id: number | null;
+    date_from: string;
+    date_to: string;
+};
+
+export type OperationalExpenseSummary = {
+    recorded_count: number;
+    recorded_amount: number;
+    paid_count: number;
+    paid_amount: number;
+    void_count: number;
+    cash_in: number;
+    cash_out: number;
+};
+
+export type CashTransactionCenterRow = {
+    id: number;
+    cash_session_id: number;
+    payment_id: number | null;
+    refund_id: number | null;
+    financial_category_id: number | null;
+    transaction_number: string;
+    direction: 'in' | 'out';
+    type: string;
+    amount: string;
+    balance_after: string;
+    occurred_at: string;
+    description: string | null;
+    session: {
+        id: number;
+        status: string;
+        opened_at: string;
+        closed_at: string | null;
+        register: {
+            id: number;
+            branch_id: number;
+            code: string;
+            name: string;
+            branch: FinanceBranch;
+        };
+    };
+    payment: {
+        id: number;
+        payment_number: string;
+        status: PaymentStatus;
+        source_context: PaymentSourceContext | null;
+    } | null;
+    refund: {
+        id: number;
+        refund_number: string;
+        status: RefundStatus;
+    } | null;
+    creator: { id: number; name: string } | null;
+};
+
+export type CashTransactionPagination = Pagination<CashTransactionCenterRow>;

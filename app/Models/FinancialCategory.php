@@ -27,6 +27,12 @@ class FinancialCategory extends Model
         return $this->hasMany(BranchTransferExpense::class);
     }
 
+    /** @return HasMany<OperationalExpense, $this> */
+    public function operationalExpenses(): HasMany
+    {
+        return $this->hasMany(OperationalExpense::class);
+    }
+
     protected function casts(): array
     {
         return [

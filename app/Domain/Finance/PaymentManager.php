@@ -8,6 +8,7 @@ use App\Models\Branch;
 use App\Models\BranchTransferExpense;
 use App\Models\CashSession;
 use App\Models\FinancialCategory;
+use App\Models\OperationalExpense;
 use App\Models\Payment;
 use App\Models\PaymentMethod;
 use App\Models\Rental;
@@ -81,6 +82,7 @@ class PaymentManager
                 'rental_return',
                 'rental_extension',
                 'transfer_expense',
+                'operational_expense',
             ], true)) {
                 throw ValidationException::withMessages([
                     'source_context' => 'Konteks sumber payment tidak valid.',
@@ -233,6 +235,29 @@ class PaymentManager
                 'voided_by' => $actor->id,
                 'voided_at' => now(),
                 'void_reason' => $reason,
+            ])->save();
+
+            return;
+        }
+
+        if ($payment->source_context === 'operational_expense') {
+            $expense = OperationalExpense::query()
+                ->where('payment_id', $payment->id)
+                ->lockForUpdate()
+                ->first();
+
+            if ($expense === null || $expense->status !== 'paid') {
+                throw ValidationException::withMessages([
+                    'payment' => 'Pengeluaran operasional sumber tidak lagi berstatus dibayar.',
+                ]);
+            }
+
+            $expense->forceFill([
+                'status' => 'void',
+                'voided_by' => $actor->id,
+                'voided_at' => now(),
+                'void_reason' => $reason,
+                'updated_by' => $actor->id,
             ])->save();
 
             return;
