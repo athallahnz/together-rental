@@ -117,6 +117,7 @@ class AppServiceProvider extends ServiceProvider
             'imports.execute',
             'reports.view',
             'reports.export',
+            'audit.view',
             'notifications.view',
             'notifications.manage',
         ] as $permission) {

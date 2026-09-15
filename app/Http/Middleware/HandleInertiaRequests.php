@@ -109,6 +109,7 @@ class HandleInertiaRequests extends Middleware
                     'imports.execute' => $user->can('imports.execute'),
                     'reports.view' => $user->can('reports.view'),
                     'reports.export' => $user->can('reports.export'),
+                    'audit.view' => $user->can('audit.view'),
                     'notifications.view' => $user->can('notifications.view'),
                     'notifications.manage' => $user->can('notifications.manage'),
                 ],

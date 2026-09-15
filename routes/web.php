@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\AssetAnalyticsController;
 use App\Http\Controllers\AssetCalendarController;
+use App\Http\Controllers\AuditTrailController;
 use App\Http\Controllers\BookingController;
 use App\Http\Controllers\BranchController;
 use App\Http\Controllers\BranchPublicProfileController;
@@ -408,6 +409,10 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
         Route::post('/{transfer}/expenses/{expense}/void', [BranchTransferExpenseController::class, 'void'])
             ->middleware('can:transfers.expense')->name('expenses.void');
     });
+
+    Route::get('/audit-trail', [AuditTrailController::class, 'index'])
+        ->middleware('can:audit.view')
+        ->name('audit.index');
 
     Route::prefix('operations')->name('operations.')->group(function () {
         Route::get('/reset', [OperationalDataResetController::class, 'index'])
