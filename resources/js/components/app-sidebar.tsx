@@ -8,6 +8,7 @@ import {
     ContactRound,
     DatabaseZap,
     Globe2,
+    History,
     LayoutGrid,
     PackageSearch,
     ShieldCheck,
@@ -277,6 +278,15 @@ export function AppSidebar() {
                               title: 'Role & Hak Akses',
                               href: '/roles',
                               icon: ShieldCheck,
+                          },
+                      ]
+                    : []),
+                ...(auth.permissions['audit.view']
+                    ? [
+                          {
+                              title: 'Audit Trail',
+                              href: '/audit-trail',
+                              icon: History,
                           },
                       ]
                     : []),
