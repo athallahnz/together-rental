@@ -109,6 +109,8 @@ class AppServiceProvider extends ServiceProvider
             'expenses.manage',
             'expenses.pay',
             'expenses.void',
+            'documents.view',
+            'documents.issue',
             'imports.view',
             'imports.upload',
             'imports.validate',

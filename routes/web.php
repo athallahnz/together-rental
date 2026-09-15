@@ -45,6 +45,7 @@ use App\Http\Controllers\RentalController;
 use App\Http\Controllers\RentalExtensionController;
 use App\Http\Controllers\RentalPackageController;
 use App\Http\Controllers\RoleController;
+use App\Http\Controllers\TransactionDocumentController;
 use App\Http\Controllers\Transfers\BranchTransferApprovalController;
 use App\Http\Controllers\Transfers\BranchTransferController;
 use App\Http\Controllers\Transfers\BranchTransferDispatchController;
@@ -350,6 +351,15 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
             ->middleware('can:rentals.reopen_return')->name('operational-corrections.store');
         Route::get('/{rental}', [RentalController::class, 'show'])
             ->middleware('can:rentals.view')->name('show');
+    });
+
+    Route::prefix('documents')->name('documents.')->group(function (): void {
+        Route::get('/', [TransactionDocumentController::class, 'index'])
+            ->middleware('can:documents.view')->name('index');
+        Route::post('/', [TransactionDocumentController::class, 'issue'])
+            ->middleware('can:documents.issue')->name('issue');
+        Route::get('/{document}/pdf', [TransactionDocumentController::class, 'pdf'])
+            ->middleware('can:documents.view')->name('pdf');
     });
 
     Route::prefix('transfers')->name('transfers.')->group(function () {

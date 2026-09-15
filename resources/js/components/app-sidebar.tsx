@@ -22,6 +22,7 @@ import {
     WalletCards,
     SlidersHorizontal,
     FileSpreadsheet,
+    FileText,
     BellRing,
     BadgePercent,
     Banknote,
@@ -92,6 +93,15 @@ export function AppSidebar() {
                               title: 'Rental In Store',
                               href: '/rentals/direct/create',
                               icon: ShoppingBag,
+                          },
+                      ]
+                    : []),
+                ...(auth.permissions['documents.view']
+                    ? [
+                          {
+                              title: 'Invoice, Nota & Agreement',
+                              href: '/documents',
+                              icon: FileText,
                           },
                       ]
                     : []),

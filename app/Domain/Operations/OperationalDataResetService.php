@@ -78,6 +78,7 @@ class OperationalDataResetService
                 ->whereIn('branch_transfer_id', $transferIds)
                 ->count(),
             'operational_expenses' => count($operationalExpenseIds),
+            'transaction_documents' => DB::table('transaction_documents')->whereIn('branch_id', $branchIds)->count(),
             'inspections' => count($inspectionIds),
             'serialized_assets' => DB::table('assets')
                 ->whereIn('current_branch_id', $branchIds)
@@ -180,6 +181,10 @@ class OperationalDataResetService
                 ->delete();
             DB::table('rental_financial_adjustments')
                 ->whereIn('rental_id', $rentalIds)
+                ->delete();
+
+            DB::table('transaction_documents')
+                ->whereIn('branch_id', $branchIds)
                 ->delete();
 
             DB::table('cash_transactions')
