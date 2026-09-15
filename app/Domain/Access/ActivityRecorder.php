@@ -52,6 +52,9 @@ class ActivityRecorder
         $label = $subject->getAttribute('name')
             ?? $subject->getAttribute('email')
             ?? $subject->getAttribute('code')
+            ?? $subject->getAttribute('asset_code')
+            ?? $subject->getAttribute('acquisition_number')
+            ?? $subject->getAttribute('disposal_number')
             ?? (string) $subject->getKey();
 
         return mb_substr((string) $label, 0, 255);

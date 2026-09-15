@@ -6,6 +6,7 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Database\Eloquent\SoftDeletes;
 
 #[Fillable([
@@ -67,6 +68,18 @@ class Asset extends Model
     public function statusHistories(): HasMany
     {
         return $this->hasMany(AssetStatusHistory::class);
+    }
+
+    /** @return HasOne<AssetAcquisitionItem, $this> */
+    public function acquisitionItem(): HasOne
+    {
+        return $this->hasOne(AssetAcquisitionItem::class);
+    }
+
+    /** @return HasOne<AssetDisposal, $this> */
+    public function disposal(): HasOne
+    {
+        return $this->hasOne(AssetDisposal::class);
     }
 
     protected function casts(): array

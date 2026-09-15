@@ -1,5 +1,6 @@
 import { Link, usePage } from '@inertiajs/react';
 import {
+    ArchiveRestore,
     BarChart3,
     CreditCard,
     CalendarDays,
@@ -198,6 +199,15 @@ export function AppSidebar() {
                               title: 'Promosi & Diskon',
                               href: '/catalog/promotions',
                               icon: BadgePercent,
+                          },
+                      ]
+                    : []),
+                ...(auth.permissions['assets.view']
+                    ? [
+                          {
+                              title: 'Siklus Aset',
+                              href: '/assets/lifecycle',
+                              icon: ArchiveRestore,
                           },
                       ]
                     : []),

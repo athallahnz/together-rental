@@ -361,6 +361,7 @@ class CatalogController extends Controller
 
         $assetRows = DB::table('assets')
             ->where('product_id', $product->id)
+            ->where('is_active', true)
             ->whereNull('deleted_at')
             ->whereIn('current_branch_id', $branchIds)
             ->selectRaw('current_branch_id, status, count(*) as total')
@@ -403,6 +404,7 @@ class CatalogController extends Controller
             'product' => $product,
             'assetSummary' => DB::table('assets')
                 ->where('product_id', $product->id)
+                ->where('is_active', true)
                 ->whereNull('deleted_at')
                 ->whereIn('current_branch_id', $scopeBranchIds)
                 ->selectRaw('status, count(*) as total')
@@ -413,6 +415,7 @@ class CatalogController extends Controller
                 ? Asset::query()
                     ->where('product_id', $product->id)
                     ->whereIn('current_branch_id', $scopeBranchIds)
+                    ->where('is_active', true)
                     ->whereNull('deleted_at')
                     ->with('currentBranch:id,code,name')
                     ->orderBy('asset_code')

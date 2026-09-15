@@ -2,6 +2,8 @@
 
 namespace App\Domain\Operations;
 
+use App\Models\AssetAcquisition;
+use App\Models\AssetDisposal;
 use App\Models\Branch;
 use App\Models\BranchTransfer;
 use Illuminate\Database\Query\Builder;
@@ -169,6 +171,7 @@ class OperationalDataResetService
 
             DB::table('asset_status_histories')
                 ->whereIn('branch_id', $branchIds)
+                ->whereNotIn('source_type', [AssetAcquisition::class, AssetDisposal::class])
                 ->delete();
 
             DB::table('asset_inspection_media')
