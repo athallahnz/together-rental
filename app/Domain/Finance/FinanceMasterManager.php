@@ -198,7 +198,8 @@ class FinanceMasterManager
     {
         return DB::table('payments')->where('financial_category_id', $category->id)->exists()
             || DB::table('cash_transactions')->where('financial_category_id', $category->id)->exists()
-            || DB::table('branch_transfer_expenses')->where('financial_category_id', $category->id)->exists();
+            || DB::table('branch_transfer_expenses')->where('financial_category_id', $category->id)->exists()
+            || DB::table('operational_expenses')->where('financial_category_id', $category->id)->exists();
     }
 
     private function hasOpenCashSession(User $actor): bool

@@ -130,11 +130,13 @@ const sourceLabels: Record<string, string> = {
     rental_return: 'Pengembalian Rental',
     rental_extension: 'Perpanjangan Rental',
     transfer_expense: 'Biaya Transfer Aset',
+    operational_expense: 'Pengeluaran Operasional',
 };
 const typeLabels: Record<string, string> = {
     rental: 'Pembayaran Rental',
     deposit: 'Deposit Rental',
     transfer_expense: 'Biaya Transfer',
+    operational_expense: 'Pengeluaran Operasional',
 };
 const refundStatusLabels: Record<RefundStatus, string> = {
     requested: 'Requested',
@@ -823,6 +825,13 @@ function sourceReference(payment: PaymentDetail): {
         return {
             label: payment.booking.booking_number,
             href: `/bookings/${payment.booking.id}`,
+        };
+    }
+
+    if (payment.operational_expense) {
+        return {
+            label: payment.operational_expense.expense_number,
+            href: `/finance/expenses/${payment.operational_expense.id}`,
         };
     }
 

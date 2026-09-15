@@ -48,11 +48,13 @@ const sourceLabels: Record<string, string> = {
     rental_return: 'Pengembalian',
     rental_extension: 'Perpanjangan Rental',
     transfer_expense: 'Biaya Transfer',
+    operational_expense: 'Pengeluaran Operasional',
 };
 const typeLabels: Record<string, string> = {
     rental: 'Pembayaran Rental',
     deposit: 'Deposit',
     transfer_expense: 'Biaya Transfer',
+    operational_expense: 'Pengeluaran Operasional',
 };
 
 export default function PaymentCenterIndex({
@@ -344,9 +346,18 @@ export default function PaymentCenterIndex({
                                                                 ''
                                                         ] ?? 'Legacy'}
                                                     </p>
-                                                    <p className="text-xs text-muted-foreground">
-                                                        {source.label}
-                                                    </p>
+                                                    {source.href ? (
+                                                        <Link
+                                                            href={source.href}
+                                                            className="text-xs text-muted-foreground hover:underline"
+                                                        >
+                                                            {source.label}
+                                                        </Link>
+                                                    ) : (
+                                                        <p className="text-xs text-muted-foreground">
+                                                            {source.label}
+                                                        </p>
+                                                    )}
                                                 </td>
                                                 <td className="px-3 py-3">
                                                     {payment.customer?.name ??
@@ -454,24 +465,47 @@ function signedAmount(payment: PaymentCenterPayment): number {
     return payment.direction === 'out' ? -amount : amount;
 }
 
-function sourceReference(payment: PaymentCenterPayment): { label: string } {
+function sourceReference(payment: PaymentCenterPayment): {
+    label: string;
+    href: string | null;
+} {
     if (payment.rental_extension && payment.rental) {
         return {
             label: payment.rental_extension.extension_number,
+            href: `/rentals/${payment.rental.id}`,
         };
     }
 
     if (payment.rental) {
-        return { label: payment.rental.rental_number };
+        return {
+            label: payment.rental.rental_number,
+            href: `/rentals/${payment.rental.id}`,
+        };
     }
 
     if (payment.booking) {
-        return { label: payment.booking.booking_number };
+        return {
+            label: payment.booking.booking_number,
+            href: `/bookings/${payment.booking.id}`,
+        };
+    }
+
+    if (payment.operational_expense) {
+        return {
+            label: payment.operational_expense.expense_number,
+            href: `/finance/expenses/${payment.operational_expense.id}`,
+        };
     }
 
     if (payment.transfer_expense?.transfer) {
-        return { label: payment.transfer_expense.transfer.transfer_number };
+        return {
+            label: payment.transfer_expense.transfer.transfer_number,
+            href: `/transfers/${payment.transfer_expense.transfer.id}`,
+        };
     }
 
-    return { label: payment.external_reference ?? 'Tanpa referensi sumber' };
+    return {
+        label: payment.external_reference ?? 'Tanpa referensi sumber',
+        href: null,
+    };
 }

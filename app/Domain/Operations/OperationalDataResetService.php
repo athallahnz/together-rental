@@ -35,7 +35,23 @@ class OperationalDataResetService
                 ->whereIn('branch_transfer_id', $transferIds)
                 ->whereNotNull('payment_id'),
         );
-        $paymentIds = $this->paymentIds($bookingIds, $rentalIds, $transferPaymentIds);
+        $operationalExpenseIds = $this->ids(
+            'operational_expenses',
+            'id',
+            static fn (Builder $query) => $query->whereIn('branch_id', $branchIds),
+        );
+        $operationalPaymentIds = $this->ids(
+            'operational_expenses',
+            'payment_id',
+            static fn (Builder $query) => $query
+                ->whereIn('branch_id', $branchIds)
+                ->whereNotNull('payment_id'),
+        );
+        $paymentIds = $this->paymentIds(
+            $bookingIds,
+            $rentalIds,
+            array_values(array_unique([...$transferPaymentIds, ...$operationalPaymentIds])),
+        );
         $inspectionIds = $this->inspectionIds($branchIds, $rentalItemIds, $returnItemIds, $transferItemIds);
 
         return [
@@ -61,6 +77,7 @@ class OperationalDataResetService
             'transfer_expenses' => DB::table('branch_transfer_expenses')
                 ->whereIn('branch_transfer_id', $transferIds)
                 ->count(),
+            'operational_expenses' => count($operationalExpenseIds),
             'inspections' => count($inspectionIds),
             'serialized_assets' => DB::table('assets')
                 ->whereIn('current_branch_id', $branchIds)
@@ -96,7 +113,23 @@ class OperationalDataResetService
                 ->whereIn('branch_transfer_id', $transferIds)
                 ->whereNotNull('payment_id'),
         );
-        $paymentIds = $this->paymentIds($bookingIds, $rentalIds, $transferPaymentIds);
+        $operationalExpenseIds = $this->ids(
+            'operational_expenses',
+            'id',
+            static fn (Builder $query) => $query->whereIn('branch_id', $branchIds),
+        );
+        $operationalPaymentIds = $this->ids(
+            'operational_expenses',
+            'payment_id',
+            static fn (Builder $query) => $query
+                ->whereIn('branch_id', $branchIds)
+                ->whereNotNull('payment_id'),
+        );
+        $paymentIds = $this->paymentIds(
+            $bookingIds,
+            $rentalIds,
+            array_values(array_unique([...$transferPaymentIds, ...$operationalPaymentIds])),
+        );
         $refundIds = $this->refundIds($bookingIds, $rentalIds, $paymentIds);
         $maintenanceIds = $this->ids('maintenance_orders', 'id', static fn (Builder $query) => $query->whereIn('branch_id', $branchIds));
         $inspectionIds = $this->inspectionIds($branchIds, $rentalItemIds, $returnItemIds, $transferItemIds);
@@ -107,6 +140,7 @@ class OperationalDataResetService
             $paymentIds,
             $refundIds,
             $inventoryAuditIds,
+            $operationalExpenseIds,
         );
         $preview = $this->preview($companyId, $branch);
 
@@ -120,6 +154,7 @@ class OperationalDataResetService
             $maintenanceIds,
             $inspectionIds,
             $inventoryAuditIds,
+            $operationalExpenseIds,
             $normalizeCondition,
         ): void {
             DB::table('notification_messages')
@@ -154,6 +189,7 @@ class OperationalDataResetService
                 })
                 ->delete();
             DB::table('refunds')->whereIn('id', $refundIds)->delete();
+            DB::table('operational_expenses')->whereIn('id', $operationalExpenseIds)->delete();
             DB::table('payments')->whereIn('id', $paymentIds)->delete();
 
             DB::table('maintenance_orders')->whereIn('id', $maintenanceIds)->delete();
@@ -310,6 +346,7 @@ class OperationalDataResetService
      * @param  list<int>  $paymentIds
      * @param  list<int>  $refundIds
      * @param  list<int>  $inventoryAuditIds
+     * @param  list<int>  $operationalExpenseIds
      * @return list<string>
      */
     private function filePaths(
@@ -319,6 +356,7 @@ class OperationalDataResetService
         array $paymentIds,
         array $refundIds,
         array $inventoryAuditIds,
+        array $operationalExpenseIds,
     ): array {
         $paths = collect()
             ->merge(DB::table('branch_transfer_documents')->whereIn('branch_transfer_id', $transferIds)->pluck('path'))
@@ -326,6 +364,7 @@ class OperationalDataResetService
             ->merge(DB::table('rental_collaterals')->whereIn('rental_id', $rentalIds)->pluck('document_path'))
             ->merge(DB::table('payments')->whereIn('id', $paymentIds)->pluck('proof_path'))
             ->merge(DB::table('refunds')->whereIn('id', $refundIds)->pluck('proof_path'))
+            ->merge(DB::table('operational_expenses')->whereIn('id', $operationalExpenseIds)->pluck('proof_path'))
             ->merge(DB::table('inventory_audit_media')
                 ->join(
                     'inventory_audit_items',

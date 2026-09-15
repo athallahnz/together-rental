@@ -95,6 +95,12 @@ class Payment extends Model
         return $this->hasOne(BranchTransferExpense::class);
     }
 
+    /** @return HasOne<OperationalExpense, $this> */
+    public function operationalExpense(): HasOne
+    {
+        return $this->hasOne(OperationalExpense::class);
+    }
+
     protected function casts(): array
     {
         return [

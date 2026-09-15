@@ -77,6 +77,7 @@ type FinancialCategory = {
     payments_count: number;
     cash_transactions_count: number;
     transfer_expenses_count: number;
+    operational_expenses_count: number;
 };
 
 type Branch = {
@@ -781,7 +782,11 @@ export default function FinanceMasterIndex({
                                         {category.transfer_expenses_count.toLocaleString(
                                             'id-ID',
                                         )}{' '}
-                                        biaya transfer
+                                        biaya transfer ·{' '}
+                                        {category.operational_expenses_count.toLocaleString(
+                                            'id-ID',
+                                        )}{' '}
+                                        expense operasional
                                     </p>
                                     {permissions.manageCategories && (
                                         <div className="flex flex-wrap gap-2">

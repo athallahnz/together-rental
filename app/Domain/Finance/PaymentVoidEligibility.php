@@ -4,6 +4,7 @@ namespace App\Domain\Finance;
 
 use App\Models\BranchTransferExpense;
 use App\Models\CashSession;
+use App\Models\OperationalExpense;
 use App\Models\Payment;
 use App\Models\PaymentMethod;
 use App\Models\Refund;
@@ -64,6 +65,7 @@ class PaymentVoidEligibility
             'rental_return',
             'rental_extension',
             'transfer_expense',
+            'operational_expense',
         ], true)) {
             return $this->blocked(
                 'payment',
@@ -101,6 +103,19 @@ class PaymentVoidEligibility
             return $this->blocked(
                 'payment',
                 'Biaya transfer sumber tidak lagi berstatus dibayar dan tidak dapat di-void dari Payment Center.',
+            );
+        }
+
+        if (
+            $payment->source_context === 'operational_expense'
+            && ! OperationalExpense::query()
+                ->where('payment_id', $payment->id)
+                ->where('status', 'paid')
+                ->exists()
+        ) {
+            return $this->blocked(
+                'payment',
+                'Pengeluaran operasional sumber tidak lagi berstatus dibayar dan tidak dapat di-void dari Payment Center.',
             );
         }
 

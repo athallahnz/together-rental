@@ -22,6 +22,11 @@ class RentalNumberGenerator
         return $this->next('payments', 'payment_number', 'PAY', $branch);
     }
 
+    public function nextOperationalExpense(Branch $branch): string
+    {
+        return $this->next('operational_expenses', 'expense_number', 'EXP', $branch);
+    }
+
     public function nextReturn(Branch $branch): string
     {
         return $this->next('rental_returns', 'return_number', 'RTN', $branch);
