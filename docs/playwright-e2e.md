@@ -125,6 +125,18 @@ Journey dilanjutkan dari rental aktif yang sudah diperpanjang ke final return:
 
 Status akhir rental yang dibuat workflow operasional adalah `returned`. Nilai `completed` pada tahap ini merupakan status record pengembaliannya; tidak ada aksi UI terpisah untuk mengubah rental dari `returned` menjadi `completed`.
 
+## Golden Rental Journey — tahap kelima
+
+Journey pascatransaksi memastikan hasil final return dapat ditelusuri lintas modul:
+
+- menerbitkan Agreement Rental dari nomor rental yang dihasilkan journey;
+- memverifikasi riwayat dokumen, versi snapshot, dan respons PDF;
+- mencari nomor rental pada laporan `Rental & Return` dan memastikan baris rental `returned` serta return `completed` tampil dengan nilai final yang benar;
+- menelusuri event `rental.return_completed` di Audit Trail berikut aktor, cabang, dan detail perubahannya;
+- memastikan penerbitan agreement juga menghasilkan event `transaction-document.issued` yang dapat diaudit.
+
+Tahap ini tetap menggunakan transaksi yang dibuat seluruhnya melalui UI pada tahap sebelumnya. Tidak ada dokumen, laporan, atau activity log sintetis yang ditambahkan melalui seeder.
+
 Suite ini bukan pengganti manual internal UAT maupun client acceptance.
 
 ## Gates
