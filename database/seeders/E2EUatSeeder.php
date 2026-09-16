@@ -228,6 +228,13 @@ class E2EUatSeeder extends Seeder
      *         asset_notes: string,
      *         notes: string,
      *         collateral: array{type: string, number: string, holder_name: string, notes: string}
+     *     },
+     *     extension: array{
+     *         duration_units: int,
+     *         payment_amount: int,
+     *         payment_reference: string,
+     *         notes: string,
+     *         payment_notes: string
      *     }
      * }
      */
@@ -333,6 +340,13 @@ class E2EUatSeeder extends Seeder
                     'holder_name' => 'E2E Golden Rental Customer',
                     'notes' => 'Original identity card held at the Ponorogo counter.',
                 ],
+            ],
+            'extension' => [
+                'duration_units' => 1,
+                'payment_amount' => 150000,
+                'payment_reference' => 'E2E-GOLDEN-EXT-PAY-001',
+                'notes' => 'E2E Golden Rental extended by one day.',
+                'payment_notes' => 'E2E extension payment via bank transfer.',
             ],
         ];
     }
