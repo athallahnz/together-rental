@@ -44,6 +44,16 @@ type GoldenRentalFixture = {
         payment_amount: number;
         payment_reference: string;
     };
+    checkout: {
+        asset_notes: string;
+        notes: string;
+        collateral: {
+            type: string;
+            number: string;
+            holder_name: string;
+            notes: string;
+        };
+    };
 };
 
 export type UatFixture = {

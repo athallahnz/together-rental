@@ -86,6 +86,19 @@ Trace, screenshot, video, dan HTML report disimpan di `storage/framework/testing
 
 Seeder menyediakan produk, tarif, aset, metode pembayaran transfer, serta metadata jadwal khusus untuk perjalanan ini. Customer dan booking tetap dibuat melalui UI agar test menguji alur pengguna nyata.
 
+## Golden Rental Journey — tahap kedua
+
+Journey yang sama dilanjutkan tanpa membuat transaksi sintetis langsung di database:
+
+- membuka checkout dari booking yang sudah dikonfirmasi;
+- memverifikasi unit dan mencatat kelengkapannya;
+- menerima jaminan fisik KTP melalui form checkout;
+- mengaktifkan rental dan memastikan aset tampil sebagai unit yang dibawa;
+- memastikan jaminan berstatus `Ditahan`;
+- memastikan aksi perpanjangan dan pengembalian tersedia pada rental aktif.
+
+Pembayaran tambahan sengaja tidak dicatat pada tahap ini agar urutan journey tetap sesuai UAT: DP sebelum konfirmasi, checkout dan collateral, kemudian extension dan pelunasan pada tahap berikutnya.
+
 Suite ini bukan pengganti manual internal UAT maupun client acceptance.
 
 ## Gates
