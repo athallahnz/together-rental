@@ -235,6 +235,11 @@ class E2EUatSeeder extends Seeder
      *         payment_reference: string,
      *         notes: string,
      *         payment_notes: string
+     *     },
+     *     rental_return: array{
+     *         payment_amount: int,
+     *         payment_reference: string,
+     *         unit_notes: string
      *     }
      * }
      */
@@ -347,6 +352,11 @@ class E2EUatSeeder extends Seeder
                 'payment_reference' => 'E2E-GOLDEN-EXT-PAY-001',
                 'notes' => 'E2E Golden Rental extended by one day.',
                 'payment_notes' => 'E2E extension payment via bank transfer.',
+            ],
+            'rental_return' => [
+                'payment_amount' => 100000,
+                'payment_reference' => 'E2E-GOLDEN-RETURN-PAY-001',
+                'unit_notes' => 'Unit and accessories returned complete in excellent condition.',
             ],
         ];
     }

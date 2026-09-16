@@ -112,6 +112,19 @@ Journey dilanjutkan dari rental aktif ke perpanjangan dan ledger pembayaran:
 
 Tahap ini menguji integrasi browser antara rental extension dan payment ledger tanpa membuat extension atau payment secara langsung melalui seeder.
 
+## Golden Rental Journey — tahap keempat
+
+Journey dilanjutkan dari rental aktif yang sudah diperpanjang ke final return:
+
+- membuka form pengembalian dari detail rental;
+- memverifikasi unit terakhir kembali lengkap dalam kondisi sangat baik;
+- melunasi sisa tagihan melalui Bank Transfer;
+- mengonfirmasi jaminan KTP sudah dikembalikan kepada pelanggan;
+- memastikan return bertipe `final` dan berstatus `completed`;
+- memastikan rental masuk status closed `returned`, saldo menjadi nol, dan collateral tampil `Dikembalikan`.
+
+Status akhir rental yang dibuat workflow operasional adalah `returned`. Nilai `completed` pada tahap ini merupakan status record pengembaliannya; tidak ada aksi UI terpisah untuk mengubah rental dari `returned` menjadi `completed`.
+
 Suite ini bukan pengganti manual internal UAT maupun client acceptance.
 
 ## Gates

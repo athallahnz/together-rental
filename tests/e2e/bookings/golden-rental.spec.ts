@@ -76,7 +76,9 @@ async function getAvailability(
     return (await response.json()) as AvailabilityResponse;
 }
 
-test('golden rental: customer through extension payment', async ({ page }) => {
+test('golden rental: customer through completed final return', async ({
+    page,
+}) => {
     const uat = loadUatFixture();
     const golden = uat.golden_rental;
 
@@ -378,4 +380,116 @@ test('golden rental: customer through extension payment', async ({ page }) => {
         golden.extension.payment_notes,
     );
     await expect(paymentSourceCard).toContainText('Perpanjangan Rental');
+
+    await paymentSourceCard.getByRole('link', { name: 'Buka sumber' }).click();
+
+    await expect(page).toHaveURL(/\/rentals\/\d+$/);
+    await page.getByRole('link', { name: 'Proses pengembalian' }).click();
+
+    await expect(page).toHaveURL(/\/rentals\/\d+\/return$/);
+    await expect(
+        page.getByRole('heading', {
+            name: 'Proses pengembalian',
+            exact: true,
+        }),
+    ).toBeVisible();
+    await expect(
+        page.getByText(golden.asset.code, { exact: true }),
+    ).toBeVisible();
+    await expect(
+        page.getByText('Pelunasan wajib', { exact: true }),
+    ).toBeVisible();
+    await expect(
+        page.getByText('Jaminan masih ditahan', { exact: true }),
+    ).toBeVisible();
+
+    const collateralReturnCard = page
+        .locator('[data-slot="card"]')
+        .filter({ hasText: 'Pengembalian jaminan fisik' });
+    const collateralReturnRow = collateralReturnCard
+        .locator('label')
+        .filter({ hasText: golden.checkout.collateral.number });
+
+    await collateralReturnRow.getByRole('checkbox').click();
+    await page
+        .getByPlaceholder('Kelengkapan, kerusakan, atau catatan unit')
+        .fill(golden.rental_return.unit_notes);
+
+    const settlementCard = page
+        .locator('[data-slot="card"]')
+        .filter({ hasText: 'Penyelesaian transaksi' });
+    const paymentField = settlementCard
+        .getByText('Pembayaran diterima', { exact: true })
+        .locator('..');
+    const paymentMethodField = settlementCard
+        .getByText('Metode pembayaran', { exact: true })
+        .locator('..');
+    const paymentReferenceField = settlementCard
+        .getByText('Referensi pembayaran', { exact: true })
+        .locator('..');
+
+    await paymentField
+        .locator('input')
+        .fill(String(golden.rental_return.payment_amount));
+    await selectOption(
+        page,
+        paymentMethodField.getByRole('combobox'),
+        golden.payment_method.name,
+    );
+    await paymentReferenceField
+        .locator('input')
+        .fill(golden.rental_return.payment_reference);
+
+    const finalSummaryCard = page
+        .locator('[data-slot="card"]')
+        .filter({ hasText: 'Ringkasan akhir' });
+    const projectedBalanceRow = finalSummaryCard
+        .getByText('Sisa setelah proses', { exact: true })
+        .locator('..');
+    const submitReturn = page.getByRole('button', {
+        name: 'Simpan pengembalian',
+    });
+
+    await expect(projectedBalanceRow).toContainText(/Rp\s*0/);
+    await expect(submitReturn).toBeEnabled();
+    await submitReturn.click();
+
+    await expect(page).toHaveURL(/\/rentals\/\d+$/);
+    await expect(
+        page.locator('h1').locator('..').getByText('returned', { exact: true }),
+    ).toBeVisible();
+
+    const closedRentalPaymentCard = page
+        .locator('[data-slot="card"]')
+        .filter({ hasText: 'Pembayaran' });
+    const closedPaidRow = closedRentalPaymentCard
+        .locator('p')
+        .filter({ hasText: 'Dibayar' });
+    const closedBalanceRow = closedRentalPaymentCard
+        .locator('p')
+        .filter({ hasText: 'Sisa' });
+
+    await expect(closedPaidRow).toContainText(/Rp\s*300\.000/);
+    await expect(closedBalanceRow).toContainText(/Rp\s*0/);
+
+    const returnedCollateralCard = page
+        .locator('[data-slot="card"]')
+        .filter({ hasText: 'Jaminan fisik / dokumen' });
+
+    await expect(returnedCollateralCard).toContainText(
+        golden.checkout.collateral.number,
+    );
+    await expect(returnedCollateralCard).toContainText('Dikembalikan');
+
+    const returnHistoryCard = page
+        .locator('[data-slot="card"]')
+        .filter({ hasText: 'Riwayat pengembalian' });
+
+    await expect(returnHistoryCard).toContainText('final');
+    await expect(returnHistoryCard).toContainText('completed');
+    await expect(returnHistoryCard).toContainText(/Rp\s*0/);
+    await expect(page.getByRole('link', { name: 'Perpanjang' })).toHaveCount(0);
+    await expect(
+        page.getByRole('link', { name: 'Proses pengembalian' }),
+    ).toHaveCount(0);
 });
