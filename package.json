@@ -11,12 +11,21 @@
         "format:check": "prettier --check resources/",
         "lint": "eslint . --fix",
         "lint:check": "eslint .",
-        "types:check": "tsc --noEmit"
+        "types:check": "tsc --noEmit",
+        "e2e:install": "playwright install chromium",
+        "e2e:prepare": "herd php artisan --env=e2e e2e:prepare --force --no-interaction",
+        "e2e:test": "npm run e2e:prepare && playwright test",
+        "e2e:test:headed": "npm run e2e:prepare && playwright test --headed",
+        "e2e:ui": "npm run e2e:prepare && playwright test --ui",
+        "e2e:types:check": "tsc --noEmit -p tsconfig.e2e.json",
+        "e2e:format:check": "prettier --check playwright.config.ts \"tests/e2e/**/*.ts\"",
+        "e2e:report": "playwright show-report storage/framework/testing/playwright-report"
     },
     "devDependencies": {
         "@eslint/js": "^9.19.0",
-        "@stylistic/eslint-plugin": "^5.10.0",
         "@laravel/vite-plugin-wayfinder": "^0.1.3",
+        "@playwright/test": "^1.63.0",
+        "@stylistic/eslint-plugin": "^5.10.0",
         "@types/node": "^22.13.5",
         "babel-plugin-react-compiler": "^1.0.0",
         "eslint": "^9.17.0",
