@@ -76,7 +76,9 @@ async function getAvailability(
     return (await response.json()) as AvailabilityResponse;
 }
 
-test('golden rental: customer through completed final return', async ({
+test.describe.configure({ timeout: 60_000 });
+
+test('golden rental: customer through post-transaction traceability', async ({
     page,
 }) => {
     const uat = loadUatFixture();
@@ -492,4 +494,136 @@ test('golden rental: customer through completed final return', async ({
     await expect(
         page.getByRole('link', { name: 'Proses pengembalian' }),
     ).toHaveCount(0);
+
+    const rentalNumber = (await page.locator('h1').innerText()).trim();
+
+    expect(rentalNumber).not.toBe('');
+
+    await page.goto('/documents');
+    await expect(
+        page.getByRole('heading', {
+            name: 'Invoice, Nota & Agreement',
+            exact: true,
+        }),
+    ).toBeVisible();
+
+    const issueDocumentCard = page
+        .locator('[data-slot="card"]')
+        .filter({ hasText: 'Terbitkan dokumen' });
+    const documentTypeField = issueDocumentCard
+        .getByText('Jenis dokumen', { exact: true })
+        .locator('..');
+    const documentSourceField = issueDocumentCard
+        .getByText('Sumber', { exact: true })
+        .locator('..');
+
+    await selectOption(
+        page,
+        documentTypeField.getByRole('combobox'),
+        'Agreement Rental',
+    );
+    await expect(documentSourceField.getByRole('combobox')).toContainText(
+        'Rental',
+    );
+    await issueDocumentCard.getByPlaceholder('Nomor rental').fill(rentalNumber);
+    await issueDocumentCard
+        .getByRole('button', { name: 'Terbitkan snapshot' })
+        .click();
+
+    await expect(page).toHaveURL(/\/documents$/);
+
+    const documentRow = page
+        .locator('tbody tr')
+        .filter({ hasText: rentalNumber });
+
+    await expect(documentRow).toHaveCount(1);
+    await expect(documentRow).toContainText('Agreement Rental');
+    await expect(documentRow).toContainText('Rental');
+    await expect(documentRow).toContainText('Versi 1');
+
+    const pdfHref = await documentRow
+        .getByRole('link', { name: 'PDF' })
+        .getAttribute('href');
+
+    if (pdfHref === null) {
+        throw new Error('Agreement PDF URL was not rendered.');
+    }
+
+    const pdfResponse = await page.request.get(pdfHref);
+
+    expect(pdfResponse.status()).toBe(200);
+    expect(pdfResponse.headers()['content-type']).toContain('application/pdf');
+    expect((await pdfResponse.body()).subarray(0, 4).toString()).toBe('%PDF');
+
+    await page.goto(
+        `/reports?report=operational&search=${encodeURIComponent(rentalNumber)}`,
+    );
+    await expect(
+        page.getByRole('heading', {
+            name: 'Integrated Reporting & Export Center',
+            exact: true,
+        }),
+    ).toBeVisible();
+
+    const reportRows = page
+        .locator('tbody tr')
+        .filter({ hasText: rentalNumber });
+    const rentalReportRow = reportRows.filter({
+        has: page.locator('td').filter({ hasText: /^Rental$/ }),
+    });
+    const returnReportRow = reportRows.filter({
+        has: page.locator('td').filter({ hasText: /^Return$/ }),
+    });
+
+    await expect(reportRows).toHaveCount(2);
+    await expect(rentalReportRow).toHaveCount(1);
+    await expect(rentalReportRow).toContainText('Dikembalikan');
+    await expect(rentalReportRow).toContainText(/Rp\s*300\.000/);
+    await expect(returnReportRow).toHaveCount(1);
+    await expect(returnReportRow).toContainText('Selesai');
+    await expect(returnReportRow).toContainText(/Rp\s*0/);
+
+    await page.goto('/audit-trail?search=rental.return_completed');
+    await expect(
+        page.getByRole('heading', {
+            name: 'Audit Trail Center',
+            exact: true,
+        }),
+    ).toBeVisible();
+
+    const returnAuditRow = page
+        .locator('tbody tr')
+        .filter({ hasText: 'rental.return_completed' });
+
+    await expect(returnAuditRow).toHaveCount(1);
+    await expect(returnAuditRow).toContainText('Rental Return Completed');
+    await expect(returnAuditRow).toContainText(uat.users.admin.email);
+    await expect(returnAuditRow).toContainText(uat.branches.ponorogo.code);
+    await returnAuditRow.getByRole('button').click();
+
+    const returnAuditDetail = returnAuditRow.locator(
+        'xpath=following-sibling::tr[1]',
+    );
+
+    await expect(returnAuditDetail).toContainText('Return Number');
+    await expect(returnAuditDetail).toContainText('Type');
+    await expect(returnAuditDetail).toContainText('final');
+
+    await page.goto('/audit-trail?search=transaction-document.issued');
+
+    const documentAuditRow = page
+        .locator('tbody tr')
+        .filter({ hasText: 'transaction-document.issued' });
+
+    await expect(documentAuditRow).toHaveCount(1);
+    await expect(documentAuditRow).toContainText('Transaction Document Issued');
+    await documentAuditRow.getByRole('button').click();
+
+    const documentAuditDetail = documentAuditRow.locator(
+        'xpath=following-sibling::tr[1]',
+    );
+
+    await expect(documentAuditDetail).toContainText('Document Type');
+    await expect(documentAuditDetail).toContainText('agreement');
+    await expect(documentAuditDetail).toContainText(rentalNumber);
 });
