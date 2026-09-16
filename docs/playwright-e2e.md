@@ -68,6 +68,54 @@ npm run e2e:report
 
 Trace, screenshot, video, dan HTML report disimpan di `storage/framework/testing/` dan hanya dipertahankan untuk failure sesuai konfigurasi.
 
+## Internal UAT evidence mode
+
+Mode evidence digunakan saat hasil browser perlu diarsipkan sebagai bukti Internal UAT. Mode ini tetap memakai Chromium dan satu worker, tetapi menyimpan trace, video, serta screenshot untuk test yang berhasil maupun gagal.
+
+Jalankan dari project root:
+
+```powershell
+npm run e2e:evidence
+Write-Host "E2E_EVIDENCE_EXIT=$LASTEXITCODE"
+```
+
+Command tersebut otomatis menjalankan `e2e:prepare`, kemudian seluruh Playwright suite. Hasil setiap run disimpan terpisah agar evidence lama tidak tertimpa:
+
+```text
+storage/framework/testing/e2e-evidence/<timestamp>/
+├── playwright-report/
+├── test-results/
+├── console.log
+└── run-summary.txt
+```
+
+Runner membutuhkan minimal 5 GB ruang kosong pada drive tujuan untuk menampung file sementara ketika trace disusun. Jika drive project tidak cukup, arahkan evidence ke drive lain:
+
+```powershell
+npm run e2e:evidence -- -EvidenceParent "G:\Together-Kamera-UAT-Evidence"
+Write-Host "E2E_EVIDENCE_EXIT=$LASTEXITCODE"
+```
+
+Jika sebuah full evidence run terhenti karena kapasitas saat trace disusun, test yang gagal dapat diulang secara targeted pada folder timestamp baru. Video dan screenshot tetap direkam, sedangkan trace dapat dimatikan untuk menekan pemakaian sementara menjadi minimal 1 GB:
+
+```powershell
+npm run e2e:evidence -- `
+    -TestPath "tests/e2e/bookings/golden-rental.spec.ts" `
+    -TraceMode off
+
+Write-Host "E2E_EVIDENCE_EXIT=$LASTEXITCODE"
+```
+
+Targeted retry tidak menimpa evidence sebelumnya. Kedua run harus disimpan bersama jika digunakan sebagai paket evidence komposit.
+
+ZIP dengan nama timestamp yang sama dibuat di samping folder evidence. `test-results` berisi `video.webm`, `trace.zip`, dan screenshot akhir pada direktori masing-masing test. HTML report dapat dibuka dengan:
+
+```powershell
+npx playwright show-report "storage\framework\testing\e2e-evidence\<timestamp>\playwright-report"
+```
+
+Folder evidence berada di dalam `storage/framework/testing`, sehingga mengikuti ignore rules storage dan tidak dimasukkan ke Git. Salin ZIP ke media handover atau penyimpanan proyek jika perlu dipertahankan di luar mesin lokal.
+
 ## POC coverage
 
 - `UAT-001`: invalid login, valid login, dan logout.

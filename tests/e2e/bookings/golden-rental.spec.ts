@@ -31,7 +31,7 @@ async function selectOption(
     });
 
     await expect(option).toBeVisible();
-    await option.click();
+    await option.press('Enter');
     await expect(trigger).toContainText(optionName);
 }
 
