@@ -3,10 +3,15 @@
 namespace Database\Seeders;
 
 use App\Domain\Branches\BranchProvisioner;
+use App\Models\Asset;
 use App\Models\Booking;
 use App\Models\Branch;
 use App\Models\Company;
 use App\Models\Customer;
+use App\Models\PaymentMethod;
+use App\Models\Product;
+use App\Models\ProductRate;
+use App\Models\RatePlan;
 use App\Models\Role;
 use App\Models\User;
 use Illuminate\Database\Seeder;
@@ -22,7 +27,7 @@ class E2EUatSeeder extends Seeder
         $this->guardEnvironment();
         $this->call(RentalFoundationSeeder::class);
 
-        /** @var array{0: User, 1: User, 2: User, 3: Branch, 4: Branch} $fixtures */
+        /** @var array{0: User, 1: User, 2: User, 3: Branch, 4: Branch, 5: array<string, mixed>} $fixtures */
         $fixtures = DB::transaction(function (): array {
             $company = Company::query()->where('code', 'TK')->firstOrFail();
             $ponorogo = Branch::query()
@@ -65,8 +70,9 @@ class E2EUatSeeder extends Seeder
 
             $this->createBookingFixture($company, $ponorogo, $admin, 'PNG');
             $this->createBookingFixture($company, $madiun, $admin, 'MDN');
+            $goldenRental = $this->createGoldenRentalFixture($company, $ponorogo);
 
-            return [$admin, $restricted, $branchManager, $ponorogo, $madiun];
+            return [$admin, $restricted, $branchManager, $ponorogo, $madiun, $goldenRental];
         });
 
         $this->writeMetadata(...$fixtures);
@@ -210,12 +216,120 @@ class E2EUatSeeder extends Seeder
         ]);
     }
 
+    /**
+     * @return array{
+     *     customer: array{name: string, phone: string, email: string},
+     *     product: array{id: int, sku: string, name: string},
+     *     asset: array{id: int, code: string},
+     *     rate_plan: array{id: int, code: string, name: string},
+     *     payment_method: array{id: int, code: string, name: string},
+     *     booking: array{starts_at: string, duration_units: int, quantity: int, payment_amount: int, payment_reference: string}
+     * }
+     */
+    private function createGoldenRentalFixture(Company $company, Branch $branch): array
+    {
+        $ratePlan = RatePlan::query()
+            ->where('company_id', $company->id)
+            ->whereNull('branch_id')
+            ->where('code', '1D')
+            ->where('is_active', true)
+            ->firstOrFail();
+        $paymentMethod = PaymentMethod::query()
+            ->where('company_id', $company->id)
+            ->where('code', 'TRANSFER')
+            ->where('is_active', true)
+            ->firstOrFail();
+        $product = Product::query()->create([
+            'company_id' => $company->id,
+            'sku' => 'E2E-GOLDEN-CAMERA',
+            'name' => 'E2E Golden Camera',
+            'brand' => 'Together Kamera',
+            'model' => 'Golden Journey',
+            'tracking_type' => 'serialized',
+            'replacement_value' => 15000000,
+            'is_rentable' => true,
+            'is_active' => true,
+            'metadata' => ['fixture' => 'golden-rental'],
+        ]);
+        ProductRate::query()->create([
+            'product_id' => $product->id,
+            'branch_id' => $branch->id,
+            'rate_plan_id' => $ratePlan->id,
+            'amount' => 150000,
+            'deposit_amount' => 500000,
+            'additional_hour_amount' => 25000,
+            'late_fee_amount' => 25000,
+            'is_active' => true,
+        ]);
+        $asset = Asset::query()->create([
+            'product_id' => $product->id,
+            'owning_branch_id' => $branch->id,
+            'current_branch_id' => $branch->id,
+            'asset_code' => 'PNG-E2E-GOLDEN-001',
+            'serial_number' => 'E2E-GOLDEN-SERIAL-001',
+            'status' => 'available',
+            'condition' => 'excellent',
+            'purchase_price' => 12000000,
+            'replacement_value' => 15000000,
+            'notes' => 'Dedicated Playwright golden rental fixture.',
+            'is_active' => true,
+        ]);
+
+        DB::table('branch_inventories')->insert([
+            'branch_id' => $branch->id,
+            'product_id' => $product->id,
+            'quantity_on_hand' => 1,
+            'quantity_reserved' => 0,
+            'quantity_rented' => 0,
+            'quantity_maintenance' => 0,
+            'reorder_level' => 0,
+            'created_at' => now(),
+            'updated_at' => now(),
+        ]);
+
+        return [
+            'customer' => [
+                'name' => 'E2E Golden Rental Customer',
+                'phone' => '081299990001',
+                'email' => 'golden-rental@together-kamera.test',
+            ],
+            'product' => [
+                'id' => $product->id,
+                'sku' => $product->sku,
+                'name' => $product->name,
+            ],
+            'asset' => [
+                'id' => $asset->id,
+                'code' => $asset->asset_code,
+            ],
+            'rate_plan' => [
+                'id' => $ratePlan->id,
+                'code' => $ratePlan->code,
+                'name' => $ratePlan->name,
+            ],
+            'payment_method' => [
+                'id' => $paymentMethod->id,
+                'code' => $paymentMethod->code,
+                'name' => $paymentMethod->name,
+            ],
+            'booking' => [
+                'starts_at' => now()->addDays(7)->setTime(9, 0)->format('Y-m-d\\TH:i'),
+                'duration_units' => 1,
+                'quantity' => 1,
+                'payment_amount' => 50000,
+                'payment_reference' => 'E2E-GOLDEN-DP-001',
+            ],
+        ];
+    }
+
+    /** @param array<string, mixed> $goldenRental */
     private function writeMetadata(
         User $admin,
         User $restricted,
         User $branchManager,
         Branch $ponorogo,
         Branch $madiun,
+        array $goldenRental,
     ): void {
         $path = storage_path('framework/testing/e2e-fixtures.json');
         File::ensureDirectoryExists(dirname($path));
@@ -232,6 +346,7 @@ class E2EUatSeeder extends Seeder
                 'ponorogo' => ['id' => $ponorogo->id, 'code' => $ponorogo->code, 'name' => $ponorogo->name],
                 'madiun' => ['id' => $madiun->id, 'code' => $madiun->code, 'name' => $madiun->name],
             ],
+            'golden_rental' => $goldenRental,
         ], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_THROW_ON_ERROR));
     }
 }

@@ -74,6 +74,18 @@ Trace, screenshot, video, dan HTML report disimpan di `storage/framework/testing
 - `UAT-002`: user terbatas menerima HTTP 403 pada Branch Management; super-admin dapat membukanya.
 - `UAT-003`: branch manager hanya melihat dashboard Ponorogo dan menerima HTTP 403 saat meminta scope Madiun.
 
+## Golden Rental Journey — tahap pertama
+
+`tests/e2e/bookings/golden-rental.spec.ts` melanjutkan POC dengan satu perjalanan browser yang saling terhubung:
+
+- membuat pelanggan baru dari Customer Center;
+- memeriksa ketersediaan unit menggunakan session browser terautentikasi;
+- membuat booking draft dan memastikan unit terreservasi;
+- mencatat DP sewa melalui detail booking;
+- mengonfirmasi booking dan memastikan aksi checkout tersedia.
+
+Seeder menyediakan produk, tarif, aset, metode pembayaran transfer, serta metadata jadwal khusus untuk perjalanan ini. Customer dan booking tetap dibuat melalui UI agar test menguji alur pengguna nyata.
+
 Suite ini bukan pengganti manual internal UAT maupun client acceptance.
 
 ## Gates

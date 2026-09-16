@@ -14,6 +14,38 @@ type UatBranch = {
     name: string;
 };
 
+type UatCatalogOption = {
+    id: number;
+    code: string;
+    name: string;
+};
+
+type GoldenRentalFixture = {
+    customer: {
+        name: string;
+        phone: string;
+        email: string;
+    };
+    product: {
+        id: number;
+        sku: string;
+        name: string;
+    };
+    asset: {
+        id: number;
+        code: string;
+    };
+    rate_plan: UatCatalogOption;
+    payment_method: UatCatalogOption;
+    booking: {
+        starts_at: string;
+        duration_units: number;
+        quantity: number;
+        payment_amount: number;
+        payment_reference: string;
+    };
+};
+
 export type UatFixture = {
     generated_at: string;
     base_url: string;
@@ -27,6 +59,7 @@ export type UatFixture = {
         ponorogo: UatBranch;
         madiun: UatBranch;
     };
+    golden_rental: GoldenRentalFixture;
 };
 
 const fixturePath = path.resolve(
