@@ -119,6 +119,7 @@ export default [
             'vendor',
             'node_modules',
             'public',
+            'storage/framework/testing/**',
             'bootstrap/ssr',
             'tailwind.config.js',
             'vite.config.ts',

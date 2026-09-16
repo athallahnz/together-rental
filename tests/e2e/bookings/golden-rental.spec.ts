@@ -19,8 +19,20 @@ async function selectOption(
     trigger: Locator,
     optionName: string,
 ): Promise<void> {
+    await trigger.evaluate((element) => {
+        element.scrollIntoView({ block: 'center', inline: 'nearest' });
+    });
+    await expect(trigger).toBeVisible();
     await trigger.click();
-    await page.getByRole('option', { name: optionName, exact: true }).click();
+
+    const option = page.getByRole('option', {
+        name: optionName,
+        exact: true,
+    });
+
+    await expect(option).toBeVisible();
+    await option.click();
+    await expect(trigger).toContainText(optionName);
 }
 
 async function chooseSearchResult(
@@ -64,7 +76,7 @@ async function getAvailability(
     return (await response.json()) as AvailabilityResponse;
 }
 
-test('golden rental: customer, availability, booking, DP, and confirmation', async ({
+test('golden rental: customer through active checkout with collateral', async ({
     page,
 }) => {
     const uat = loadUatFixture();
@@ -195,7 +207,75 @@ test('golden rental: customer, availability, booking, DP, and confirmation', asy
     await page.getByRole('button', { name: 'Konfirmasi' }).click();
 
     await expect(page.getByText('confirmed', { exact: true })).toBeVisible();
+    const checkoutLink = page.getByRole('link', { name: 'Checkout booking' });
+
+    await expect(checkoutLink).toBeVisible();
+    await checkoutLink.click();
+
+    await expect(page).toHaveURL(/\/rentals\/checkout\/\d+$/);
     await expect(
-        page.getByRole('link', { name: 'Checkout booking' }),
+        page.getByRole('heading', { name: 'Checkout booking', exact: true }),
+    ).toBeVisible();
+    await expect(
+        page.getByText(golden.asset.code, { exact: true }),
+    ).toBeVisible();
+
+    await page
+        .getByPlaceholder('Kelengkapan/catatan unit')
+        .fill(golden.checkout.asset_notes);
+    await page.getByRole('button', { name: 'Tambah jaminan fisik' }).click();
+
+    const collateralCard = page
+        .locator('[data-slot="card"]')
+        .filter({ hasText: 'Jaminan fisik / dokumen' });
+
+    await collateralCard
+        .getByPlaceholder('NIK / nomor SIM / nomor kartu')
+        .fill(golden.checkout.collateral.number);
+    await collateralCard
+        .getByPlaceholder('Nama pemilik jaminan')
+        .fill(golden.checkout.collateral.holder_name);
+    await collateralCard
+        .getByPlaceholder(
+            'Kondisi fisik, tempat penyimpanan, atau catatan lain',
+        )
+        .fill(golden.checkout.collateral.notes);
+    await page
+        .getByPlaceholder('Catatan umum dan kelengkapan yang dibawa.')
+        .fill(golden.checkout.notes);
+
+    await page
+        .getByRole('button', { name: 'Checkout menjadi rental aktif' })
+        .click();
+
+    await expect(page).toHaveURL(/\/rentals\/\d+$/);
+
+    const rentalTitleRow = page.locator('h1').locator('..');
+
+    await expect(
+        rentalTitleRow.getByText('active', { exact: true }),
+    ).toBeVisible();
+
+    const unitCard = page
+        .locator('[data-slot="card"]')
+        .filter({ hasText: 'Unit yang dibawa' });
+
+    await expect(unitCard).toContainText(golden.asset.code);
+    await expect(unitCard).toContainText(golden.checkout.asset_notes);
+
+    const heldCollateralCard = page
+        .locator('[data-slot="card"]')
+        .filter({ hasText: 'Jaminan fisik / dokumen' });
+
+    await expect(heldCollateralCard).toContainText(
+        `${golden.checkout.collateral.type} · ${golden.checkout.collateral.number}`,
+    );
+    await expect(heldCollateralCard).toContainText('Ditahan');
+    await expect(heldCollateralCard).toContainText(
+        golden.checkout.collateral.holder_name,
+    );
+    await expect(page.getByRole('link', { name: 'Perpanjang' })).toBeVisible();
+    await expect(
+        page.getByRole('link', { name: 'Proses pengembalian' }),
     ).toBeVisible();
 });

@@ -223,7 +223,12 @@ class E2EUatSeeder extends Seeder
      *     asset: array{id: int, code: string},
      *     rate_plan: array{id: int, code: string, name: string},
      *     payment_method: array{id: int, code: string, name: string},
-     *     booking: array{starts_at: string, duration_units: int, quantity: int, payment_amount: int, payment_reference: string}
+     *     booking: array{starts_at: string, duration_units: int, quantity: int, payment_amount: int, payment_reference: string},
+     *     checkout: array{
+     *         asset_notes: string,
+     *         notes: string,
+     *         collateral: array{type: string, number: string, holder_name: string, notes: string}
+     *     }
      * }
      */
     private function createGoldenRentalFixture(Company $company, Branch $branch): array
@@ -318,6 +323,16 @@ class E2EUatSeeder extends Seeder
                 'quantity' => 1,
                 'payment_amount' => 50000,
                 'payment_reference' => 'E2E-GOLDEN-DP-001',
+            ],
+            'checkout' => [
+                'asset_notes' => 'Body, battery, charger, and strap verified.',
+                'notes' => 'E2E Golden Rental checkout verification.',
+                'collateral' => [
+                    'type' => 'KTP',
+                    'number' => 'E2E-GOLDEN-KTP-001',
+                    'holder_name' => 'E2E Golden Rental Customer',
+                    'notes' => 'Original identity card held at the Ponorogo counter.',
+                ],
             ],
         ];
     }
