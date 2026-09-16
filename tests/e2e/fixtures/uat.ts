@@ -61,6 +61,11 @@ type GoldenRentalFixture = {
         notes: string;
         payment_notes: string;
     };
+    rental_return: {
+        payment_amount: number;
+        payment_reference: string;
+        unit_notes: string;
+    };
 };
 
 export type UatFixture = {
