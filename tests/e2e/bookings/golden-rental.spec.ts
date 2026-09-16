@@ -76,9 +76,7 @@ async function getAvailability(
     return (await response.json()) as AvailabilityResponse;
 }
 
-test('golden rental: customer through active checkout with collateral', async ({
-    page,
-}) => {
+test('golden rental: customer through extension payment', async ({ page }) => {
     const uat = loadUatFixture();
     const golden = uat.golden_rental;
 
@@ -278,4 +276,106 @@ test('golden rental: customer through active checkout with collateral', async ({
     await expect(
         page.getByRole('link', { name: 'Proses pengembalian' }),
     ).toBeVisible();
+
+    await page.getByRole('link', { name: 'Perpanjang' }).click();
+
+    await expect(page).toHaveURL(/\/rentals\/\d+\/extend$/);
+    await expect(
+        page.getByRole('heading', {
+            name: 'Perpanjangan rental',
+            exact: true,
+        }),
+    ).toBeVisible();
+    await expect(
+        page.getByText(golden.asset.code, { exact: false }),
+    ).toBeVisible();
+    await page
+        .getByLabel('Jumlah unit durasi')
+        .fill(String(golden.extension.duration_units));
+
+    const extensionPaymentCard = page
+        .locator('[data-slot="card"]')
+        .filter({ hasText: 'Pembayaran opsional' });
+
+    await extensionPaymentCard
+        .getByPlaceholder('Bayar biaya perpanjangan')
+        .fill(String(golden.extension.payment_amount));
+    await selectOption(
+        page,
+        extensionPaymentCard.getByRole('combobox'),
+        golden.payment_method.name,
+    );
+    await extensionPaymentCard
+        .getByLabel('Referensi pembayaran')
+        .fill(golden.extension.payment_reference);
+    await page.getByLabel('Catatan perpanjangan').fill(golden.extension.notes);
+    await page
+        .getByLabel('Catatan pembayaran')
+        .fill(golden.extension.payment_notes);
+    await page.getByRole('button', { name: 'Setujui perpanjangan' }).click();
+
+    await expect(page).toHaveURL(/\/rentals\/\d+$/);
+    await expect(
+        page.locator('h1').locator('..').getByText('active', { exact: true }),
+    ).toBeVisible();
+
+    const extensionHistoryCard = page
+        .locator('[data-slot="card"]')
+        .filter({ hasText: 'Riwayat perpanjangan' });
+
+    await expect(extensionHistoryCard).toContainText(golden.extension.notes);
+    await expect(extensionHistoryCard).toContainText(/Rp\s*150\.000/);
+    await expect(extensionHistoryCard).toContainText(/Dibayar\s*Rp\s*150\.000/);
+
+    const rentalPaymentCard = page
+        .locator('[data-slot="card"]')
+        .filter({ hasText: 'Pembayaran' });
+    const paidRow = rentalPaymentCard
+        .locator('p')
+        .filter({ hasText: 'Dibayar' });
+    const balanceRow = rentalPaymentCard
+        .locator('p')
+        .filter({ hasText: 'Sisa' });
+
+    await expect(paidRow).toContainText(/Rp\s*200\.000/);
+    await expect(balanceRow).toContainText(/Rp\s*100\.000/);
+
+    await page.goto('/finance/payments');
+    await expect(
+        page.getByRole('heading', { name: 'Payment Center', exact: true }),
+    ).toBeVisible();
+    await page
+        .getByPlaceholder('Payment, booking, rental, pelanggan, referensi...')
+        .fill(golden.extension.payment_reference);
+    await page.getByRole('button', { name: 'Cari', exact: true }).click();
+
+    const paymentRow = page
+        .locator('tbody tr')
+        .filter({ hasText: golden.customer.name });
+
+    await expect(paymentRow).toHaveCount(1);
+    await expect(paymentRow).toContainText('Perpanjangan Rental');
+    await expect(paymentRow).toContainText(golden.payment_method.name);
+    await expect(paymentRow).toContainText('Completed');
+    await expect(paymentRow).toContainText(/Rp\s*150\.000/);
+    await paymentRow.getByRole('link').first().click();
+
+    await expect(page).toHaveURL(/\/finance\/payments\/\d+$/);
+
+    const paymentDetailCard = page
+        .locator('[data-slot="card"]')
+        .filter({ hasText: 'Detail Payment' });
+    const paymentSourceCard = page
+        .locator('[data-slot="card"]')
+        .filter({ hasText: 'Sumber Transaksi' });
+
+    await expect(paymentDetailCard).toContainText(/Rp\s*150\.000/);
+    await expect(paymentDetailCard).toContainText(golden.payment_method.name);
+    await expect(paymentDetailCard).toContainText(
+        golden.extension.payment_reference,
+    );
+    await expect(paymentDetailCard).toContainText(
+        golden.extension.payment_notes,
+    );
+    await expect(paymentSourceCard).toContainText('Perpanjangan Rental');
 });

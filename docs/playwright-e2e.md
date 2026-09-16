@@ -99,6 +99,19 @@ Journey yang sama dilanjutkan tanpa membuat transaksi sintetis langsung di datab
 
 Pembayaran tambahan sengaja tidak dicatat pada tahap ini agar urutan journey tetap sesuai UAT: DP sebelum konfirmasi, checkout dan collateral, kemudian extension dan pelunasan pada tahap berikutnya.
 
+## Golden Rental Journey — tahap ketiga
+
+Journey dilanjutkan dari rental aktif ke perpanjangan dan ledger pembayaran:
+
+- membuka form perpanjangan dari detail rental;
+- memperpanjang seluruh unit yang masih keluar selama satu hari;
+- mencatat pembayaran perpanjangan melalui Bank Transfer;
+- memverifikasi riwayat perpanjangan, total dibayar, dan saldo rental;
+- mencari pembayaran melalui referensi unik di Payment Center;
+- membuka Detail Payment dan memverifikasi nominal, metode, referensi, catatan, serta source `Perpanjangan Rental`.
+
+Tahap ini menguji integrasi browser antara rental extension dan payment ledger tanpa membuat extension atau payment secara langsung melalui seeder.
+
 Suite ini bukan pengganti manual internal UAT maupun client acceptance.
 
 ## Gates
