@@ -106,7 +106,10 @@ export async function loginAs(
     password: string,
 ): Promise<void> {
     await page.goto('/login');
-    await page.getByLabel('Email address', { exact: true }).fill(user.email);
+    const emailField = page.getByLabel('Email address', { exact: true });
+
+    await expect(emailField).toBeVisible({ timeout: 20_000 });
+    await emailField.fill(user.email);
     await page.getByLabel('Password', { exact: true }).fill(password);
     await page.getByTestId('login-button').click();
 

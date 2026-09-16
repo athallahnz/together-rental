@@ -17,6 +17,7 @@
         "e2e:test": "npm run e2e:prepare && playwright test",
         "e2e:test:headed": "npm run e2e:prepare && playwright test --headed",
         "e2e:ui": "npm run e2e:prepare && playwright test --ui",
+        "e2e:evidence": "powershell -NoProfile -ExecutionPolicy Bypass -File scripts/e2e/Run-E2EEvidence.ps1",
         "e2e:types:check": "tsc --noEmit -p tsconfig.e2e.json",
         "e2e:format:check": "prettier --check playwright.config.ts \"tests/e2e/**/*.ts\"",
         "e2e:report": "playwright show-report storage/framework/testing/playwright-report"
