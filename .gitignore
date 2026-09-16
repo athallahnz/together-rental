@@ -33,3 +33,6 @@ Together-Kamera-Notification-Validation-Audit-*.zip
 
 # Playwright E2E local environment
 .env.e2e
+
+# Internal UAT environment
+.env.uat
