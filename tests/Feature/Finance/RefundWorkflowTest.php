@@ -25,7 +25,7 @@ class RefundWorkflowTest extends TestCase
 
     public function test_partial_refund_request_reserves_refundable_amount_and_blocks_over_refund(): void
     {
-        [$requester, , , $branch, $customer] = $this->fixture();
+        [$requester,,, $branch, $customer] = $this->fixture();
         $payment = $this->nonCashPayment($requester, $branch, $customer, 500000);
         $method = PaymentMethod::query()->where('code', 'TRANSFER')->firstOrFail();
 
@@ -61,7 +61,7 @@ class RefundWorkflowTest extends TestCase
         $this->actingAs($requester)
             ->get(route('finance.payments.show', $payment))
             ->assertOk()
-            ->assertInertia(fn (AssertableInertia $page) => $page
+            ->assertInertia(fn(AssertableInertia $page) => $page
                 ->where('refundEligibility.refundable_amount', 300000)
                 ->where('refundEligibility.reserved_refund_amount', 200000)
                 ->has('payment.refunds', 1));
@@ -69,7 +69,7 @@ class RefundWorkflowTest extends TestCase
 
     public function test_requester_cannot_approve_own_refund_but_separate_approver_can(): void
     {
-        [$requester, $approver, , $branch, $customer] = $this->fixture();
+        [$requester, $approver,, $branch, $customer] = $this->fixture();
         $refund = $this->requestedRefund($requester, $branch, $customer);
 
         $this->actingAs($requester)
@@ -91,7 +91,7 @@ class RefundWorkflowTest extends TestCase
 
     public function test_rejection_releases_reserved_amount_for_a_new_request(): void
     {
-        [$requester, $approver, , $branch, $customer] = $this->fixture();
+        [$requester, $approver,, $branch, $customer] = $this->fixture();
         $refund = $this->requestedRefund($requester, $branch, $customer, 300000);
         $payment = $refund->payment()->firstOrFail();
         $method = PaymentMethod::query()->where('code', 'TRANSFER')->firstOrFail();
@@ -144,14 +144,21 @@ class RefundWorkflowTest extends TestCase
             ->assertSessionHasNoErrors();
 
         $refund->refresh();
+
         $this->assertSame('paid', $refund->status);
         $this->assertSame($processor->id, $refund->processed_by);
         $this->assertSame('TRX-REFUND-0001', $refund->external_reference);
         $this->assertNotNull($refund->proof_path);
-        Storage::disk('local')->assertExists((string) $refund->proof_path);
+
+        $this->assertTrue(
+            Storage::disk('local')->exists((string) $refund->proof_path),
+            'Bukti refund seharusnya tersimpan pada disk local.',
+        );
+
         $this->actingAs($processor)
             ->get(route('finance.refunds.proof', $refund))
             ->assertOk();
+
         $this->assertDatabaseCount('cash_transactions', 0);
         $this->assertSame('completed', $payment->fresh()->status);
         $this->assertSame('500000.00', $payment->fresh()->amount);
@@ -205,7 +212,7 @@ class RefundWorkflowTest extends TestCase
 
     public function test_approved_refund_can_be_cancelled_without_deleting_history_or_ledger(): void
     {
-        [$requester, $approver, , $branch, $customer] = $this->fixture();
+        [$requester, $approver,, $branch, $customer] = $this->fixture();
         $refund = $this->requestedRefund($requester, $branch, $customer, 225000);
         $this->actingAs($approver)->post(route('finance.refunds.approve', $refund));
 
@@ -254,9 +261,59 @@ class RefundWorkflowTest extends TestCase
         $this->assertSame('completed', $payment->fresh()->status);
     }
 
+    public function test_void_payment_has_zero_refundable_amount_and_cannot_be_refunded(): void
+    {
+        [$requester,,, $branch, $customer] = $this->fixture();
+
+        $payment = $this->nonCashPayment(
+            $requester,
+            $branch,
+            $customer,
+            50000,
+        );
+
+        $payment->forceFill([
+            'status' => 'void',
+            'voided_by' => $requester->id,
+            'voided_at' => now(),
+            'void_reason' => 'Regression fixture untuk refund eligibility payment void.',
+        ])->save();
+
+        $payment->refresh();
+
+        $this->assertSame('void', $payment->status);
+
+        $this->actingAs($requester)
+            ->get(route('finance.payments.show', $payment))
+            ->assertOk()
+            ->assertInertia(fn(AssertableInertia $page) => $page
+                ->where('refundEligibility.allowed', false)
+                ->where('refundEligibility.refundable_amount', 0)
+                ->where('refundEligibility.reason', 'Hanya payment completed yang dapat direfund.')
+                ->where('permissions.requestRefund', false));
+
+        $method = PaymentMethod::query()
+            ->where('code', 'TRANSFER')
+            ->firstOrFail();
+
+        $this->actingAs($requester)
+            ->from(route('finance.payments.show', $payment))
+            ->post(route('finance.payments.refunds.store', $payment), [
+                'amount' => 50000,
+                'payment_method_id' => $method->id,
+                'reason' => 'Mencoba refund payment yang sudah berstatus void.',
+            ])
+            ->assertRedirect(route('finance.payments.show', $payment))
+            ->assertSessionHasErrors('payment');
+
+        $this->assertDatabaseMissing('refunds', [
+            'payment_id' => $payment->id,
+        ]);
+    }
+
     public function test_refund_center_is_branch_isolated_and_requires_permission(): void
     {
-        [$requester, , , $branch, $customer] = $this->fixture();
+        [$requester,,, $branch, $customer] = $this->fixture();
         $refund = $this->requestedRefund($requester, $branch, $customer);
         $foreignBranch = Branch::query()->create([
             'company_id' => $branch->company_id,
@@ -291,7 +348,7 @@ class RefundWorkflowTest extends TestCase
         $this->actingAs($requester)
             ->get(route('finance.refunds.index'))
             ->assertOk()
-            ->assertInertia(fn (AssertableInertia $page) => $page
+            ->assertInertia(fn(AssertableInertia $page) => $page
                 ->component('finance/refunds/index')
                 ->has('refunds.data', 1)
                 ->where('refunds.data.0.id', $refund->id));

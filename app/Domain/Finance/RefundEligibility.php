@@ -61,7 +61,7 @@ class RefundEligibility
                 $paymentAmount,
                 $paid,
                 $reserved,
-                $remaining,
+                0.0,
             );
         }
 

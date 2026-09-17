@@ -433,7 +433,7 @@ export default function PaymentCenterShow({
                             </p>
                         )}
                         {!refundEligibility.allowed &&
-                            payment.status === 'completed' && (
+                            refundEligibility.reason && (
                                 <p className="text-sm text-muted-foreground">
                                     {refundEligibility.reason}
                                 </p>
