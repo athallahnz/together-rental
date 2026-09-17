@@ -33,7 +33,7 @@ export function FilterBar({
     <Card
       data-slot="filter-bar"
       className={cn(
-        "gap-0 overflow-hidden border-primary/15 py-0 shadow-xs",
+        "shrink-0 gap-0 overflow-hidden border-primary/15 py-0 shadow-xs",
         className,
       )}
     >

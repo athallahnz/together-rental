@@ -37,6 +37,8 @@ type Props = {
     asset: AssetUnit | null;
 };
 
+type CalendarAppearance = 'default' | 'public';
+
 const statusMeta: Record<
     AssetCalendarStatus,
     { label: string; cell: string; dot: string }
@@ -61,6 +63,13 @@ const statusMeta: Record<
         cell: 'border-cyan-200 bg-cyan-50 dark:border-cyan-900 dark:bg-cyan-950/30',
         dot: 'bg-cyan-500',
     },
+};
+
+const publicStatusCell: Record<AssetCalendarStatus, string> = {
+    booked: 'border-sky-200 bg-sky-50 text-sky-950',
+    rented: 'border-violet-200 bg-violet-50 text-violet-950',
+    maintenance: 'border-amber-200 bg-amber-50 text-amber-950',
+    in_transit: 'border-cyan-200 bg-cyan-50 text-cyan-950',
 };
 
 const priority: AssetCalendarStatus[] = [
@@ -194,29 +203,54 @@ export function AssetSmartCalendarDialog({ open, onOpenChange, asset }: Props) {
 export function CalendarMonth({
     month,
     events,
+    appearance = 'default',
 }: {
     month: string;
     events: AssetCalendarEvent[];
+    appearance?: CalendarAppearance;
 }) {
     const days = useMemo(() => monthCells(month), [month]);
+    const isPublic = appearance === 'public';
 
     return (
         <div className="space-y-3">
             <div className="flex flex-wrap gap-2">
                 {priority.map((status) => (
-                    <Badge key={status} variant="outline" className="gap-2">
+                    <Badge
+                        key={status}
+                        variant="outline"
+                        className={
+                            isPublic
+                                ? 'gap-2 border-neutral-200 bg-white text-neutral-700'
+                                : 'gap-2'
+                        }
+                    >
                         <span
                             className={`size-2 rounded-full ${statusMeta[status].dot}`}
                         />
                         {statusMeta[status].label}
                     </Badge>
                 ))}
-                <Badge variant="outline" className="gap-2">
+                <Badge
+                    variant="outline"
+                    className={
+                        isPublic
+                            ? 'gap-2 border-emerald-200 bg-emerald-50 text-emerald-700'
+                            : 'gap-2'
+                    }
+                >
                     <span className="size-2 rounded-full bg-emerald-500" />
                     Tersedia
                 </Badge>
             </div>
-            <div className="grid grid-cols-7 gap-1 text-center text-xs font-medium text-muted-foreground">
+
+            <div
+                className={
+                    isPublic
+                        ? 'grid grid-cols-7 gap-1 text-center text-xs font-medium text-neutral-500'
+                        : 'grid grid-cols-7 gap-1 text-center text-xs font-medium text-muted-foreground'
+                }
+            >
                 {['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'].map(
                     (day) => (
                         <div key={day} className="py-2">
@@ -225,6 +259,7 @@ export function CalendarMonth({
                     ),
                 )}
             </div>
+
             <div className="grid grid-cols-7 gap-1">
                 {days.map((day) => {
                     const dayEvents = day.inMonth
@@ -235,21 +270,33 @@ export function CalendarMonth({
                     const primary = primaryStatus(dayEvents);
                     const meta = primary ? statusMeta[primary] : null;
 
+                    const cellClass = isPublic
+                        ? !day.inMonth
+                            ? 'border-neutral-200 bg-neutral-100 text-neutral-400'
+                            : primary
+                              ? publicStatusCell[primary]
+                              : 'border-emerald-100 bg-emerald-50/60 text-neutral-900'
+                        : !day.inMonth
+                          ? 'border-transparent bg-muted/20 text-muted-foreground/40'
+                          : (meta?.cell ?? 'bg-background');
+
                     return (
                         <div
                             key={day.key}
-                            className={`min-h-24 rounded-lg border p-2 ${
-                                !day.inMonth
-                                    ? 'border-transparent bg-muted/20 text-muted-foreground/40'
-                                    : (meta?.cell ?? 'bg-background')
-                            }`}
+                            className={`min-h-24 rounded-lg border p-2 ${cellClass}`}
                         >
                             <div className="flex items-center justify-between">
                                 <span className="text-xs font-semibold">
                                     {day.day}
                                 </span>
                                 {dayEvents.length > 1 && (
-                                    <span className="text-[10px] text-muted-foreground">
+                                    <span
+                                        className={
+                                            isPublic
+                                                ? 'text-[10px] text-neutral-500'
+                                                : 'text-[10px] text-muted-foreground'
+                                        }
+                                    >
                                         +{dayEvents.length}
                                     </span>
                                 )}
@@ -270,7 +317,13 @@ export function CalendarMonth({
                                         </div>
                                     ))}
                                     {dayEvents.length === 0 && (
-                                        <span className="text-[10px] text-emerald-700 dark:text-emerald-400">
+                                        <span
+                                            className={
+                                                isPublic
+                                                    ? 'text-[10px] font-medium text-emerald-700'
+                                                    : 'text-[10px] text-emerald-700 dark:text-emerald-400'
+                                            }
+                                        >
                                             Tersedia
                                         </span>
                                     )}
@@ -288,17 +341,32 @@ export function CalendarToolbar({
     month,
     onPrevious,
     onNext,
+    appearance = 'default',
 }: {
     month: string;
     onPrevious: () => void;
     onNext: () => void;
+    appearance?: CalendarAppearance;
 }) {
+    const isPublic = appearance === 'public';
+
     return (
-        <div className="flex items-center justify-between rounded-xl border bg-muted/20 p-2">
+        <div
+            className={
+                isPublic
+                    ? 'flex items-center justify-between rounded-xl border border-neutral-200 bg-neutral-100 p-2 text-neutral-900'
+                    : 'flex items-center justify-between rounded-xl border bg-muted/20 p-2'
+            }
+        >
             <Button
                 type="button"
                 variant="ghost"
                 size="icon"
+                className={
+                    isPublic
+                        ? 'text-neutral-700 hover:bg-neutral-200 hover:text-neutral-950'
+                        : undefined
+                }
                 onClick={onPrevious}
                 aria-label="Bulan sebelumnya"
             >
@@ -309,6 +377,11 @@ export function CalendarToolbar({
                 type="button"
                 variant="ghost"
                 size="icon"
+                className={
+                    isPublic
+                        ? 'text-neutral-700 hover:bg-neutral-200 hover:text-neutral-950'
+                        : undefined
+                }
                 onClick={onNext}
                 aria-label="Bulan berikutnya"
             >
