@@ -2,6 +2,7 @@
 
 namespace App\Domain\InventoryAudits;
 
+use App\Domain\Inventory\PooledStockManager;
 use App\Domain\Maintenance\MaintenanceManager;
 use App\Domain\Transfers\TransferInventorySynchronizer;
 use App\Models\Asset;
@@ -9,6 +10,7 @@ use App\Models\Branch;
 use App\Models\BranchInventory;
 use App\Models\InventoryAudit;
 use App\Models\InventoryAuditItem;
+use App\Models\Product;
 use App\Models\User;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Http\UploadedFile;
@@ -450,28 +452,41 @@ class InventoryAuditManager
 
     private function snapshotQuantityInventory(InventoryAudit $audit): void
     {
-        BranchInventory::query()
-            ->where('branch_id', $audit->branch_id)
-            ->whereHas('product', fn (Builder $query) => $query
-                ->where('company_id', $audit->company_id)
-                ->where('tracking_type', 'quantity')
-                ->where('is_active', true))
+        Product::query()
+            ->where('company_id', $audit->company_id)
+            ->whereIn('tracking_type', ['bulk', 'quantity'])
+            ->where('is_active', true)
             ->orderBy('id')
-            ->each(function (BranchInventory $inventory) use ($audit): void {
-                InventoryAuditItem::query()->create([
-                    'inventory_audit_id' => $audit->id,
-                    'product_id' => $inventory->product_id,
-                    'asset_id' => null,
-                    'expected_branch_id' => $audit->branch_id,
-                    'tracking_type' => 'quantity',
-                    'expected_quantity' => max(
-                        0,
-                        $inventory->quantity_on_hand
-                            - $inventory->quantity_rented
-                            - $inventory->quantity_in_transfer,
-                    ),
-                    'finding_status' => 'pending',
-                ]);
+            ->chunkById(200, function ($products) use ($audit): void {
+                $inventories = BranchInventory::query()
+                    ->where('branch_id', $audit->branch_id)
+                    ->whereIn('product_id', $products->pluck('id'))
+                    ->get()
+                    ->keyBy('product_id');
+
+                foreach ($products as $product) {
+                    /** @var BranchInventory|null $inventory */
+                    $inventory = $inventories->get($product->id);
+
+                    $expectedQuantity = $inventory === null
+                        ? 0
+                        : max(
+                            0,
+                            $inventory->quantity_on_hand
+                                - $inventory->quantity_rented
+                                - $inventory->quantity_in_transfer,
+                        );
+
+                    InventoryAuditItem::query()->create([
+                        'inventory_audit_id' => $audit->id,
+                        'product_id' => $product->id,
+                        'asset_id' => null,
+                        'expected_branch_id' => $audit->branch_id,
+                        'tracking_type' => 'quantity',
+                        'expected_quantity' => $expectedQuantity,
+                        'finding_status' => 'pending',
+                    ]);
+                }
             });
     }
 
@@ -637,11 +652,27 @@ class InventoryAuditManager
             ->where('branch_id', $audit->branch_id)
             ->where('product_id', $item->product_id)
             ->lockForUpdate()
-            ->firstOrFail();
-        $minimumOnSite = $inventory->quantity_reserved + $inventory->quantity_maintenance;
-        if ($item->counted_quantity < $minimumOnSite) {
+            ->first();
+
+        if ($inventory === null) {
+            $inventory = BranchInventory::query()->create([
+                'branch_id' => $audit->branch_id,
+                'product_id' => $item->product_id,
+                'quantity_on_hand' => 0,
+                'quantity_reserved' => 0,
+                'quantity_rented' => 0,
+                'quantity_maintenance' => 0,
+                'quantity_in_transfer' => 0,
+                'reorder_level' => 0,
+            ]);
+        }
+
+        $proposedOnHand = $item->counted_quantity + $inventory->quantity_rented + $inventory->quantity_in_transfer;
+        $reduction = max(0, $inventory->quantity_on_hand - $proposedOnHand);
+        if ($item->counted_quantity < $inventory->quantity_maintenance
+            || $reduction > app(PooledStockManager::class)->transferable($inventory)) {
             throw ValidationException::withMessages([
-                'resolution_action' => 'Jumlah fisik tidak boleh lebih kecil dari stok reserved dan maintenance aktif.',
+                'resolution_action' => 'Jumlah fisik tidak mencukupi untuk maintenance dan komitmen booking/rental yang masih aktif.',
             ]);
         }
 

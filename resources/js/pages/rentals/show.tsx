@@ -9,6 +9,7 @@ import {
     ShieldCheck,
 } from 'lucide-react';
 import type { FormEvent } from 'react';
+import { TransactionDocumentActions } from '@/components/documents/transaction-document-actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -60,6 +61,12 @@ type Rental = {
     }>;
     collaterals: Array<{
         id: number;
+        customer_identity_id: number | null;
+        source_type: 'manual' | 'customer_identity' | string;
+        identity_snapshot: {
+            verified_at?: string | null;
+            expires_at?: string | null;
+        } | null;
         type: string;
         number: string;
         holder_name: string | null;
@@ -93,6 +100,8 @@ type Rental = {
         id: number;
         description: string;
         quantity: number;
+        returned_quantity: number;
+        is_bulk: boolean;
         total_amount: string;
         assets: Array<{
             id: number;
@@ -272,9 +281,11 @@ export default function RentalShow({ rental, permissions }: Props) {
                         </div>
                     </div>
                     <p className="mt-1 text-sm text-muted-foreground">
-                        {rental.customer.name} · {rental.branch.name}
+                        {rental.customer.name} Â· {rental.branch.name}
                     </p>
                 </header>
+
+                <TransactionDocumentActions sourceType="rental" sourceReference={rental.rental_number} />
                 {overdue && (
                     <Alert variant="destructive">
                         <AlertTriangle className="size-4" />
@@ -323,7 +334,7 @@ export default function RentalShow({ rental, permissions }: Props) {
                             </p>
                             <p>{rental.booking?.booking_number}</p>
                             <p>
-                                {rental.customer.customer_number} ·{' '}
+                                {rental.customer.customer_number} Â·{' '}
                                 {rental.customer.phone ?? '-'}
                             </p>
                         </CardContent>
@@ -406,6 +417,9 @@ export default function RentalShow({ rental, permissions }: Props) {
                                     </b>
                                 </div>
                                 <div className="mt-3 grid gap-2 md:grid-cols-2">
+                                    {item.is_bulk && (
+                                        <p>Bulk · Keluar {item.quantity - item.returned_quantity} unit · Selesai {item.returned_quantity} unit</p>
+                                    )}
                                     {item.assets.map((line) => (
                                         <div
                                             key={line.id}
@@ -418,7 +432,7 @@ export default function RentalShow({ rental, permissions }: Props) {
                                                 Kondisi{' '}
                                                 {line.checkout_condition}
                                                 {line.asset.serial_number
-                                                    ? ` · SN ${line.asset.serial_number}`
+                                                    ? ` Â· SN ${line.asset.serial_number}`
                                                     : ''}
                                             </p>
                                             {line.notes && <p>{line.notes}</p>}
@@ -450,7 +464,7 @@ export default function RentalShow({ rental, permissions }: Props) {
                                         <div>
                                             <div className="flex flex-wrap items-center gap-2">
                                                 <p className="font-medium">
-                                                    {item.type} · {item.number}
+                                                    {item.type} Â· {item.number}
                                                 </p>
                                                 <Badge
                                                     variant={
@@ -463,6 +477,12 @@ export default function RentalShow({ rental, permissions }: Props) {
                                                         ? 'Ditahan'
                                                         : 'Dikembalikan'}
                                                 </Badge>
+                                                {item.source_type ===
+                                                    'customer_identity' && (
+                                                    <Badge variant="outline">
+                                                        Customer360
+                                                    </Badge>
+                                                )}
                                             </div>
                                             <p className="mt-1 text-sm text-muted-foreground">
                                                 Atas nama{' '}
@@ -477,10 +497,10 @@ export default function RentalShow({ rental, permissions }: Props) {
                                                       ).toLocaleString('id-ID')
                                                     : '-'}
                                                 {item.receiver?.name
-                                                    ? ` · ${item.receiver.name}`
+                                                    ? ` Â· ${item.receiver.name}`
                                                     : ''}
                                                 {item.returned_at
-                                                    ? ` · Dikembalikan ${new Date(
+                                                    ? ` Â· Dikembalikan ${new Date(
                                                           item.returned_at,
                                                       ).toLocaleString(
                                                           'id-ID',
@@ -668,7 +688,7 @@ export default function RentalShow({ rental, permissions }: Props) {
                                                 {new Date(
                                                     extension.previous_due_at,
                                                 ).toLocaleString('id-ID')}
-                                                {' → '}
+                                                {' â†’ '}
                                                 {new Date(
                                                     extension.extended_due_at,
                                                 ).toLocaleString('id-ID')}
@@ -692,7 +712,7 @@ export default function RentalShow({ rental, permissions }: Props) {
                                                         ),
                                                     )}
                                                     {extension.promotion
-                                                        ? ` · ${extension.promotion.code}`
+                                                        ? ` Â· ${extension.promotion.code}`
                                                         : ''}
                                                 </p>
                                             )}
@@ -717,7 +737,7 @@ export default function RentalShow({ rental, permissions }: Props) {
                                                         item.rental_item
                                                             .description
                                                     }{' '}
-                                                    · {item.quantity} unit
+                                                    Â· {item.quantity} unit
                                                 </span>
                                                 <span>
                                                     {new Date(
@@ -731,7 +751,7 @@ export default function RentalShow({ rental, permissions }: Props) {
                                         Disetujui oleh{' '}
                                         {extension.approver?.name ?? '-'}
                                         {extension.notes
-                                            ? ` · ${extension.notes}`
+                                            ? ` Â· ${extension.notes}`
                                             : ''}
                                     </p>
                                 </div>
@@ -755,7 +775,7 @@ export default function RentalShow({ rental, permissions }: Props) {
                                             {item.return_number}
                                         </p>
                                         <p className="text-sm text-muted-foreground">
-                                            {item.type} ·{' '}
+                                            {item.type} Â·{' '}
                                             {new Date(
                                                 item.returned_at,
                                             ).toLocaleString('id-ID')}
@@ -800,8 +820,8 @@ export default function RentalShow({ rental, permissions }: Props) {
                                                         .return_number
                                                 }
                                                 {item.replacement_return
-                                                    ? ` → ${item.replacement_return.return_number}`
-                                                    : ' → menunggu finalisasi'}
+                                                    ? ` â†’ ${item.replacement_return.return_number}`
+                                                    : ' â†’ menunggu finalisasi'}
                                             </p>
                                         </div>
                                         <Badge>{item.status}</Badge>
@@ -812,7 +832,7 @@ export default function RentalShow({ rental, permissions }: Props) {
                                     <p className="mt-2 text-xs text-muted-foreground">
                                         Dibuka oleh {item.opener.name}
                                         {item.finalizer
-                                            ? ` · Difinalisasi oleh ${item.finalizer.name}`
+                                            ? ` Â· Difinalisasi oleh ${item.finalizer.name}`
                                             : ''}
                                     </p>
                                 </div>
@@ -821,6 +841,7 @@ export default function RentalShow({ rental, permissions }: Props) {
                     </Card>
                 )}
                 {permissions.reopenReturn &&
+                    !rental.items.some((item) => item.is_bulk) &&
                     ['returned', 'completed'].includes(rental.status) && (
                         <Card>
                             <CardHeader>
@@ -948,8 +969,8 @@ export default function RentalShow({ rental, permissions }: Props) {
                                                 {item.adjustment_number}
                                             </p>
                                             <p className="text-sm text-muted-foreground">
-                                                {item.component} ·{' '}
-                                                {item.direction} ·{' '}
+                                                {item.component} Â·{' '}
+                                                {item.direction} Â·{' '}
                                                 {item.creator.name}
                                             </p>
                                         </div>
@@ -965,7 +986,7 @@ export default function RentalShow({ rental, permissions }: Props) {
                                         {money.format(
                                             Number(item.balance_before),
                                         )}
-                                        {' → '}
+                                        {' â†’ '}
                                         {money.format(
                                             Number(item.balance_after),
                                         )}

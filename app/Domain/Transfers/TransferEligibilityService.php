@@ -2,6 +2,7 @@
 
 namespace App\Domain\Transfers;
 
+use App\Domain\Inventory\PooledStockManager;
 use App\Domain\Transfers\Enums\TransferStatus;
 use App\Models\Asset;
 use App\Models\BranchInventory;
@@ -15,6 +16,8 @@ use Illuminate\Validation\ValidationException;
 
 class TransferEligibilityService
 {
+    public function __construct(private readonly PooledStockManager $pooled) {}
+
     /**
      * @return list<array{code: string, field: string, message: string, asset_id?: int, asset_code?: string, source_type?: string, source_id?: int, source_number?: string, starts_at?: string|null, ends_at?: string|null}>
      */
@@ -254,25 +257,16 @@ class TransferEligibilityService
             ]];
         }
 
-        $heldByCurrentTransfer = $forDispatch ? $item->quantity : 0;
-        $heldByContext = $forDispatch
-            ? 0
-            : $this->contextHeldQuantity($contextTransfer, $item->product_id);
-        $available = max(0,
-            $inventory->quantity_on_hand
-            - $inventory->quantity_reserved
-            - $inventory->quantity_rented
-            - $inventory->quantity_maintenance
-            - $inventory->quantity_in_transfer
-            + $heldByCurrentTransfer
-            + $heldByContext,
-        );
+        $required = (int) $transfer->items->whereNull('asset_id')->where('product_id', $item->product_id)->sum('quantity');
+        $heldByCurrentTransfer = $forDispatch ? $required : 0;
+        $heldByContext = $forDispatch ? 0 : $this->contextHeldQuantity($contextTransfer, $item->product_id);
+        $available = $this->pooled->transferable($inventory, $heldByCurrentTransfer + $heldByContext);
 
-        if ($available < $item->quantity) {
+        if ($available < $required) {
             return [[
                 'code' => 'INSUFFICIENT_STOCK',
                 'field' => "items.{$item->line_number}.quantity",
-                'message' => "Stok tersedia {$available} unit, sedangkan transfer membutuhkan {$item->quantity} unit.",
+                'message' => "Stok tersedia {$available} unit setelah memperhitungkan jadwal booking/rental, sedangkan transfer membutuhkan {$required} unit.",
             ]];
         }
 

@@ -81,6 +81,7 @@ class BookingController extends Controller
             ->when($period === 'past', fn (Builder $query) => $query->where('ends_at', '<', now()))
             ->with(['branch:id,code,name', 'customer:id,customer_number,name,phone'])
             ->withCount(['items', 'reservations'])
+            ->withSum(['bulkReservations as bulk_units_count' => fn (Builder $query) => $query->where('status', 'reserved')], 'quantity')
             ->orderByDesc('booked_at')
             ->paginate(20)
             ->withQueryString();
@@ -190,6 +191,7 @@ class BookingController extends Controller
                     'brand',
                     'model',
                     'variant',
+                    'tracking_type',
                     'catalog_brand_id',
                     'primary_image_path',
                 ])
@@ -202,6 +204,7 @@ class BookingController extends Controller
                         : $product->brand,
                     'model' => $product->model,
                     'variant' => $product->variant,
+                    'tracking_type' => $product->tracking_type,
                     'image_url' => $this->mediaUrl($product->primary_image_path),
                     'brand_logo_url' => $product->catalog_brand_id !== null
                         ? $product->catalogBrand->logo_url
@@ -284,6 +287,7 @@ class BookingController extends Controller
             'handler:id,name', 'creator:id,name', 'canceller:id,name',
             'items.product:id,sku,name', 'items.package:id,code,name',
             'items.reservations.asset:id,asset_code,serial_number,status,condition',
+            'items.bulkReservations.product:id,sku,name',
             'statusHistories.changer:id,name',
             'payments:id,booking_id,payment_method_id,cash_session_id,payment_number,type,source_context,status,amount,paid_at,external_reference,voided_at,void_reason',
             'payments.paymentMethod:id,name',
@@ -386,7 +390,7 @@ class BookingController extends Controller
         $cancelled = $manager->cancel($booking, $request->string('reason')->toString(), $request->user());
         $recorder->record($request, 'booking.cancelled', $cancelled, $old, $this->audit($cancelled), $cancelled->branch_id);
 
-        return back()->with('toast', ['type' => 'success', 'message' => 'Booking berhasil dibatalkan dan reservasi aset dilepas.']);
+        return back()->with('toast', ['type' => 'success', 'message' => 'Booking berhasil dibatalkan dan reservasi stok dilepas.']);
     }
 
     public function availability(BookingAvailabilityRequest $request, BookingManager $manager): JsonResponse

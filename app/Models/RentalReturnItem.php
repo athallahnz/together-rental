@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable([
     'rental_return_id', 'rental_item_id', 'asset_id', 'quantity', 'condition',
-    'status', 'late_fee_amount', 'damage_fee_amount', 'cleaning_fee_amount', 'notes',
+    'status', 'late_fee_amount', 'overtime_breakdown', 'damage_fee_amount', 'cleaning_fee_amount', 'notes',
 ])]
 class RentalReturnItem extends Model
 {
@@ -39,6 +39,7 @@ class RentalReturnItem extends Model
         return [
             'quantity' => 'integer',
             'late_fee_amount' => 'decimal:2',
+            'overtime_breakdown' => 'array',
             'damage_fee_amount' => 'decimal:2',
             'cleaning_fee_amount' => 'decimal:2',
         ];

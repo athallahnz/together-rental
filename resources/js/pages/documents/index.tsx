@@ -1,13 +1,21 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import {
+    Check,
+    ChevronsUpDown,
     Download,
     FileCheck2,
     FileText,
+    Loader2,
     ReceiptText,
     Search,
     ShieldCheck,
 } from 'lucide-react';
-import { useMemo } from 'react';
+import {
+    useEffect,
+    useMemo,
+    useRef,
+    useState,
+} from 'react';
 import type { FormEvent } from 'react';
 import { PaginationLinks } from '@/components/pagination-links';
 import { Button } from '@/components/ui/button';
@@ -43,6 +51,21 @@ type DocumentRow = {
     issuer?: { id: number; name: string } | null;
     pdf_url: string;
     source_url: string | null;
+};
+
+type SourceOption = {
+    source_id: number;
+    reference: string;
+    branch_id: number;
+    branch_code: string;
+    branch_name: string;
+    customer_name: string | null;
+    status: string;
+    amount: number;
+    has_document: boolean;
+    latest_version: number | null;
+    latest_document_number: string | null;
+    latest_content_hash: string | null;
 };
 
 type Pagination = {
@@ -97,6 +120,13 @@ const localDateTime = (value: string) =>
         timeStyle: 'short',
     }).format(new Date(value));
 
+const money = (value: number) =>
+    new Intl.NumberFormat('id-ID', {
+        style: 'currency',
+        currency: 'IDR',
+        maximumFractionDigits: 0,
+    }).format(value);
+
 export default function TransactionDocumentsIndex({
     documents,
     summary,
@@ -109,6 +139,13 @@ export default function TransactionDocumentsIndex({
         source_type: 'booking' as DocumentRow['source_type'],
         source_reference: '',
     });
+    const [sourceOptions, setSourceOptions] = useState<SourceOption[]>([]);
+    const [sourceSearch, setSourceSearch] = useState('');
+    const [sourceOpen, setSourceOpen] = useState(false);
+    const [sourceLoading, setSourceLoading] = useState(false);
+    const [sourceLoadError, setSourceLoadError] = useState<string | null>(null);
+    const [sourceRefresh, setSourceRefresh] = useState(0);
+    const sourcePickerRef = useRef<HTMLDivElement>(null);
 
     const allowedSources = useMemo(() => {
         if (issueForm.data.document_type === 'receipt') {
@@ -122,6 +159,96 @@ export default function TransactionDocumentsIndex({
         return ['booking', 'rental'] as DocumentRow['source_type'][];
     }, [issueForm.data.document_type]);
 
+    useEffect(() => {
+        const handler = (event: MouseEvent) => {
+            if (
+                sourcePickerRef.current &&
+                !sourcePickerRef.current.contains(event.target as Node)
+            ) {
+                setSourceOpen(false);
+            }
+        };
+
+        document.addEventListener('mousedown', handler);
+
+        return () => document.removeEventListener('mousedown', handler);
+    }, []);
+
+    useEffect(() => {
+        const controller = new AbortController();
+        const timer = window.setTimeout(async () => {
+            setSourceLoading(true);
+            setSourceLoadError(null);
+
+            const params = new URLSearchParams({
+                document_type: issueForm.data.document_type,
+                source_type: issueForm.data.source_type,
+            });
+
+            const query = sourceSearch.trim();
+
+            if (query !== '') {
+                params.set('q', query);
+            }
+
+            try {
+                const response = await fetch(
+                    `/documents/source-options?${params.toString()}`,
+                    {
+                        headers: {
+                            Accept: 'application/json',
+                            'X-Requested-With': 'XMLHttpRequest',
+                        },
+                        signal: controller.signal,
+                    },
+                );
+
+                if (!response.ok) {
+                    throw new Error(
+                        `Gagal memuat sumber (${response.status}).`,
+                    );
+                }
+
+                const payload = (await response.json()) as {
+                    data: SourceOption[];
+                };
+
+                setSourceOptions(payload.data);
+            } catch (error) {
+                if (error instanceof DOMException && error.name === 'AbortError') {
+                    return;
+                }
+
+                setSourceOptions([]);
+                setSourceLoadError(
+                    error instanceof Error
+                        ? error.message
+                        : 'Gagal memuat daftar sumber.',
+                );
+            } finally {
+                if (!controller.signal.aborted) {
+                    setSourceLoading(false);
+                }
+            }
+        }, sourceSearch.trim() === '' ? 0 : 200);
+
+        return () => {
+            window.clearTimeout(timer);
+            controller.abort();
+        };
+    }, [
+        issueForm.data.document_type,
+        issueForm.data.source_type,
+        sourceSearch,
+        sourceRefresh,
+    ]);
+
+    const clearSource = () => {
+        issueForm.setData('source_reference', '');
+        setSourceSearch('');
+        setSourceOpen(false);
+    };
+
     const setDocumentType = (value: DocumentRow['document_type']) => {
         issueForm.setData('document_type', value);
         const source =
@@ -131,13 +258,48 @@ export default function TransactionDocumentsIndex({
                   ? 'rental'
                   : 'booking';
         issueForm.setData('source_type', source);
+        clearSource();
+    };
+
+    const setSourceType = (value: DocumentRow['source_type']) => {
+        issueForm.setData('source_type', value);
+        clearSource();
+    };
+
+    const selectSource = (option: SourceOption) => {
+        issueForm.setData('source_reference', option.reference);
+        setSourceSearch(option.reference);
+        setSourceOpen(false);
+    };
+
+    const changeSourceSearch = (value: string) => {
+        setSourceSearch(value);
+        setSourceOpen(true);
+
+        if (
+            issueForm.data.source_reference !== '' &&
+            issueForm.data.source_reference !== value
+        ) {
+            issueForm.setData('source_reference', '');
+        }
     };
 
     const submitIssue = (event: FormEvent) => {
         event.preventDefault();
+
+        if (issueForm.data.source_reference === '') {
+            setSourceOpen(true);
+
+            return;
+        }
+
         issueForm.post('/documents', {
             preserveScroll: true,
-            onSuccess: () => issueForm.reset('source_reference'),
+            onSuccess: () => {
+                issueForm.reset('source_reference');
+                setSourceSearch('');
+                setSourceRefresh((value) => value + 1);
+            },
         });
     };
 
@@ -148,6 +310,13 @@ export default function TransactionDocumentsIndex({
             { preserveState: true, replace: true },
         );
     };
+
+    const sourcePlaceholder =
+        issueForm.data.source_type === 'booking'
+            ? 'Pilih / cari nomor booking...'
+            : issueForm.data.source_type === 'rental'
+              ? 'Pilih / cari nomor rental...'
+              : 'Pilih / cari nomor payment...';
 
     return (
         <>
@@ -237,8 +406,7 @@ export default function TransactionDocumentsIndex({
                                     <Select
                                         value={issueForm.data.source_type}
                                         onValueChange={(value) =>
-                                            issueForm.setData(
-                                                'source_type',
+                                            setSourceType(
                                                 value as DocumentRow['source_type'],
                                             )
                                         }
@@ -263,31 +431,171 @@ export default function TransactionDocumentsIndex({
                                     label="Nomor sumber"
                                     error={issueForm.errors.source_reference}
                                 >
-                                    <Input
-                                        value={issueForm.data.source_reference}
-                                        onChange={(event) =>
-                                            issueForm.setData(
-                                                'source_reference',
-                                                event.target.value.toUpperCase(),
-                                            )
-                                        }
-                                        placeholder={
-                                            issueForm.data.source_type ===
-                                            'booking'
-                                                ? 'Nomor booking'
-                                                : issueForm.data.source_type ===
-                                                    'rental'
-                                                  ? 'Nomor rental'
-                                                  : 'Nomor payment'
-                                        }
-                                    />
+                                    <div
+                                        ref={sourcePickerRef}
+                                        className="relative"
+                                    >
+                                        <div className="relative">
+                                            <Input
+                                                value={sourceSearch}
+                                                onFocus={() =>
+                                                    setSourceOpen(true)
+                                                }
+                                                onClick={() =>
+                                                    setSourceOpen(true)
+                                                }
+                                                onChange={(event) =>
+                                                    changeSourceSearch(
+                                                        event.target.value,
+                                                    )
+                                                }
+                                                placeholder={sourcePlaceholder}
+                                                autoComplete="off"
+                                                className="pr-10"
+                                            />
+                                            <button
+                                                type="button"
+                                                aria-label="Buka pilihan sumber"
+                                                className="absolute top-1/2 right-2 flex size-7 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
+                                                onClick={() =>
+                                                    setSourceOpen(
+                                                        (value) => !value,
+                                                    )
+                                                }
+                                            >
+                                                {sourceLoading ? (
+                                                    <Loader2 className="size-4 animate-spin" />
+                                                ) : (
+                                                    <ChevronsUpDown className="size-4" />
+                                                )}
+                                            </button>
+                                        </div>
+
+                                        {sourceOpen && (
+                                            <div className="absolute z-50 mt-1 w-full min-w-[340px] overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md">
+                                                <div className="border-b px-3 py-2 text-xs text-muted-foreground">
+                                                    Klik untuk memilih. Mengetik
+                                                    hanya mempersempit daftar.
+                                                </div>
+
+                                                <div className="max-h-80 overflow-y-auto p-1">
+                                                    {sourceLoading &&
+                                                        sourceOptions.length ===
+                                                            0 && (
+                                                            <div className="flex items-center gap-2 px-3 py-5 text-sm text-muted-foreground">
+                                                                <Loader2 className="size-4 animate-spin" />
+                                                                Memuat sumber
+                                                                tersedia...
+                                                            </div>
+                                                        )}
+
+                                                    {!sourceLoading &&
+                                                        sourceLoadError && (
+                                                            <div className="px-3 py-5 text-sm text-destructive">
+                                                                {
+                                                                    sourceLoadError
+                                                                }
+                                                            </div>
+                                                        )}
+
+                                                    {!sourceLoading &&
+                                                        !sourceLoadError &&
+                                                        sourceOptions.length ===
+                                                            0 && (
+                                                            <div className="px-3 py-5 text-sm text-muted-foreground">
+                                                                Tidak ada sumber
+                                                                yang sesuai.
+                                                            </div>
+                                                        )}
+
+                                                    {sourceOptions.map(
+                                                        (option) => {
+                                                            const selected =
+                                                                issueForm.data
+                                                                    .source_reference ===
+                                                                option.reference;
+
+                                                            return (
+                                                                <button
+                                                                    key={`${issueForm.data.source_type}-${option.source_id}`}
+                                                                    type="button"
+                                                                    className="flex w-full items-start gap-3 rounded-sm px-3 py-2.5 text-left hover:bg-accent hover:text-accent-foreground"
+                                                                    onClick={() =>
+                                                                        selectSource(
+                                                                            option,
+                                                                        )
+                                                                    }
+                                                                >
+                                                                    <span className="mt-0.5 flex size-4 shrink-0 items-center justify-center">
+                                                                        {selected && (
+                                                                            <Check className="size-4" />
+                                                                        )}
+                                                                    </span>
+
+                                                                    <span className="min-w-0 flex-1">
+                                                                        <span className="flex flex-wrap items-center gap-x-2 gap-y-1">
+                                                                            <span className="font-medium">
+                                                                                {
+                                                                                    option.reference
+                                                                                }
+                                                                            </span>
+                                                                            <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium uppercase text-muted-foreground">
+                                                                                {
+                                                                                    option.branch_code
+                                                                                }
+                                                                            </span>
+                                                                        </span>
+
+                                                                        <span className="mt-1 block text-xs text-muted-foreground">
+                                                                            {option.customer_name ??
+                                                                                'Tanpa pelanggan'}{' '}
+                                                                            ·{' '}
+                                                                            {
+                                                                                option.status
+                                                                            }{' '}
+                                                                            ·{' '}
+                                                                            {money(
+                                                                                option.amount,
+                                                                            )}
+                                                                        </span>
+
+                                                                        <span
+                                                                            className={
+                                                                                option.has_document
+                                                                                    ? 'mt-1 block text-xs text-amber-600 dark:text-amber-400'
+                                                                                    : 'mt-1 block text-xs text-emerald-600 dark:text-emerald-400'
+                                                                            }
+                                                                        >
+                                                                            {option.has_document
+                                                                                ? `Sudah ada ${typeLabels[issueForm.data.document_type]} · V${option.latest_version}`
+                                                                                : `Belum ada ${typeLabels[issueForm.data.document_type]}`}
+                                                                        </span>
+                                                                    </span>
+                                                                </button>
+                                                            );
+                                                        },
+                                                    )}
+                                                </div>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    <p className="text-xs text-muted-foreground">
+                                        Yang belum diterbitkan diprioritaskan.
+                                        Sumber yang sudah punya versi tetap dapat
+                                        dipilih untuk snapshot berikutnya.
+                                    </p>
                                 </Field>
 
                                 <div className="flex items-end">
                                     <Button
                                         type="submit"
                                         className="w-full"
-                                        disabled={issueForm.processing}
+                                        disabled={
+                                            issueForm.processing ||
+                                            issueForm.data.source_reference ===
+                                                ''
+                                        }
                                     >
                                         <FileCheck2 />
                                         Terbitkan snapshot

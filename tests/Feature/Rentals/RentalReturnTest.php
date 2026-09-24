@@ -28,6 +28,7 @@ class RentalReturnTest extends TestCase
         $unit = $rental->items()->firstOrFail()->assets()->firstOrFail();
         $method = PaymentMethod::query()->where('code', 'CASH')->firstOrFail();
         $session = $this->openCashSession($user, $rental->branch);
+        $rental->items()->firstOrFail()->update(['due_at' => now()->subMinutes(119)]);
 
         $this->actingAs($user)->post(route('rentals.return.store', $rental), [
             'returned_at' => now()->format('Y-m-d H:i:s'),
@@ -38,7 +39,6 @@ class RentalReturnTest extends TestCase
             'items' => [[
                 'rental_item_asset_id' => $unit->id,
                 'condition' => 'damaged',
-                'late_fee_amount' => 10000,
                 'damage_fee_amount' => 20000,
                 'cleaning_fee_amount' => 5000,
                 'notes' => 'Grip terkelupas dan perlu pemeriksaan.',
@@ -155,14 +155,15 @@ class RentalReturnTest extends TestCase
     public function test_final_return_is_rejected_atomically_until_fully_paid(): void
     {
         [$user, $rental, $asset] = $this->activeRental();
-        $unit = $rental->items()->firstOrFail()->assets()->firstOrFail();
+        $item = $rental->items()->firstOrFail();
+        $unit = $item->assets()->firstOrFail();
+        $item->update(['due_at' => now()->subMinutes(119)]);
 
         $this->actingAs($user)->post(route('rentals.return.store', $rental), [
             'returned_at' => now()->format('Y-m-d H:i:s'),
             'items' => [[
                 'rental_item_asset_id' => $unit->id,
                 'condition' => 'good',
-                'late_fee_amount' => 10000,
             ]],
         ])->assertSessionHasErrors([
             'payment_amount' => 'Rental belum lunas. Sisa tagihan Rp60.000 harus dibayar sebelum pengembalian diselesaikan.',
@@ -174,6 +175,58 @@ class RentalReturnTest extends TestCase
         $this->assertSame('out', $unit->fresh()->status);
         $this->assertDatabaseCount('rental_returns', 0);
         $this->assertDatabaseCount('rental_return_items', 0);
+    }
+
+    public function test_return_timestamp_is_rejected_when_before_checkout_or_too_far_in_future(): void
+    {
+        [$user, $rental] = $this->activeRental();
+        $unit = $rental->items()->firstOrFail()->assets()->firstOrFail();
+
+        $this->actingAs($user)->post(route('rentals.return.store', $rental), [
+            'returned_at' => $rental->checked_out_at->copy()->subMinute()->format('Y-m-d H:i:s'),
+            'items' => [[
+                'rental_item_asset_id' => $unit->id,
+                'condition' => 'good',
+            ]],
+        ])->assertSessionHasErrors('returned_at');
+
+        $this->actingAs($user)->post(route('rentals.return.store', $rental), [
+            'returned_at' => now()->addMinutes(5)->format('Y-m-d H:i:s'),
+            'items' => [[
+                'rental_item_asset_id' => $unit->id,
+                'condition' => 'good',
+            ]],
+        ])->assertSessionHasErrors('returned_at');
+
+        $this->assertDatabaseCount('rental_returns', 0);
+    }
+
+    public function test_client_backdating_cannot_reduce_server_calculated_overtime(): void
+    {
+        [$user, $rental] = $this->activeRental();
+        $item = $rental->items()->firstOrFail();
+        $unit = $item->assets()->firstOrFail();
+        $method = PaymentMethod::query()->where('code', 'CASH')->firstOrFail();
+        $session = $this->openCashSession($user, $rental->branch);
+        $rental->update(['checked_out_at' => now()->subDay()]);
+        $item->update(['due_at' => now()->subMinutes(59)]);
+        $submitted = now()->subHours(2);
+
+        $this->actingAs($user)->post(route('rentals.return.store', $rental), [
+            'returned_at' => $submitted->format('Y-m-d H:i:s'),
+            'payment_amount' => 55000,
+            'payment_method_id' => $method->id,
+            'cash_session_id' => $session->id,
+            'items' => [[
+                'rental_item_asset_id' => $unit->id,
+                'condition' => 'good',
+            ]],
+        ])->assertSessionHasNoErrors();
+
+        $return = $rental->returns()->firstOrFail();
+        $this->assertSame('5000.00', $return->late_fee_amount);
+        $this->assertTrue($return->returned_at->isAfter($submitted));
+        $this->assertSame(1, $return->overtime_breakdown['serialized'][0]['billable_hours']);
     }
 
     /** @return array{User, Rental, Asset} */

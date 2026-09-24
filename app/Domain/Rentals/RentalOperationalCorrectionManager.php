@@ -48,6 +48,12 @@ class RentalOperationalCorrectionManager
                 ]);
             }
 
+            if ($locked->items()->where('is_bulk', true)->exists()) {
+                throw ValidationException::withMessages([
+                    'rental_return_id' => 'Buka ulang operasional belum tersedia untuk rental yang memiliki stok Bulk. Return yang sudah selesai tetap tersimpan.',
+                ]);
+            }
+
             $assetIds = $originalReturn->items->pluck('asset_id')->filter()->values();
             $assignments = RentalItemAsset::query()
                 ->whereHas('rentalItem', fn ($query) => $query->where('rental_id', $locked->id))

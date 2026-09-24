@@ -4,6 +4,7 @@ namespace App\Domain\Rentals;
 
 use App\Domain\Catalog\AssetScheduleService;
 use App\Domain\Finance\PaymentManager;
+use App\Domain\Inventory\PooledStockManager;
 use App\Domain\Pricing\RentalPricingEngine;
 use App\Models\Rental;
 use App\Models\RentalExtension;
@@ -21,6 +22,7 @@ class RentalExtensionManager
         private readonly AssetScheduleService $schedule,
         private readonly PaymentManager $payments,
         private readonly RentalPricingEngine $pricing,
+        private readonly PooledStockManager $pooled,
     ) {}
 
     /**
@@ -47,7 +49,9 @@ class RentalExtensionManager
         $originalUnits = $this->originalDurationUnits($rental);
 
         $options = $rental->items
-            ->filter(fn (RentalItem $item): bool => $item->status === 'out' && $item->assets->isNotEmpty())
+            ->filter(fn (RentalItem $item): bool => $item->is_bulk
+                ? $item->quantity > $item->returned_quantity
+                : $item->status === 'out' && $item->assets->isNotEmpty())
             ->map(function (RentalItem $item) use ($rental, $originalUnits): array {
                 $currentDueAt = $item->due_at ?? $rental->due_at;
 
@@ -55,7 +59,7 @@ class RentalExtensionManager
                     'id' => (int) $item->id,
                     'description' => (string) $item->description,
                     'product_name' => (string) ($item->product->name ?: $item->description),
-                    'out_quantity' => $item->assets->count(),
+                    'out_quantity' => $item->is_bulk ? $item->quantity - $item->returned_quantity : $item->assets->count(),
                     'current_due_at' => CarbonImmutable::parse((string) $currentDueAt)->toIso8601String(),
                     'unit_rate' => round((float) $item->unit_rate / $originalUnits, 2),
                     'assets' => array_values($item->assets->map(fn (RentalItemAsset $assignment): array => [
@@ -160,7 +164,8 @@ class RentalExtensionManager
             $extensionDueAt = null;
 
             foreach ($items as $item) {
-                if ($item->status !== 'out' || $item->assets->count() !== (int) $item->quantity) {
+                if ($item->is_bulk ? $item->quantity <= $item->returned_quantity
+                    : ($item->status !== 'out' || $item->assets->count() !== (int) $item->quantity)) {
                     throw ValidationException::withMessages([
                         'item_ids' => "Item {$item->description} sudah dikembalikan sebagian/seluruhnya dan tidak dapat diperpanjang sebagai satu baris. Pilih item lain yang seluruh unitnya masih keluar.",
                     ]);
@@ -171,11 +176,16 @@ class RentalExtensionManager
                 $this->assertNoScheduleConflict($locked, $item, $previousDueAt, $extendedDueAt);
 
                 $unitRate = round((float) $item->unit_rate / $originalUnits, 2);
-                $quantity = $item->assets->count();
+                $quantity = $item->is_bulk ? $item->quantity - $item->returned_quantity : $item->assets->count();
                 $lineTotal = round($unitRate * $durationUnits * $quantity, 2);
                 $subtotal += $lineTotal;
                 if ($extensionDueAt === null || $extendedDueAt->isAfter($extensionDueAt)) {
                     $extensionDueAt = $extendedDueAt;
+                }
+                if ($item->is_bulk) {
+                    // Make this proposed interval visible to the next selected
+                    // item of the same product. The whole extension rolls back.
+                    $item->update(['due_at' => $extendedDueAt]);
                 }
                 $lines[] = [
                     'item' => $item,
@@ -263,7 +273,9 @@ class RentalExtensionManager
 
             $nextDueAt = RentalItem::query()
                 ->where('rental_id', $locked->id)
-                ->whereHas('assets', fn ($query) => $query->where('status', 'out'))
+                ->where(fn ($query) => $query
+                    ->whereHas('assets', fn ($assets) => $assets->where('status', 'out'))
+                    ->orWhere(fn ($bulk) => $bulk->where('is_bulk', true)->whereColumn('quantity', '>', 'returned_quantity')))
                 ->min('due_at');
 
             $locked->update([
@@ -292,6 +304,16 @@ class RentalExtensionManager
         CarbonImmutable $startsAt,
         CarbonImmutable $endsAt,
     ): void {
+        if ($item->is_bulk) {
+            $inventory = $this->pooled->lock($rental->branch_id, $item->product_id);
+            $required = $item->quantity - $item->returned_quantity;
+            if ($this->pooled->remaining($inventory, $startsAt->getTimestamp(), $endsAt->getTimestamp(), null, [$item->id]) < $required) {
+                throw ValidationException::withMessages(['item_ids' => "Stok Bulk {$item->description} bentrok dengan booking/rental lain pada periode perpanjangan."]);
+            }
+
+            return;
+        }
+
         foreach ($item->assets as $assignment) {
             $calendar = $this->schedule->calendar(
                 $assignment->asset,

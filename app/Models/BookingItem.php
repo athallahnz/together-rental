@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 
 #[Fillable([
     'booking_id', 'product_id', 'package_id', 'description', 'quantity',
-    'unit_rate', 'additional_amount', 'discount_amount', 'total_amount',
+    'unit_rate', 'additional_amount', 'discount_amount', 'total_amount', 'stock_requirements',
 ])]
 class BookingItem extends Model
 {
@@ -37,10 +37,17 @@ class BookingItem extends Model
         return $this->hasMany(AssetReservation::class);
     }
 
+    /** @return HasMany<BulkReservation, $this> */
+    public function bulkReservations(): HasMany
+    {
+        return $this->hasMany(BulkReservation::class);
+    }
+
     protected function casts(): array
     {
         return [
             'quantity' => 'integer',
+            'stock_requirements' => 'array',
             'unit_rate' => 'decimal:2',
             'additional_amount' => 'decimal:2',
             'discount_amount' => 'decimal:2',

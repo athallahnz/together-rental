@@ -30,6 +30,7 @@ export type BookingSearchOption = {
     brand?: string | null;
     model?: string | null;
     variant?: string | null;
+    tracking_type?: string;
     image_url?: string | null;
     brand_logo_url?: string | null;
 };
@@ -52,7 +53,9 @@ const labels: Record<SearchType, string> = {
 };
 
 const optionMeta = (option: BookingSearchOption) =>
-    option.customer_number ?? option.sku ?? option.code ?? '';
+    [option.customer_number ?? option.sku ?? option.code ?? '',
+        option.tracking_type === 'bulk' || option.tracking_type === 'quantity' ? 'Bulk' : '',
+    ].filter(Boolean).join(' · ');
 
 export function SearchPickerDialog({
     type,

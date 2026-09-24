@@ -10,7 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 #[Fillable([
     'rental_id', 'booking_item_id', 'product_id', 'description', 'quantity',
     'returned_quantity', 'unit_rate', 'additional_amount', 'discount_amount',
-    'total_amount', 'due_at', 'status',
+    'total_amount', 'due_at', 'overtime_snapshot', 'status', 'is_bulk',
 ])]
 class RentalItem extends Model
 {
@@ -48,12 +48,14 @@ class RentalItem extends Model
     {
         return [
             'quantity' => 'integer',
+            'is_bulk' => 'boolean',
             'returned_quantity' => 'integer',
             'unit_rate' => 'decimal:2',
             'additional_amount' => 'decimal:2',
             'discount_amount' => 'decimal:2',
             'total_amount' => 'decimal:2',
             'due_at' => 'datetime',
+            'overtime_snapshot' => 'array',
         ];
     }
 }

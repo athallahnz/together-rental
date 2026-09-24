@@ -3,7 +3,9 @@
 namespace App\Domain\Bookings;
 
 use App\Domain\Finance\PaymentManager;
+use App\Domain\Inventory\PooledStockManager;
 use App\Domain\Pricing\RentalPricingEngine;
+use App\Domain\Rentals\RentalOvertimeCalculator;
 use App\Models\Asset;
 use App\Models\AssetReservation;
 use App\Models\Booking;
@@ -29,6 +31,8 @@ class BookingManager
         private readonly BookingNumberGenerator $numbers,
         private readonly PaymentManager $payments,
         private readonly RentalPricingEngine $pricing,
+        private readonly PooledStockManager $pooled,
+        private readonly RentalOvertimeCalculator $overtime,
     ) {}
 
     /** @param array<string, mixed> $data */
@@ -80,7 +84,7 @@ class BookingManager
             $this->recordInitialPayments($booking, $data, $actor);
             $this->history($booking, null, 'draft', 'Booking dibuat.', $actor);
 
-            return $booking->fresh(['items', 'reservations']);
+            return $booking->fresh(['items', 'reservations', 'bulkReservations']);
         }, 3);
     }
 
@@ -167,6 +171,9 @@ class BookingManager
 
         return DB::transaction(function () use ($booking, $data, $actor): Booking {
             $locked = Booking::query()->with('branch')->lockForUpdate()->findOrFail($booking->id);
+            if ($locked->status !== 'draft') {
+                throw ValidationException::withMessages(['booking' => 'Hanya booking draft yang dapat diubah.']);
+            }
             $customer = Customer::query()
                 ->where('company_id', $actor->company_id)
                 ->whereKey($data['customer_id'])
@@ -197,12 +204,13 @@ class BookingManager
                 'notes' => $data['notes'] ?? null,
                 'updated_by' => $actor->id,
             ]);
+            $this->pooled->release($locked, $actor, 'Item booking diperbarui.');
             $locked->reservations()->delete();
             $locked->items()->delete();
             $this->replaceItems($locked, $data, $plan, $customer, $promotion, $requestedDuration);
             $this->assertExistingPaymentsFitPricing($locked);
 
-            return $locked->fresh(['items', 'reservations', 'promotion']);
+            return $locked->fresh(['items', 'reservations', 'bulkReservations', 'promotion']);
         }, 3);
     }
 
@@ -255,6 +263,7 @@ class BookingManager
             }
 
             $from = $locked->status;
+            $this->pooled->release($locked, $actor, $reason);
             $locked->reservations()->where('status', 'reserved')->update([
                 'status' => 'released',
                 'released_at' => now(),
@@ -294,13 +303,18 @@ class BookingManager
             ->firstOrFail();
         $startsAtValue = CarbonImmutable::parse($startsAt);
         $endsAt = $this->calculateEndsAt($startsAtValue, $plan, $durationUnits);
-        $count = $this->availableAssetsQuery(
-            $branchId,
-            $productId,
-            $startsAtValue,
-            $endsAt,
-            $ignoreBookingId,
-        )->count();
+        $branch = Branch::query()->findOrFail($branchId);
+        $product = Product::query()->where('company_id', $branch->company_id)
+            ->where('is_active', true)->where('is_rentable', true)->findOrFail($productId);
+        $count = in_array($product->tracking_type, ['bulk', 'quantity'], true)
+            ? $this->pooled->available($branchId, $productId, $startsAtValue, $endsAt, $ignoreBookingId)
+            : $this->availableAssetsQuery(
+                $branchId,
+                $productId,
+                $startsAtValue,
+                $endsAt,
+                $ignoreBookingId,
+            )->count();
 
         return [
             'available' => $count >= $quantity,
@@ -327,12 +341,31 @@ class BookingManager
             [$description, $rate, $depositRate, $requirements] = $payload['type'] === 'product'
                 ? $this->productPricing($booking, $plan, (int) $payload['id'], (int) $payload['quantity'])
                 : $this->packagePricing($booking, $plan, (int) $payload['id'], (int) $payload['quantity']);
+            $requirements = $requirements->groupBy('product_id')->map(function (Collection $rows, int $productId) use ($booking, $plan): array {
+                $product = Product::query()->where('company_id', $booking->branch->company_id)
+                    ->where('is_active', true)->where('is_rentable', true)->findOrFail($productId);
+
+                return [
+                    'product_id' => $productId,
+                    'quantity' => (int) $rows->sum('quantity'),
+                    'tracking_type' => $product->tracking_type,
+                    'overtime_snapshot' => $this->overtime->snapshotForBookingProduct(
+                        $booking->branch,
+                        $plan,
+                        $product,
+                    ),
+                ];
+            })->sortBy('product_id')->values();
+            if ($requirements->isEmpty()) {
+                throw ValidationException::withMessages(['items' => 'Paket harus memiliki komponen wajib.']);
+            }
             $lineTotal = $rate * $units * (int) $payload['quantity'];
             $item = $booking->items()->create([
                 'product_id' => $payload['type'] === 'product' ? $payload['id'] : null,
                 'package_id' => $payload['type'] === 'package' ? $payload['id'] : null,
                 'description' => $description,
                 'quantity' => $payload['quantity'],
+                'stock_requirements' => $requirements->all(),
                 'unit_rate' => $rate,
                 'additional_amount' => 0,
                 'discount_amount' => 0,
@@ -412,10 +445,15 @@ class BookingManager
         return [$package->name, (float) $rate->amount, (float) $rate->deposit_amount, $requirements];
     }
 
-    /** @param Collection<int, array{product_id: int, quantity: int}> $requirements */
+    /** @param Collection<int, array{product_id: int, quantity: int, tracking_type: string}> $requirements */
     private function reserveRequirements(Booking $booking, BookingItem $item, Collection $requirements, int $position): void
     {
         foreach ($requirements as $requirement) {
+            if (in_array($requirement['tracking_type'], ['bulk', 'quantity'], true)) {
+                $this->pooled->reserve($booking, $item, $requirement['product_id'], $requirement['quantity'], $position);
+
+                continue;
+            }
             $assets = $this->availableAssetsQuery(
                 $booking->branch_id,
                 $requirement['product_id'],
@@ -467,14 +505,50 @@ class BookingManager
             ->orderBy('id');
     }
 
-    private function assertReservationsStillAvailable(Booking $booking): void
+    private function assertReservationCompleteness(Booking $booking): void
     {
+        foreach ($booking->items()->with(['reservations.asset', 'bulkReservations'])->get() as $item) {
+            $expected = collect($item->stock_requirements ?? []);
+            if ($item->stock_requirements === null) {
+                // Compatibility for bookings made before this additive migration.
+                $expected = $item->product_id !== null
+                    ? collect([['product_id' => $item->product_id, 'quantity' => $item->quantity]])
+                    : $item->package->items()->where('is_optional', false)->get()->map(fn ($part): array => [
+                        'product_id' => $part->product_id, 'quantity' => $part->quantity * $item->quantity,
+                    ]);
+            }
+            $expected = $expected->groupBy('product_id')->map(fn (Collection $rows): int => (int) $rows->sum('quantity'))->sortKeys()->all();
+            $actual = [];
+            foreach ($item->reservations->where('status', 'reserved') as $reservation) {
+                $productId = $reservation->asset?->product_id;
+                if ($productId !== null) {
+                    $actual[$productId] = ($actual[$productId] ?? 0) + 1;
+                }
+            }
+            foreach ($item->bulkReservations->where('status', 'reserved') as $reservation) {
+                $actual[$reservation->product_id] = ($actual[$reservation->product_id] ?? 0) + $reservation->quantity;
+            }
+            ksort($actual);
+            if ($expected === [] || $expected !== $actual) {
+                throw ValidationException::withMessages(['booking' => 'Reservasi item booking tidak lengkap. Perbarui booking sebelum diproses.']);
+            }
+        }
+        if (! $booking->items()->exists()) {
+            throw ValidationException::withMessages(['booking' => 'Booking tidak memiliki item.']);
+        }
+    }
+
+    public function assertReservationsStillAvailable(Booking $booking): void
+    {
+        $this->assertReservationCompleteness($booking);
+        $this->pooled->assertBooking($booking);
         $conflict = AssetReservation::query()
             ->where('booking_id', $booking->id)
             ->where('status', 'reserved')
             ->whereHas('asset', fn (Builder $query) => $query
                 ->where('status', '!=', 'available')
                 ->orWhere('is_active', false)
+                ->orWhereIn('condition', ['damaged', 'lost'])
                 ->orWhere('current_branch_id', '!=', $booking->branch_id))
             ->exists();
 

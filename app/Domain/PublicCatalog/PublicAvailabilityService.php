@@ -2,7 +2,9 @@
 
 namespace App\Domain\PublicCatalog;
 
+use App\Domain\Inventory\PooledStockManager;
 use App\Models\Branch;
+use App\Models\BranchInventory;
 use App\Models\PackageItem;
 use App\Models\PackageRate;
 use App\Models\Product;
@@ -17,6 +19,8 @@ use Illuminate\Validation\ValidationException;
 
 class PublicAvailabilityService
 {
+    public function __construct(private readonly PooledStockManager $pooled) {}
+
     /** @var list<string> */
     private const NON_BLOCKING_BOOKING_STATUSES = [
         'draft',
@@ -316,6 +320,21 @@ class PublicAvailabilityService
         CarbonImmutable $endsAt,
         int $requested,
     ): array {
+        if (in_array($product->tracking_type, ['bulk', 'quantity'], true)) {
+            $inventory = BranchInventory::query()->where('branch_id', $branch->id)->where('product_id', $product->id)->first();
+            $projection = $inventory === null
+                ? ['capacity' => 0, 'reserved' => 0, 'rented' => 0, 'remaining' => 0]
+                : $this->pooled->projection($inventory, $startsAt->getTimestamp(), $endsAt->getTimestamp());
+
+            return $this->availabilityPayload(
+                total: $projection['capacity'],
+                reserved: $projection['reserved'],
+                rented: $projection['rented'],
+                available: max(0, $projection['remaining']),
+                requested: $requested,
+            );
+        }
+
         $total = $product->tracking_type === 'serialized'
             ? $this->serializedCapacity($product, $branch)
             : $this->quantityCapacity($product, $branch);

@@ -116,6 +116,12 @@ class Booking extends Model
         return $this->hasMany(Payment::class);
     }
 
+    /** @return HasMany<BulkReservation, $this> */
+    public function bulkReservations(): HasMany
+    {
+        return $this->hasMany(BulkReservation::class);
+    }
+
     protected function casts(): array
     {
         return [

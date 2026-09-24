@@ -359,8 +359,14 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
     Route::prefix('documents')->name('documents.')->group(function (): void {
         Route::get('/', [TransactionDocumentController::class, 'index'])
             ->middleware('can:documents.view')->name('index');
+        Route::get('/source-options', [TransactionDocumentController::class, 'sourceOptions'])
+            ->middleware('can:documents.issue')->name('source-options');
+        Route::post('/quick-issue', [TransactionDocumentController::class, 'quickIssue'])
+            ->middleware('can:documents.issue')->name('quick-issue');
         Route::post('/', [TransactionDocumentController::class, 'issue'])
             ->middleware('can:documents.issue')->name('issue');
+        Route::get('/{document}/preview', [TransactionDocumentController::class, 'preview'])
+            ->middleware('can:documents.view')->name('preview');
         Route::get('/{document}/pdf', [TransactionDocumentController::class, 'pdf'])
             ->middleware('can:documents.view')->name('pdf');
     });

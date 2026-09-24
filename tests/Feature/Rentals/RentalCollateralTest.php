@@ -6,6 +6,7 @@ use App\Models\Asset;
 use App\Models\Booking;
 use App\Models\Branch;
 use App\Models\Customer;
+use App\Models\CustomerIdentity;
 use App\Models\PaymentMethod;
 use App\Models\Product;
 use App\Models\ProductRate;
@@ -19,6 +20,7 @@ use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\Storage;
+use Inertia\Testing\AssertableInertia as Assert;
 use Tests\Feature\InteractsWithFinance;
 use Tests\TestCase;
 
@@ -103,6 +105,184 @@ class RentalCollateralTest extends TestCase
             'number' => 'SIM-0001',
             'status' => 'held',
         ]);
+    }
+
+    public function test_checkout_exposes_customer360_identity_and_marks_primary_verified_identity_as_default(): void
+    {
+        [$user, $branch, $customer, $plan, $product] = $this->fixture();
+        $identity = CustomerIdentity::query()->create([
+            'customer_id' => $customer->id,
+            'type' => 'ktp',
+            'number' => '3502010101010099',
+            'name_on_identity' => 'Pelanggan Customer360',
+            'is_primary' => true,
+            'verified_at' => now(),
+            'verified_by' => $user->id,
+        ]);
+        $booking = $this->confirmedBooking($user, $branch, $customer, $plan, $product);
+
+        $this->actingAs($user)
+            ->get(route('rentals.checkout.create', $booking))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('rentals/checkout')
+                ->where('customerIdentities.0.id', $identity->id)
+                ->where('customerIdentities.0.collateral_type', 'KTP')
+                ->where('customerIdentities.0.is_default', true)
+                ->where('customerIdentities.0.is_expired', false));
+    }
+
+    public function test_checkout_skips_expired_primary_identity_when_choosing_customer360_default(): void
+    {
+        [$user, $branch, $customer, $plan, $product] = $this->fixture();
+        $expiredPrimary = CustomerIdentity::query()->create([
+            'customer_id' => $customer->id,
+            'type' => 'ktp',
+            'number' => 'EXPIRED-PRIMARY',
+            'expires_at' => now()->subDay()->toDateString(),
+            'is_primary' => true,
+            'verified_at' => now()->subMonth(),
+            'verified_by' => $user->id,
+        ]);
+        $verifiedSecondary = CustomerIdentity::query()->create([
+            'customer_id' => $customer->id,
+            'type' => 'sim',
+            'number' => 'VALID-SECONDARY',
+            'expires_at' => now()->addYear()->toDateString(),
+            'is_primary' => false,
+            'verified_at' => now(),
+            'verified_by' => $user->id,
+        ]);
+        $booking = $this->confirmedBooking($user, $branch, $customer, $plan, $product);
+
+        $this->actingAs($user)
+            ->get(route('rentals.checkout.create', $booking))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->where('customerIdentities.0.id', $expiredPrimary->id)
+                ->where('customerIdentities.0.is_expired', true)
+                ->where('customerIdentities.0.is_default', false)
+                ->where('customerIdentities.1.id', $verifiedSecondary->id)
+                ->where('customerIdentities.1.is_default', true));
+    }
+
+    public function test_customer360_collateral_is_resolved_server_side_and_does_not_pay_cash_deposit(): void
+    {
+        [$user, $branch, $customer, $plan, $product] = $this->fixture();
+        $identity = CustomerIdentity::query()->create([
+            'customer_id' => $customer->id,
+            'type' => 'sim',
+            'number' => 'SIM-C360-001',
+            'name_on_identity' => 'Nama Canonical',
+            'expires_at' => now()->addYear()->toDateString(),
+            'is_primary' => true,
+            'verified_at' => now(),
+            'verified_by' => $user->id,
+        ]);
+        $booking = $this->confirmedBooking($user, $branch, $customer, $plan, $product);
+
+        $this->actingAs($user)->post(route('rentals.checkout.store', $booking), [
+            'checked_out_at' => now()->format('Y-m-d H:i:s'),
+            'checkout_condition' => 'good',
+            'deposit_paid' => 0,
+            'collaterals' => [[
+                'customer_identity_id' => $identity->id,
+                'type' => 'KTP',
+                'number' => 'TAMPERED',
+                'holder_name' => 'Tampered Holder',
+            ]],
+        ])->assertSessionHasNoErrors()->assertRedirect();
+
+        $rental = Rental::query()->firstOrFail();
+        $collateral = RentalCollateral::query()->firstOrFail();
+
+        $this->assertSame('0.00', $rental->deposit_amount);
+        $this->assertSame($identity->id, $collateral->customer_identity_id);
+        $this->assertSame('customer_identity', $collateral->source_type);
+        $this->assertSame('SIM', $collateral->type);
+        $this->assertSame('SIM-C360-001', $collateral->number);
+        $this->assertSame('Nama Canonical', $collateral->holder_name);
+        $this->assertSame($identity->id, $collateral->identity_snapshot['customer_identity_id']);
+        $this->assertNotNull($collateral->identity_snapshot['verified_at']);
+        $this->assertDatabaseMissing('payments', [
+            'rental_id' => $rental->id,
+            'type' => 'deposit',
+            'status' => 'completed',
+        ]);
+    }
+
+    public function test_checkout_rejects_customer360_identity_from_another_customer(): void
+    {
+        [$user, $branch, $customer, $plan, $product] = $this->fixture();
+        $otherCustomer = Customer::query()->create([
+            'company_id' => $branch->company_id,
+            'registered_branch_id' => $branch->id,
+            'customer_number' => 'PNG-CUS-OTHER-COLLATERAL',
+            'name' => 'Pelanggan Lain',
+            'status' => 'active',
+            'risk_level' => 'normal',
+        ]);
+        $identity = CustomerIdentity::query()->create([
+            'customer_id' => $otherCustomer->id,
+            'type' => 'ktp',
+            'number' => 'OTHER-KTP-001',
+            'is_primary' => true,
+            'verified_at' => now(),
+            'verified_by' => $user->id,
+        ]);
+        $booking = $this->confirmedBooking($user, $branch, $customer, $plan, $product);
+
+        $this->actingAs($user)->post(route('rentals.checkout.store', $booking), [
+            'checked_out_at' => now()->format('Y-m-d H:i:s'),
+            'checkout_condition' => 'good',
+            'collaterals' => [[
+                'customer_identity_id' => $identity->id,
+                'type' => 'KTP',
+                'number' => 'OTHER-KTP-001',
+            ]],
+        ])->assertSessionHasErrors('collaterals.0.customer_identity_id');
+
+        $this->assertDatabaseCount('rentals', 0);
+        $this->assertDatabaseCount('rental_collaterals', 0);
+    }
+
+    public function test_checkout_rejects_expired_customer360_identity_but_manual_override_remains_available(): void
+    {
+        [$user, $branch, $customer, $plan, $product] = $this->fixture();
+        $identity = CustomerIdentity::query()->create([
+            'customer_id' => $customer->id,
+            'type' => 'ktp',
+            'number' => 'EXPIRED-KTP-001',
+            'expires_at' => now()->subDay()->toDateString(),
+            'is_primary' => true,
+        ]);
+        $booking = $this->confirmedBooking($user, $branch, $customer, $plan, $product);
+
+        $this->actingAs($user)->post(route('rentals.checkout.store', $booking), [
+            'checked_out_at' => now()->format('Y-m-d H:i:s'),
+            'checkout_condition' => 'good',
+            'collaterals' => [[
+                'customer_identity_id' => $identity->id,
+                'type' => 'KTP',
+                'number' => 'EXPIRED-KTP-001',
+            ]],
+        ])->assertSessionHasErrors('collaterals.0.customer_identity_id');
+
+        $this->actingAs($user)->post(route('rentals.checkout.store', $booking), [
+            'checked_out_at' => now()->format('Y-m-d H:i:s'),
+            'checkout_condition' => 'good',
+            'collaterals' => [[
+                'type' => 'KTP',
+                'number' => 'MANUAL-OVERRIDE-001',
+                'holder_name' => $customer->name,
+            ]],
+        ])->assertSessionHasNoErrors()->assertRedirect();
+
+        $collateral = RentalCollateral::query()->firstOrFail();
+        $this->assertNull($collateral->customer_identity_id);
+        $this->assertSame('manual', $collateral->source_type);
+        $this->assertNull($collateral->identity_snapshot);
+        $this->assertSame('MANUAL-OVERRIDE-001', $collateral->number);
     }
 
     public function test_active_rental_can_receive_private_collateral_document_and_foreign_branch_cannot_read_it(): void
@@ -347,6 +527,25 @@ class RentalCollateralTest extends TestCase
                 'quantity' => $quantity,
             ]],
         ];
+    }
+
+    private function confirmedBooking(
+        User $user,
+        Branch $branch,
+        Customer $customer,
+        RatePlan $plan,
+        Product $product,
+    ): Booking {
+        $this->actingAs($user)->post(
+            route('bookings.store'),
+            $this->bookingPayload($branch, $customer, $plan, $product),
+        )->assertSessionHasNoErrors();
+
+        $booking = Booking::query()->latest('id')->firstOrFail();
+        $this->actingAs($user)->post(route('bookings.confirm', $booking))
+            ->assertSessionHasNoErrors();
+
+        return $booking->fresh();
     }
 
     /** @return array<string, mixed> */

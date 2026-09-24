@@ -3,6 +3,7 @@
 namespace App\Domain\Rentals;
 
 use App\Domain\Finance\PaymentManager;
+use App\Domain\Inventory\PooledStockManager;
 use App\Models\Asset;
 use App\Models\AssetInspection;
 use App\Models\MaintenanceOrder;
@@ -12,6 +13,7 @@ use App\Models\RentalItemAsset;
 use App\Models\RentalOperationalCorrection;
 use App\Models\RentalReturn;
 use App\Models\User;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -24,6 +26,8 @@ class RentalReturnManager
         private readonly RentalOperationalCorrectionManager $corrections,
         private readonly PaymentManager $payments,
         private readonly RentalCollateralManager $collaterals,
+        private readonly PooledStockManager $pooled,
+        private readonly RentalOvertimeCalculator $overtime,
     ) {}
 
     /** @param array<string, mixed> $data */
@@ -110,14 +114,57 @@ class RentalReturnManager
                 }
             }
 
-            $returnedAt = $data['returned_at'];
-            $lateFee = $inputItems->sum(fn (array $item): float => (float) ($item['late_fee_amount'] ?? 0));
-            $damageFee = $inputItems->sum(fn (array $item): float => (float) ($item['damage_fee_amount'] ?? 0));
-            $cleaningFee = $inputItems->sum(fn (array $item): float => (float) ($item['cleaning_fee_amount'] ?? 0));
+            $bulkInputs = collect($data['bulk_items'] ?? []);
+            if ($bulkInputs->isNotEmpty() && $correction !== null) {
+                throw ValidationException::withMessages(['bulk_items' => 'Koreksi operasional Bulk belum tersedia.']);
+            }
+            $bulkItems = RentalItem::query()->where('rental_id', $locked->id)->where('is_bulk', true)
+                ->whereIn('id', $bulkInputs->pluck('rental_item_id'))->orderBy('product_id')
+                ->lockForUpdate()->get()->keyBy('id');
+            $requestedByItem = $bulkInputs->groupBy('rental_item_id');
+            if ($bulkItems->count() !== $requestedByItem->count() || ($units->isEmpty() && $bulkInputs->isEmpty())) {
+                throw ValidationException::withMessages(['bulk_items' => 'Pilih item yang masih keluar pada rental ini.']);
+            }
+            foreach ($requestedByItem as $itemId => $inputs) {
+                $item = $bulkItems->get($itemId);
+                if ($inputs->contains(fn (array $input): bool => (int) ($input['quantity'] ?? 0) < 1
+                    || ! in_array($input['condition'] ?? '', ['excellent', 'good', 'fair', 'damaged', 'lost'], true))
+                    || $inputs->sum('quantity') > $item->quantity - $item->returned_quantity) {
+                    throw ValidationException::withMessages(['bulk_items' => 'Jumlah pengembalian Bulk melebihi sisa atau kondisinya tidak valid.']);
+                }
+                $this->pooled->lock($locked->branch_id, $item->product_id);
+            }
+            $feeInputs = $inputItems->values()->concat($bulkInputs);
+            $returnedAt = $correction !== null
+                ? CarbonImmutable::parse((string) $correction->originalReturn()->firstOrFail()->returned_at)
+                : CarbonImmutable::now();
+
+            /** @var array<int, array<string, mixed>> $serializedOvertime */
+            $serializedOvertime = [];
+            foreach ($units as $unit) {
+                $serializedOvertime[$unit->id] = $correction !== null
+                    ? $this->zeroOvertime($unit->rentalItem, $returnedAt, 1, 'operational_correction')
+                    : $this->overtime->calculate($unit->rentalItem, $returnedAt, 1);
+            }
+
+            /** @var list<array<string, mixed>> $bulkOvertime */
+            $bulkOvertime = [];
+            foreach ($bulkInputs->values() as $index => $input) {
+                $item = $bulkItems->get((int) $input['rental_item_id']);
+                $quantity = max(1, (int) ($input['quantity'] ?? 1));
+                $bulkOvertime[$index] = $correction !== null
+                    ? $this->zeroOvertime($item, $returnedAt, $quantity, 'operational_correction')
+                    : $this->overtime->calculate($item, $returnedAt, $quantity);
+            }
+
+            $lateFee = collect($serializedOvertime)->sum('total_charge_amount')
+                + collect($bulkOvertime)->sum('total_charge_amount');
+            $damageFee = $feeInputs->sum(fn (array $item): float => (float) ($item['damage_fee_amount'] ?? 0));
+            $cleaningFee = $feeInputs->sum(fn (array $item): float => (float) ($item['cleaning_fee_amount'] ?? 0));
             $discount = (float) ($data['discount_amount'] ?? 0);
             $grossCharge = $lateFee + $damageFee + $cleaningFee;
             $isFinalReturn = $correction !== null
-                || $this->willComplete($locked, $units->count());
+                || $this->willComplete($locked, $units->count() + (int) $bulkInputs->sum('quantity'));
 
             if ($correction !== null && (
                 $grossCharge > 0
@@ -183,6 +230,10 @@ class RentalReturnManager
                 'status' => 'completed',
                 'returned_at' => $returnedAt,
                 'late_fee_amount' => $lateFee,
+                'overtime_breakdown' => [
+                    'serialized' => array_values($serializedOvertime),
+                    'bulk' => $bulkOvertime,
+                ],
                 'damage_fee_amount' => $damageFee,
                 'cleaning_fee_amount' => $cleaningFee,
                 'discount_amount' => $discount,
@@ -205,7 +256,8 @@ class RentalReturnManager
                     'quantity' => 1,
                     'condition' => $condition,
                     'status' => $condition === 'lost' ? 'lost' : 'returned',
-                    'late_fee_amount' => $input['late_fee_amount'] ?? 0,
+                    'late_fee_amount' => $serializedOvertime[$unit->id]['total_charge_amount'] ?? 0,
+                    'overtime_breakdown' => $serializedOvertime[$unit->id] ?? null,
                     'damage_fee_amount' => $input['damage_fee_amount'] ?? 0,
                     'cleaning_fee_amount' => $input['cleaning_fee_amount'] ?? 0,
                     'notes' => $input['notes'] ?? null,
@@ -273,6 +325,35 @@ class RentalReturnManager
                         'type' => $condition === 'lost' ? 'loss' : 'damage',
                         'description' => $input['notes']
                             ?? "Biaya kondisi {$condition} saat pengembalian.",
+                        'amount' => $input['damage_fee_amount'],
+                        'status' => 'charged',
+                        'decided_by' => $actor->id,
+                        'decided_at' => now(),
+                    ]);
+                }
+            }
+
+            foreach ($bulkInputs->values() as $bulkIndex => $input) {
+                $item = $bulkItems->get((int) $input['rental_item_id']);
+                $condition = $input['condition'];
+                $this->pooled->returnQuantity($item, (int) $input['quantity'], $condition);
+                $returnItem = $return->items()->create([
+                    'rental_item_id' => $item->id,
+                    'asset_id' => null,
+                    'quantity' => (int) $input['quantity'],
+                    'condition' => $condition,
+                    'status' => $condition === 'lost' ? 'lost' : 'returned',
+                    'late_fee_amount' => $bulkOvertime[$bulkIndex]['total_charge_amount'] ?? 0,
+                    'overtime_breakdown' => $bulkOvertime[$bulkIndex] ?? null,
+                    'damage_fee_amount' => $input['damage_fee_amount'] ?? 0,
+                    'cleaning_fee_amount' => $input['cleaning_fee_amount'] ?? 0,
+                    'notes' => $input['notes'] ?? null,
+                ]);
+                if ((float) ($input['damage_fee_amount'] ?? 0) > 0) {
+                    $returnItem->damageCharges()->create([
+                        'asset_id' => null,
+                        'type' => $condition === 'lost' ? 'loss' : 'damage',
+                        'description' => $input['notes'] ?? "Biaya kondisi {$condition} saat pengembalian Bulk.",
                         'amount' => $input['damage_fee_amount'],
                         'status' => 'charged',
                         'decided_by' => $actor->id,
@@ -458,6 +539,9 @@ class RentalReturnManager
             ->where('status', 'out')
             ->count();
 
+        $remaining += (int) RentalItem::query()->where('rental_id', $rental->id)->where('is_bulk', true)
+            ->selectRaw('COALESCE(SUM(quantity - returned_quantity), 0) as outstanding')->value('outstanding');
+
         return $returningCount === $remaining;
     }
 
@@ -465,7 +549,7 @@ class RentalReturnManager
     {
         RentalItem::query()->where('rental_id', $rental->id)->get()
             ->each(function (RentalItem $item): void {
-                $returned = $item->assets()
+                $returned = $item->is_bulk ? $item->returned_quantity : $item->assets()
                     ->whereIn('status', ['returned', 'lost'])
                     ->count();
                 $item->update([
@@ -477,6 +561,26 @@ class RentalReturnManager
                     },
                 ]);
             });
+    }
+
+    /** @return array<string, mixed> */
+    private function zeroOvertime(
+        RentalItem $item,
+        CarbonImmutable $returnedAt,
+        int $quantity,
+        string $reason,
+    ): array {
+        return [
+            'version' => 1,
+            'rental_item_id' => $item->id,
+            'product_id' => $item->product_id,
+            'returned_at' => $returnedAt->toISOString(),
+            'quantity' => max(1, $quantity),
+            'billable_hours' => 0,
+            'unit_charge_amount' => 0.0,
+            'total_charge_amount' => 0.0,
+            'snapshot_source' => $reason,
+        ];
     }
 
     /** @param array<string, mixed> $data */
@@ -534,13 +638,16 @@ class RentalReturnManager
         $remaining = RentalItemAsset::query()
             ->whereHas('rentalItem', fn ($query) => $query->where('rental_id', $rental->id))
             ->where('status', 'out')
-            ->exists();
+            ->exists() || RentalItem::query()->where('rental_id', $rental->id)->where('is_bulk', true)
+            ->whereColumn('quantity', '>', 'returned_quantity')->exists();
         $from = $rental->status;
         $to = $remaining ? 'partial_return' : 'returned';
         $nextDueAt = $remaining
             ? RentalItem::query()
                 ->where('rental_id', $rental->id)
-                ->whereHas('assets', fn ($query) => $query->where('status', 'out'))
+                ->where(fn ($query) => $query
+                    ->whereHas('assets', fn ($assets) => $assets->where('status', 'out'))
+                    ->orWhere(fn ($bulk) => $bulk->where('is_bulk', true)->whereColumn('quantity', '>', 'returned_quantity')))
                 ->min('due_at')
             : null;
         $rental->update([

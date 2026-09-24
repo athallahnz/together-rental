@@ -48,7 +48,7 @@ type Rental = {
         holder_name: string | null;
         received_at: string | null;
     }>;
-    items: Array<{ id: number; description: string; assets: Unit[] }>;
+    items: Array<{ id: number; description: string; quantity: number; returned_quantity: number; is_bulk: boolean; assets: Unit[] }>;
 };
 type OperationalCorrection = {
     correction_number: string;
@@ -63,11 +63,30 @@ type ReturnLine = {
     replacement_asset_id: number | null;
     selected: boolean;
     condition: string;
-    late_fee_amount: number;
     damage_fee_amount: number;
     cleaning_fee_amount: number;
     notes: string;
 };
+type BulkReturnLine = Omit<ReturnLine, 'rental_item_asset_id' | 'replacement_asset_id'> & {
+    rental_item_id: number;
+    quantity: number;
+};
+type OvertimeBreakdown = {
+    billable_hours: number;
+    hourly_penalty_amount: number;
+    six_hour_amount: number | null;
+    six_hour_blocks: number;
+    remainder_hours: number;
+    unit_charge_amount: number;
+    total_charge_amount: number;
+    effective_due_at?: string;
+    snapshot_source: string;
+};
+type OvertimePreview = {
+    serialized: Record<number, OvertimeBreakdown>;
+    bulk: Record<number, { per_unit: OvertimeBreakdown; remaining: OvertimeBreakdown }>;
+};
+
 type ReplacementAsset = {
     id: number;
     product_id: number;
@@ -84,6 +103,7 @@ type FormData = {
     payment_reference: string;
     returned_collateral_ids: number[];
     items: ReturnLine[];
+    bulk_items: BulkReturnLine[];
 };
 
 const money = new Intl.NumberFormat('id-ID', {
@@ -91,8 +111,9 @@ const money = new Intl.NumberFormat('id-ID', {
     currency: 'IDR',
     maximumFractionDigits: 0,
 });
-const localDateTime = () => {
-    const date = new Date(Date.now() - new Date().getTimezoneOffset() * 60000);
+const localDateTime = (value?: string) => {
+    const source = value ? new Date(value) : new Date();
+    const date = new Date(source.getTime() - source.getTimezoneOffset() * 60000);
 
     return date.toISOString().slice(0, 16);
 };
@@ -103,23 +124,28 @@ export default function RentalReturn({
     cashSessions,
     operationalCorrection,
     replacementAssets,
+    serverNow,
+    overtimePreview,
 }: {
     rental: Rental;
     paymentMethods: PaymentMethodOption[];
     cashSessions: CashSessionOption[];
     operationalCorrection: OperationalCorrection | null;
     replacementAssets: ReplacementAsset[];
+    serverNow: string;
+    overtimePreview: OvertimePreview;
 }) {
     const correctionMode = operationalCorrection !== null;
     const units = rental.items.flatMap((item) =>
         item.assets.map((unit) => ({ ...unit, description: item.description })),
     );
+    const bulkItems = rental.items.filter((item) => item.is_bulk && item.quantity > item.returned_quantity);
     const form = useForm<FormData>({
         returned_at: correctionMode
             ? new Date(operationalCorrection.original_return.returned_at)
                   .toISOString()
                   .slice(0, 16)
-            : localDateTime(),
+            : localDateTime(serverNow),
         notes: '',
         discount_amount: 0,
         payment_amount: 0,
@@ -127,27 +153,58 @@ export default function RentalReturn({
         cash_session_id: null,
         payment_reference: '',
         returned_collateral_ids: [],
+        bulk_items: bulkItems.map((item) => ({
+            rental_item_id: item.id,
+            quantity: item.quantity - item.returned_quantity,
+            selected: true,
+            condition: 'good',
+            damage_fee_amount: 0,
+            cleaning_fee_amount: 0,
+            notes: '',
+        })),
         items: units.map((unit) => ({
             rental_item_asset_id: unit.id,
             replacement_asset_id: unit.asset.id,
             selected: true,
             condition: unit.asset.condition || 'good',
-            late_fee_amount: 0,
             damage_fee_amount: 0,
             cleaning_fee_amount: 0,
             notes: '',
         })),
     });
     const selected = form.data.items.filter((item) => item.selected);
-    const isFinalReturn = selected.length === units.length;
-    const charges = selected.reduce(
-        (sum, item) =>
-            sum +
-            Number(item.late_fee_amount) +
-            Number(item.damage_fee_amount) +
-            Number(item.cleaning_fee_amount),
-        0,
-    );
+    const selectedBulk = form.data.bulk_items.filter((item) => item.selected);
+    const returningBulk = selectedBulk.reduce((sum, item) => sum + Number(item.quantity), 0);
+    const remainingBulk = bulkItems.reduce((sum, item) => sum + item.quantity - item.returned_quantity, 0);
+    const isFinalReturn = selected.length === units.length && returningBulk === remainingBulk;
+    const overtimeCharge = correctionMode
+        ? 0
+        : selected.reduce(
+              (sum, item) =>
+                  sum +
+                  Number(
+                      overtimePreview.serialized[item.rental_item_asset_id]
+                          ?.total_charge_amount ?? 0,
+                  ),
+              0,
+          ) +
+          selectedBulk.reduce((sum, item) => {
+              const perUnit = Number(
+                  overtimePreview.bulk[item.rental_item_id]?.per_unit
+                      .unit_charge_amount ?? 0,
+              );
+
+              return sum + perUnit * Number(item.quantity);
+          }, 0);
+    const charges =
+        overtimeCharge +
+        [...selected, ...selectedBulk].reduce(
+            (sum, item) =>
+                sum +
+                Number(item.damage_fee_amount) +
+                Number(item.cleaning_fee_amount),
+            0,
+        );
     const finalCharge = Math.max(
         0,
         charges - Number(form.data.discount_amount),
@@ -176,12 +233,31 @@ export default function RentalReturn({
         items[index] = { ...items[index], ...patch };
         form.setData('items', items);
     };
+    const setBulkLine = (index: number, patch: Partial<BulkReturnLine>) => {
+        form.setData('bulk_items', form.data.bulk_items.map((item, position) =>
+            position === index ? { ...item, ...patch } : item,
+        ));
+    };
+    const splitBulkLine = (index: number) => {
+        const line = form.data.bulk_items[index];
+
+        if (line.quantity < 2) {
+return;
+}
+
+        form.setData('bulk_items', [
+            ...form.data.bulk_items.map((item, position) => position === index
+                ? { ...item, quantity: item.quantity - 1 } : item),
+            { ...line, quantity: 1, damage_fee_amount: 0, cleaning_fee_amount: 0, notes: '' },
+        ]);
+    };
     const submit = (event: FormEvent) => {
         event.preventDefault();
         form.transform((data) => ({
             ...data,
             payment_method_id: data.payment_method_id || null,
             items: data.items.filter((item) => item.selected),
+            bulk_items: data.bulk_items.filter((item) => item.selected),
         }));
         form.post(`/rentals/${rental.id}/return`);
     };
@@ -233,12 +309,15 @@ export default function RentalReturn({
                         <AlertTriangle />
                         <AlertTitle>Rental melewati batas kembali</AlertTitle>
                         <AlertDescription>
-                            Masukkan denda keterlambatan pada unit terkait
-                            sesuai kebijakan cabang.
+                            Denda keterlambatan dihitung otomatis oleh server dari jatuh tempo efektif setiap item. Nilai di bawah adalah pratinjau dan akan dihitung ulang saat disimpan.
                         </AlertDescription>
                     </Alert>
                 )}
                 <InputError message={form.errors.items} />
+                <InputError message={form.errors.bulk_items} />
+                {Object.entries(form.errors).filter(([key]) => key.startsWith('bulk_items.')).map(([key, message]) => (
+                    <InputError key={key} message={message} />
+                ))}
                 <InputError
                     message={(form.errors as Record<string, string>).rental}
                 />
@@ -314,6 +393,57 @@ export default function RentalReturn({
                         <CardTitle>Unit yang diterima</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
+                        {form.data.bulk_items.map((line, index) => {
+                            const item = bulkItems.find((candidate) => candidate.id === line.rental_item_id);
+
+                            if (!item) {
+return null;
+}
+
+                            return (
+                                <div key={`bulk-${index}`} className="space-y-4 rounded-lg border p-4">
+                                    <div className="flex items-center gap-3">
+                                        <Checkbox checked={line.selected} onCheckedChange={(value) => setBulkLine(index, { selected: value === true })} />
+                                        <p className="font-medium">{item.description} · Bulk · Sisa {item.quantity - item.returned_quantity} unit</p>
+                                    </div>
+                                    {line.selected && (
+                                        <div className="grid gap-4 md:grid-cols-3">
+                                            <Field label="Jumlah diterima">
+                                                <Input type="number" min={1} max={item.quantity - item.returned_quantity} value={line.quantity} onChange={(event) => setBulkLine(index, { quantity: Number(event.target.value) })} />
+                                            </Field>
+                                            <Field label="Kondisi">
+                                                <Select value={line.condition} onValueChange={(condition) => setBulkLine(index, { condition })}>
+                                                    <SelectTrigger><SelectValue /></SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="excellent">Sangat baik</SelectItem>
+                                                        <SelectItem value="good">Baik</SelectItem>
+                                                        <SelectItem value="fair">Cukup</SelectItem>
+                                                        <SelectItem value="damaged">Rusak</SelectItem>
+                                                        <SelectItem value="lost">Hilang</SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                            </Field>
+                                            <Field label="Denda overtime otomatis">
+                                                <div className="rounded-md border bg-muted/40 px-3 py-2 text-sm">
+                                                    {money.format((overtimePreview.bulk[item.id]?.per_unit.unit_charge_amount ?? 0) * Number(line.quantity))}
+                                                    <span className="block text-xs text-muted-foreground">
+                                                        {overtimePreview.bulk[item.id]?.per_unit.billable_hours ?? 0} jam tertagih · dihitung server-side
+                                                    </span>
+                                                </div>
+                                            </Field>
+                                            <MoneyField label="Kerusakan total baris" value={line.damage_fee_amount} onChange={(damage_fee_amount) => setBulkLine(index, { damage_fee_amount })} />
+                                            <MoneyField label="Cleaning total baris" value={line.cleaning_fee_amount} onChange={(cleaning_fee_amount) => setBulkLine(index, { cleaning_fee_amount })} />
+                                            <Field label="Catatan">
+                                                <Input value={line.notes} onChange={(event) => setBulkLine(index, { notes: event.target.value })} />
+                                            </Field>
+                                            <Button type="button" variant="outline" disabled={line.quantity < 2} onClick={() => splitBulkLine(index)}>
+                                                Pisahkan kondisi 1 unit
+                                            </Button>
+                                        </div>
+                                    )}
+                                </div>
+                            );
+                        })}
                         {units.map((unit, index) => (
                             <div
                                 key={unit.id}
@@ -438,20 +568,14 @@ export default function RentalReturn({
                                         </Field>
                                         {!correctionMode && (
                                             <>
-                                                <MoneyField
-                                                    label="Denda terlambat"
-                                                    value={
-                                                        form.data.items[index]
-                                                            .late_fee_amount
-                                                    }
-                                                    onChange={(
-                                                        late_fee_amount,
-                                                    ) =>
-                                                        setLine(index, {
-                                                            late_fee_amount,
-                                                        })
-                                                    }
-                                                />
+                                                <Field label="Denda overtime otomatis">
+                                                    <div className="rounded-md border bg-muted/40 px-3 py-2 text-sm">
+                                                        {money.format(overtimePreview.serialized[unit.id]?.total_charge_amount ?? 0)}
+                                                        <span className="block text-xs text-muted-foreground">
+                                                            {overtimePreview.serialized[unit.id]?.billable_hours ?? 0} jam tertagih · dihitung server-side
+                                                        </span>
+                                                    </div>
+                                                </Field>
                                                 <MoneyField
                                                     label="Biaya kerusakan"
                                                     value={
@@ -514,13 +638,12 @@ export default function RentalReturn({
                                 <Input
                                     type="datetime-local"
                                     value={form.data.returned_at}
-                                    onChange={(event) =>
-                                        form.setData(
-                                            'returned_at',
-                                            event.target.value,
-                                        )
-                                    }
+                                    readOnly
+                                    aria-readonly="true"
                                 />
+                                <p className="text-xs text-muted-foreground">
+                                    Waktu final ditetapkan oleh server saat proses disimpan untuk mencegah backdating.
+                                </p>
                                 <InputError message={form.errors.returned_at} />
                             </Field>
                             {!correctionMode && (
@@ -690,7 +813,7 @@ export default function RentalReturn({
                         type="submit"
                         disabled={
                             form.processing ||
-                            selected.length === 0 ||
+                            (selected.length === 0 && selectedBulk.length === 0) ||
                             finalReturnHasBalance ||
                             finalReturnHasHeldCollateral
                         }

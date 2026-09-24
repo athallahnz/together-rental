@@ -4,14 +4,17 @@ namespace App\Domain\Rentals;
 
 use App\Domain\Bookings\BookingManager;
 use App\Domain\Finance\PaymentManager;
+use App\Domain\Inventory\PooledStockManager;
 use App\Models\Asset;
 use App\Models\AssetInspection;
 use App\Models\AssetReservation;
 use App\Models\Booking;
+use App\Models\BulkReservation;
 use App\Models\Payment;
 use App\Models\Rental;
 use App\Models\RentalItem;
 use App\Models\User;
+use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -23,6 +26,8 @@ class RentalManager
         private readonly BookingManager $bookings,
         private readonly PaymentManager $payments,
         private readonly RentalCollateralManager $collaterals,
+        private readonly PooledStockManager $pooled,
+        private readonly RentalOvertimeCalculator $overtime,
     ) {}
 
     /** @param array<string, mixed> $data */
@@ -75,12 +80,23 @@ class RentalManager
             ->lockForUpdate()
             ->get();
 
-        $expectedUnits = (int) $booking->items->sum('quantity');
-
-        if ($reservations->isEmpty() || $reservations->count() < $expectedUnits) {
-            throw ValidationException::withMessages([
-                'booking' => 'Reservasi unit booking tidak lengkap. Perbarui booking sebelum checkout.',
-            ]);
+        $bulkReservations = $booking->bulkReservations()->where('status', 'reserved')
+            ->with(['product', 'bookingItem'])->orderBy('product_id')->lockForUpdate()->get();
+        $this->bookings->assertReservationsStillAvailable($booking);
+        $checkedOutAt = CarbonImmutable::parse($data['checked_out_at'] ?? now());
+        if ($bulkReservations->isNotEmpty()) {
+            if (! $checkedOutAt->lessThan($booking->ends_at)) {
+                throw ValidationException::withMessages(['checked_out_at' => 'Waktu checkout harus sebelum akhir booking.']);
+            }
+            $this->pooled->assertBooking($booking, $checkedOutAt);
+            foreach ($bulkReservations->groupBy('product_id') as $productId => $rows) {
+                $inventory = $this->pooled->lock($booking->branch_id, (int) $productId);
+                $physical = $inventory->quantity_on_hand - $inventory->quantity_rented
+                    - $inventory->quantity_maintenance - $inventory->quantity_in_transfer;
+                if ($physical < $rows->sum('quantity')) {
+                    throw ValidationException::withMessages(['booking' => 'Stok fisik Bulk belum cukup untuk checkout.']);
+                }
+            }
         }
 
         $invalidAsset = $reservations->first(
@@ -151,7 +167,8 @@ class RentalManager
             'updated_by' => $actor->id,
         ]);
 
-        $this->createRentalItems($rental, $reservations, $data, $actor);
+        $this->createRentalItems($rental, $reservations, $data, $actor, $bulkReservations);
+        $this->createBulkRentalItems($rental, $reservations, $bulkReservations);
         $rawCollaterals = $data['collaterals'] ?? [];
         /** @var list<array<string, mixed>> $collateralInputs */
         $collateralInputs = [];
@@ -187,6 +204,7 @@ class RentalManager
             'status' => 'rented',
             'updated_at' => now(),
         ]);
+        $this->pooled->release($booking, $actor, 'Dikonversi ke rental aktif.', 'converted');
         $booking->update(['status' => 'converted', 'updated_by' => $actor->id]);
         $booking->statusHistories()->create([
             'from_status' => 'confirmed',
@@ -216,6 +234,7 @@ class RentalManager
 
     /**
      * @param  Collection<int, AssetReservation>  $reservations
+     * @param  Collection<int, BulkReservation>  $bulkReservations
      * @param  array<string, mixed>  $data
      */
     private function createRentalItems(
@@ -223,6 +242,7 @@ class RentalManager
         Collection $reservations,
         array $data,
         User $actor,
+        Collection $bulkReservations,
     ): void {
         $rawAssetInputs = $data['assets'] ?? [];
         /** @var list<array<string, mixed>> $assetInputs */
@@ -247,7 +267,7 @@ class RentalManager
             $bookingItem = $first->bookingItem;
             $bookingItemUnitCount = max(1, $reservations
                 ->where('booking_item_id', $bookingItem->id)
-                ->count());
+                ->count() + (int) $bulkReservations->where('booking_item_id', $bookingItem->id)->sum('quantity'));
             $allocatedTotal = round(
                 (float) $bookingItem->total_amount * $group->count() / $bookingItemUnitCount,
                 2,
@@ -263,6 +283,10 @@ class RentalManager
                 'unit_rate' => $allocatedTotal / max(1, $group->count()),
                 'total_amount' => $allocatedTotal,
                 'due_at' => $rental->due_at,
+                'overtime_snapshot' => $this->overtime->finalizeRentalItemSnapshot(
+                    $this->bookingOvertimeSnapshot($bookingItem, $first->asset->product_id),
+                    $allocatedTotal / max(1, $group->count()),
+                ),
                 'status' => 'out',
             ]);
 
@@ -291,6 +315,80 @@ class RentalManager
                 ]);
             }
         }
+    }
+
+    /**
+     * @param  Collection<int, AssetReservation>  $reservations
+     * @param  Collection<int, BulkReservation>  $bulkReservations
+     */
+    private function createBulkRentalItems(Rental $rental, Collection $reservations, Collection $bulkReservations): void
+    {
+        foreach ($bulkReservations as $reservation) {
+            $bookingItem = $reservation->bookingItem;
+            $unitCount = $reservations->where('booking_item_id', $bookingItem->id)->count()
+                + (int) $bulkReservations->where('booking_item_id', $bookingItem->id)->sum('quantity');
+            $allocatedTotal = round((float) $bookingItem->total_amount * $reservation->quantity / max(1, $unitCount), 2);
+            $rental->items()->create([
+                'booking_item_id' => $bookingItem->id,
+                'product_id' => $reservation->product_id,
+                'description' => $bookingItem->package_id === null ? $bookingItem->description
+                    : "{$bookingItem->description} · {$reservation->product->name}",
+                'quantity' => $reservation->quantity,
+                'is_bulk' => true,
+                'unit_rate' => $allocatedTotal / $reservation->quantity,
+                'total_amount' => $allocatedTotal,
+                'due_at' => $rental->due_at,
+                'overtime_snapshot' => $this->overtime->finalizeRentalItemSnapshot(
+                    $this->bookingOvertimeSnapshot($bookingItem, $reservation->product_id),
+                    $allocatedTotal / max(1, $reservation->quantity),
+                ),
+                'status' => 'out',
+            ]);
+            $this->pooled->lock($rental->branch_id, $reservation->product_id)
+                ->increment('quantity_rented', $reservation->quantity);
+        }
+
+        // Keep the booking line total exact when mixed components round to cents.
+        foreach ($rental->items()->get()->groupBy('booking_item_id') as $items) {
+            if (! $items->contains('is_bulk', true)) {
+                continue;
+            }
+            $last = $items->last();
+            $delta = round((float) $last->bookingItem->total_amount - (float) $items->sum('total_amount'), 2);
+            $adjustedTotal = (float) $last->total_amount + $delta;
+            $adjustedUnitRate = $adjustedTotal / max(1, (int) $last->quantity);
+            $last->update([
+                'total_amount' => $adjustedTotal,
+                'unit_rate' => $adjustedUnitRate,
+                'overtime_snapshot' => $this->overtime->finalizeRentalItemSnapshot(
+                    is_array($last->overtime_snapshot) ? $last->overtime_snapshot : null,
+                    $adjustedUnitRate,
+                ),
+            ]);
+        }
+    }
+
+    /** @return array<string, mixed>|null */
+    private function bookingOvertimeSnapshot(
+        \App\Models\BookingItem $bookingItem,
+        int $productId,
+    ): ?array {
+        $requirements = $bookingItem->stock_requirements;
+        if (! is_array($requirements)) {
+            return null;
+        }
+
+        foreach ($requirements as $requirement) {
+            if (! is_array($requirement) || (int) ($requirement['product_id'] ?? 0) !== $productId) {
+                continue;
+            }
+
+            $snapshot = $requirement['overtime_snapshot'] ?? null;
+
+            return is_array($snapshot) ? $snapshot : null;
+        }
+
+        return null;
     }
 
     /** @param array<string, mixed> $data */

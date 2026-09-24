@@ -251,7 +251,7 @@ class PublicAvailabilityTest extends TestCase
             ->assertJsonPath('data.availability.status', 'unavailable');
     }
 
-    public function test_quantity_product_uses_period_demand_instead_of_current_counters(): void
+    public function test_quantity_product_with_unexplained_counters_is_not_promised_to_public(): void
     {
         $quantityProduct = Product::query()->create([
             'company_id' => $this->companyId,
@@ -325,10 +325,10 @@ class PublicAvailabilityTest extends TestCase
         ]))
             ->assertOk()
             ->assertJsonPath('data.availability.total_units', 4)
-            ->assertJsonPath('data.availability.reserved_units', 2)
-            ->assertJsonPath('data.availability.rented_units', 1)
-            ->assertJsonPath('data.availability.available_units', 1)
-            ->assertJsonPath('data.availability.status', 'limited');
+            ->assertJsonPath('data.availability.reserved_units', 99)
+            ->assertJsonPath('data.availability.rented_units', 99)
+            ->assertJsonPath('data.availability.available_units', 0)
+            ->assertJsonPath('data.availability.status', 'unavailable');
     }
 
     public function test_package_availability_uses_the_most_limited_required_item(): void

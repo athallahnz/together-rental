@@ -83,6 +83,7 @@ class TransactionDocumentManager
                 'content_hash' => $hash,
                 'snapshot' => $snapshot,
                 'issued_by' => $actor->id,
+                'issuer_name_snapshot' => $actor->name,
                 'issued_at' => now(),
             ]);
         }, 3);
@@ -268,6 +269,7 @@ class TransactionDocumentManager
                     'returned_at' => $this->isoDateTime($collateral->returned_at),
                     'notes' => $collateral->notes,
                 ])->values()->all(),
+                'agreement_rights_obligations' => $this->agreementRightsObligations(),
                 'agreement_terms' => $this->agreementTerms(),
                 'notes' => $rental->notes,
             ],
@@ -459,15 +461,37 @@ class TransactionDocumentManager
     }
 
     /** @return list<string> */
+    /** @return list<string> */
+    private function agreementRightsObligations(): array
+    {
+        return [
+            'Penyewa berhak bertanya mengenai cara penggunaan alat yang disewakan.',
+            'Penyewa berhak untuk mengecek terlebih dahulu kondisi peralatan sebelum digunakan, karena jika peralatan telah keluar dari kami maka kami anggap peralatan tersebut dalam kondisi baik.',
+            'Penyewa dapat melakukan complain jika terjadi kerusakan barang pada saat pengecekan barang dengan menukar barang yang sama.',
+            'Segala macam complain yang dilakukan pada saat masa penyewaan selesai ataupun berlangsung maka kami anggap, kami tidak bertanggung jawab.',
+            'Semua peralatan yang telah disewakan tidak diasuransikan, maka pihak penyewa bertanggung jawab penuh atas semua peralatan yang disewakan dari pihak kami.',
+            'Apabila terjadi kerusakan atau kehilangan pada peralatan di masa waktu penyewaan, maka penyewa bertanggung jawab untuk mengganti sesuai dengan harga jual alat tersebut atau diganti dengan peralatan yang sama.',
+            'Penyewa tidak dibenarkan untuk melakukan reparasi, bongkar pasang dan lainnya pada peralatan yang disewakan dengan alasan atau kondisi apapun, semua kerusakan harus dikonfirmasikan terlebih dahulu ke pihak administrasi.',
+            'Alat yang disewa tidak boleh dipindah tangankan, digadaikan, atau dijual kepada pihak lain dalam bentuk apapun.',
+            'Penyewa wajib mengikuti salah satu sosial media kami berupa Instagram dan memberikan domisili yang valid.',
+            'Konfirmasi perpanjangan wajib datang ke kantor dan membayar biaya perpanjangan.',
+        ];
+    }
+
+    /** @return list<string> */
     private function agreementTerms(): array
     {
         return [
-            'Penyewa bertanggung jawab menjaga seluruh unit selama masa rental.',
-            'Perpanjangan wajib diproses melalui sistem sebelum jatuh tempo dan tunduk pada ketersediaan unit.',
-            'Keterlambatan, kerusakan, kehilangan, dan kebutuhan cleaning dapat menimbulkan biaya tambahan sesuai hasil pemeriksaan.',
-            'Jaminan fisik dicatat terpisah dari deposit uang dan dikembalikan setelah kewajiban yang terkait dinyatakan selesai.',
-            'Setiap pembayaran, koreksi, dan pengembalian dicatat dalam histori sistem dan tidak menghapus transaksi sebelumnya.',
-            'Dokumen ini merekam kondisi transaksi pada saat diterbitkan; versi baru dapat diterbitkan bila transaksi berubah.',
+            'Biaya sewa per hari dihitung saat penerimaan barang.',
+            'Penyewa jika ingin melakukan perpanjang masa rental maka wajib konfirmasi kepada kami dan pihak penyewa akan dikenakan biaya tambahan sesuai dengan perhitungan yang telah ditentukan.',
+            'Pengambilan barang tidak boleh diwakilkan orang lain atau harus dengan pemilik identitas.',
+            'DP rental mengikuti pembayaran yang tercatat pada sistem dan tidak memiliki minimum 50%. Booking tanpa DP tetap dapat diproses sesuai status dan otorisasi sistem; DP rental dan security deposit dicatat terpisah, sedangkan sisa tagihan tetap tercatat untuk pelunasan berikutnya.',
+            'Keterlambatan pengembalian dihitung per jam dengan pembulatan ke atas. Untuk 1–5 jam, berlaku tarif denda per jam yang disepakati saat transaksi; jika tarif denda per jam tidak tersedia, digunakan 10% dari harga sewa per jam. Mulai 6 jam, jika tarif paket 6 jam tersedia, setiap blok 6 jam menggunakan tarif paket tersebut dan sisa jam menggunakan tarif denda per jam. Jika tarif paket 6 jam tidak tersedia, seluruh jam keterlambatan dihitung sebesar 10% dari harga sewa per jam.',
+            'Setiap penyewa WAJIB memback-up semua data dari peralatan yang disewa termasuk data file kamera.',
+            'Kami tidak bertanggung jawab jika terjadi sesuatu hal yang mengakibatkan DATA HILANG. Semua file data foto, video maupun audio kami anggap tidak terpakai pada saat peralatan yang disewakan tersebut dikembalikan kepada kami.',
+            'Pembatalan penyewaan dinyatakan tidak berlaku apabila pada saat hari penyewa berlangsung.',
+            'Apabila terjadi masalah di atas / setelah perjanjian ini akan diselesaikan secara kekeluargaan dan apabila terpaksa bisa diselesaikan ke pihak yang berwajib atau jalur hukum.',
+            'Dengan tertulisnya aturan umum ini maka pihak penyewa telah mengetahui, memahami dan melaksanakan segala aturan umum yang telah ditetapkan oleh kami dengan sebaik-baiknya.',
         ];
     }
 }

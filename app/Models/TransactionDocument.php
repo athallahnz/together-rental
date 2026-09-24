@@ -9,7 +9,7 @@ use LogicException;
 
 #[Fillable([
     'branch_id', 'document_number', 'document_type', 'source_type', 'source_id',
-    'source_reference', 'version', 'content_hash', 'snapshot', 'issued_by', 'issued_at',
+    'source_reference', 'version', 'content_hash', 'snapshot', 'issued_by', 'issuer_name_snapshot', 'issued_at',
 ])]
 class TransactionDocument extends Model
 {

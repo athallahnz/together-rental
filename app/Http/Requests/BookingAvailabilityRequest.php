@@ -2,6 +2,7 @@
 
 namespace App\Http\Requests;
 
+use App\Models\Booking;
 use App\Models\Branch;
 use App\Models\Product;
 use App\Models\RatePlan;
@@ -34,6 +35,11 @@ class BookingAvailabilityRequest extends FormRequest
     {
         $branch = Branch::query()->findOrFail($this->integer('branch_id'));
         abort_unless($this->user()->canAccessBranch($branch), 403);
+        if ($this->filled('ignore_booking_id')) {
+            abort_unless(Booking::query()->whereKey($this->integer('ignore_booking_id'))
+                ->where('branch_id', $branch->id)->where('status', 'draft')->exists()
+                && Gate::allows('bookings.update'), 422);
+        }
         abort_unless(Product::query()
             ->where('company_id', $this->user()->company_id)
             ->where('is_active', true)

@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Http\Requests\Concerns\ValidatesPaymentInput;
 use App\Models\Booking;
+use App\Models\CustomerIdentity;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Validation\Rule;
@@ -30,6 +31,7 @@ class CheckoutBookingRequest extends FormRequest
             'assets.*.condition' => ['required', Rule::in(['excellent', 'good', 'fair'])],
             'assets.*.notes' => ['nullable', 'string', 'max:1000'],
             'collaterals' => ['nullable', 'array', 'max:5'],
+            'collaterals.*.customer_identity_id' => ['nullable', 'integer', 'distinct'],
             'collaterals.*.type' => ['required', 'string', 'max:40'],
             'collaterals.*.number' => ['required', 'string', 'max:100'],
             'collaterals.*.holder_name' => ['nullable', 'string', 'max:150'],
@@ -67,6 +69,44 @@ class CheckoutBookingRequest extends FormRequest
                         $this->float('payment_amount') + $this->float('deposit_paid'),
                         $booking->branch_id,
                     );
+
+                    if ($validator->errors()->has('checked_out_at')) {
+                        return;
+                    }
+
+                    $checkedOutAt = $this->string('checked_out_at')->toString();
+                    $collaterals = $this->input('collaterals', []);
+                    if (is_array($collaterals)) {
+                        foreach ($collaterals as $index => $collateral) {
+                            if (! is_array($collateral)) {
+                                continue;
+                            }
+
+                            $identityId = (int) ($collateral['customer_identity_id'] ?? 0);
+                            if ($identityId <= 0) {
+                                continue;
+                            }
+
+                            $identity = CustomerIdentity::query()
+                                ->where('customer_id', $booking->customer_id)
+                                ->find($identityId);
+
+                            if ($identity === null) {
+                                $validator->errors()->add(
+                                    "collaterals.{$index}.customer_identity_id",
+                                    'Identitas Customer360 tidak milik pelanggan booking ini.',
+                                );
+                                continue;
+                            }
+
+                            if ($identity->isExpiredAt($checkedOutAt)) {
+                                $validator->errors()->add(
+                                    "collaterals.{$index}.customer_identity_id",
+                                    'Identitas Customer360 sudah kedaluwarsa pada waktu checkout.',
+                                );
+                            }
+                        }
+                    }
                 }
             },
         ];

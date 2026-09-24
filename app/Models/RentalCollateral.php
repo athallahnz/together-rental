@@ -9,9 +9,12 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 #[Fillable([
     'rental_id',
     'customer_id',
+    'customer_identity_id',
+    'source_type',
     'type',
     'number',
     'holder_name',
+    'identity_snapshot',
     'status',
     'received_at',
     'received_by',
@@ -37,6 +40,12 @@ class RentalCollateral extends Model
         return $this->belongsTo(Customer::class);
     }
 
+    /** @return BelongsTo<CustomerIdentity, $this> */
+    public function customerIdentity(): BelongsTo
+    {
+        return $this->belongsTo(CustomerIdentity::class);
+    }
+
     /** @return BelongsTo<User, $this> */
     public function receiver(): BelongsTo
     {
@@ -55,6 +64,7 @@ class RentalCollateral extends Model
             'received_at' => 'datetime',
             'returned_at' => 'datetime',
             'document_size' => 'integer',
+            'identity_snapshot' => 'array',
         ];
     }
 }

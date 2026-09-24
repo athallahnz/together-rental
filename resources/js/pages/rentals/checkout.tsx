@@ -1,8 +1,14 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import { AlertTriangle, ArrowLeft, LogOut } from 'lucide-react';
 import { CashSessionSelect } from '@/components/finance/cash-session-select';
-import { CollateralFields } from '@/components/rentals/collateral-fields';
-import type { CollateralInput } from '@/components/rentals/collateral-fields';
+import {
+    CollateralFields,
+    collateralFromIdentity,
+} from '@/components/rentals/collateral-fields';
+import type {
+    CollateralIdentityOption,
+    CollateralInput,
+} from '@/components/rentals/collateral-fields';
 import type {
     CashSessionOption,
     PaymentMethodOption,
@@ -30,6 +36,7 @@ type Props = {
     booking: Booking;
     paymentMethods: PaymentMethodOption[];
     cashSessions: CashSessionOption[];
+    customerIdentities: CollateralIdentityOption[];
     financialSummary: {
         rental_paid: number;
         deposit_paid: number;
@@ -54,6 +61,7 @@ export default function RentalCheckout({
     booking,
     paymentMethods,
     cashSessions,
+    customerIdentities,
     financialSummary,
 }: Props) {
     const reservedAssets = booking.items.flatMap((item) =>
@@ -61,6 +69,9 @@ export default function RentalCheckout({
             reservation,
             item,
         })),
+    );
+    const defaultIdentity = customerIdentities.find(
+        (identity) => identity.is_default && !identity.is_expired,
     );
     const form = useForm({
         checked_out_at: localNow(),
@@ -80,7 +91,9 @@ export default function RentalCheckout({
         cash_session_id: null as number | null,
         payment_reference: '',
         payment_notes: '',
-        collaterals: [] as CollateralInput[],
+        collaterals: defaultIdentity
+            ? [collateralFromIdentity(defaultIdentity)]
+            : ([] as CollateralInput[]),
     });
     const updateAsset = (index: number, patch: Partial<AssetInput>) =>
         form.setData(
@@ -314,6 +327,14 @@ export default function RentalCheckout({
                         <CardTitle>Verifikasi unit dan kondisi awal</CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
+                        {booking.items.flatMap((item) =>
+                            (item.bulk_reservations ?? []).map((reservation) => (
+                                <div key={`bulk-${reservation.id}`} className="rounded-lg border p-4">
+                                    <p className="font-medium">{reservation.product.name} · Bulk {reservation.quantity} unit</p>
+                                    <p className="text-sm text-muted-foreground">{item.description} · Periksa jumlah dan kelengkapan barang.</p>
+                                </div>
+                            )),
+                        )}
                         {reservedAssets.map(({ reservation, item }, index) => (
                             <div
                                 key={reservation.asset.id}
@@ -378,6 +399,7 @@ export default function RentalCheckout({
                                 form.setData('collaterals', collaterals)
                             }
                             errors={form.errors as Record<string, string>}
+                            identityOptions={customerIdentities}
                         />
                         {form.errors.collaterals && (
                             <p className="mt-2 text-sm text-destructive">

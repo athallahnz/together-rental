@@ -4,6 +4,7 @@ namespace App\Http\Requests;
 
 use App\Http\Requests\Concerns\ValidatesPaymentInput;
 use App\Models\Rental;
+use Carbon\CarbonImmutable;
 use Illuminate\Foundation\Http\FormRequest;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\Validator;
@@ -31,17 +32,23 @@ class StoreRentalReturnRequest extends FormRequest
             'payment_method_id' => ['nullable', 'integer'],
             'cash_session_id' => ['nullable', 'integer'],
             'payment_reference' => ['nullable', 'string', 'max:100'],
-            'items' => ['required', 'array', 'min:1'],
+            'items' => ['required_without:bulk_items', 'array'],
             'items.*.rental_item_asset_id' => ['required', 'integer', 'distinct'],
             'items.*.replacement_asset_id' => ['nullable', 'integer', 'distinct', 'exists:assets,id'],
             'items.*.condition' => [
                 'required',
                 Rule::in(['excellent', 'good', 'fair', 'damaged', 'lost']),
             ],
-            'items.*.late_fee_amount' => ['nullable', 'numeric', 'min:0'],
             'items.*.damage_fee_amount' => ['nullable', 'numeric', 'min:0'],
             'items.*.cleaning_fee_amount' => ['nullable', 'numeric', 'min:0'],
             'items.*.notes' => ['nullable', 'string', 'max:2000'],
+            'bulk_items' => ['required_without:items', 'array'],
+            'bulk_items.*.rental_item_id' => ['required', 'integer'],
+            'bulk_items.*.quantity' => ['required', 'integer', 'min:1'],
+            'bulk_items.*.condition' => ['required', Rule::in(['excellent', 'good', 'fair', 'damaged', 'lost'])],
+            'bulk_items.*.damage_fee_amount' => ['nullable', 'numeric', 'min:0'],
+            'bulk_items.*.cleaning_fee_amount' => ['nullable', 'numeric', 'min:0'],
+            'bulk_items.*.notes' => ['nullable', 'string', 'max:2000'],
             'returned_collateral_ids' => ['nullable', 'array'],
             'returned_collateral_ids.*' => ['integer', 'distinct'],
         ];
@@ -60,6 +67,32 @@ class StoreRentalReturnRequest extends FormRequest
                         $payment,
                         $rental->branch_id,
                     );
+
+                    $submitted = $this->input('returned_at');
+                    if (
+                        $submitted !== null
+                        && $submitted !== ''
+                        && ! $validator->errors()->has('returned_at')
+                    ) {
+                        $returnedAt = CarbonImmutable::parse((string) $submitted);
+                        $checkedOutAt = $rental->checked_out_at === null
+                            ? null
+                            : CarbonImmutable::parse((string) $rental->checked_out_at);
+
+                        if ($checkedOutAt !== null && $returnedAt->isBefore($checkedOutAt)) {
+                            $validator->errors()->add(
+                                'returned_at',
+                                'Waktu pengembalian tidak boleh sebelum waktu checkout.',
+                            );
+                        }
+
+                        if ($returnedAt->isAfter(now()->addMinutes(2))) {
+                            $validator->errors()->add(
+                                'returned_at',
+                                'Waktu pengembalian tidak boleh lebih dari 2 menit di masa depan.',
+                            );
+                        }
+                    }
                 }
             },
         ];

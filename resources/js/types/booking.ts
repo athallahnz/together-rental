@@ -13,6 +13,13 @@ export type BookingItem = {
     total_amount: string;
     product?: { id: number; sku: string; name: string } | null;
     package?: { id: number; code: string; name: string } | null;
+    bulk_reservations?: Array<{
+        id: number;
+        product_id: number;
+        quantity: number;
+        status: string;
+        product: { id: number; sku: string; name: string };
+    }>;
     reservations?: Array<{
         id: number;
         asset: {
@@ -79,6 +86,7 @@ export type Booking = {
     items: BookingItem[];
     items_count?: number;
     reservations_count?: number;
+    bulk_units_count?: number | string | null;
     status_histories?: Array<{
         id: number;
         from_status: string | null;

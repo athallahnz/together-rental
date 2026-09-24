@@ -435,8 +435,7 @@ export default function BookingIndex({
                                                     item
                                                 </p>
                                                 <p className="text-xs text-muted-foreground">
-                                                    {booking.reservations_count ??
-                                                        0}{' '}
+                                                    {(booking.reservations_count ?? 0) + Number(booking.bulk_units_count ?? 0)}{' '}
                                                     unit terreservasi
                                                 </p>
                                             </td>

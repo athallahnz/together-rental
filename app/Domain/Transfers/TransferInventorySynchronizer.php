@@ -2,6 +2,7 @@
 
 namespace App\Domain\Transfers;
 
+use App\Domain\Inventory\PooledStockManager;
 use App\Models\Asset;
 use App\Models\BranchInventory;
 use App\Models\BranchTransfer;
@@ -10,6 +11,8 @@ use Illuminate\Validation\ValidationException;
 
 class TransferInventorySynchronizer
 {
+    public function __construct(private readonly PooledStockManager $pooled) {}
+
     public function hold(BranchTransfer $transfer): void
     {
         foreach ($transfer->items as $item) {
@@ -27,7 +30,7 @@ class TransferInventorySynchronizer
             }
 
             $inventory = $this->lockInventory($transfer->from_branch_id, $item->product_id);
-            $available = $this->availableQuantity($inventory);
+            $available = $this->pooled->transferable($inventory);
             if ($available < $item->quantity) {
                 throw ValidationException::withMessages([
                     'transfer' => "Stok produk {$item->product_id} tidak lagi mencukupi untuk dikunci.",
@@ -208,16 +211,5 @@ class TransferInventorySynchronizer
             ->where('product_id', $productId)
             ->lockForUpdate()
             ->firstOrFail();
-    }
-
-    private function availableQuantity(BranchInventory $inventory): int
-    {
-        return max(0,
-            $inventory->quantity_on_hand
-            - $inventory->quantity_reserved
-            - $inventory->quantity_rented
-            - $inventory->quantity_maintenance
-            - $inventory->quantity_in_transfer,
-        );
     }
 }

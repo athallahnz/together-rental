@@ -7,6 +7,7 @@ use App\Domain\Rentals\RentalCollateralDocumentStorage;
 use App\Domain\Rentals\RentalFinancialCorrectionManager;
 use App\Domain\Rentals\RentalManager;
 use App\Domain\Rentals\RentalOperationalCorrectionManager;
+use App\Domain\Rentals\RentalOvertimeCalculator;
 use App\Domain\Rentals\RentalReturnManager;
 use App\Http\Requests\CheckoutBookingRequest;
 use App\Http\Requests\ReopenRentalReturnRequest;
@@ -16,6 +17,7 @@ use App\Http\Requests\StoreRentalReturnRequest;
 use App\Models\Asset;
 use App\Models\Booking;
 use App\Models\Customer;
+use App\Models\CustomerIdentity;
 use App\Models\PaymentMethod;
 use App\Models\Product;
 use App\Models\RatePlan;
@@ -221,9 +223,14 @@ class RentalController extends Controller
         $booking->load([
             'branch:id,code,name',
             'customer:id,customer_number,name,phone',
+            'customer.identities' => fn ($query) => $query
+                ->orderByDesc('is_primary')
+                ->orderByDesc('verified_at')
+                ->orderByDesc('id'),
             'ratePlan:id,code,name,duration_unit,duration_value',
             'promotion:id,code,name,type,value,bonus_duration',
             'items.reservations.asset:id,product_id,asset_code,serial_number,status,condition',
+            'items.bulkReservations.product:id,sku,name',
         ]);
 
         $rentalPaid = (float) $booking->payments()
@@ -237,10 +244,35 @@ class RentalController extends Controller
             ->where('type', 'deposit')
             ->sum('amount');
 
+        $identities = $booking->customer?->identities ?? collect();
+        $eligibleIdentities = $identities->reject(
+            fn (CustomerIdentity $identity): bool => $identity->isExpiredAt(now()),
+        );
+        $defaultIdentity = $eligibleIdentities->first(
+            fn (CustomerIdentity $identity): bool => $identity->is_primary && $identity->verified_at !== null,
+        ) ?? $eligibleIdentities->first(
+            fn (CustomerIdentity $identity): bool => $identity->verified_at !== null,
+        ) ?? $eligibleIdentities->first(
+            fn (CustomerIdentity $identity): bool => $identity->is_primary,
+        ) ?? $eligibleIdentities->first();
+
         return Inertia::render('rentals/checkout', [
             'booking' => $booking,
             'paymentMethods' => $this->paymentMethods($request->user()),
             'cashSessions' => $this->cashSessions($request->user(), $booking->branch_id),
+            'customerIdentities' => $identities->map(fn (CustomerIdentity $identity): array => [
+                'id' => $identity->id,
+                'type' => $identity->type,
+                'collateral_type' => $identity->collateralType(),
+                'number' => $identity->number,
+                'name_on_identity' => $identity->name_on_identity,
+                'expires_at' => $identity->expires_at?->toDateString(),
+                'is_primary' => $identity->is_primary,
+                'verified_at' => $identity->verified_at?->toISOString(),
+                'document_present' => $identity->document_path !== null,
+                'is_expired' => $identity->isExpiredAt(now()),
+                'is_default' => $defaultIdentity?->id === $identity->id,
+            ])->values(),
             'financialSummary' => [
                 'rental_paid' => $rentalPaid,
                 'deposit_paid' => $depositPaid,
@@ -330,7 +362,11 @@ class RentalController extends Controller
         ]);
     }
 
-    public function createReturn(Request $request, Rental $rental): Response
+    public function createReturn(
+        Request $request,
+        Rental $rental,
+        RentalOvertimeCalculator $overtime,
+    ): Response
     {
         Gate::authorize('rentals.return');
         $this->guardRentalAccess($request, $rental);
@@ -347,8 +383,35 @@ class RentalController extends Controller
                 ->orderBy('id'),
         ]);
 
+        $previewAt = CarbonImmutable::now();
+        $serializedOvertime = [];
+        $bulkOvertime = [];
+
+        foreach ($rental->items as $item) {
+            if ($item->is_bulk) {
+                $remainingQuantity = max(0, (int) $item->quantity - (int) $item->returned_quantity);
+                if ($remainingQuantity > 0) {
+                    $bulkOvertime[$item->id] = [
+                        'per_unit' => $overtime->calculate($item, $previewAt, 1),
+                        'remaining' => $overtime->calculate($item, $previewAt, $remainingQuantity),
+                    ];
+                }
+
+                continue;
+            }
+
+            foreach ($item->assets as $unit) {
+                $serializedOvertime[$unit->id] = $overtime->calculate($item, $previewAt, 1);
+            }
+        }
+
         return Inertia::render('rentals/return', [
             'rental' => $rental,
+            'serverNow' => $previewAt->toISOString(),
+            'overtimePreview' => [
+                'serialized' => $serializedOvertime,
+                'bulk' => $bulkOvertime,
+            ],
             'paymentMethods' => $this->paymentMethods($request->user()),
             'cashSessions' => $this->cashSessions($request->user(), $rental->branch_id),
             'operationalCorrection' => $rental->status === 'correction_pending'
@@ -606,9 +669,9 @@ class RentalController extends Controller
                 $collateral,
                 null,
                 $collateral->only([
-                    'id', 'rental_id', 'customer_id', 'type', 'number',
-                    'holder_name', 'status', 'received_at', 'received_by',
-                    'document_path',
+                    'id', 'rental_id', 'customer_id', 'customer_identity_id',
+                    'source_type', 'type', 'number', 'holder_name', 'identity_snapshot',
+                    'status', 'received_at', 'received_by', 'document_path',
                 ]),
                 $rental->branch_id,
             );

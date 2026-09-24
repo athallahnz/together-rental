@@ -1,6 +1,7 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { ArrowLeft, CheckCircle2, LogOut, Pencil, XCircle } from 'lucide-react';
 import { useState } from 'react';
+import { TransactionDocumentActions } from '@/components/documents/transaction-document-actions';
 import { CashSessionSelect } from '@/components/finance/cash-session-select';
 import type {
     CashSessionOption,
@@ -90,7 +91,7 @@ export default function BookingShow({
                             <Badge>{booking.status}</Badge>
                         </div>
                         <p className="mt-2 text-sm text-muted-foreground">
-                            {booking.branch?.name} · {booking.customer?.name}
+                            {booking.branch?.name} Â· {booking.customer?.name}
                         </p>
                     </div>
                     <div className="flex gap-2">
@@ -127,6 +128,8 @@ export default function BookingShow({
                         )}
                     </div>
                 </header>
+
+                <TransactionDocumentActions sourceType="booking" sourceReference={booking.booking_number} />
                 {booking.status === 'expired' && (
                     <Alert variant="destructive">
                         <XCircle className="size-4" />
@@ -203,7 +206,7 @@ export default function BookingShow({
                             {!booking.promotion &&
                                 booking.customer?.is_member && (
                                     <p className="text-xs text-muted-foreground">
-                                        Member Together · diskon 10% flat
+                                        Member Together Â· diskon 10% flat
                                         diterapkan.
                                     </p>
                                 )}
@@ -258,7 +261,7 @@ export default function BookingShow({
                                             {item.description}
                                         </p>
                                         <p className="text-sm text-muted-foreground">
-                                            {item.quantity} ×{' '}
+                                            {item.quantity} Ã—{' '}
                                             {money.format(
                                                 Number(item.unit_rate),
                                             )}
@@ -271,12 +274,17 @@ export default function BookingShow({
                                     </b>
                                 </div>
                                 <div className="mt-3 flex flex-wrap gap-2">
+                                    {item.bulk_reservations?.map((reservation) => (
+                                        <Badge key={`bulk-${reservation.id}`} variant="secondary">
+                                            {reservation.product.name} · Bulk {reservation.quantity} unit
+                                        </Badge>
+                                    ))}
                                     {item.reservations?.map((reservation) => (
                                         <Badge
                                             key={reservation.id}
                                             variant="secondary"
                                         >
-                                            {reservation.asset.asset_code} ·{' '}
+                                            {reservation.asset.asset_code} Â·{' '}
                                             {reservation.asset.condition}
                                         </Badge>
                                     ))}
@@ -304,7 +312,7 @@ export default function BookingShow({
                                                     : 'Pembayaran sewa'}
                                             </p>
                                             <p className="text-muted-foreground">
-                                                {payment.payment_number} ·{' '}
+                                                {payment.payment_number} Â·{' '}
                                                 {payment.payment_method?.name ??
                                                     '-'}
                                             </p>
@@ -346,7 +354,7 @@ export default function BookingShow({
                                         }}
                                     >
                                         <RupiahInput
-                                            placeholder={`DP/pembayaran sewa · sisa ${money.format(balanceDue)}`}
+                                            placeholder={`DP/pembayaran sewa Â· sisa ${money.format(balanceDue)}`}
                                             value={
                                                 paymentForm.data.payment_amount
                                             }
@@ -358,7 +366,7 @@ export default function BookingShow({
                                             }
                                         />
                                         <RupiahInput
-                                            placeholder={`Deposit jaminan · kurang ${money.format(depositDue)}`}
+                                            placeholder={`Deposit jaminan Â· kurang ${money.format(depositDue)}`}
                                             value={
                                                 paymentForm.data.deposit_paid
                                             }
@@ -460,11 +468,11 @@ export default function BookingShow({
                                     className="border-l-2 pl-3 text-sm"
                                 >
                                     <p className="font-medium">
-                                        {history.from_status ?? 'awal'} →{' '}
+                                        {history.from_status ?? 'awal'} â†’{' '}
                                         {history.to_status}
                                     </p>
                                     <p className="text-muted-foreground">
-                                        {history.reason} ·{' '}
+                                        {history.reason} Â·{' '}
                                         {history.changer?.name ?? 'Sistem'}
                                     </p>
                                 </div>

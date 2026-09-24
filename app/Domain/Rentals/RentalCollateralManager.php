@@ -2,6 +2,7 @@
 
 namespace App\Domain\Rentals;
 
+use App\Models\CustomerIdentity;
 use App\Models\Rental;
 use App\Models\RentalCollateral;
 use App\Models\User;
@@ -134,8 +135,30 @@ class RentalCollateralManager
         User $actor,
         mixed $receivedAt,
     ): RentalCollateral {
-        $type = trim((string) ($data['type'] ?? ''));
-        $number = trim((string) ($data['number'] ?? ''));
+        $identity = null;
+        $identityId = (int) ($data['customer_identity_id'] ?? 0);
+        if ($identityId > 0) {
+            $identity = CustomerIdentity::query()
+                ->where('customer_id', $rental->customer_id)
+                ->find($identityId);
+
+            if ($identity === null) {
+                throw ValidationException::withMessages([
+                    'collaterals' => 'Identitas Customer360 tidak milik pelanggan rental ini.',
+                ]);
+            }
+
+            if ($identity->isExpiredAt($receivedAt ?? now())) {
+                throw ValidationException::withMessages([
+                    'collaterals' => 'Identitas Customer360 sudah kedaluwarsa pada waktu penerimaan.',
+                ]);
+            }
+        }
+
+        $type = $identity?->collateralType() ?? trim((string) ($data['type'] ?? ''));
+        $number = $identity?->number ?? trim((string) ($data['number'] ?? ''));
+        $holderName = $identity?->name_on_identity
+            ?? $this->nullableString($data['holder_name'] ?? null);
 
         if ($type === '' || $number === '') {
             throw ValidationException::withMessages([
@@ -159,9 +182,12 @@ class RentalCollateralManager
         return RentalCollateral::query()->create([
             'rental_id' => $rental->id,
             'customer_id' => $rental->customer_id,
+            'customer_identity_id' => $identity?->id,
+            'source_type' => $identity === null ? 'manual' : 'customer_identity',
             'type' => $type,
             'number' => $number,
-            'holder_name' => $this->nullableString($data['holder_name'] ?? null),
+            'holder_name' => $holderName,
+            'identity_snapshot' => $identity?->collateralSnapshot(),
             'status' => 'held',
             'received_at' => $receivedAt ?? now(),
             'received_by' => $actor->id,
