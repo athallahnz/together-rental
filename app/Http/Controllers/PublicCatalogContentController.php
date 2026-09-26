@@ -835,13 +835,13 @@ class PublicCatalogContentController extends Controller
 
         return $disk->url($path);
     }
+
     /** @param array<string, mixed> $validated
-     *  @param list<string> $keys
-     *  @return array<string, mixed>
+     * @param  list<string>  $keys
+     * @return array<string, mixed>
      */
     private function optionalContent(array $validated, array $keys): array
     {
         return array_intersect_key($validated, array_flip($keys));
     }
-
 }

@@ -14,7 +14,7 @@ class SetUserLocale
      * An authenticated user always uses their saved preference. For guests,
      * accept only whitelisted cookie values set by the guest language route.
      *
-     * @param Closure(Request): Response $next
+     * @param  Closure(Request): Response  $next
      */
     public function handle(Request $request, Closure $next): Response
     {

@@ -3,6 +3,7 @@
 namespace Tests\Unit;
 
 use App\Domain\PublicCatalog\PublicCatalogService;
+use App\Models\RentalPackage;
 use ReflectionMethod;
 use Tests\TestCase;
 
@@ -20,7 +21,7 @@ class PublicCatalogBilingualContentTest extends TestCase
 
     public function test_package_content_falls_back_without_changing_package_identity(): void
     {
-        $package = new \App\Models\RentalPackage([
+        $package = new RentalPackage([
             'name' => 'Paket Foto',
             'description' => 'Paket asli',
             'description_en' => 'Photo package',

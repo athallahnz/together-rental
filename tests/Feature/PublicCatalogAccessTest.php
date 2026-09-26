@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Domain\PublicCatalog\PublicCatalogService;
 use App\Models\CatalogBrand;
 use App\Models\Product;
 use App\Models\ProductCategory;
@@ -185,7 +186,7 @@ class PublicCatalogAccessTest extends TestCase
             'seo_description_en' => null,
         ]);
 
-        $catalog = app(\App\Domain\PublicCatalog\PublicCatalogService::class);
+        $catalog = app(PublicCatalogService::class);
         app()->setLocale('id');
         $original = $catalog->product($this->product->slug, 'PNG')['product'];
         $this->assertSame('Ringkas ID', $original['short_description']);

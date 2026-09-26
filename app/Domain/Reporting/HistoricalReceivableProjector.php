@@ -15,8 +15,8 @@ use stdClass;
 class HistoricalReceivableProjector
 {
     /**
-     * @param list<int> $branchIds
-     * @param array{to: CarbonImmutable, status: string, search: string} $filters
+     * @param  list<int>  $branchIds
+     * @param  array{to: CarbonImmutable, status: string, search: string}  $filters
      * @return array{rows: list<array<string, mixed>>, meta: array<string, mixed>, branch_totals: array<int, float>, branch_unverified: array<int, int>}
      */
     public function project(array $branchIds, array $filters): array
@@ -201,6 +201,7 @@ class HistoricalReceivableProjector
                     && (int) $payment->booking_id === $bookingId
                     && $payment->rental_id !== null && (int) $payment->rental_id !== $rentalId) {
                     $reasons[] = 'CONFLICTING_PAYMENT_LINK';
+
                     continue;
                 }
                 $allPaidRefunds = 0.0;
@@ -252,6 +253,7 @@ class HistoricalReceivableProjector
                     if ($adjustment->component === 'charge') {
                         $reasons[] = 'LATER_FINANCIAL_CHARGE';
                     }
+
                     continue;
                 }
                 if ($adjustment->component === 'payment') {

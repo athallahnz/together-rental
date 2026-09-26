@@ -2,8 +2,8 @@
 
 namespace App\Jobs;
 
-use App\Models\NotificationMessage;
 use App\Domain\Notifications\NotificationContentLocalizer;
+use App\Models\NotificationMessage;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
 use Illuminate\Mail\Message;

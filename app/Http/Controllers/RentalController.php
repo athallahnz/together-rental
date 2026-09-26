@@ -252,8 +252,7 @@ class RentalController extends Controller
         Request $request,
         Booking $booking,
         BookingPaymentSettlement $paymentSettlement,
-    ): Response
-    {
+    ): Response {
         Gate::authorize('rentals.create');
         $this->guardBookingAccess($request, $booking);
         abort_unless($booking->status === 'confirmed' && ! $booking->rental()->exists(), 409);
@@ -406,8 +405,7 @@ class RentalController extends Controller
         Request $request,
         Rental $rental,
         RentalOvertimeCalculator $overtime,
-    ): Response
-    {
+    ): Response {
         Gate::authorize('rentals.return');
         $this->guardRentalAccess($request, $rental);
         abort_unless(in_array($rental->status, ['active', 'partial_return', 'correction_pending'], true), 409);

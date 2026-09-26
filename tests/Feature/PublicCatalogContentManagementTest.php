@@ -4,6 +4,7 @@ namespace Tests\Feature;
 
 use App\Models\Product;
 use App\Models\ProductCategory;
+use App\Models\RentalPackage;
 use App\Models\User;
 use Database\Seeders\RentalFoundationSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -72,7 +73,7 @@ class PublicCatalogContentManagementTest extends TestCase
     {
         [$user, $product] = $this->catalogManagerAndProduct();
         $branchId = (int) $user->current_branch_id;
-        $package = \App\Models\RentalPackage::query()->create([
+        $package = RentalPackage::query()->create([
             'company_id' => $product->company_id,
             'branch_id' => $branchId,
             'code' => 'PKG-BILINGUAL',

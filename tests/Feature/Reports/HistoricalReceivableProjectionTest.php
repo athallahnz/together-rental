@@ -34,17 +34,17 @@ class HistoricalReceivableProjectionTest extends TestCase
         $filters = ['report' => 'receivables', 'from' => '2026-09-01', 'to' => '2026-09-23'];
         $this->actingAs($manager)->get(route('reports.index', $filters))
             ->assertOk()->assertInertia(fn (AssertableInertia $page) => $page
-                ->where('historyMeta.as_of', '2026-09-23')
-                ->where('historyMeta.verified_count', 1)
-                ->where('historyMeta.unverified_count', 0)
-                ->where('historyMeta.verified_receivables', 350000)
-                ->where('reportMeta.row_count', 1)
-                ->where('summary.4.value', 350000)
-                ->where('branchPerformance.0.receivables', 350000)
-                ->where('rows.data.0.values.status', 'active')
-                ->where('rows.data.0.values.total_amount', 500000)
-                ->where('rows.data.0.values.paid_amount', 150000)
-                ->where('rows.data.0.values.balance_due', 350000));
+            ->where('historyMeta.as_of', '2026-09-23')
+            ->where('historyMeta.verified_count', 1)
+            ->where('historyMeta.unverified_count', 0)
+            ->where('historyMeta.verified_receivables', 350000)
+            ->where('reportMeta.row_count', 1)
+            ->where('summary.4.value', 350000)
+            ->where('branchPerformance.0.receivables', 350000)
+            ->where('rows.data.0.values.status', 'active')
+            ->where('rows.data.0.values.total_amount', 500000)
+            ->where('rows.data.0.values.paid_amount', 150000)
+            ->where('rows.data.0.values.balance_due', 350000));
 
         $excel = $this->actingAs($manager)->get(route('reports.export', [...$filters, 'format' => 'excel']));
         $excel->assertOk();

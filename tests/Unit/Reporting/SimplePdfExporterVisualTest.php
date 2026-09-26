@@ -178,8 +178,8 @@ class SimplePdfExporterVisualTest extends TestCase
     }
 
     /**
-     * @param list<array{key: string, label: string, type: string, export_width: int}> $columns
-     * @param list<array{id: string, href: string, values: array<string, mixed>}> $rows
+     * @param  list<array{key: string, label: string, type: string, export_width: int}>  $columns
+     * @param  list<array{id: string, href: string, values: array<string, mixed>}>  $rows
      * @return array{
      *     title: string,
      *     subtitle: string,

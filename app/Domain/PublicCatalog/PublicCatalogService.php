@@ -1060,6 +1060,7 @@ class PublicCatalogService
             'query' => request()->query(),
         ]);
     }
+
     /** English is optional; never translate operator content automatically. */
     private function localizedContent(?string $original, ?string $english): ?string
     {
@@ -1069,5 +1070,4 @@ class PublicCatalogService
 
         return $original;
     }
-
 }

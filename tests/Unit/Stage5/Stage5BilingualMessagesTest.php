@@ -47,7 +47,7 @@ class Stage5BilingualMessagesTest extends TestCase
 
     public function test_notification_template_localization_preserves_original_record_and_unknown_templates(): void
     {
-        $localizer = new NotificationContentLocalizer();
+        $localizer = new NotificationContentLocalizer;
         $title = 'Booking BKG-001 segera dimulai';
         $body = 'Booking BKG-001 untuk Pelanggan UAT di cabang PNG dijadwalkan mulai 26 Sep 2026, 10:00.';
 

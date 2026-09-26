@@ -219,7 +219,7 @@ class RentalCollateralManager
     }
 
     /**
-     * @param array{type:string, number:string, name_on_identity:?string, expires_at:?string, is_primary:bool} $data
+     * @param  array{type:string, number:string, name_on_identity:?string, expires_at:?string, is_primary:bool}  $data
      */
     private function createCustomerIdentityLocked(
         Rental $rental,

@@ -210,6 +210,7 @@ class AuditReceivablesAsOf extends Command
                     && (int) $payment->booking_id === $bookingId
                     && $payment->rental_id !== null && (int) $payment->rental_id !== $id) {
                     $flags[] = 'CONFLICTING_PAYMENT_LINK';
+
                     continue;
                 }
                 $paidAt = (string) $payment->paid_at;

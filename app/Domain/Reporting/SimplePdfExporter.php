@@ -86,6 +86,7 @@ class SimplePdfExporter
                 $lineCapacity = (int) floor(($available - 12) / $lineHeight);
                 if ($lineCapacity < 1) {
                     $this->startPage($pages, $stream, $cursor, $document, $widths, $pageWidth, $pageHeight, false);
+
                     continue;
                 }
 
@@ -160,7 +161,7 @@ class SimplePdfExporter
     }
 
     /**
-     * @param list<array<string, mixed>> $columns
+     * @param  list<array<string, mixed>>  $columns
      * @return list<float>
      */
     private function columnWidths(array $columns, float $availableWidth): array
@@ -188,9 +189,9 @@ class SimplePdfExporter
     }
 
     /**
-     * @param list<string> $pages
-     * @param PdfDocument $document
-     * @param list<float> $widths
+     * @param  list<string>  $pages
+     * @param  PdfDocument  $document
+     * @param  list<float>  $widths
      */
     private function startPage(
         array &$pages,
@@ -287,7 +288,7 @@ class SimplePdfExporter
     }
 
     /**
-     * @param list<array{label: string, value: int|float, type: string, note: string}> $cards
+     * @param  list<array{label: string, value: int|float, type: string, note: string}>  $cards
      */
     private function summaryCards(string &$stream, array $cards, float &$cursor, float $pageWidth): void
     {
@@ -319,8 +320,8 @@ class SimplePdfExporter
     }
 
     /**
-     * @param list<array<string, mixed>> $columns
-     * @param list<float> $widths
+     * @param  list<array<string, mixed>>  $columns
+     * @param  list<float>  $widths
      */
     private function tableHeader(string &$stream, array $columns, array $widths, float $top, float $pageWidth): void
     {
@@ -507,11 +508,11 @@ class SimplePdfExporter
         }
         $this->logoAttempted = true;
         $path = $this->logoPath ?? dirname(__DIR__, 3).'/public/primary-logos.png';
-        if (!is_file($path)) {
+        if (! is_file($path)) {
             return null;
         }
         $png = @file_get_contents($path);
-        if ($png === false || !str_starts_with($png, "\x89PNG\r\n\x1a\n")) {
+        if ($png === false || ! str_starts_with($png, "\x89PNG\r\n\x1a\n")) {
             return null;
         }
 

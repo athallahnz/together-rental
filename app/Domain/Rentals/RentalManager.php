@@ -10,6 +10,7 @@ use App\Models\Asset;
 use App\Models\AssetInspection;
 use App\Models\AssetReservation;
 use App\Models\Booking;
+use App\Models\BookingItem;
 use App\Models\BulkReservation;
 use App\Models\Payment;
 use App\Models\Rental;
@@ -364,7 +365,7 @@ class RentalManager
 
     /** @return array<string, mixed>|null */
     private function bookingOvertimeSnapshot(
-        \App\Models\BookingItem $bookingItem,
+        BookingItem $bookingItem,
         int $productId,
     ): ?array {
         $requirements = $bookingItem->stock_requirements;

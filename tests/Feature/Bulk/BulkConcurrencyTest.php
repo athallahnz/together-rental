@@ -105,6 +105,7 @@ class BulkConcurrencyTest extends TestCase
                     clearstatcache(true, $readyFiles[$index]);
                     if (is_file($readyFiles[$index])) {
                         $readyCount++;
+
                         continue;
                     }
                     if (! $process->isRunning()) {

@@ -95,7 +95,6 @@ class CashSessionWorkflowTest extends TestCase
         $this->assertDatabaseCount('cash_sessions', 1);
     }
 
-
     public function test_closed_cash_session_history_and_detail_are_read_only(): void
     {
         [$user, , $register] = $this->financeFixture();

@@ -85,10 +85,8 @@ class VerifyReceivablesAsOf extends Command
         }
 
         $rows = collect($dataset['rows']);
-        $sum = round((float) $rows->sum(static fn (array $row): float =>
-            (float) ($row['values']['balance_due'] ?? 0)), 2);
-        $unverified = $rows->filter(static fn (array $row): bool =>
-            $row['values']['balance_due'] === null)->count();
+        $sum = round((float) $rows->sum(static fn (array $row): float => (float) ($row['values']['balance_due'] ?? 0)), 2);
+        $unverified = $rows->filter(static fn (array $row): bool => $row['values']['balance_due'] === null)->count();
         $summaryCard = collect($dataset['summary'])->firstWhere('key', 'receivables');
         $unique = $rows->pluck('id')->unique()->count() === $rows->count();
         $internallyConsistent = $unique
