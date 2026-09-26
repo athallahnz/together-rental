@@ -49,7 +49,7 @@ class CustomerIdentityController extends Controller
 
         return back()->with('toast', [
             'type' => 'success',
-            'message' => "Identitas {$identity->number} berhasil ditambahkan.",
+            'message' => __('uat035b_stage3.toast.customeridentity_1', ['number' => $identity->number]),
         ]);
     }
 
@@ -108,7 +108,7 @@ class CustomerIdentityController extends Controller
 
         return back()->with('toast', [
             'type' => 'success',
-            'message' => 'Identitas pelanggan berhasil diperbarui.',
+            'message' => __('uat035b_stage3.toast.customeridentity_2'),
         ]);
     }
 
@@ -123,7 +123,7 @@ class CustomerIdentityController extends Controller
         if ($customerIdentity->verified_at !== null) {
             return back()->with('toast', [
                 'type' => 'info',
-                'message' => 'Identitas pelanggan sudah diverifikasi.',
+                'message' => __('uat035b_stage3.toast.customeridentity_3'),
             ]);
         }
 
@@ -151,7 +151,7 @@ class CustomerIdentityController extends Controller
 
         return back()->with('toast', [
             'type' => 'success',
-            'message' => 'Identitas pelanggan berhasil diverifikasi.',
+            'message' => __('uat035b_stage3.toast.customeridentity_4'),
         ]);
     }
 
@@ -192,7 +192,7 @@ class CustomerIdentityController extends Controller
 
         return back()->with('toast', [
             'type' => 'success',
-            'message' => 'Identitas pelanggan berhasil dihapus.',
+            'message' => __('uat035b_stage3.toast.customeridentity_5'),
         ]);
     }
 

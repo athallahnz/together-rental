@@ -10,6 +10,7 @@ import {
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import type { FormEvent, ReactNode } from 'react';
+import { stage5Choice, stage5Display, Stage5Text, stage5Translate, stage5Date, stage5Money, stage5IntlLocale } from '@/components/stage5-text';
 import InputError from '@/components/input-error';
 import { PaginationLinks } from '@/components/pagination-links';
 import { Badge } from '@/components/ui/badge';
@@ -20,6 +21,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { MetricCard } from '@/components/ui/metric-card';
 import { RupiahInput } from '@/components/ui/rupiah-input';
+import { useAppLocale } from '@/lib/i18n';
 import {
     Select,
     SelectContent,
@@ -88,20 +90,8 @@ type ExpenseForm = {
     proof: File | null;
 };
 
-const money = new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    maximumFractionDigits: 0,
-});
-const dateTime = new Intl.DateTimeFormat('id-ID', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-});
-const statusLabel: Record<OperationalExpenseStatus, string> = {
-    recorded: 'Recorded',
-    paid: 'Paid',
-    void: 'Void',
-};
+const money = { format: stage5Money };
+
 
 function localDateTime(value = new Date()): string {
     const offset = value.getTimezoneOffset() * 60_000;
@@ -119,6 +109,7 @@ export default function OperationalExpenseIndex({
     permissions,
     defaultBranchId,
 }: Props) {
+    const { locale: stage5Locale } = useAppLocale();
     const [tab, setTab] = useState<'expenses' | 'cash'>('expenses');
     const [search, setSearch] = useState(filters.search);
     const activeCategories = useMemo(
@@ -180,19 +171,16 @@ export default function OperationalExpenseIndex({
 
     return (
         <>
-            <Head title="Expense & Cash Center" />
+            <Head title={stage5Translate("stage5.ui.18927b067117", stage5Locale)} />
             <div className="space-y-6 p-4 md:p-6">
                 <header className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
                     <div>
                         <h1 className="flex items-center gap-2 text-2xl font-semibold">
                             <Banknote className="size-6 text-primary" />
-                            Expense & Cash Center
+                            <Stage5Text k="stage5.ui.18927b067117" />
                         </h1>
                         <p className="mt-1 max-w-3xl text-sm leading-6 text-muted-foreground">
-                            Catat pengeluaran operasional, bayarkan melalui
-                            Payment Center, dan pantau cash ledger append-only.
-                            Payment tunai wajib memakai sesi kas aktif;
-                            non-tunai tidak membuat transaksi kas.
+                            <Stage5Text k="stage5.ui.4a5facff232f" />
                         </p>
                     </div>
                     <div className="flex gap-2">
@@ -201,44 +189,44 @@ export default function OperationalExpenseIndex({
                             variant={tab === 'expenses' ? 'default' : 'outline'}
                             onClick={() => setTab('expenses')}
                         >
-                            <BookOpenCheck /> Expense
+                            <BookOpenCheck /> <Stage5Text k="stage5.ui.a0db8e68b834" />
                         </Button>
                         <Button
                             type="button"
                             variant={tab === 'cash' ? 'default' : 'outline'}
                             onClick={() => setTab('cash')}
                         >
-                            <WalletCards /> Cash Ledger
+                            <WalletCards /> <Stage5Text k="stage5.ui.c9d440879f01" />
                         </Button>
                     </div>
                 </header>
 
                 <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                     <MetricCard
-                        label="Belum dibayar"
+                        label={stage5Translate("stage5.ui.f22109b83333", stage5Locale)}
                         value={money.format(summary.recorded_amount)}
-                        detail={`${summary.recorded_count.toLocaleString('id-ID')} expense recorded`}
+                        detail={stage5Choice(`${summary.recorded_count.toLocaleString(stage5IntlLocale(stage5Locale))} pengeluaran tercatat`, `${summary.recorded_count.toLocaleString(stage5IntlLocale(stage5Locale))} recorded expenses`, stage5Locale)}
                         icon={BookOpenCheck}
                         tone="warning"
                     />
                     <MetricCard
-                        label="Expense dibayar"
+                        label={stage5Translate("stage5.ui.9059094e4350", stage5Locale)}
                         value={money.format(summary.paid_amount)}
-                        detail={`${summary.paid_count.toLocaleString('id-ID')} expense paid`}
+                        detail={stage5Choice(`${summary.paid_count.toLocaleString(stage5IntlLocale(stage5Locale))} pengeluaran dibayar`, `${summary.paid_count.toLocaleString(stage5IntlLocale(stage5Locale))} paid expenses`, stage5Locale)}
                         icon={CircleDollarSign}
                         tone="danger"
                     />
                     <MetricCard
-                        label="Cash In"
+                        label={stage5Translate("stage5.ui.cf5d476cb93c", stage5Locale)}
                         value={money.format(summary.cash_in)}
-                        detail="Arus masuk pada cash ledger terfilter"
+                        detail={stage5Choice('Arus masuk pada buku kas terfilter', 'Cash inflow in the filtered ledger', stage5Locale)}
                         icon={WalletCards}
                         tone="success"
                     />
                     <MetricCard
-                        label="Cash Out"
+                        label={stage5Translate("stage5.ui.e6b54fb57f0f", stage5Locale)}
                         value={money.format(summary.cash_out)}
-                        detail={`${summary.void_count.toLocaleString('id-ID')} expense void pada lingkup filter`}
+                        detail={stage5Choice(`${summary.void_count.toLocaleString(stage5IntlLocale(stage5Locale))} pengeluaran dibatalkan sesuai filter`, `${summary.void_count.toLocaleString(stage5IntlLocale(stage5Locale))} voided expenses in the filtered scope`, stage5Locale)}
                         icon={Banknote}
                         tone="danger"
                     />
@@ -247,7 +235,7 @@ export default function OperationalExpenseIndex({
                 {tab === 'expenses' && permissions.manage && (
                     <Card>
                         <CardHeader>
-                            <CardTitle>Catat pengeluaran operasional</CardTitle>
+                            <CardTitle><Stage5Text k="stage5.ui.dc3c634b9e74" /></CardTitle>
                         </CardHeader>
                         <CardContent>
                             <form
@@ -255,7 +243,7 @@ export default function OperationalExpenseIndex({
                                 onSubmit={submitExpense}
                             >
                                 <Field
-                                    label="Cabang"
+                                    label={stage5Translate("stage5.ui.1387475bd674", stage5Locale)}
                                     error={form.errors.branch_id}
                                 >
                                     <Select
@@ -270,7 +258,7 @@ export default function OperationalExpenseIndex({
                                         }
                                     >
                                         <SelectTrigger>
-                                            <SelectValue placeholder="Pilih cabang" />
+                                            <SelectValue placeholder={stage5Translate("stage5.ui.f53404d2ddcf", stage5Locale)} />
                                         </SelectTrigger>
                                         <SelectContent>
                                             {branches.map((branch) => (
@@ -286,7 +274,7 @@ export default function OperationalExpenseIndex({
                                     </Select>
                                 </Field>
                                 <Field
-                                    label="Kategori expense"
+                                    label={stage5Translate("stage5.ui.f2b93c76303e", stage5Locale)}
                                     error={form.errors.financial_category_id}
                                 >
                                     <Select
@@ -302,7 +290,7 @@ export default function OperationalExpenseIndex({
                                         }
                                     >
                                         <SelectTrigger>
-                                            <SelectValue placeholder="Pilih kategori" />
+                                            <SelectValue placeholder={stage5Translate("stage5.ui.5322c62fbfeb", stage5Locale)} />
                                         </SelectTrigger>
                                         <SelectContent>
                                             {activeCategories.map(
@@ -322,7 +310,7 @@ export default function OperationalExpenseIndex({
                                     </Select>
                                 </Field>
                                 <Field
-                                    label="Nominal"
+                                    label={stage5Translate("stage5.ui.1795d163388f", stage5Locale)}
                                     error={form.errors.amount}
                                 >
                                     <RupiahInput
@@ -333,7 +321,7 @@ export default function OperationalExpenseIndex({
                                     />
                                 </Field>
                                 <Field
-                                    label="Tanggal kejadian"
+                                    label={stage5Translate("stage5.ui.08206fcf8a87", stage5Locale)}
                                     error={form.errors.incurred_at}
                                 >
                                     <Input
@@ -348,12 +336,12 @@ export default function OperationalExpenseIndex({
                                     />
                                 </Field>
                                 <Field
-                                    label="Vendor / penerima"
+                                    label={stage5Translate("stage5.ui.e3f18544463f", stage5Locale)}
                                     error={form.errors.vendor_name}
                                 >
                                     <Input
                                         value={form.data.vendor_name}
-                                        placeholder="Opsional"
+                                        placeholder={stage5Translate("stage5.ui.cf048762964b", stage5Locale)}
                                         onChange={(event) =>
                                             form.setData(
                                                 'vendor_name',
@@ -363,12 +351,12 @@ export default function OperationalExpenseIndex({
                                     />
                                 </Field>
                                 <Field
-                                    label="Referensi dokumen"
+                                    label={stage5Translate("stage5.ui.e2579d653a27", stage5Locale)}
                                     error={form.errors.external_reference}
                                 >
                                     <Input
                                         value={form.data.external_reference}
-                                        placeholder="No. nota/invoice, opsional"
+                                        placeholder={stage5Translate("stage5.ui.4dc91241f058", stage5Locale)}
                                         onChange={(event) =>
                                             form.setData(
                                                 'external_reference',
@@ -378,7 +366,7 @@ export default function OperationalExpenseIndex({
                                     />
                                 </Field>
                                 <Field
-                                    label="Bukti privat"
+                                    label={stage5Translate("stage5.ui.e254e37b8d68", stage5Locale)}
                                     error={form.errors.proof}
                                 >
                                     <Input
@@ -393,12 +381,12 @@ export default function OperationalExpenseIndex({
                                     />
                                 </Field>
                                 <Field
-                                    label="Catatan"
+                                    label={stage5Translate("stage5.ui.9f09aefd0dd4", stage5Locale)}
                                     error={form.errors.notes}
                                 >
                                     <Input
                                         value={form.data.notes}
-                                        placeholder="Keperluan pengeluaran"
+                                        placeholder={stage5Translate("stage5.ui.a20b32e340ed", stage5Locale)}
                                         onChange={(event) =>
                                             form.setData(
                                                 'notes',
@@ -412,13 +400,10 @@ export default function OperationalExpenseIndex({
                                         type="submit"
                                         disabled={form.processing}
                                     >
-                                        <Plus /> Simpan sebagai Recorded
+                                        <Plus /> <Stage5Text k="stage5.ui.895e0ebb1197" />
                                     </Button>
                                     <p className="mt-2 text-xs text-muted-foreground">
-                                        Menyimpan expense belum mengubah saldo
-                                        kas. Arus keluar baru tercatat setelah
-                                        expense dibayar melalui workflow
-                                        Payment.
+                                        <Stage5Text k="stage5.ui.cc40daa8dbc7" />
                                     </p>
                                 </div>
                             </form>
@@ -426,16 +411,19 @@ export default function OperationalExpenseIndex({
                     </Card>
                 )}
 
-                <FilterBar>
+                <FilterBar
+                    title={stage5Choice('Filter & pencarian', 'Filters & search', stage5Locale)}
+                    description={stage5Choice('Persempit data untuk menemukan pekerjaan yang perlu ditindak.', 'Narrow results to find expenses and ledger entries requiring action.', stage5Locale)}
+                >
                     <div className="space-y-1.5 md:col-span-2">
-                        <Label htmlFor="expense-search">Cari</Label>
+                        <Label htmlFor="expense-search"><Stage5Text k="stage5.ui.3f2275d79afb" /></Label>
                         <div className="relative">
                             <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
                             <Input
                                 id="expense-search"
                                 className="pl-9"
                                 value={search}
-                                placeholder="Nomor, vendor, referensi, catatan..."
+                                placeholder={stage5Translate("stage5.ui.672052db0c40", stage5Locale)}
                                 onChange={(event) =>
                                     setSearch(event.target.value)
                                 }
@@ -450,7 +438,7 @@ export default function OperationalExpenseIndex({
                         </div>
                     </div>
                     <div className="space-y-1.5">
-                        <Label>Status</Label>
+                        <Label><Stage5Text k="stage5.ui.bae7d5be7082" /></Label>
                         <Select
                             value={filters.status || 'all'}
                             onValueChange={(value) =>
@@ -464,18 +452,18 @@ export default function OperationalExpenseIndex({
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">
-                                    Semua status
+                                    <Stage5Text k="stage5.ui.baa2adda4148" />
                                 </SelectItem>
                                 <SelectItem value="recorded">
-                                    Recorded
+                                    <Stage5Text k="stage5.ui.d5383ea7af4c" />
                                 </SelectItem>
-                                <SelectItem value="paid">Paid</SelectItem>
-                                <SelectItem value="void">Void</SelectItem>
+                                <SelectItem value="paid"><Stage5Text k="stage5.ui.dc9d4584a554" /></SelectItem>
+                                <SelectItem value="void"><Stage5Text k="stage5.ui.207c7c00630b" /></SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
                     <div className="space-y-1.5">
-                        <Label>Cabang</Label>
+                        <Label><Stage5Text k="stage5.ui.1387475bd674" /></Label>
                         <Select
                             value={
                                 filters.branch_id
@@ -494,7 +482,7 @@ export default function OperationalExpenseIndex({
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">
-                                    Semua cabang
+                                    <Stage5Text k="stage5.ui.27d30aba48a4" />
                                 </SelectItem>
                                 {branches.map((branch) => (
                                     <SelectItem
@@ -508,7 +496,7 @@ export default function OperationalExpenseIndex({
                         </Select>
                     </div>
                     <div className="space-y-1.5">
-                        <Label>Kategori</Label>
+                        <Label><Stage5Text k="stage5.ui.b7964404a785" /></Label>
                         <Select
                             value={
                                 filters.financial_category_id
@@ -527,7 +515,7 @@ export default function OperationalExpenseIndex({
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">
-                                    Semua kategori
+                                    <Stage5Text k="stage5.ui.3ee43aaffaaf" />
                                 </SelectItem>
                                 {categories.map((category) => (
                                     <SelectItem
@@ -541,7 +529,7 @@ export default function OperationalExpenseIndex({
                         </Select>
                     </div>
                     <div className="space-y-1.5">
-                        <Label>Dari tanggal</Label>
+                        <Label><Stage5Text k="stage5.ui.30b35bf928d5" /></Label>
                         <Input
                             type="date"
                             value={filters.date_from}
@@ -551,7 +539,7 @@ export default function OperationalExpenseIndex({
                         />
                     </div>
                     <div className="space-y-1.5">
-                        <Label>Sampai tanggal</Label>
+                        <Label><Stage5Text k="stage5.ui.95b58818f0a3" /></Label>
                         <Input
                             type="date"
                             value={filters.date_to}
@@ -565,14 +553,14 @@ export default function OperationalExpenseIndex({
                         variant="outline"
                         onClick={resetFilters}
                     >
-                        <RefreshCcw /> Reset
+                        <RefreshCcw /> <Stage5Text k="stage5.ui.44c57abd888a" />
                     </Button>
                 </FilterBar>
 
                 {tab === 'expenses' ? (
                     <Card>
                         <CardHeader>
-                            <CardTitle>Riwayat pengeluaran</CardTitle>
+                            <CardTitle><Stage5Text k="stage5.ui.f3bcb8ba671d" /></CardTitle>
                         </CardHeader>
                         <CardContent>
                             <div className="overflow-x-auto">
@@ -580,22 +568,22 @@ export default function OperationalExpenseIndex({
                                     <thead className="border-b bg-muted/40 text-left text-muted-foreground">
                                         <tr>
                                             <th className="px-3 py-3">
-                                                Expense
+                                                <Stage5Text k="stage5.ui.a0db8e68b834" />
                                             </th>
                                             <th className="px-3 py-3">
-                                                Kategori
+                                                <Stage5Text k="stage5.ui.b7964404a785" />
                                             </th>
                                             <th className="px-3 py-3">
-                                                Vendor
+                                                <Stage5Text k="stage5.ui.d96159ff30af" />
                                             </th>
                                             <th className="px-3 py-3">
-                                                Cabang
+                                                <Stage5Text k="stage5.ui.1387475bd674" />
                                             </th>
                                             <th className="px-3 py-3">
-                                                Status
+                                                <Stage5Text k="stage5.ui.bae7d5be7082" />
                                             </th>
                                             <th className="px-3 py-3 text-right">
-                                                Nominal
+                                                <Stage5Text k="stage5.ui.1795d163388f" />
                                             </th>
                                         </tr>
                                     </thead>
@@ -613,10 +601,11 @@ export default function OperationalExpenseIndex({
                                                         {expense.expense_number}
                                                     </Link>
                                                     <p className="mt-1 text-xs text-muted-foreground">
-                                                        {dateTime.format(
+                                                        {stage5Date(
                                                             new Date(
                                                                 expense.incurred_at,
                                                             ),
+                                                            stage5Locale,
                                                         )}
                                                     </p>
                                                 </td>
@@ -651,8 +640,7 @@ export default function OperationalExpenseIndex({
                                                     colSpan={6}
                                                     className="px-3 py-10 text-center text-muted-foreground"
                                                 >
-                                                    Belum ada pengeluaran pada
-                                                    filter ini.
+                                                    <Stage5Text k="stage5.ui.005d5d86f8e9" />
                                                 </td>
                                             </tr>
                                         )}
@@ -670,33 +658,31 @@ export default function OperationalExpenseIndex({
                 ) : (
                     <Card>
                         <CardHeader>
-                            <CardTitle>Cash Ledger · read-only</CardTitle>
+                            <CardTitle><Stage5Text k="stage5.ui.44faccfc5cb6" /></CardTitle>
                         </CardHeader>
                         <CardContent>
                             <p className="mb-4 text-sm text-muted-foreground">
-                                Ledger tidak memiliki tombol tambah/edit/hapus.
-                                Baris kas hanya lahir dari Payment, Refund, dan
-                                workflow keuangan yang tervalidasi.
+                                <Stage5Text k="stage5.ui.c6b7fb287a1c" />
                             </p>
                             <div className="overflow-x-auto">
                                 <table className="w-full min-w-[1050px] text-sm">
                                     <thead className="border-b bg-muted/40 text-left text-muted-foreground">
                                         <tr>
                                             <th className="px-3 py-3">
-                                                Transaksi
+                                                <Stage5Text k="stage5.ui.05ad114b6398" />
                                             </th>
                                             <th className="px-3 py-3">
-                                                Register / Cabang
+                                                <Stage5Text k="stage5.ui.5a007da5dc90" />
                                             </th>
                                             <th className="px-3 py-3">
-                                                Sumber
+                                                <Stage5Text k="stage5.ui.ff648afc53ef" />
                                             </th>
-                                            <th className="px-3 py-3">Arah</th>
+                                            <th className="px-3 py-3"><Stage5Text k="stage5.ui.c86c93709b3d" /></th>
                                             <th className="px-3 py-3 text-right">
-                                                Nominal
+                                                <Stage5Text k="stage5.ui.1795d163388f" />
                                             </th>
                                             <th className="px-3 py-3 text-right">
-                                                Saldo setelah
+                                                <Stage5Text k="stage5.ui.65068eea081e" />
                                             </th>
                                         </tr>
                                     </thead>
@@ -714,10 +700,11 @@ export default function OperationalExpenseIndex({
                                                             }
                                                         </div>
                                                         <div className="mt-1 text-xs text-muted-foreground">
-                                                            {dateTime.format(
+                                                            {stage5Date(
                                                                 new Date(
                                                                     transaction.occurred_at,
                                                                 ),
+                                                                stage5Locale,
                                                             )}
                                                         </div>
                                                     </td>
@@ -809,8 +796,7 @@ export default function OperationalExpenseIndex({
                                                     colSpan={6}
                                                     className="px-3 py-10 text-center text-muted-foreground"
                                                 >
-                                                    Belum ada cash transaction
-                                                    pada filter ini.
+                                                    <Stage5Text k="stage5.ui.f166c9a49c0d" />
                                                 </td>
                                             </tr>
                                         )}
@@ -832,6 +818,7 @@ export default function OperationalExpenseIndex({
 }
 
 function StatusBadge({ status }: { status: OperationalExpenseStatus }) {
+    const { locale: stage5Locale } = useAppLocale();
     const variant =
         status === 'void'
             ? 'destructive'
@@ -839,7 +826,7 @@ function StatusBadge({ status }: { status: OperationalExpenseStatus }) {
               ? 'secondary'
               : 'outline';
 
-    return <Badge variant={variant}>{statusLabel[status]}</Badge>;
+    return <Badge variant={variant}>{stage5Display(status, stage5Locale)}</Badge>;
 }
 
 function Field({

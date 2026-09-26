@@ -1,4 +1,4 @@
-import { Head, router, useForm, usePage } from '@inertiajs/react';
+import { Head, Link, router, useForm, usePage } from '@inertiajs/react';
 import {
     ArrowDownToLine,
     ArrowUpFromLine,
@@ -8,6 +8,7 @@ import {
     CircleOff,
     Clock3,
     CreditCard,
+    History,
     Landmark,
     Pencil,
     Plus,
@@ -18,6 +19,7 @@ import {
 } from 'lucide-react';
 import type { FormEvent } from 'react';
 import { useState } from 'react';
+import { stage5Choice, stage5Display, Stage5Text, stage5Translate, stage5Date, stage5Money } from '@/components/stage5-text';
 import { useConfirmDialog } from '@/components/confirm-dialog-provider';
 import InputError from '@/components/input-error';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -50,6 +52,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { useAppLocale } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 type PaymentMethodType = 'cash' | 'bank_transfer' | 'qris' | 'card' | 'other';
@@ -181,16 +184,9 @@ const coreCategoryCodes = new Set([
     'TRANSFER-SHIPPING',
 ]);
 
-const money = new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    maximumFractionDigits: 0,
-});
+const money = { format: stage5Money };
 
-const dateTime = new Intl.DateTimeFormat('id-ID', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-});
+
 
 const methodTypeLabels: Record<PaymentMethodType, string> = {
     cash: 'Tunai',
@@ -211,7 +207,7 @@ function formatMoney(value: string | number | null | undefined): string {
 }
 
 function formatDateTime(value: string | null | undefined): string {
-    return value ? dateTime.format(new Date(value)) : '—';
+    return value ? stage5Date(new Date(value)) : '—';
 }
 
 export default function FinanceMasterIndex({
@@ -222,6 +218,7 @@ export default function FinanceMasterIndex({
     summary,
     permissions,
 }: Props) {
+    const { locale: stage5Locale } = useAppLocale();
     const { errors: pageErrors } = usePage().props;
     const confirm = useConfirmDialog();
     const [activeTab, setActiveTab] = useState<MasterTab>('methods');
@@ -377,12 +374,12 @@ export default function FinanceMasterIndex({
         const activate = !method.is_active;
         const approved = await confirm({
             title: activate
-                ? 'Aktifkan metode pembayaran?'
-                : 'Nonaktifkan metode pembayaran?',
+                ? stage5Choice('Aktifkan metode pembayaran?', 'Activate payment method?', stage5Locale)
+                : stage5Choice('Nonaktifkan metode pembayaran?', 'Deactivate payment method?', stage5Locale),
             description: activate
-                ? `${method.code} akan tersedia kembali untuk transaksi baru.`
-                : `${method.code} tidak lagi dapat dipilih untuk transaksi baru. Histori lama tetap utuh.`,
-            confirmLabel: activate ? 'Aktifkan' : 'Nonaktifkan',
+                ? stage5Choice(`${method.code} akan tersedia kembali untuk transaksi baru.`, `${method.code} will be available again for new transactions.`, stage5Locale)
+                : stage5Choice(`${method.code} tidak lagi dapat dipilih untuk transaksi baru. Riwayat lama tetap utuh.`, `${method.code} will no longer be selectable for new transactions. Existing history remains intact.`, stage5Locale),
+            confirmLabel: stage5Display(activate ? 'Aktifkan' : 'Nonaktifkan', stage5Locale),
             variant: activate ? 'default' : 'destructive',
         });
 
@@ -400,11 +397,13 @@ export default function FinanceMasterIndex({
     const toggleCategoryStatus = async (category: FinancialCategory) => {
         const activate = !category.is_active;
         const approved = await confirm({
-            title: activate ? 'Aktifkan kategori?' : 'Nonaktifkan kategori?',
+            title: activate
+                ? stage5Choice('Aktifkan kategori?', 'Activate category?', stage5Locale)
+                : stage5Choice('Nonaktifkan kategori?', 'Deactivate category?', stage5Locale),
             description: activate
-                ? `${category.code} akan tersedia kembali untuk transaksi baru.`
-                : `${category.code} tidak lagi dapat dipilih. Histori kategorisasi lama tidak berubah.`,
-            confirmLabel: activate ? 'Aktifkan' : 'Nonaktifkan',
+                ? stage5Choice(`${category.code} akan tersedia kembali untuk transaksi baru.`, `${category.code} will be available again for new transactions.`, stage5Locale)
+                : stage5Choice(`${category.code} tidak lagi dapat dipilih. Riwayat kategorisasi lama tidak berubah.`, `${category.code} will no longer be selectable. Existing categorization history is unchanged.`, stage5Locale),
+            confirmLabel: stage5Display(activate ? 'Aktifkan' : 'Nonaktifkan', stage5Locale),
             variant: activate ? 'default' : 'destructive',
         });
 
@@ -422,11 +421,13 @@ export default function FinanceMasterIndex({
     const toggleRegisterStatus = async (register: CashRegister) => {
         const activate = !register.is_active;
         const approved = await confirm({
-            title: activate ? 'Aktifkan kasir?' : 'Nonaktifkan kasir?',
+            title: activate
+                ? stage5Choice('Aktifkan kasir?', 'Activate cash register?', stage5Locale)
+                : stage5Choice('Nonaktifkan kasir?', 'Deactivate cash register?', stage5Locale),
             description: activate
-                ? `${register.code} akan dapat membuka sesi kas kembali.`
-                : `${register.code} tidak dapat menerima sesi baru. Histori sesi tetap tersimpan.`,
-            confirmLabel: activate ? 'Aktifkan' : 'Nonaktifkan',
+                ? stage5Choice(`${register.code} dapat membuka sesi kas kembali.`, `${register.code} can open cash sessions again.`, stage5Locale)
+                : stage5Choice(`${register.code} tidak dapat menerima sesi baru. Riwayat sesi tetap tersimpan.`, `${register.code} cannot accept new sessions. Existing session history remains stored.`, stage5Locale),
+            confirmLabel: stage5Display(activate ? 'Aktifkan' : 'Nonaktifkan', stage5Locale),
             variant: activate ? 'default' : 'destructive',
         });
 
@@ -508,27 +509,25 @@ export default function FinanceMasterIndex({
 
     return (
         <>
-            <Head title="Master Finance & Kasir" />
+            <Head title={stage5Translate("stage5.ui.51de34c002c1", stage5Locale)} />
 
             <div className="flex h-full flex-1 flex-col gap-6 overflow-x-auto rounded-xl p-4 md:p-6">
                 <header className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                     <div>
                         <p className="text-sm font-medium text-primary">
-                            Finance Control Center
+                            <Stage5Text k="stage5.ui.b9d7ae992a65" />
                         </p>
                         <h1 className="mt-1 text-2xl font-semibold tracking-tight">
-                            Master Finance & Kasir
+                            <Stage5Text k="stage5.ui.51de34c002c1" />
                         </h1>
                         <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-                            Kelola metode pembayaran, kategori pencatatan,
-                            perangkat kasir cabang, dan sesi kas tanpa mengubah
-                            histori transaksi yang sudah terbentuk.
+                            <Stage5Text k="stage5.ui.a7bd100326ec" />
                         </p>
                     </div>
                     {tabActions[activeTab] && (
                         <Button onClick={tabActions[activeTab] ?? undefined}>
                             <Plus />
-                            Tambah data
+                            <Stage5Text k="stage5.ui.0f66b36a4304" />
                         </Button>
                     )}
                 </header>
@@ -541,7 +540,7 @@ export default function FinanceMasterIndex({
                 ].some((error) => typeof error === 'string') && (
                     <Alert variant="destructive">
                         <CircleOff />
-                        <AlertTitle>Perubahan master ditolak</AlertTitle>
+                        <AlertTitle><Stage5Text k="stage5.ui.b6cbaafd336f" /></AlertTitle>
                         <AlertDescription>
                             {
                                 [
@@ -559,34 +558,31 @@ export default function FinanceMasterIndex({
 
                 <Alert>
                     <ShieldCheck />
-                    <AlertTitle>Histori finansial tetap dilindungi</AlertTitle>
+                    <AlertTitle><Stage5Text k="stage5.ui.7663f6d7285e" /></AlertTitle>
                     <AlertDescription>
-                        Master yang tidak dipakai cukup dinonaktifkan. Kode dan
-                        tipe yang sudah terhubung transaksi dikunci, kategori
-                        inti sistem tetap aktif, dan kasir dengan sesi terbuka
-                        tidak dapat dinonaktifkan.
+                        <Stage5Text k="stage5.ui.887bc48f5c36" />
                     </AlertDescription>
                 </Alert>
 
                 <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                     {[
                         {
-                            label: 'Metode aktif',
+                            label: stage5Translate("stage5.ui.76bb7c50b710", stage5Locale),
                             value: `${summary.active_payment_methods}/${summary.payment_methods}`,
                             icon: CreditCard,
                         },
                         {
-                            label: 'Kategori aktif',
+                            label: stage5Translate("stage5.ui.bcd3f3d4c0e4", stage5Locale),
                             value: `${summary.active_financial_categories}/${summary.financial_categories}`,
                             icon: ReceiptText,
                         },
                         {
-                            label: 'Kasir aktif',
+                            label: stage5Translate("stage5.ui.556d8061a368", stage5Locale),
                             value: `${summary.active_cash_registers}/${summary.cash_registers}`,
                             icon: WalletCards,
                         },
                         {
-                            label: 'Sesi terbuka',
+                            label: stage5Translate("stage5.ui.ca47904abdc9", stage5Locale),
                             value: summary.open_cash_sessions,
                             icon: Clock3,
                         },
@@ -604,17 +600,17 @@ export default function FinanceMasterIndex({
                     {[
                         {
                             key: 'methods' as const,
-                            label: 'Metode pembayaran',
+                            label: stage5Translate("stage5.ui.53eb1a623ade", stage5Locale),
                             icon: CreditCard,
                         },
                         {
                             key: 'categories' as const,
-                            label: 'Kategori keuangan',
+                            label: stage5Translate("stage5.ui.7fa537fc5d9b", stage5Locale),
                             icon: SlidersHorizontal,
                         },
                         {
                             key: 'registers' as const,
-                            label: 'Cash register & sesi',
+                            label: stage5Translate("stage5.ui.63e59e158474", stage5Locale),
                             icon: WalletCards,
                         },
                     ].map(({ key, label, icon: Icon }) => (
@@ -633,8 +629,8 @@ export default function FinanceMasterIndex({
 
                 {activeTab === 'methods' && (
                     <MasterSection
-                        title="Metode pembayaran"
-                        description="Urutan menentukan susunan pilihan pada form transaksi. Metode nonaktif tidak muncul pada transaksi baru."
+                        title={stage5Translate("stage5.ui.53eb1a623ade", stage5Locale)}
+                        description={stage5Translate("stage5.ui.5ea9c7402b0d", stage5Locale)}
                         empty={paymentMethods.length === 0}
                         emptyLabel="Belum ada metode pembayaran."
                     >
@@ -657,7 +653,7 @@ export default function FinanceMasterIndex({
                                                 />
                                             </div>
                                             <CardDescription className="mt-2 font-mono">
-                                                {method.code} · urutan{' '}
+                                                {method.code} <Stage5Text k="stage5.ui.c14e3e4ee2c7" />{' '}
                                                 {method.sort_order}
                                             </CardDescription>
                                         </div>
@@ -667,23 +663,23 @@ export default function FinanceMasterIndex({
                                 <CardContent className="space-y-4">
                                     <div className="flex flex-wrap gap-2">
                                         <Badge variant="outline">
-                                            {methodTypeLabels[method.type]}
+                                            {stage5Display(methodTypeLabels[method.type], stage5Locale)}
                                         </Badge>
                                         <Badge variant="outline">
                                             {method.requires_reference
-                                                ? 'Referensi wajib'
-                                                : 'Referensi opsional'}
+                                                ? stage5Display('Referensi wajib', stage5Locale)
+                                                : stage5Display('Referensi opsional', stage5Locale)}
                                         </Badge>
                                     </div>
                                     <p className="text-sm text-muted-foreground">
                                         {method.payments_count.toLocaleString(
                                             'id-ID',
                                         )}{' '}
-                                        payment ·{' '}
+                                        <Stage5Text k="stage5.ui.e88f36115fc2" />{' '}
                                         {method.refunds_count.toLocaleString(
                                             'id-ID',
                                         )}{' '}
-                                        refund
+                                        <Stage5Text k="stage5.ui.b51118f58785" />
                                     </p>
                                     {permissions.managePaymentMethods && (
                                         <div className="flex flex-wrap gap-2">
@@ -695,7 +691,7 @@ export default function FinanceMasterIndex({
                                                 }
                                             >
                                                 <Pencil />
-                                                Edit
+                                                <Stage5Text k="stage5.ui.5301648dcf6b" />
                                             </Button>
                                             <Button
                                                 size="sm"
@@ -716,8 +712,8 @@ export default function FinanceMasterIndex({
                                                     <CheckCircle2 />
                                                 )}
                                                 {method.is_active
-                                                    ? 'Nonaktifkan'
-                                                    : 'Aktifkan'}
+                                                    ? stage5Display('Nonaktifkan', stage5Locale)
+                                                    : stage5Display('Aktifkan', stage5Locale)}
                                             </Button>
                                         </div>
                                     )}
@@ -729,8 +725,8 @@ export default function FinanceMasterIndex({
 
                 {activeTab === 'categories' && (
                     <MasterSection
-                        title="Kategori keuangan"
-                        description="Kategori mengklasifikasikan pendapatan, pengeluaran, dan liabilitas pada payment serta ledger kas."
+                        title={stage5Translate("stage5.ui.7fa537fc5d9b", stage5Locale)}
+                        description={stage5Translate("stage5.ui.d17d151e0d20", stage5Locale)}
                         empty={financialCategories.length === 0}
                         emptyLabel="Belum ada kategori keuangan."
                     >
@@ -755,7 +751,7 @@ export default function FinanceMasterIndex({
                                                     category.code,
                                                 ) && (
                                                     <Badge variant="outline">
-                                                        Inti sistem
+                                                        <Stage5Text k="stage5.ui.6d5307c236ab" />
                                                     </Badge>
                                                 )}
                                             </div>
@@ -768,25 +764,25 @@ export default function FinanceMasterIndex({
                                 </CardHeader>
                                 <CardContent className="space-y-4">
                                     <Badge variant="outline">
-                                        {categoryTypeLabels[category.type]}
+                                        {stage5Display(categoryTypeLabels[category.type], stage5Locale)}
                                     </Badge>
                                     <p className="text-sm text-muted-foreground">
                                         {category.payments_count.toLocaleString(
                                             'id-ID',
                                         )}{' '}
-                                        payment ·{' '}
+                                        <Stage5Text k="stage5.ui.e88f36115fc2" />{' '}
                                         {category.cash_transactions_count.toLocaleString(
                                             'id-ID',
                                         )}{' '}
-                                        ledger ·{' '}
+                                        <Stage5Text k="stage5.ui.5d9bda80b667" />{' '}
                                         {category.transfer_expenses_count.toLocaleString(
                                             'id-ID',
                                         )}{' '}
-                                        biaya transfer ·{' '}
+                                        <Stage5Text k="stage5.ui.4d77ffc0f90b" />{' '}
                                         {category.operational_expenses_count.toLocaleString(
                                             'id-ID',
                                         )}{' '}
-                                        expense operasional
+                                        <Stage5Text k="stage5.ui.ce8336b3ef02" />
                                     </p>
                                     {permissions.manageCategories && (
                                         <div className="flex flex-wrap gap-2">
@@ -798,7 +794,7 @@ export default function FinanceMasterIndex({
                                                 }
                                             >
                                                 <Pencil />
-                                                Edit
+                                                <Stage5Text k="stage5.ui.5301648dcf6b" />
                                             </Button>
                                             <Button
                                                 size="sm"
@@ -825,8 +821,8 @@ export default function FinanceMasterIndex({
                                                     <CheckCircle2 />
                                                 )}
                                                 {category.is_active
-                                                    ? 'Nonaktifkan'
-                                                    : 'Aktifkan'}
+                                                    ? stage5Display('Nonaktifkan', stage5Locale)
+                                                    : stage5Display('Aktifkan', stage5Locale)}
                                             </Button>
                                         </div>
                                     )}
@@ -838,8 +834,8 @@ export default function FinanceMasterIndex({
 
                 {activeTab === 'registers' && (
                     <MasterSection
-                        title="Cash register & sesi kas"
-                        description="Setiap kasir hanya boleh memiliki satu sesi terbuka. Saldo ekspektasi dihitung dari ledger append-only."
+                        title={stage5Translate("stage5.ui.e5d14c97c039", stage5Locale)}
+                        description={stage5Translate("stage5.ui.ab9dc8aca427", stage5Locale)}
                         empty={cashRegisters.length === 0}
                         emptyLabel="Belum ada cash register pada lingkup cabang ini."
                     >
@@ -864,7 +860,7 @@ export default function FinanceMasterIndex({
                                                 />
                                                 {register.open_session && (
                                                     <Badge className="bg-emerald-600 hover:bg-emerald-600">
-                                                        Sesi terbuka
+                                                        <Stage5Text k="stage5.ui.ca47904abdc9" />
                                                     </Badge>
                                                 )}
                                             </div>
@@ -885,7 +881,7 @@ export default function FinanceMasterIndex({
                                     {register.open_session ? (
                                         <div className="rounded-lg border bg-emerald-500/5 p-4">
                                             <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                                                Saldo ekspektasi sekarang
+                                                <Stage5Text k="stage5.ui.f9e7fc030e42" />
                                             </p>
                                             <p className="mt-1 text-2xl font-semibold tabular-nums">
                                                 {formatMoney(
@@ -895,28 +891,28 @@ export default function FinanceMasterIndex({
                                             </p>
                                             <div className="mt-3 grid gap-2 text-xs text-muted-foreground sm:grid-cols-2">
                                                 <span>
-                                                    Masuk{' '}
+                                                    <Stage5Text k="stage5.ui.f2dd30734a6a" />{' '}
                                                     {formatMoney(
                                                         register.open_session
                                                             .incoming_total,
                                                     )}
                                                 </span>
                                                 <span>
-                                                    Keluar{' '}
+                                                    <Stage5Text k="stage5.ui.a421ce222c82" />{' '}
                                                     {formatMoney(
                                                         register.open_session
                                                             .outgoing_total,
                                                     )}
                                                 </span>
                                                 <span>
-                                                    Dibuka{' '}
+                                                    <Stage5Text k="stage5.ui.374027752cd7" />{' '}
                                                     {formatDateTime(
                                                         register.open_session
                                                             .opened_at,
                                                     )}
                                                 </span>
                                                 <span>
-                                                    Oleh{' '}
+                                                    <Stage5Text k="stage5.ui.aad1a980791c" />{' '}
                                                     {register.open_session
                                                         .opener?.name ?? '—'}
                                                 </span>
@@ -924,10 +920,10 @@ export default function FinanceMasterIndex({
                                         </div>
                                     ) : (
                                         <div className="rounded-lg border border-dashed p-4 text-sm text-muted-foreground">
-                                            Tidak ada sesi aktif. Sesi terakhir:{' '}
+                                            <Stage5Text k="stage5.ui.aca1fb22d21f" />{' '}
                                             {register.latest_session
                                                 ? `${formatDateTime(register.latest_session.closed_at ?? register.latest_session.opened_at)}`
-                                                : 'belum pernah dibuka'}
+                                                : stage5Display('belum pernah dibuka', stage5Locale)}
                                         </div>
                                     )}
 
@@ -935,10 +931,18 @@ export default function FinanceMasterIndex({
                                         {register.sessions_count.toLocaleString(
                                             'id-ID',
                                         )}{' '}
-                                        histori sesi
+                                        <Stage5Text k="stage5.ui.6699a79bd41e" />
                                     </p>
 
                                     <div className="flex flex-wrap gap-2">
+                                        <Button size="sm" variant="outline" asChild>
+                                            <Link
+                                                href={`/finance/cash-registers/${register.id}/sessions`}
+                                            >
+                                                <History />
+                                                <Stage5Text k="stage5.ui.6f1a56a6161e" />
+                                            </Link>
+                                        </Button>
                                         {permissions.manageCashSessions &&
                                             register.is_active &&
                                             (register.open_session ? (
@@ -951,7 +955,7 @@ export default function FinanceMasterIndex({
                                                     }
                                                 >
                                                     <Clock3 />
-                                                    Tutup sesi
+                                                    <Stage5Text k="stage5.ui.e9e255c66487" />
                                                 </Button>
                                             ) : (
                                                 <Button
@@ -963,7 +967,7 @@ export default function FinanceMasterIndex({
                                                     }
                                                 >
                                                     <Banknote />
-                                                    Buka sesi
+                                                    <Stage5Text k="stage5.ui.f726357dac09" />
                                                 </Button>
                                             ))}
                                         {permissions.manageCashRegisters && (
@@ -978,7 +982,7 @@ export default function FinanceMasterIndex({
                                                     }
                                                 >
                                                     <Pencil />
-                                                    Edit
+                                                    <Stage5Text k="stage5.ui.5301648dcf6b" />
                                                 </Button>
                                                 <Button
                                                     size="sm"
@@ -1003,8 +1007,8 @@ export default function FinanceMasterIndex({
                                                         <CheckCircle2 />
                                                     )}
                                                     {register.is_active
-                                                        ? 'Nonaktifkan'
-                                                        : 'Aktifkan'}
+                                                        ? stage5Display('Nonaktifkan', stage5Locale)
+                                                        : stage5Display('Aktifkan', stage5Locale)}
                                                 </Button>
                                             </>
                                         )}
@@ -1025,18 +1029,17 @@ export default function FinanceMasterIndex({
                         <DialogHeader>
                             <DialogTitle>
                                 {editingPaymentMethod
-                                    ? 'Edit metode pembayaran'
-                                    : 'Tambah metode pembayaran'}
+                                    ? stage5Choice('Edit metode pembayaran', 'Edit payment method', stage5Locale)
+                                    : stage5Choice('Tambah metode pembayaran', 'Add payment method', stage5Locale)}
                             </DialogTitle>
                             <DialogDescription>
-                                Kode dan tipe akan dikunci setelah metode
-                                dipakai transaksi.
+                                <Stage5Text k="stage5.ui.c5696edf2622" />
                             </DialogDescription>
                         </DialogHeader>
                         <div className="grid gap-4 py-5">
                             <div className="grid gap-2 sm:grid-cols-2">
                                 <FormField
-                                    label="Kode"
+                                    label={stage5Translate("stage5.ui.3e25d43ab0d0", stage5Locale)}
                                     error={paymentForm.errors.code}
                                 >
                                     <Input
@@ -1052,7 +1055,7 @@ export default function FinanceMasterIndex({
                                     />
                                 </FormField>
                                 <FormField
-                                    label="Urutan"
+                                    label={stage5Translate("stage5.ui.a465a033b3f9", stage5Locale)}
                                     error={paymentForm.errors.sort_order}
                                 >
                                     <Input
@@ -1071,7 +1074,7 @@ export default function FinanceMasterIndex({
                                 </FormField>
                             </div>
                             <FormField
-                                label="Nama metode"
+                                label={stage5Translate("stage5.ui.492550b08a82", stage5Locale)}
                                 error={paymentForm.errors.name}
                             >
                                 <Input
@@ -1082,12 +1085,12 @@ export default function FinanceMasterIndex({
                                             event.target.value,
                                         )
                                     }
-                                    placeholder="Dompet Digital"
+                                    placeholder={stage5Translate("stage5.ui.4f1621cbaa3c", stage5Locale)}
                                     required
                                 />
                             </FormField>
                             <FormField
-                                label="Tipe"
+                                label={stage5Translate("stage5.ui.d809b1515dab", stage5Locale)}
                                 error={paymentForm.errors.type}
                             >
                                 <Select
@@ -1106,7 +1109,7 @@ export default function FinanceMasterIndex({
                                                     key={value}
                                                     value={value}
                                                 >
-                                                    {label}
+                                                    {stage5Display(label, stage5Locale)}
                                                 </SelectItem>
                                             ),
                                         )}
@@ -1127,11 +1130,10 @@ export default function FinanceMasterIndex({
                                 />
                                 <span>
                                     <span className="block text-sm font-medium">
-                                        Wajib referensi transaksi
+                                        <Stage5Text k="stage5.ui.d4fde0fb586e" />
                                     </span>
                                     <span className="mt-1 block text-xs text-muted-foreground">
-                                        Cocok untuk transfer, QRIS, kartu, dan
-                                        kanal non-tunai lainnya.
+                                        <Stage5Text k="stage5.ui.63178642207f" />
                                     </span>
                                 </span>
                             </label>
@@ -1142,13 +1144,13 @@ export default function FinanceMasterIndex({
                                 variant="outline"
                                 onClick={() => setPaymentDialogOpen(false)}
                             >
-                                Batal
+                                <Stage5Text k="stage5.ui.1433539c3b8f" />
                             </Button>
                             <Button
                                 type="submit"
                                 disabled={paymentForm.processing}
                             >
-                                Simpan metode
+                                <Stage5Text k="stage5.ui.827f4e23d2e3" />
                             </Button>
                         </DialogFooter>
                     </form>
@@ -1164,17 +1166,16 @@ export default function FinanceMasterIndex({
                         <DialogHeader>
                             <DialogTitle>
                                 {editingCategory
-                                    ? 'Edit kategori keuangan'
-                                    : 'Tambah kategori keuangan'}
+                                    ? stage5Choice('Edit kategori keuangan', 'Edit finance category', stage5Locale)
+                                    : stage5Choice('Tambah kategori keuangan', 'Add finance category', stage5Locale)}
                             </DialogTitle>
                             <DialogDescription>
-                                Kode dan tipe dikunci setelah kategori tercatat
-                                pada transaksi.
+                                <Stage5Text k="stage5.ui.1367b86612e9" />
                             </DialogDescription>
                         </DialogHeader>
                         <div className="grid gap-4 py-5">
                             <FormField
-                                label="Kode"
+                                label={stage5Translate("stage5.ui.3e25d43ab0d0", stage5Locale)}
                                 error={categoryForm.errors.code}
                             >
                                 <Input
@@ -1190,7 +1191,7 @@ export default function FinanceMasterIndex({
                                 />
                             </FormField>
                             <FormField
-                                label="Nama kategori"
+                                label={stage5Translate("stage5.ui.458b202df966", stage5Locale)}
                                 error={categoryForm.errors.name}
                             >
                                 <Input
@@ -1201,12 +1202,12 @@ export default function FinanceMasterIndex({
                                             event.target.value,
                                         )
                                     }
-                                    placeholder="Biaya Marketing"
+                                    placeholder={stage5Translate("stage5.ui.b2619f9d691b", stage5Locale)}
                                     required
                                 />
                             </FormField>
                             <FormField
-                                label="Tipe"
+                                label={stage5Translate("stage5.ui.d809b1515dab", stage5Locale)}
                                 error={categoryForm.errors.type}
                             >
                                 <Select
@@ -1225,7 +1226,7 @@ export default function FinanceMasterIndex({
                                                     key={value}
                                                     value={value}
                                                 >
-                                                    {label}
+                                                    {stage5Display(label, stage5Locale)}
                                                 </SelectItem>
                                             ),
                                         )}
@@ -1239,13 +1240,13 @@ export default function FinanceMasterIndex({
                                 variant="outline"
                                 onClick={() => setCategoryDialogOpen(false)}
                             >
-                                Batal
+                                <Stage5Text k="stage5.ui.1433539c3b8f" />
                             </Button>
                             <Button
                                 type="submit"
                                 disabled={categoryForm.processing}
                             >
-                                Simpan kategori
+                                <Stage5Text k="stage5.ui.9333cdcad532" />
                             </Button>
                         </DialogFooter>
                     </form>
@@ -1261,17 +1262,16 @@ export default function FinanceMasterIndex({
                         <DialogHeader>
                             <DialogTitle>
                                 {editingRegister
-                                    ? 'Edit cash register'
-                                    : 'Tambah cash register'}
+                                    ? stage5Choice('Edit cash register', 'Edit cash register', stage5Locale)
+                                    : stage5Choice('Tambah cash register', 'Add cash register', stage5Locale)}
                             </DialogTitle>
                             <DialogDescription>
-                                Register mengikuti satu cabang dan tidak dapat
-                                dipindahkan setelah dibuat.
+                                <Stage5Text k="stage5.ui.cc426b872703" />
                             </DialogDescription>
                         </DialogHeader>
                         <div className="grid gap-4 py-5">
                             <FormField
-                                label="Cabang"
+                                label={stage5Translate("stage5.ui.1387475bd674", stage5Locale)}
                                 error={registerForm.errors.branch_id}
                             >
                                 <Select
@@ -1285,7 +1285,7 @@ export default function FinanceMasterIndex({
                                     }
                                 >
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Pilih cabang" />
+                                        <SelectValue placeholder={stage5Translate("stage5.ui.f53404d2ddcf", stage5Locale)} />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {branches.map((branch) => (
@@ -1300,7 +1300,7 @@ export default function FinanceMasterIndex({
                                 </Select>
                             </FormField>
                             <FormField
-                                label="Kode register"
+                                label={stage5Translate("stage5.ui.4631323e1a6f", stage5Locale)}
                                 error={registerForm.errors.code}
                             >
                                 <Input
@@ -1316,7 +1316,7 @@ export default function FinanceMasterIndex({
                                 />
                             </FormField>
                             <FormField
-                                label="Nama register"
+                                label={stage5Translate("stage5.ui.64db2fd66ddb", stage5Locale)}
                                 error={registerForm.errors.name}
                             >
                                 <Input
@@ -1327,7 +1327,7 @@ export default function FinanceMasterIndex({
                                             event.target.value,
                                         )
                                     }
-                                    placeholder="Kasir Front Desk"
+                                    placeholder={stage5Translate("stage5.ui.29aa16fc7aea", stage5Locale)}
                                     required
                                 />
                             </FormField>
@@ -1338,13 +1338,13 @@ export default function FinanceMasterIndex({
                                 variant="outline"
                                 onClick={() => setRegisterDialogOpen(false)}
                             >
-                                Batal
+                                <Stage5Text k="stage5.ui.1433539c3b8f" />
                             </Button>
                             <Button
                                 type="submit"
                                 disabled={registerForm.processing}
                             >
-                                Simpan register
+                                <Stage5Text k="stage5.ui.0862e2e225dd" />
                             </Button>
                         </DialogFooter>
                     </form>
@@ -1360,8 +1360,8 @@ export default function FinanceMasterIndex({
                         <DialogHeader>
                             <DialogTitle>
                                 {sessionAction === 'open'
-                                    ? 'Buka sesi kas'
-                                    : 'Tutup sesi kas'}
+                                    ? stage5Choice('Buka sesi kas', 'Open cash session', stage5Locale)
+                                    : stage5Choice('Tutup sesi kas', 'Close cash session', stage5Locale)}
                             </DialogTitle>
                             <DialogDescription>
                                 {sessionRegister?.branch.code} ·{' '}
@@ -1372,7 +1372,7 @@ export default function FinanceMasterIndex({
                             {sessionAction === 'open' ? (
                                 <>
                                     <FormField
-                                        label="Modal awal"
+                                        label={stage5Translate("stage5.ui.144de9cec6f7", stage5Locale)}
                                         error={
                                             sessionForm.errors.opening_balance
                                         }
@@ -1390,7 +1390,7 @@ export default function FinanceMasterIndex({
                                         />
                                     </FormField>
                                     <FormField
-                                        label="Catatan pembukaan"
+                                        label={stage5Translate("stage5.ui.f2395dbb1a19", stage5Locale)}
                                         error={sessionForm.errors.opening_notes}
                                     >
                                         <Input
@@ -1403,7 +1403,7 @@ export default function FinanceMasterIndex({
                                                     event.target.value,
                                                 )
                                             }
-                                            placeholder="Contoh: Shift pagi"
+                                            placeholder={stage5Translate("stage5.ui.17750586bf7f", stage5Locale)}
                                         />
                                     </FormField>
                                 </>
@@ -1411,21 +1411,21 @@ export default function FinanceMasterIndex({
                                 <>
                                     <div className="grid gap-3 rounded-lg border bg-muted/40 p-4 sm:grid-cols-3">
                                         <SessionMetric
-                                            label="Modal"
+                                            label={stage5Translate("stage5.ui.d44c2c5216ec", stage5Locale)}
                                             value={formatMoney(
                                                 sessionRegister?.open_session
                                                     ?.opening_balance,
                                             )}
                                         />
                                         <SessionMetric
-                                            label="Masuk"
+                                            label={stage5Translate("stage5.ui.f2dd30734a6a", stage5Locale)}
                                             value={formatMoney(
                                                 sessionRegister?.open_session
                                                     ?.incoming_total,
                                             )}
                                         />
                                         <SessionMetric
-                                            label="Ekspektasi"
+                                            label={stage5Translate("stage5.ui.1f4e4ee3de7a", stage5Locale)}
                                             value={formatMoney(
                                                 sessionRegister?.open_session
                                                     ?.expected_balance,
@@ -1433,7 +1433,7 @@ export default function FinanceMasterIndex({
                                         />
                                     </div>
                                     <FormField
-                                        label="Saldo aktual"
+                                        label={stage5Translate("stage5.ui.4345d43dd7c7", stage5Locale)}
                                         error={
                                             sessionForm.errors
                                                 .actual_closing_balance
@@ -1453,7 +1453,7 @@ export default function FinanceMasterIndex({
                                         />
                                     </FormField>
                                     <FormField
-                                        label="Catatan penutupan"
+                                        label={stage5Translate("stage5.ui.649f4544764c", stage5Locale)}
                                         error={sessionForm.errors.closing_notes}
                                     >
                                         <Input
@@ -1466,7 +1466,7 @@ export default function FinanceMasterIndex({
                                                     event.target.value,
                                                 )
                                             }
-                                            placeholder="Jelaskan bila ada selisih"
+                                            placeholder={stage5Translate("stage5.ui.88f29b457fe6", stage5Locale)}
                                         />
                                     </FormField>
                                 </>
@@ -1478,7 +1478,7 @@ export default function FinanceMasterIndex({
                                 variant="outline"
                                 onClick={() => setSessionDialogOpen(false)}
                             >
-                                Batal
+                                <Stage5Text k="stage5.ui.1433539c3b8f" />
                             </Button>
                             <Button
                                 type="submit"
@@ -1554,12 +1554,12 @@ function StatusBadge({ active }: { active: boolean }) {
     return active ? (
         <Badge className="bg-emerald-600 hover:bg-emerald-600">
             <CheckCircle2 />
-            Aktif
+            <Stage5Text k="stage5.ui.89f29d42adb5" />
         </Badge>
     ) : (
         <Badge variant="secondary">
             <CircleOff />
-            Nonaktif
+            <Stage5Text k="stage5.ui.609449ca31c3" />
         </Badge>
     );
 }

@@ -119,7 +119,7 @@ class SettingsCenterController extends Controller
 
         return back()->with('toast', [
             'type' => 'success',
-            'message' => 'Identitas dan regional perusahaan berhasil diperbarui.',
+            'message' => __('uat035b_settings.company_updated'),
         ]);
     }
 

@@ -13,6 +13,8 @@ import {
     ShieldCheck,
     Sparkles,
 } from 'lucide-react';
+import { useAppLocale } from '@/lib/i18n';
+import { publicHomeText } from '@/lib/public-i18n';
 import PackageCard from '@/components/public/package-card';
 import ProductCard from '@/components/public/product-card';
 import PublicShell from '@/components/public/public-shell';
@@ -39,52 +41,52 @@ type Props = {
 };
 
 const equipmentTypes = [
-    { icon: Camera, label: 'Camera' },
-    { icon: Layers3, label: 'Lens' },
-    { icon: Headphones, label: 'Audio' },
-];
+    { icon: Camera, labelKey: 'public.home.camera' },
+    { icon: Layers3, labelKey: 'public.home.lens' },
+    { icon: Headphones, labelKey: 'public.home.audio' },
+] as const;
 
 const benefits = [
     {
         icon: ShieldCheck,
-        title: 'Unit terawat',
-        description:
-            'Setiap alat dipantau kondisi dan statusnya sebelum digunakan.',
+        titleKey: 'public.home.benefit.maintained.title',
+        descriptionKey:
+            'public.home.benefit.maintained.description',
     },
     {
         icon: BadgeCheck,
-        title: 'Harga transparan',
-        description:
-            'Pilihan durasi dan tarif dapat dilihat langsung pada katalog.',
+        titleKey: 'public.home.benefit.transparent.title',
+        descriptionKey:
+            'public.home.benefit.transparent.description',
     },
     {
         icon: Clock3,
-        title: 'Layanan responsif',
-        description:
-            'Admin siap membantu konfirmasi jadwal dan rekomendasi alat.',
+        titleKey: 'public.home.benefit.responsive.title',
+        descriptionKey:
+            'public.home.benefit.responsive.description',
     },
-];
+] as const;
 
 const steps = [
     {
         icon: Search,
-        title: 'Pilih alat',
-        description:
-            'Jelajahi katalog dan temukan alat sesuai kebutuhan produksi Anda.',
+        titleKey: 'public.home.step.choose.title',
+        descriptionKey:
+            'public.home.step.choose.description',
     },
     {
         icon: MessageCircle,
-        title: 'Konfirmasi jadwal',
-        description:
-            'Hubungi admin untuk memastikan periode rental dan ketersediaan unit.',
+        titleKey: 'public.home.step.confirm.title',
+        descriptionKey:
+            'public.home.step.confirm.description',
     },
     {
         icon: CalendarCheck2,
-        title: 'Ambil & berkarya',
-        description:
-            'Selesaikan administrasi, ambil alat, lalu fokus pada karya Anda.',
+        titleKey: 'public.home.step.create.title',
+        descriptionKey:
+            'public.home.step.create.description',
     },
-];
+] as const;
 
 export default function PublicHome({
     branch,
@@ -95,18 +97,28 @@ export default function PublicHome({
     featuredPackages,
     stats,
 }: Props) {
+    const { locale, tr } = useAppLocale();
     const catalogHref = branch ? `/rental?branch=${branch.code}` : '/rental';
-    const description =
-        branch?.hero_description ||
-        'Rental kamera dan perlengkapan produksi yang terawat, transparan, dan siap digunakan.';
+    const description = publicHomeText(
+        branch?.hero_description,
+        'public.home.fallbackDescription',
+        locale,
+        tr('public.home.fallbackDescription'),
+    );
+    const heroTitle = publicHomeText(
+        branch?.hero_title,
+        'public.home.fallbackHero',
+        locale,
+        tr('public.home.fallbackHero'),
+    );
 
     return (
         <PublicShell branch={branch} branches={branches}>
-            <Head title="Rental Kamera & Peralatan Kreatif">
+            <Head title={tr('public.home.head')}>
                 <meta name="description" content={description} />
                 <meta
                     property="og:title"
-                    content="Together Kamera — Rental Kamera & Peralatan Kreatif"
+                    content={tr('public.home.ogTitle')}
                 />
                 <meta property="og:description" content={description} />
                 <meta
@@ -144,8 +156,7 @@ export default function PublicHome({
                                 Kamera · {branch?.city ?? 'Ponorogo'}
                             </div>
                             <h1 className="mt-7 max-w-4xl text-5xl leading-[0.98] font-semibold tracking-[-0.055em] sm:text-6xl lg:text-8xl">
-                                {branch?.hero_title ??
-                                    'Sewa alat kreatif tanpa ribet.'}
+                                {heroTitle}
                             </h1>
                             <p className="mt-7 max-w-2xl text-base leading-7 text-white/60 sm:text-lg sm:leading-8">
                                 {description}
@@ -155,7 +166,7 @@ export default function PublicHome({
                                     href={catalogHref}
                                     className="inline-flex h-12 items-center justify-center gap-2 rounded-full bg-white px-6 text-sm font-semibold text-neutral-950 transition hover:bg-neutral-200"
                                 >
-                                    Lihat katalog{' '}
+                                    {tr('public.home.viewCatalog')}{' '}
                                     <ArrowRight className="size-4" />
                                 </Link>
                                 {branch?.whatsapp_url && (
@@ -165,9 +176,7 @@ export default function PublicHome({
                                         rel="noreferrer"
                                         className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-white/15 bg-white/5 px-6 text-sm font-semibold text-white transition hover:bg-white/10"
                                     >
-                                        <MessageCircle className="size-4" />{' '}
-                                        Konsultasi kebutuhan
-                                    </a>
+                                        <MessageCircle className="size-4" />{' '}{tr('public.home.consult')}</a>
                                 )}
                             </div>
 
@@ -177,24 +186,21 @@ export default function PublicHome({
                                         {stats.products}+
                                     </p>
                                     <p className="mt-1 text-xs text-white/45 sm:text-sm">
-                                        Pilihan produk
-                                    </p>
+                                    {tr('public.home.productChoices')}</p>
                                 </div>
                                 <div>
                                     <p className="text-2xl font-semibold sm:text-3xl">
                                         {stats.availableUnits}+
                                     </p>
                                     <p className="mt-1 text-xs text-white/45 sm:text-sm">
-                                        Unit siap tersedia
-                                    </p>
+                                    {tr('public.home.unitsReady')}</p>
                                 </div>
                                 <div>
                                     <p className="text-2xl font-semibold sm:text-3xl">
                                         09–21
                                     </p>
                                     <p className="mt-1 text-xs text-white/45 sm:text-sm">
-                                        Jam layanan
-                                    </p>
+                                    {tr('public.home.hours')}</p>
                                 </div>
                             </div>
                         </div>
@@ -204,11 +210,9 @@ export default function PublicHome({
                             <div className="relative overflow-hidden rounded-[2.5rem] border border-white/10 bg-white/[0.06] p-6 shadow-2xl backdrop-blur-xl sm:p-9">
                                 <div className="flex items-center justify-between">
                                     <p className="text-sm font-medium text-white/70">
-                                        Creative equipment
-                                    </p>
+                                    {tr('public.home.equipment')}</p>
                                     <span className="rounded-full bg-emerald-400/15 px-3 py-1 text-xs font-medium text-emerald-300">
-                                        Ready to rent
-                                    </span>
+                                    {tr('public.home.ready')}</span>
                                 </div>
                                 <div className="mt-12 flex min-h-72 items-center justify-center">
                                     <img
@@ -226,12 +230,12 @@ export default function PublicHome({
 
                                         return (
                                             <div
-                                                key={item.label}
+                                                key={item.labelKey}
                                                 className="rounded-2xl border border-white/10 bg-white/5 p-4 text-center"
                                             >
                                                 <Icon className="mx-auto size-5 text-white/60" />
                                                 <p className="mt-2 text-xs text-white/50">
-                                                    {item.label}
+                                                    {tr(item.labelKey)}
                                                 </p>
                                             </div>
                                         );
@@ -245,13 +249,12 @@ export default function PublicHome({
                 <section className="border-b border-black/5 bg-white">
                     <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-x-10 gap-y-5 px-5 py-7 lg:px-8">
                         <p className="text-xs font-semibold tracking-[0.18em] text-neutral-400 uppercase">
-                            Brand pilihan
-                        </p>
+                                    {tr('public.home.featuredBrands')}</p>
                         {brands.length > 0 ? (
                             brands.slice(0, 8).map((brand) => (
                                 <Link
                                     key={brand.id}
-                                    href={`${catalogHref}&brand=${brand.slug}`}
+                                    href={`${catalogHref}${catalogHref.includes('?') ? '&' : '?'}brand=${brand.slug}`}
                                     className="flex h-9 items-center gap-2 text-sm font-semibold text-neutral-500 transition hover:text-neutral-950"
                                 >
                                     {brand.logo_url && (
@@ -276,17 +279,15 @@ export default function PublicHome({
                     <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
                         <div>
                             <p className="text-xs font-semibold tracking-[0.18em] text-neutral-400 uppercase">
-                                Jelajahi kebutuhanmu
-                            </p>
+                                    {tr('public.home.explore')}</p>
                             <h2 className="mt-3 text-3xl font-semibold tracking-[-0.035em] sm:text-5xl">
-                                Kategori populer.
-                            </h2>
+                                    {tr('public.home.popularCategories')}</h2>
                         </div>
                         <Link
                             href={catalogHref}
                             className="inline-flex items-center gap-2 text-sm font-semibold hover:text-neutral-500"
                         >
-                            Lihat semua <ArrowRight className="size-4" />
+                                    {tr('public.home.viewAll')}{' '}<ArrowRight className="size-4" />
                         </Link>
                     </div>
 
@@ -295,7 +296,7 @@ export default function PublicHome({
                             categories.map((category, index) => (
                                 <Link
                                     key={category.id}
-                                    href={`${catalogHref}&category=${category.slug}`}
+                                    href={`${catalogHref}${catalogHref.includes('?') ? '&' : '?'}category=${category.slug}`}
                                     className="group relative min-h-52 overflow-hidden rounded-[1.75rem] bg-neutral-950 p-6 text-white"
                                 >
                                     {category.image_url && (
@@ -317,17 +318,14 @@ export default function PublicHome({
                                                 {category.name}
                                             </h3>
                                             <p className="mt-1 text-sm text-white/50">
-                                                {category.products_count} produk
-                                            </p>
+                                                {category.products_count}{' '}{tr('public.home.products')}</p>
                                         </div>
                                     </div>
                                 </Link>
                             ))
                         ) : (
                             <div className="col-span-full rounded-3xl border border-dashed border-black/10 bg-white p-10 text-center text-sm text-neutral-500">
-                                Kategori publik akan tampil setelah data katalog
-                                tersedia.
-                            </div>
+                                    {tr('public.home.noCategories')}</div>
                         )}
                     </div>
                 </section>
@@ -337,17 +335,15 @@ export default function PublicHome({
                         <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
                             <div>
                                 <p className="text-xs font-semibold tracking-[0.18em] text-neutral-400 uppercase">
-                                    Pilihan Together
-                                </p>
+                                    {tr('public.home.featured')}</p>
                                 <h2 className="mt-3 text-3xl font-semibold tracking-[-0.035em] sm:text-5xl">
-                                    Alat yang sering dicari.
-                                </h2>
+                                    {tr('public.home.popularGear')}</h2>
                             </div>
                             <Link
                                 href={catalogHref}
                                 className="inline-flex items-center gap-2 text-sm font-semibold hover:text-neutral-500"
                             >
-                                Buka katalog <ArrowRight className="size-4" />
+                                    {tr('public.home.openCatalog')}{' '}<ArrowRight className="size-4" />
                             </Link>
                         </div>
 
@@ -368,15 +364,11 @@ export default function PublicHome({
                     <section className="mx-auto max-w-7xl px-5 py-20 lg:px-8 lg:py-28">
                         <div className="max-w-2xl">
                             <p className="text-xs font-semibold tracking-[0.18em] text-neutral-400 uppercase">
-                                Lebih praktis
-                            </p>
+                                    {tr('public.home.practical')}</p>
                             <h2 className="mt-3 text-3xl font-semibold tracking-[-0.035em] sm:text-5xl">
-                                Paket siap produksi.
-                            </h2>
+                                    {tr('public.home.readyPackages')}</h2>
                             <p className="mt-4 text-base leading-7 text-neutral-500">
-                                Kombinasi alat yang sudah disusun agar Anda
-                                tidak perlu memilih satu per satu.
-                            </p>
+                                    {tr('public.home.packagesDescription')}</p>
                         </div>
                         <div className="mt-10 grid gap-5 lg:grid-cols-2">
                             {featuredPackages.map((rentalPackage) => (
@@ -398,15 +390,11 @@ export default function PublicHome({
                         <div className="grid gap-12 lg:grid-cols-[0.8fr_1.2fr]">
                             <div>
                                 <p className="text-xs font-semibold tracking-[0.18em] text-white/40 uppercase">
-                                    Alur sederhana
-                                </p>
+                                    {tr('public.home.simpleProcess')}</p>
                                 <h2 className="mt-3 text-3xl font-semibold tracking-[-0.035em] sm:text-5xl">
-                                    Dari rencana menuju karya.
-                                </h2>
+                                    {tr('public.home.fromPlanToCreation')}</h2>
                                 <p className="mt-5 max-w-md leading-7 text-white/50">
-                                    Kami membantu memastikan alat, jadwal, dan
-                                    kebutuhan teknis Anda lebih tertata.
-                                </p>
+                                    {tr('public.home.processDescription')}</p>
                             </div>
                             <div className="grid gap-4 md:grid-cols-3">
                                 {steps.map((step, index) => {
@@ -414,7 +402,7 @@ export default function PublicHome({
 
                                     return (
                                         <article
-                                            key={step.title}
+                                            key={step.titleKey}
                                             className="rounded-[1.5rem] border border-white/10 bg-white/[0.04] p-6"
                                         >
                                             <div className="flex items-center justify-between">
@@ -426,10 +414,10 @@ export default function PublicHome({
                                                 </span>
                                             </div>
                                             <h3 className="mt-8 font-semibold">
-                                                {step.title}
+                                                {tr(step.titleKey)}
                                             </h3>
                                             <p className="mt-2 text-sm leading-6 text-white/45">
-                                                {step.description}
+                                                {tr(step.descriptionKey)}
                                             </p>
                                         </article>
                                     );
@@ -446,15 +434,15 @@ export default function PublicHome({
 
                             return (
                                 <article
-                                    key={benefit.title}
+                                    key={benefit.titleKey}
                                     className="rounded-[1.5rem] border border-black/7 p-6"
                                 >
                                     <Icon className="size-5" />
                                     <h3 className="mt-7 font-semibold">
-                                        {benefit.title}
+                                        {tr(benefit.titleKey)}
                                     </h3>
                                     <p className="mt-2 text-sm leading-6 text-neutral-500">
-                                        {benefit.description}
+                                        {tr(benefit.descriptionKey)}
                                     </p>
                                 </article>
                             );
@@ -466,16 +454,11 @@ export default function PublicHome({
                     <div className="mx-auto max-w-7xl overflow-hidden rounded-[2rem] bg-gradient-to-br from-cyan-400 via-sky-500 to-blue-700 px-6 py-12 text-white sm:px-10 lg:flex lg:items-center lg:justify-between lg:px-14 lg:py-14">
                         <div className="max-w-2xl">
                             <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1.5 text-xs font-medium backdrop-blur">
-                                <CheckCircle2 className="size-3.5" /> Siap
-                                mulai?
-                            </div>
+                                <CheckCircle2 className="size-3.5" />{' '}{tr('public.home.readyToStart')}</div>
                             <h2 className="mt-5 text-3xl font-semibold tracking-[-0.035em] sm:text-5xl">
-                                Ceritakan kebutuhan produksimu.
-                            </h2>
+                                    {tr('public.home.tellUs')}</h2>
                             <p className="mt-4 leading-7 text-white/75">
-                                Admin Together Kamera akan membantu memilihkan
-                                alat dan durasi rental yang paling sesuai.
-                            </p>
+                                    {tr('public.home.helpChoose')}</p>
                         </div>
                         {branch?.whatsapp_url && (
                             <a
@@ -484,7 +467,7 @@ export default function PublicHome({
                                 rel="noreferrer"
                                 className="mt-8 inline-flex h-12 items-center gap-2 rounded-full bg-white px-6 text-sm font-semibold text-neutral-950 transition hover:bg-neutral-100 lg:mt-0"
                             >
-                                Hubungi via WhatsApp{' '}
+                                    {tr('public.home.whatsapp')}{' '}
                                 <ArrowRight className="size-4" />
                             </a>
                         )}

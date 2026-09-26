@@ -6,6 +6,8 @@ import {
     LoaderCircle,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import { translateKey } from '@/lib/i18n';
+import type { AppLocale } from '@/lib/i18n';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -78,6 +80,18 @@ const priority: AssetCalendarStatus[] = [
     'booked',
     'in_transit',
 ];
+
+/** Public calendar labels come from stable status codes; internal asset screens remain unchanged. */
+function publicEventLabel(status: AssetCalendarStatus, locale: AppLocale): string {
+    const keys = {
+        booked: 'public.detail.calendar.event.booked',
+        rented: 'public.detail.calendar.event.rented',
+        maintenance: 'public.detail.calendar.event.maintenance',
+        in_transit: 'public.detail.calendar.event.inTransit',
+    } as const;
+
+    return translateKey(keys[status], locale);
+}
 
 export function AssetSmartCalendarDialog({ open, onOpenChange, asset }: Props) {
     const [month, setMonth] = useState(currentMonth());
@@ -204,10 +218,12 @@ export function CalendarMonth({
     month,
     events,
     appearance = 'default',
+    locale = 'id',
 }: {
     month: string;
     events: AssetCalendarEvent[];
     appearance?: CalendarAppearance;
+    locale?: AppLocale;
 }) {
     const days = useMemo(() => monthCells(month), [month]);
     const isPublic = appearance === 'public';
@@ -228,7 +244,7 @@ export function CalendarMonth({
                         <span
                             className={`size-2 rounded-full ${statusMeta[status].dot}`}
                         />
-                        {statusMeta[status].label}
+                        {isPublic ? publicEventLabel(status, locale) : statusMeta[status].label}
                     </Badge>
                 ))}
                 <Badge
@@ -240,7 +256,7 @@ export function CalendarMonth({
                     }
                 >
                     <span className="size-2 rounded-full bg-emerald-500" />
-                    Tersedia
+                    {isPublic ? translateKey('public.detail.calendar.available', locale) : 'Tersedia'}
                 </Badge>
             </div>
 
@@ -251,7 +267,10 @@ export function CalendarMonth({
                         : 'grid grid-cols-7 gap-1 text-center text-xs font-medium text-muted-foreground'
                 }
             >
-                {['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min'].map(
+                {(isPublic && locale === 'en'
+                    ? ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
+                    : ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min']
+                ).map(
                     (day) => (
                         <div key={day} className="py-2">
                             {day}
@@ -312,7 +331,7 @@ export function CalendarMonth({
                                                 className={`size-1.5 shrink-0 rounded-full ${statusMeta[event.status].dot}`}
                                             />
                                             <span className="truncate">
-                                                {event.label}
+                                                {isPublic ? publicEventLabel(event.status, locale) : event.label}
                                             </span>
                                         </div>
                                     ))}
@@ -324,7 +343,7 @@ export function CalendarMonth({
                                                     : 'text-[10px] text-emerald-700 dark:text-emerald-400'
                                             }
                                         >
-                                            Tersedia
+                                            {isPublic ? translateKey('public.detail.calendar.available', locale) : 'Tersedia'}
                                         </span>
                                     )}
                                 </div>
@@ -342,11 +361,13 @@ export function CalendarToolbar({
     onPrevious,
     onNext,
     appearance = 'default',
+    locale = 'id',
 }: {
     month: string;
     onPrevious: () => void;
     onNext: () => void;
     appearance?: CalendarAppearance;
+    locale?: AppLocale;
 }) {
     const isPublic = appearance === 'public';
 
@@ -368,11 +389,11 @@ export function CalendarToolbar({
                         : undefined
                 }
                 onClick={onPrevious}
-                aria-label="Bulan sebelumnya"
+                aria-label={isPublic ? translateKey('public.detail.calendar.previous', locale) : 'Bulan sebelumnya'}
             >
                 <ChevronLeft />
             </Button>
-            <p className="font-semibold">{monthLabel(month)}</p>
+            <p className="font-semibold">{monthLabel(month, isPublic ? locale : 'id')}</p>
             <Button
                 type="button"
                 variant="ghost"
@@ -383,7 +404,7 @@ export function CalendarToolbar({
                         : undefined
                 }
                 onClick={onNext}
-                aria-label="Bulan berikutnya"
+                aria-label={isPublic ? translateKey('public.detail.calendar.next', locale) : 'Bulan berikutnya'}
             >
                 <ChevronRight />
             </Button>
@@ -506,10 +527,10 @@ export function shiftMonth(month: string, delta: number) {
     return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
 }
 
-function monthLabel(month: string) {
+function monthLabel(month: string, locale: AppLocale = 'id') {
     const [year, monthNumber] = month.split('-').map(Number);
 
-    return new Intl.DateTimeFormat('id-ID', {
+    return new Intl.DateTimeFormat(locale === 'en' ? 'en-US' : 'id-ID', {
         month: 'long',
         year: 'numeric',
     }).format(new Date(year, monthNumber - 1, 1));

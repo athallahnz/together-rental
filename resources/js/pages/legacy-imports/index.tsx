@@ -8,6 +8,7 @@ import {
     UploadCloud,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { stage5Choice, stage5PaginatorLabel, stage5Number, stage5Date, stage5Display, Stage5Text, stage5Translate } from '@/components/stage5-text';
 import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -20,6 +21,7 @@ import {
 } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useAppLocale } from '@/lib/i18n';
 
 type BranchOption = {
     id: number;
@@ -69,23 +71,6 @@ type Props = {
     };
 };
 
-const statusLabels: Record<string, string> = {
-    uploaded: 'Uploaded',
-    queued_preview: 'Preview dalam antrean',
-    previewing: 'Memproses preview',
-    previewed: 'Preview tersedia',
-    queued_validation: 'Validasi dalam antrean',
-    validating: 'Memvalidasi',
-    validated: 'Tervalidasi',
-    mapped: 'Mapping dikonfirmasi',
-    queued_execution: 'Execute dalam antrean',
-    executing: 'Mengeksekusi',
-    executed: 'Sudah dieksekusi',
-    queued_verification: 'Verifikasi dalam antrean',
-    verifying: 'Memverifikasi',
-    verified: 'Terverifikasi',
-    failed: 'Gagal',
-};
 
 export default function LegacyImportIndex({
     branches,
@@ -94,6 +79,7 @@ export default function LegacyImportIndex({
     maxUploadMegabytes,
     permissions,
 }: Props) {
+    const { locale: stage5Locale } = useAppLocale();
     const initialBranch =
         branches.find((branch) => branch.id === defaultBranchId) ?? branches[0];
     const [selectedBranchId, setSelectedBranchId] = useState(
@@ -116,25 +102,23 @@ export default function LegacyImportIndex({
 
     return (
         <>
-            <Head title="Legacy Import RentalV1" />
+            <Head title={stage5Translate("stage5.ui.1a71ed4aa718", stage5Locale)} />
 
             <div className="flex h-full flex-1 flex-col gap-6 overflow-x-auto rounded-xl p-4 md:p-6">
                 <header className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
                     <div>
                         <p className="text-sm font-medium text-primary">
-                            Database Rental Management V2
+                            <Stage5Text k="stage5.ui.580b76bbdf67" />
                         </p>
                         <h1 className="mt-1 text-2xl font-semibold tracking-tight">
-                            Legacy Import RentalV1
+                            <Stage5Text k="stage5.ui.1a71ed4aa718" />
                         </h1>
                         <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-                            Setiap import memiliki kota/cabang tujuan dan PREFIX
-                            tiga huruf sendiri. PREFIX menjadi identitas legacy
-                            agar data antar-kota tidak saling bertabrakan.
+                            <Stage5Text k="stage5.ui.b165ac31abb0" />
                         </p>
                     </div>
                     <Badge variant="outline" className="h-7 px-3">
-                        {branches.length} cabang tersedia
+                        {branches.length} <Stage5Text k="stage5.ui.44d3894c59ae" />
                     </Badge>
                 </header>
 
@@ -143,13 +127,10 @@ export default function LegacyImportIndex({
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <UploadCloud className="size-5" />
-                                Upload SQL RentalV1
+                                <Stage5Text k="stage5.ui.97e282e6af6d" />
                             </CardTitle>
                             <CardDescription>
-                                Pilih kota/cabang yang benar sebelum upload.
-                                Maksimal {maxUploadMegabytes} MB. File disimpan
-                                privat dan tidak pernah dieksekusi langsung ke
-                                MySQL.
+                                <Stage5Text k="stage5.ui.e7db6b30860a" /> {maxUploadMegabytes} <Stage5Text k="stage5.ui.0dd949d2ec49" />
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -166,7 +147,7 @@ export default function LegacyImportIndex({
                                                 <div className="grid gap-4 md:grid-cols-[1fr_180px]">
                                                     <div className="grid gap-2">
                                                         <Label htmlFor="branch_id">
-                                                            Kota / cabang tujuan
+                                                            <Stage5Text k="stage5.ui.fcf175c12573" />
                                                         </Label>
                                                         <select
                                                             id="branch_id"
@@ -219,7 +200,7 @@ export default function LegacyImportIndex({
 
                                                     <div className="grid gap-2">
                                                         <Label htmlFor="import_prefix">
-                                                            PREFIX import
+                                                            <Stage5Text k="stage5.ui.54491fdec612" />
                                                         </Label>
                                                         <Input
                                                             id="import_prefix"
@@ -258,12 +239,7 @@ export default function LegacyImportIndex({
                                                         />
                                                         {selectedBranch?.prefix_locked && (
                                                             <p className="text-xs text-muted-foreground">
-                                                                PREFIX cabang
-                                                                ini sudah
-                                                                ditetapkan dari
-                                                                import
-                                                                sebelumnya dan
-                                                                harus tetap{' '}
+                                                                <Stage5Text k="stage5.ui.9b244da11251" />{' '}
                                                                 {
                                                                     selectedBranch.suggested_prefix
                                                                 }
@@ -278,7 +254,7 @@ export default function LegacyImportIndex({
                                                         <MapPin className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
                                                         <div>
                                                             <p className="font-medium">
-                                                                Tujuan:{' '}
+                                                                <Stage5Text k="stage5.ui.17848205f216" />{' '}
                                                                 {selectedBranch.city ||
                                                                     'Kota belum diisi'}
                                                             </p>
@@ -290,7 +266,7 @@ export default function LegacyImportIndex({
                                                                 {
                                                                     selectedBranch.name
                                                                 }{' '}
-                                                                · PREFIX{' '}
+                                                                <Stage5Text k="stage5.ui.a8ef9fece60b" />{' '}
                                                                 <span className="font-mono font-semibold">
                                                                     {importPrefix ||
                                                                         '---'}
@@ -302,7 +278,7 @@ export default function LegacyImportIndex({
 
                                                 <div className="grid gap-2">
                                                     <Label htmlFor="sql_file">
-                                                        File dump .sql
+                                                        <Stage5Text k="stage5.ui.feb5330e8531" />
                                                     </Label>
                                                     <Input
                                                         id="sql_file"
@@ -322,7 +298,7 @@ export default function LegacyImportIndex({
                                                     <div>
                                                         <div className="mb-1 flex justify-between text-xs text-muted-foreground">
                                                             <span>
-                                                                Mengunggah file
+                                                                <Stage5Text k="stage5.ui.0152ec282094" />
                                                             </span>
                                                             <span>
                                                                 {
@@ -352,22 +328,20 @@ export default function LegacyImportIndex({
                                                 >
                                                     <UploadCloud />
                                                     {processing
-                                                        ? 'Mengunggah…'
-                                                        : 'Upload dan buat batch'}
+                                                        ? stage5Choice('Mengunggah…', 'Uploading…', stage5Locale)
+                                                        : stage5Choice('Unggah dan buat batch', 'Upload and create batch', stage5Locale)}
                                                 </Button>
                                             </>
                                         )}
                                     </Form>
                                 ) : (
                                     <p className="text-sm text-muted-foreground">
-                                        Tidak ada cabang aktif dengan akses
-                                        import untuk akun ini.
+                                        <Stage5Text k="stage5.ui.95a53d7b10ab" />
                                     </p>
                                 )
                             ) : (
                                 <p className="text-sm text-muted-foreground">
-                                    Akun ini tidak memiliki izin untuk
-                                    mengunggah sumber legacy.
+                                    <Stage5Text k="stage5.ui.2b8e53ea98e6" />
                                 </p>
                             )}
                         </CardContent>
@@ -375,9 +349,9 @@ export default function LegacyImportIndex({
 
                     <Card>
                         <CardHeader>
-                            <CardTitle>Proteksi import</CardTitle>
+                            <CardTitle><Stage5Text k="stage5.ui.f9fc8c5ae6af" /></CardTitle>
                             <CardDescription>
-                                Guardrail aktif untuk menjaga database baru.
+                                <Stage5Text k="stage5.ui.971b11394d08" />
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
@@ -385,17 +359,17 @@ export default function LegacyImportIndex({
                                 [
                                     FileCode2,
                                     'Allowlist parser',
-                                    'Hanya tabel RentalV1 yang dikenali yang dibaca.',
+                                    stage5Choice('Hanya tabel RentalV1 yang dikenali yang dibaca.', 'Only recognized RentalV1 tables are read.', stage5Locale),
                                 ],
                                 [
                                     ShieldCheck,
-                                    'Kota & PREFIX terkunci sebelum execute',
-                                    'Jika tujuan diubah setelah preview, hasil staging direset dan wajib dipreview ulang.',
+                                    stage5Choice('Kota & PREFIX terkunci sebelum eksekusi', 'City and prefix locked before execution', stage5Locale),
+                                    stage5Choice('Jika tujuan diubah setelah pratinjau, data sementara dihapus dan wajib dipratinjau ulang.', 'If the destination changes after preview, staged data is reset and preview must be repeated.', stage5Locale),
                                 ],
                                 [
                                     DatabaseZap,
-                                    'SHA-256 & ID map per cabang',
-                                    'File duplikat dan mapping ID record ganda diblokir.',
+                                    stage5Choice('SHA-256 & pemetaan ID per cabang', 'SHA-256 & branch-specific ID mapping', stage5Locale),
+                                    stage5Choice('Berkas duplikat dan pemetaan ID ganda diblokir.', 'Duplicate files and duplicate record ID mappings are blocked.', stage5Locale),
                                 ],
                             ].map(([Icon, title, description]) => (
                                 <div key={String(title)} className="flex gap-3">
@@ -418,10 +392,9 @@ export default function LegacyImportIndex({
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>Riwayat batch import</CardTitle>
+                        <CardTitle><Stage5Text k="stage5.ui.cfa0a46b60f6" /></CardTitle>
                         <CardDescription>
-                            Kota, PREFIX, keputusan mapping, dan eksekusi
-                            tersimpan dalam audit event.
+                            <Stage5Text k="stage5.ui.bf8e3d90d088" />
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="overflow-x-auto">
@@ -429,28 +402,28 @@ export default function LegacyImportIndex({
                             <thead>
                                 <tr className="border-b text-left text-xs tracking-wide text-muted-foreground uppercase">
                                     <th className="px-3 py-3 font-medium">
-                                        Sumber
+                                        <Stage5Text k="stage5.ui.ff648afc53ef" />
                                     </th>
                                     <th className="px-3 py-3 font-medium">
-                                        Kota
+                                        <Stage5Text k="stage5.ui.1f1ad92e0a04" />
                                     </th>
                                     <th className="px-3 py-3 font-medium">
-                                        PREFIX
+                                        <Stage5Text k="stage5.ui.890121a7a9c7" />
                                     </th>
                                     <th className="px-3 py-3 font-medium">
-                                        Status
+                                        <Stage5Text k="stage5.ui.bae7d5be7082" />
                                     </th>
                                     <th className="px-3 py-3 text-right font-medium">
-                                        Rows
+                                        <Stage5Text k="stage5.ui.52d0b35277ee" />
                                     </th>
                                     <th className="px-3 py-3 text-right font-medium">
-                                        Warning
+                                        <Stage5Text k="stage5.ui.e9c45563358e" />
                                     </th>
                                     <th className="px-3 py-3 text-right font-medium">
-                                        Error
+                                        <Stage5Text k="stage5.ui.7f2f6a15cf8d" />
                                     </th>
                                     <th className="px-3 py-3 font-medium">
-                                        Dibuat
+                                        <Stage5Text k="stage5.ui.5264ac49ed12" />
                                     </th>
                                     <th className="px-3 py-3" />
                                 </tr>
@@ -514,7 +487,7 @@ export default function LegacyImportIndex({
                                                 <Link
                                                     href={`/legacy-imports/${batch.id}`}
                                                 >
-                                                    Detail
+                                                    <Stage5Text k="stage5.ui.7c9a7c0610c1" />
                                                     <ArrowRight />
                                                 </Link>
                                             </Button>
@@ -527,7 +500,7 @@ export default function LegacyImportIndex({
                                             colSpan={9}
                                             className="px-3 py-12 text-center text-muted-foreground"
                                         >
-                                            Belum ada batch import.
+                                            <Stage5Text k="stage5.ui.5ac392996ea9" />
                                         </td>
                                     </tr>
                                 )}
@@ -543,6 +516,7 @@ export default function LegacyImportIndex({
 }
 
 function StatusBadge({ status }: { status: string }) {
+    const { locale: stage5Locale } = useAppLocale();
     const variant =
         status === 'failed'
             ? 'destructive'
@@ -552,7 +526,7 @@ function StatusBadge({ status }: { status: string }) {
 
     return (
         <Badge variant={variant}>
-            {statusLabels[status] ?? status.replaceAll('_', ' ')}
+            {stage5Display(status, stage5Locale)}
         </Badge>
     );
 }
@@ -562,6 +536,8 @@ function Pagination({
 }: {
     links: Array<{ url: string | null; label: string; active: boolean }>;
 }) {
+    const { locale: stage5Locale } = useAppLocale();
+
     if (links.length <= 3) {
         return null;
     }
@@ -579,7 +555,7 @@ function Pagination({
                         <Link
                             href={link.url}
                             preserveScroll
-                            dangerouslySetInnerHTML={{ __html: link.label }}
+                            dangerouslySetInnerHTML={{ __html: stage5PaginatorLabel(link.label, stage5Locale) }}
                         />
                     </Button>
                 ) : (
@@ -588,7 +564,7 @@ function Pagination({
                         size="sm"
                         variant="outline"
                         disabled
-                        dangerouslySetInnerHTML={{ __html: link.label }}
+                        dangerouslySetInnerHTML={{ __html: stage5PaginatorLabel(link.label, stage5Locale) }}
                     />
                 ),
             )}
@@ -597,14 +573,11 @@ function Pagination({
 }
 
 function number(value: number) {
-    return new Intl.NumberFormat('id-ID').format(value);
+    return stage5Number(value);
 }
 
 function dateTime(value: string) {
-    return new Intl.DateTimeFormat('id-ID', {
-        dateStyle: 'medium',
-        timeStyle: 'short',
-    }).format(new Date(value));
+    return stage5Date(value);
 }
 
 LegacyImportIndex.layout = {

@@ -15,11 +15,13 @@ import {
     useSidebar,
 } from '@/components/ui/sidebar';
 import { useIsMobile } from '@/hooks/use-mobile';
+import { useAppLocale } from '@/lib/i18n';
 
 export function BranchSwitcher() {
     const { auth } = usePage().props;
     const { state } = useSidebar();
     const isMobile = useIsMobile();
+    const { tr } = useAppLocale();
 
     if (
         !auth.user ||
@@ -39,7 +41,7 @@ export function BranchSwitcher() {
                         <SidebarMenuButton
                             size="lg"
                             className="rounded-xl border border-sidebar-border/70 bg-sidebar-accent/35 shadow-xs data-[state=open]:bg-sidebar-accent"
-                            tooltip={{ children: current.name }}
+                            tooltip={{ children: tr('common.currentBranchTooltip', { name: current.name }) }}
                         >
                             <div className="flex aspect-square size-8 shrink-0 items-center justify-center rounded-lg border border-sidebar-border bg-sidebar text-sidebar-foreground">
                                 <Building2 className="size-4" />
@@ -67,7 +69,7 @@ export function BranchSwitcher() {
                         }
                     >
                         <DropdownMenuLabel className="text-xs text-muted-foreground">
-                            Cabang aktif
+                            {tr('common.activeBranch')}
                         </DropdownMenuLabel>
                         <DropdownMenuSeparator />
                         {auth.branches.map((branch) => {

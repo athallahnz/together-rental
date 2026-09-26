@@ -44,11 +44,13 @@ import {
     SidebarMenuButton,
     SidebarMenuItem,
 } from '@/components/ui/sidebar';
+import { useAppLocale } from '@/lib/i18n';
 import { dashboard } from '@/routes';
 import type { NavItem } from '@/types';
 
 export function AppSidebar() {
     const { auth } = usePage().props;
+    const { tr } = useAppLocale();
     const canOpenSettingsCenter =
         auth.permissions['company.view'] ||
         auth.permissions['company.manage'] ||
@@ -58,17 +60,17 @@ export function AppSidebar() {
         auth.permissions['roles.view'];
     const navGroups: NavMainGroup[] = [
         {
-            label: 'Ringkasan',
+            label: tr('nav.overview'),
             items: [
                 {
-                    title: 'Dashboard',
+                    title: tr('nav.dashboard'),
                     href: dashboard(),
                     icon: LayoutGrid,
                 },
                 ...(auth.permissions['notifications.view']
                     ? [
                           {
-                              title: 'Notifikasi',
+                              title: tr('nav.notifications'),
                               href: '/notifications',
                               icon: BellRing,
                           },
@@ -77,12 +79,12 @@ export function AppSidebar() {
             ],
         },
         {
-            label: 'Operasional Rental',
+            label: tr('nav.rentalOperations'),
             items: [
                 ...(auth.permissions['bookings.view']
                     ? [
                           {
-                              title: 'Booking',
+                              title: tr('nav.bookings'),
                               href: '/bookings',
                               icon: CalendarDays,
                           },
@@ -91,7 +93,7 @@ export function AppSidebar() {
                 ...(auth.permissions['rentals.view']
                     ? [
                           {
-                              title: 'Rental Control Center',
+                              title: tr('nav.rentals'),
                               href: '/rentals',
                               icon: ShoppingBag,
                           },
@@ -100,7 +102,7 @@ export function AppSidebar() {
                 ...(auth.permissions['rentals.create']
                     ? [
                           {
-                              title: 'Rental In Store',
+                              title: tr('nav.directRentals'),
                               href: '/rentals/direct/create',
                               icon: ShoppingBag,
                           },
@@ -109,7 +111,7 @@ export function AppSidebar() {
                 ...(auth.permissions['documents.view']
                     ? [
                           {
-                              title: 'Invoice, Nota & Agreement',
+                              title: tr('nav.documents'),
                               href: '/documents',
                               icon: FileText,
                           },
@@ -118,7 +120,7 @@ export function AppSidebar() {
                 ...(auth.permissions['maintenance.view']
                     ? [
                           {
-                              title: 'Maintenance',
+                              title: tr('nav.maintenance'),
                               href: '/maintenance',
                               icon: Wrench,
                           },
@@ -127,12 +129,12 @@ export function AppSidebar() {
             ] satisfies NavItem[],
         },
         {
-            label: 'Keuangan',
+            label: tr('nav.finance'),
             items: [
                 ...(auth.permissions['finance.dashboard.view']
                     ? [
                           {
-                              title: 'Finance Dashboard',
+                              title: tr('nav.financeDashboard'),
                               href: '/finance/dashboard',
                               icon: WalletCards,
                           },
@@ -141,7 +143,7 @@ export function AppSidebar() {
                 ...(auth.permissions['payments.view']
                     ? [
                           {
-                              title: 'Payment Center',
+                              title: tr('nav.payments'),
                               href: '/finance/payments',
                               icon: CreditCard,
                           },
@@ -150,7 +152,7 @@ export function AppSidebar() {
                 ...(auth.permissions['expenses.view']
                     ? [
                           {
-                              title: 'Expense & Cash Center',
+                              title: tr('nav.expenses'),
                               href: '/finance/expenses',
                               icon: Banknote,
                           },
@@ -159,7 +161,7 @@ export function AppSidebar() {
                 ...(auth.permissions['refunds.view']
                     ? [
                           {
-                              title: 'Refund Center',
+                              title: tr('nav.refunds'),
                               href: '/finance/refunds',
                               icon: ReceiptText,
                           },
@@ -168,7 +170,7 @@ export function AppSidebar() {
                 ...(auth.permissions['finance.masters.view']
                     ? [
                           {
-                              title: 'Master Finance & Kasir',
+                              title: tr('nav.financeMaster'),
                               href: '/finance/master-data',
                               icon: SlidersHorizontal,
                           },
@@ -177,12 +179,12 @@ export function AppSidebar() {
             ] satisfies NavItem[],
         },
         {
-            label: 'Data & Inventaris',
+            label: tr('nav.inventory'),
             items: [
                 ...(auth.permissions['customers.view']
                     ? [
                           {
-                              title: 'Pelanggan',
+                              title: tr('nav.customers'),
                               href: '/customers',
                               icon: ContactRound,
                           },
@@ -191,12 +193,12 @@ export function AppSidebar() {
                 ...(auth.permissions['products.view']
                     ? [
                           {
-                              title: 'Katalog & Harga',
+                              title: tr('nav.catalog'),
                               href: '/catalog',
                               icon: PackageSearch,
                           },
                           {
-                              title: 'Promosi & Diskon',
+                              title: tr('nav.promotions'),
                               href: '/catalog/promotions',
                               icon: BadgePercent,
                           },
@@ -205,7 +207,7 @@ export function AppSidebar() {
                 ...(auth.permissions['assets.view']
                     ? [
                           {
-                              title: 'Siklus Aset',
+                              title: tr('nav.assetLifecycle'),
                               href: '/assets/lifecycle',
                               icon: ArchiveRestore,
                           },
@@ -214,12 +216,12 @@ export function AppSidebar() {
                 ...(auth.permissions['products.manage']
                     ? [
                           {
-                              title: 'Konten Katalog Publik',
+                              title: tr('nav.publicCatalogContent'),
                               href: '/catalog/public-content',
                               icon: Globe2,
                           },
                           {
-                              title: 'Kecerdasan Katalog',
+                              title: tr('nav.catalogIntelligence'),
                               href: '/catalog/intelligence',
                               icon: Sparkles,
                           },
@@ -228,7 +230,7 @@ export function AppSidebar() {
                 ...(auth.permissions['transfers.view']
                     ? [
                           {
-                              title: 'Transfer Aset',
+                              title: tr('nav.assetTransfers'),
                               href: '/transfers',
                               icon: ArrowLeftRight,
                           },
@@ -237,7 +239,7 @@ export function AppSidebar() {
                 ...(auth.permissions['inventory-audits.view']
                     ? [
                           {
-                              title: 'Stock Opname',
+                              title: tr('nav.stocktaking'),
                               href: '/inventory-audits',
                               icon: ClipboardCheck,
                           },
@@ -246,17 +248,17 @@ export function AppSidebar() {
             ] satisfies NavItem[],
         },
         {
-            label: 'Laporan',
+            label: tr('nav.reports'),
             items: [
                 ...(auth.permissions['reports.view']
                     ? [
                           {
-                              title: 'Reporting Center',
+                              title: tr('nav.reportingCenter'),
                               href: '/reports',
                               icon: FileSpreadsheet,
                           },
                           {
-                              title: 'Analitik Aset',
+                              title: tr('nav.assetAnalytics'),
                               href: '/reports/asset-analytics',
                               icon: BarChart3,
                           },
@@ -265,21 +267,26 @@ export function AppSidebar() {
             ] satisfies NavItem[],
         },
         {
-            label: 'Administrasi',
+            label: tr('nav.administration'),
             items: [
                 ...(canOpenSettingsCenter
                     ? [
                           {
-                              title: 'Pengaturan',
+                              title: tr('nav.settings'),
                               href: '/settings-center',
                               icon: Settings2,
                           },
                       ]
                     : []),
+                {
+                    title: tr('nav.language'),
+                    href: '/settings/language',
+                    icon: Globe2,
+                },
                 ...(auth.permissions['branches.view']
                     ? [
                           {
-                              title: 'Cabang',
+                              title: tr('nav.branches'),
                               href: '/branches',
                               icon: Building2,
                           },
@@ -288,12 +295,12 @@ export function AppSidebar() {
                 ...(auth.permissions['users.view']
                     ? [
                           {
-                              title: 'Karyawan',
+                              title: tr('nav.employees'),
                               href: '/employees',
                               icon: UsersRound,
                           },
                           {
-                              title: 'Pengguna',
+                              title: tr('nav.users'),
                               href: '/users',
                               icon: UserRound,
                           },
@@ -302,7 +309,7 @@ export function AppSidebar() {
                 ...(auth.permissions['roles.view']
                     ? [
                           {
-                              title: 'Role & Hak Akses',
+                              title: tr('nav.roles'),
                               href: '/roles',
                               icon: ShieldCheck,
                           },
@@ -311,7 +318,7 @@ export function AppSidebar() {
                 ...(auth.permissions['audit.view']
                     ? [
                           {
-                              title: 'Audit Trail',
+                              title: tr('nav.audit'),
                               href: '/audit-trail',
                               icon: History,
                           },
@@ -320,7 +327,7 @@ export function AppSidebar() {
                 ...(auth.permissions['imports.view']
                     ? [
                           {
-                              title: 'Legacy Import',
+                              title: tr('nav.legacyImport'),
                               href: '/legacy-imports',
                               icon: DatabaseZap,
                           },
@@ -329,7 +336,7 @@ export function AppSidebar() {
                 ...(auth.canResetOperations
                     ? [
                           {
-                              title: 'Reset Data Operasional',
+                              title: tr('nav.operationalReset'),
                               href: '/operations/reset',
                               icon: RotateCcw,
                           },

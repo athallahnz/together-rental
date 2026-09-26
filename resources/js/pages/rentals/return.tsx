@@ -1,6 +1,8 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import { AlertTriangle, ArrowLeft, PackageCheck } from 'lucide-react';
 import type { FormEvent, ReactNode } from 'react';
+import { Stage4Text, stage4Translate } from '@/components/stage4-text';
+import { useAppLocale } from '@/lib/i18n';
 import { CashSessionSelect } from '@/components/finance/cash-session-select';
 import type {
     CashSessionOption,
@@ -135,6 +137,8 @@ export default function RentalReturn({
     serverNow: string;
     overtimePreview: OvertimePreview;
 }) {
+    const { locale: stage4Locale } = useAppLocale();
+
     const correctionMode = operationalCorrection !== null;
     const units = rental.items.flatMap((item) =>
         item.assets.map((unit) => ({ ...unit, description: item.description })),
@@ -264,7 +268,7 @@ return;
 
     return (
         <>
-            <Head title={`Pengembalian ${rental.rental_number}`} />
+            <Head title={`${stage4Translate("stage4.ui.f59b32920284", stage4Locale)} ${rental.rental_number}`} />
             <form
                 onSubmit={submit}
                 className="flex flex-1 flex-col gap-6 p-4 md:p-6"
@@ -272,12 +276,10 @@ return;
                 <header>
                     <Button variant="ghost" size="sm" asChild>
                         <Link href={`/rentals/${rental.id}`}>
-                            <ArrowLeft />
-                            Detail rental
+                            <ArrowLeft /><Stage4Text k="stage4.ui.8d3adbe5e57d" />
                         </Link>
                     </Button>
-                    <h1 className="mt-3 text-2xl font-semibold">
-                        Proses pengembalian
+                    <h1 className="mt-3 text-2xl font-semibold"><Stage4Text k="stage4.ui.f59b32920284" />
                     </h1>
                     <p className="text-sm text-muted-foreground">
                         {rental.rental_number} · {rental.customer.name} ·{' '}
@@ -288,28 +290,22 @@ return;
                 {correctionMode && (
                     <Alert>
                         <AlertTriangle />
-                        <AlertTitle>
-                            Koreksi operasional{' '}
+                        <AlertTitle><Stage4Text k="stage4.ui.6bcdfebc3863" />{' '}
                             {operationalCorrection.correction_number}
                         </AlertTitle>
-                        <AlertDescription>
-                            Merevisi{' '}
+                        <AlertDescription><Stage4Text k="stage4.ui.0af956075f65" />{' '}
                             {
                                 operationalCorrection.original_return
                                     .return_number
-                            }
-                            . Semua unit wajib difinalisasi bersama. Nominal
-                            tetap Rp0 dan koreksi keuangan harus dilakukan
-                            melalui adjustment ledger.
+                            }<Stage4Text k="stage4.ui.2865d8261361" />
                         </AlertDescription>
                     </Alert>
                 )}
                 {!correctionMode && new Date(rental.due_at) < new Date() && (
                     <Alert variant="destructive">
                         <AlertTriangle />
-                        <AlertTitle>Rental melewati batas kembali</AlertTitle>
-                        <AlertDescription>
-                            Denda keterlambatan dihitung otomatis oleh server dari jatuh tempo efektif setiap item. Nilai di bawah adalah pratinjau dan akan dihitung ulang saat disimpan.
+                        <AlertTitle><Stage4Text k="stage4.ui.caf3db77f175" /></AlertTitle>
+                        <AlertDescription><Stage4Text k="stage4.ui.544f0ae5c151" />
                         </AlertDescription>
                     </Alert>
                 )}
@@ -331,12 +327,10 @@ return;
                 {!correctionMode && rental.collaterals.length > 0 && (
                     <Card>
                         <CardHeader>
-                            <CardTitle>Pengembalian jaminan fisik</CardTitle>
+                            <CardTitle><Stage4Text k="stage4.ui.c14f794ccd56" /></CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-3">
-                            <p className="text-sm text-muted-foreground">
-                                Centang hanya jaminan yang benar-benar
-                                diserahkan kembali ke pelanggan pada proses ini.
+                            <p className="text-sm text-muted-foreground"><Stage4Text k="stage4.ui.4185e45d4cf8" />
                             </p>
                             {rental.collaterals.map((collateral) => {
                                 const checked =
@@ -374,13 +368,9 @@ return;
                             {finalReturnHasHeldCollateral && (
                                 <Alert variant="destructive">
                                     <AlertTriangle />
-                                    <AlertTitle>
-                                        Jaminan masih ditahan
+                                    <AlertTitle><Stage4Text k="stage4.ui.32652bf89678" />
                                     </AlertTitle>
-                                    <AlertDescription>
-                                        Karena ini pengembalian unit terakhir,
-                                        seluruh jaminan fisik wajib dikonfirmasi
-                                        sudah dikembalikan.
+                                    <AlertDescription><Stage4Text k="stage4.ui.4e99ffd2ae06" />
                                     </AlertDescription>
                                 </Alert>
                             )}
@@ -390,7 +380,7 @@ return;
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>Unit yang diterima</CardTitle>
+                        <CardTitle><Stage4Text k="stage4.ui.48b9db9322bf" /></CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         {form.data.bulk_items.map((line, index) => {
@@ -404,40 +394,39 @@ return null;
                                 <div key={`bulk-${index}`} className="space-y-4 rounded-lg border p-4">
                                     <div className="flex items-center gap-3">
                                         <Checkbox checked={line.selected} onCheckedChange={(value) => setBulkLine(index, { selected: value === true })} />
-                                        <p className="font-medium">{item.description} · Bulk · Sisa {item.quantity - item.returned_quantity} unit</p>
+                                        <p className="font-medium">{item.description}<Stage4Text k="stage4.ui.0662e2442bc7" /> {item.quantity - item.returned_quantity}<Stage4Text k="stage4.ui.0df9eea0bad5" /></p>
                                     </div>
                                     {line.selected && (
                                         <div className="grid gap-4 md:grid-cols-3">
-                                            <Field label="Jumlah diterima">
+                                            <Field label={stage4Translate("stage4.ui.a3a7b9fed220", stage4Locale)}>
                                                 <Input type="number" min={1} max={item.quantity - item.returned_quantity} value={line.quantity} onChange={(event) => setBulkLine(index, { quantity: Number(event.target.value) })} />
                                             </Field>
-                                            <Field label="Kondisi">
+                                            <Field label={stage4Translate("stage4.ui.b723bb628009", stage4Locale)}>
                                                 <Select value={line.condition} onValueChange={(condition) => setBulkLine(index, { condition })}>
                                                     <SelectTrigger><SelectValue /></SelectTrigger>
                                                     <SelectContent>
-                                                        <SelectItem value="excellent">Sangat baik</SelectItem>
-                                                        <SelectItem value="good">Baik</SelectItem>
-                                                        <SelectItem value="fair">Cukup</SelectItem>
-                                                        <SelectItem value="damaged">Rusak</SelectItem>
-                                                        <SelectItem value="lost">Hilang</SelectItem>
+                                                        <SelectItem value="excellent"><Stage4Text k="stage4.ui.e90dcd5d96b8" /></SelectItem>
+                                                        <SelectItem value="good"><Stage4Text k="stage4.ui.04f5b5ce0518" /></SelectItem>
+                                                        <SelectItem value="fair"><Stage4Text k="stage4.ui.e776a0660b3d" /></SelectItem>
+                                                        <SelectItem value="damaged"><Stage4Text k="stage4.ui.f1238819f6ca" /></SelectItem>
+                                                        <SelectItem value="lost"><Stage4Text k="stage4.ui.71efaa642140" /></SelectItem>
                                                     </SelectContent>
                                                 </Select>
                                             </Field>
-                                            <Field label="Denda overtime otomatis">
+                                            <Field label={stage4Translate("stage4.ui.8b6b43040432", stage4Locale)}>
                                                 <div className="rounded-md border bg-muted/40 px-3 py-2 text-sm">
                                                     {money.format((overtimePreview.bulk[item.id]?.per_unit.unit_charge_amount ?? 0) * Number(line.quantity))}
                                                     <span className="block text-xs text-muted-foreground">
-                                                        {overtimePreview.bulk[item.id]?.per_unit.billable_hours ?? 0} jam tertagih · dihitung server-side
+                                                        {overtimePreview.bulk[item.id]?.per_unit.billable_hours ?? 0}<Stage4Text k="stage4.ui.5e86e0edd02d" />
                                                     </span>
                                                 </div>
                                             </Field>
-                                            <MoneyField label="Kerusakan total baris" value={line.damage_fee_amount} onChange={(damage_fee_amount) => setBulkLine(index, { damage_fee_amount })} />
-                                            <MoneyField label="Cleaning total baris" value={line.cleaning_fee_amount} onChange={(cleaning_fee_amount) => setBulkLine(index, { cleaning_fee_amount })} />
-                                            <Field label="Catatan">
+                                            <MoneyField label={stage4Translate("stage4.ui.e258b4a52180", stage4Locale)} value={line.damage_fee_amount} onChange={(damage_fee_amount) => setBulkLine(index, { damage_fee_amount })} />
+                                            <MoneyField label={stage4Translate("stage4.ui.0055268d93c2", stage4Locale)} value={line.cleaning_fee_amount} onChange={(cleaning_fee_amount) => setBulkLine(index, { cleaning_fee_amount })} />
+                                            <Field label={stage4Translate("stage4.ui.9f09aefd0dd4", stage4Locale)}>
                                                 <Input value={line.notes} onChange={(event) => setBulkLine(index, { notes: event.target.value })} />
                                             </Field>
-                                            <Button type="button" variant="outline" disabled={line.quantity < 2} onClick={() => splitBulkLine(index)}>
-                                                Pisahkan kondisi 1 unit
+                                            <Button type="button" variant="outline" disabled={line.quantity < 2} onClick={() => splitBulkLine(index)}><Stage4Text k="stage4.ui.941c87fb3c32" />
                                             </Button>
                                         </div>
                                     )}
@@ -476,7 +465,7 @@ return null;
                                 {form.data.items[index].selected && (
                                     <div className="grid gap-4 md:grid-cols-4">
                                         {correctionMode && (
-                                            <Field label="Unit aktual">
+                                            <Field label={stage4Translate("stage4.ui.3c93f5c8bccf", stage4Locale)}>
                                                 <Select
                                                     value={String(
                                                         form.data.items[index]
@@ -501,8 +490,7 @@ return null;
                                                             {
                                                                 unit.asset
                                                                     .asset_code
-                                                            }{' '}
-                                                            (tercatat)
+                                                            }{' '}<Stage4Text k="stage4.ui.9be5d9d8c5b1" />
                                                         </SelectItem>
                                                         {replacementAssets
                                                             .filter(
@@ -532,7 +520,7 @@ return null;
                                                 </Select>
                                             </Field>
                                         )}
-                                        <Field label="Kondisi kembali">
+                                        <Field label={stage4Translate("stage4.ui.c777d0aa5c18", stage4Locale)}>
                                             <Select
                                                 value={
                                                     form.data.items[index]
@@ -548,36 +536,31 @@ return null;
                                                     <SelectValue />
                                                 </SelectTrigger>
                                                 <SelectContent>
-                                                    <SelectItem value="excellent">
-                                                        Sangat baik
+                                                    <SelectItem value="excellent"><Stage4Text k="stage4.ui.e90dcd5d96b8" />
                                                     </SelectItem>
-                                                    <SelectItem value="good">
-                                                        Baik
+                                                    <SelectItem value="good"><Stage4Text k="stage4.ui.04f5b5ce0518" />
                                                     </SelectItem>
-                                                    <SelectItem value="fair">
-                                                        Cukup
+                                                    <SelectItem value="fair"><Stage4Text k="stage4.ui.e776a0660b3d" />
                                                     </SelectItem>
-                                                    <SelectItem value="damaged">
-                                                        Rusak
+                                                    <SelectItem value="damaged"><Stage4Text k="stage4.ui.f1238819f6ca" />
                                                     </SelectItem>
-                                                    <SelectItem value="lost">
-                                                        Hilang
+                                                    <SelectItem value="lost"><Stage4Text k="stage4.ui.71efaa642140" />
                                                     </SelectItem>
                                                 </SelectContent>
                                             </Select>
                                         </Field>
                                         {!correctionMode && (
                                             <>
-                                                <Field label="Denda overtime otomatis">
+                                                <Field label={stage4Translate("stage4.ui.8b6b43040432", stage4Locale)}>
                                                     <div className="rounded-md border bg-muted/40 px-3 py-2 text-sm">
                                                         {money.format(overtimePreview.serialized[unit.id]?.total_charge_amount ?? 0)}
                                                         <span className="block text-xs text-muted-foreground">
-                                                            {overtimePreview.serialized[unit.id]?.billable_hours ?? 0} jam tertagih · dihitung server-side
+                                                            {overtimePreview.serialized[unit.id]?.billable_hours ?? 0}<Stage4Text k="stage4.ui.5e86e0edd02d" />
                                                         </span>
                                                     </div>
                                                 </Field>
                                                 <MoneyField
-                                                    label="Biaya kerusakan"
+                                                    label={stage4Translate("stage4.ui.f9f8434f7834", stage4Locale)}
                                                     value={
                                                         form.data.items[index]
                                                             .damage_fee_amount
@@ -591,7 +574,7 @@ return null;
                                                     }
                                                 />
                                                 <MoneyField
-                                                    label="Biaya cleaning"
+                                                    label={stage4Translate("stage4.ui.967fc6cfa290", stage4Locale)}
                                                     value={
                                                         form.data.items[index]
                                                             .cleaning_fee_amount
@@ -607,7 +590,7 @@ return null;
                                             </>
                                         )}
                                         <div className="md:col-span-4">
-                                            <Label>Catatan pemeriksaan</Label>
+                                            <Label><Stage4Text k="stage4.ui.eb5f10d7dafe" /></Label>
                                             <Input
                                                 value={
                                                     form.data.items[index].notes
@@ -618,7 +601,7 @@ return null;
                                                             .value,
                                                     })
                                                 }
-                                                placeholder="Kelengkapan, kerusakan, atau catatan unit"
+                                                placeholder={stage4Translate("stage4.ui.8ad95ceb48f1", stage4Locale)}
                                             />
                                         </div>
                                     </div>
@@ -631,25 +614,24 @@ return null;
                 <section className="grid gap-4 lg:grid-cols-2">
                     <Card>
                         <CardHeader>
-                            <CardTitle>Penyelesaian transaksi</CardTitle>
+                            <CardTitle><Stage4Text k="stage4.ui.3c28a14c5b4f" /></CardTitle>
                         </CardHeader>
                         <CardContent className="grid gap-4 sm:grid-cols-2">
-                            <Field label="Waktu kembali">
+                            <Field label={stage4Translate("stage4.ui.b9c6fd451de4", stage4Locale)}>
                                 <Input
                                     type="datetime-local"
                                     value={form.data.returned_at}
                                     readOnly
                                     aria-readonly="true"
                                 />
-                                <p className="text-xs text-muted-foreground">
-                                    Waktu final ditetapkan oleh server saat proses disimpan untuk mencegah backdating.
+                                <p className="text-xs text-muted-foreground"><Stage4Text k="stage4.ui.01974963ac08" />
                                 </p>
                                 <InputError message={form.errors.returned_at} />
                             </Field>
                             {!correctionMode && (
                                 <>
                                     <MoneyField
-                                        label="Diskon biaya"
+                                        label={stage4Translate("stage4.ui.6cb0606cef8b", stage4Locale)}
                                         value={form.data.discount_amount}
                                         onChange={(value) =>
                                             form.setData(
@@ -662,7 +644,7 @@ return null;
                                         message={form.errors.discount_amount}
                                     />
                                     <MoneyField
-                                        label="Pembayaran diterima"
+                                        label={stage4Translate("stage4.ui.779199ba9cb2", stage4Locale)}
                                         value={form.data.payment_amount}
                                         onChange={(value) =>
                                             form.setData(
@@ -674,7 +656,7 @@ return null;
                                     <InputError
                                         message={form.errors.payment_amount}
                                     />
-                                    <Field label="Metode pembayaran">
+                                    <Field label={stage4Translate("stage4.ui.53eb1a623ade", stage4Locale)}>
                                         <Select
                                             value={
                                                 form.data.payment_method_id ??
@@ -692,7 +674,7 @@ return null;
                                             }}
                                         >
                                             <SelectTrigger>
-                                                <SelectValue placeholder="Pilih metode" />
+                                                <SelectValue placeholder={stage4Translate("stage4.ui.cfabec6a6763", stage4Locale)} />
                                             </SelectTrigger>
                                             <SelectContent>
                                                 {paymentMethods.map(
@@ -732,7 +714,7 @@ return null;
                                         error={form.errors.cash_session_id}
                                     />
                                     <div className="sm:col-span-2">
-                                        <Label>Referensi pembayaran</Label>
+                                        <Label><Stage4Text k="stage4.ui.7f2cc58cb31e" /></Label>
                                         <Input
                                             value={form.data.payment_reference}
                                             onChange={(event) =>
@@ -754,54 +736,45 @@ return null;
                     </Card>
                     <Card>
                         <CardHeader>
-                            <CardTitle>Ringkasan akhir</CardTitle>
+                            <CardTitle><Stage4Text k="stage4.ui.8766c184eea3" /></CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-3 text-sm">
                             <Summary
-                                label="Saldo sebelumnya"
+                                label={stage4Translate("stage4.ui.9f46961351fe", stage4Locale)}
                                 value={rental.balance_due}
                             />
                             {!correctionMode && (
                                 <>
                                     <Summary
-                                        label="Biaya pengembalian"
+                                        label={stage4Translate("stage4.ui.fd3ab9a66418", stage4Locale)}
                                         value={finalCharge}
                                     />
                                     <Summary
-                                        label="Pembayaran"
+                                        label={stage4Translate("stage4.ui.f0874594eb78", stage4Locale)}
                                         value={-form.data.payment_amount}
                                     />
                                 </>
                             )}
                             <Summary
-                                label="Sisa setelah proses"
+                                label={stage4Translate("stage4.ui.92020f684329", stage4Locale)}
                                 value={projectedBalance}
                             />
                             {finalReturnHasBalance && (
                                 <Alert variant="destructive">
                                     <AlertTriangle />
-                                    <AlertTitle>Pelunasan wajib</AlertTitle>
-                                    <AlertDescription>
-                                        Ini adalah pengembalian unit terakhir.
-                                        Sisa tagihan{' '}
-                                        {money.format(projectedBalance)} wajib
-                                        dilunasi sebelum pengembalian dapat
-                                        diproses.
+                                    <AlertTitle><Stage4Text k="stage4.ui.7999fe381882" /></AlertTitle>
+                                    <AlertDescription><Stage4Text k="stage4.ui.b7439bdbb32d" />{' '}
+                                        {money.format(projectedBalance)}<Stage4Text k="stage4.ui.613ac834ee60" />
                                     </AlertDescription>
                                 </Alert>
                             )}
                             {!isFinalReturn && projectedBalance > 0 && (
                                 <Alert>
                                     <AlertTriangle />
-                                    <AlertTitle>
-                                        Pengembalian parsial
+                                    <AlertTitle><Stage4Text k="stage4.ui.1333e1003d69" />
                                     </AlertTitle>
-                                    <AlertDescription>
-                                        Pengembalian parsial tetap dapat
-                                        diproses. Saldo{' '}
-                                        {money.format(projectedBalance)} wajib
-                                        dilunasi ketika unit terakhir
-                                        dikembalikan.
+                                    <AlertDescription><Stage4Text k="stage4.ui.6c565cffdad7" />{' '}
+                                        {money.format(projectedBalance)}<Stage4Text k="stage4.ui.d9387738f355" />
                                     </AlertDescription>
                                 </Alert>
                             )}
@@ -820,10 +793,10 @@ return null;
                     >
                         <PackageCheck />
                         {form.processing
-                            ? 'Memproses...'
+                            ? stage4Translate("stage4.ui.5f2061cbdf8f", stage4Locale)
                             : correctionMode
-                              ? 'Finalisasi koreksi operasional'
-                              : 'Simpan pengembalian'}
+                              ? stage4Translate("stage4.ui.ff08f3772b4d", stage4Locale)
+                              : stage4Translate("stage4.ui.fa8e866ce2c1", stage4Locale)}
                     </Button>
                 </div>
             </form>

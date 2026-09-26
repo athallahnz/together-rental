@@ -40,6 +40,7 @@ use App\Http\Controllers\ProductRateController;
 use App\Http\Controllers\PromotionController;
 use App\Http\Controllers\PublicCatalogContentController;
 use App\Http\Controllers\PublicCatalogController;
+use App\Http\Controllers\GuestLanguageController;
 use App\Http\Controllers\PublicSitemapController;
 use App\Http\Controllers\RatePlanController;
 use App\Http\Controllers\RentalCollateralController;
@@ -58,6 +59,11 @@ use App\Http\Controllers\Transfers\BranchTransferReceivingController;
 use App\Http\Controllers\Transfers\BranchTransferSettingsController;
 use App\Http\Controllers\UserManagementController;
 use Illuminate\Support\Facades\Route;
+
+// Guest display language is independent of authenticated per-user preferences.
+Route::post('/language/guest', GuestLanguageController::class)
+    ->middleware(['guest', 'throttle:20,1'])
+    ->name('language.guest');
 
 Route::get('/', [PublicCatalogController::class, 'home'])->name('home');
 Route::get('/sitemap.xml', PublicSitemapController::class)->name('public.sitemap');
@@ -138,6 +144,10 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
             ->middleware('can:refunds.process')->name('refunds.process');
         Route::post('/refunds/{refund}/cancel', [RefundController::class, 'cancel'])
             ->middleware('can:refunds.cancel')->name('refunds.cancel');
+        Route::get('/cash-registers/{cashRegister}/sessions', [CashSessionController::class, 'index'])
+            ->middleware('can:cash.view')->name('cash-sessions.index');
+        Route::get('/cash-sessions/{cashSession}', [CashSessionController::class, 'show'])
+            ->middleware('can:cash.view')->name('cash-sessions.show');
         Route::post('/cash-registers/{cashRegister}/sessions', [CashSessionController::class, 'store'])
             ->middleware('can:cash.manage')->name('cash-sessions.store');
         Route::post('/cash-sessions/{cashSession}/close', [CashSessionController::class, 'close'])
@@ -328,6 +338,9 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
             ->middleware('can:rentals.view')->name('index');
         Route::get('/direct/create', [RentalController::class, 'createDirect'])
             ->middleware('can:rentals.create')->name('direct.create');
+        Route::get('/direct/customer-identities', [RentalController::class, 'directCustomerIdentities'])
+            ->middleware(['can:rentals.create', 'throttle:60,1'])
+            ->name('direct.customer-identities');
         Route::post('/direct', [RentalController::class, 'storeDirect'])
             ->middleware('can:rentals.create')->name('direct.store');
         Route::get('/checkout/{booking}', [RentalController::class, 'createCheckout'])

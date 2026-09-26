@@ -1,5 +1,7 @@
 import { Download, FileCheck2, Printer, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import { Stage4Text, stage4Translate, stage4TranslateDynamic } from '@/components/stage4-text';
+import { useAppLocale } from '@/lib/i18n';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -44,6 +46,8 @@ export function TransactionDocumentActions({
     sourceReference,
     className,
 }: Props) {
+    const { locale: stage4Locale } = useAppLocale();
+
     const [authorized, setAuthorized] = useState<boolean | null>(null);
     const [dismissed, setDismissed] = useState(false);
     const [busy, setBusy] = useState<string | null>(null);
@@ -145,7 +149,7 @@ export function TransactionDocumentActions({
 
             const data = payload.data;
             setMessage(
-                `${documentLabels[documentType]} ${data.document_number} Â· V${data.version}${
+                `${documentLabels[documentType]} ${data.document_number} · V${data.version}${
                     data.created ? ' diterbitkan' : ' digunakan kembali'
                 }`,
             );
@@ -186,11 +190,9 @@ export function TransactionDocumentActions({
                 <div className="flex items-start justify-between gap-4">
                     <div>
                         <CardTitle className="flex items-center gap-2 text-base">
-                            <FileCheck2 className="size-4" />
-                            Dokumen transaksi
+                            <FileCheck2 className="size-4" /><Stage4Text k="stage4.ui.e0d3e769c653" />
                         </CardTitle>
-                        <p className="mt-1 text-sm text-muted-foreground">
-                            Cetak atau download langsung tanpa pindah ke Document Center.
+                        <p className="mt-1 text-sm text-muted-foreground"><Stage4Text k="stage4.ui.274a60e86740" />
                         </p>
                     </div>
                     <Button
@@ -199,7 +201,7 @@ export function TransactionDocumentActions({
                         size="sm"
                         onClick={() => setDismissed(true)}
                     >
-                        <X /> Lewati
+                        <X /><Stage4Text k="stage4.ui.8bd638497107" />
                     </Button>
                 </div>
             </CardHeader>
@@ -211,10 +213,9 @@ export function TransactionDocumentActions({
                     >
                         <div>
                             <p className="font-medium">
-                                {documentLabels[documentType]}
+                                {stage4TranslateDynamic(documentLabels[documentType], stage4Locale)}
                             </p>
-                            <p className="text-xs text-muted-foreground">
-                                Snapshot/versioning tetap memakai Document Center yang sama.
+                            <p className="text-xs text-muted-foreground"><Stage4Text k="stage4.ui.90a079715238" />
                             </p>
                         </div>
                         <div className="flex gap-2">
@@ -227,8 +228,8 @@ export function TransactionDocumentActions({
                             >
                                 <Printer />
                                 {busy === `${documentType}:print`
-                                    ? 'Menyiapkan...'
-                                    : 'Cetak'}
+                                    ? stage4Translate("stage4.ui.9683d9f785f4", stage4Locale)
+                                    : stage4Translate("stage4.ui.e96378dc0a9d", stage4Locale)}
                             </Button>
                             <Button
                                 type="button"
@@ -238,8 +239,8 @@ export function TransactionDocumentActions({
                             >
                                 <Download />
                                 {busy === `${documentType}:download`
-                                    ? 'Menyiapkan...'
-                                    : 'Download'}
+                                    ? stage4Translate("stage4.ui.9683d9f785f4", stage4Locale)
+                                    : stage4Translate("stage4.ui.a479c9c34e87", stage4Locale)}
                             </Button>
                         </div>
                     </div>
@@ -248,13 +249,13 @@ export function TransactionDocumentActions({
                 {message && (
                     <Alert>
                         <FileCheck2 />
-                        <AlertTitle>Dokumen siap</AlertTitle>
+                        <AlertTitle><Stage4Text k="stage4.ui.4928cf59e856" /></AlertTitle>
                         <AlertDescription>{message}</AlertDescription>
                     </Alert>
                 )}
                 {error && (
                     <Alert variant="destructive">
-                        <AlertTitle>Dokumen gagal diproses</AlertTitle>
+                        <AlertTitle><Stage4Text k="stage4.ui.e1b9d99c661b" /></AlertTitle>
                         <AlertDescription>{error}</AlertDescription>
                     </Alert>
                 )}

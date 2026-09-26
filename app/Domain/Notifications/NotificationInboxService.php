@@ -9,6 +9,10 @@ use Illuminate\Support\Facades\Schema;
 
 class NotificationInboxService
 {
+    public function __construct(
+        private readonly NotificationContentLocalizer $contentLocalizer,
+    ) {}
+
     /**
      * @return array{unread_count: int, critical_count: int, recent: list<array<string, mixed>>}
      */
@@ -43,6 +47,13 @@ class NotificationInboxService
     /** @return array<string, mixed> */
     public function serialize(NotificationMessage $message): array
     {
+        $localized = $this->contentLocalizer->localize(
+            $message->rule_code,
+            $message->title,
+            $message->body,
+            app()->getLocale(),
+        );
+
         return [
             'id' => $message->id,
             'branch_id' => $message->branch_id,
@@ -54,8 +65,8 @@ class NotificationInboxService
             'rule_code' => $message->rule_code,
             'category' => $message->category,
             'severity' => $message->severity,
-            'title' => $message->title,
-            'body' => $message->body,
+            'title' => $localized['title'],
+            'body' => $localized['body'],
             'action_url' => $message->action_url,
             'occurrences' => $message->occurrences,
             'first_triggered_at' => $message->first_triggered_at->toIso8601String(),

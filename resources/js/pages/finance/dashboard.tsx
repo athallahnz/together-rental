@@ -13,6 +13,7 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import { stage5Choice, stage5Display, Stage5Text, stage5Translate, stage5Date, stage5Money, stage5Number, stage5IntlLocale } from '@/components/stage5-text';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import {
@@ -25,6 +26,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { FilterBar } from '@/components/ui/filter-bar';
 import { MetricCard } from '@/components/ui/metric-card';
+import { useAppLocale } from '@/lib/i18n';
 import {
     Select,
     SelectContent,
@@ -38,21 +40,11 @@ import type {
     FinanceDashboardTrendPoint,
 } from '@/types';
 
-const money = new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    maximumFractionDigits: 0,
-});
+const money = { format: stage5Money };
 
-const number = new Intl.NumberFormat('id-ID');
+const number = { format: stage5Number };
 
-const dateTime = new Intl.DateTimeFormat('id-ID', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-});
+
 
 function Delta({
     value,
@@ -61,10 +53,12 @@ function Delta({
     value: number | null;
     inverse?: boolean;
 }) {
+    const { locale: stage5Locale } = useAppLocale();
+
     if (value === null) {
         return (
             <span className="text-xs text-muted-foreground">
-                Baru pada periode ini
+                <Stage5Text k="stage5.ui.9c48027a79e1" />
             </span>
         );
     }
@@ -82,10 +76,10 @@ function Delta({
             }`}
         >
             <Icon className="size-3.5" />
-            {Math.abs(value).toLocaleString('id-ID', {
+            {Math.abs(value).toLocaleString(stage5IntlLocale(stage5Locale), {
                 maximumFractionDigits: 1,
             })}
-            % vs periode lalu
+            <Stage5Text k="stage5.ui.6b452bb956e2" />
         </span>
     );
 }
@@ -126,6 +120,7 @@ function KpiCard({
 }
 
 function TrendChart({ data }: { data: FinanceDashboardTrendPoint[] }) {
+    const { locale: stage5Locale } = useAppLocale();
     const width = 980;
     const height = 310;
     const padding = 48;
@@ -158,19 +153,19 @@ function TrendChart({ data }: { data: FinanceDashboardTrendPoint[] }) {
             <div className="flex flex-wrap gap-x-5 gap-y-2 text-xs text-muted-foreground">
                 <span className="flex items-center gap-2">
                     <span className="size-2.5 rounded-full bg-emerald-500" />
-                    Payment masuk
+                    <Stage5Text k="stage5.ui.b20a4ff937cb" />
                 </span>
                 <span className="flex items-center gap-2">
                     <span className="size-2.5 rounded-full bg-primary" />
-                    Arus kas bersih
+                    <Stage5Text k="stage5.ui.87cc18989577" />
                 </span>
                 <span className="flex items-center gap-2">
                     <span className="size-2.5 rounded-full bg-amber-500" />
-                    Payment keluar
+                    <Stage5Text k="stage5.ui.bffab1d92ea6" />
                 </span>
                 <span className="flex items-center gap-2">
                     <span className="size-2.5 rounded-full bg-destructive" />
-                    Refund paid
+                    <Stage5Text k="stage5.ui.b89ff1f0350e" />
                 </span>
             </div>
 
@@ -179,7 +174,7 @@ function TrendChart({ data }: { data: FinanceDashboardTrendPoint[] }) {
                     viewBox={`0 0 ${width} ${height}`}
                     className="min-w-[760px]"
                     role="img"
-                    aria-label="Tren payment masuk, payment keluar, refund, dan arus kas bersih"
+                    aria-label={stage5Translate("stage5.ui.6f23934d2c7f", stage5Locale)}
                 >
                     {[0, 0.25, 0.5, 0.75, 1].map((ratio) => {
                         const value = minValue + range * ratio;
@@ -295,6 +290,7 @@ export default function FinanceDashboard({
     generatedAt,
     methodology,
 }: FinanceDashboardPageProps) {
+    const { locale: stage5Locale } = useAppLocale();
     const [from, setFrom] = useState(filters.from);
     const [to, setTo] = useState(filters.to);
     const [branchId, setBranchId] = useState(
@@ -346,31 +342,29 @@ export default function FinanceDashboard({
 
     return (
         <>
-            <Head title="Finance Dashboard" />
+            <Head title={stage5Translate("stage5.ui.fd67685200d8", stage5Locale)} />
 
             <div className="flex h-full flex-1 flex-col gap-6 overflow-x-auto rounded-xl p-4 md:p-6">
                 <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                     <div>
                         <p className="text-sm font-medium text-primary">
-                            Finance Center
+                            <Stage5Text k="stage5.ui.00112f3a86da" />
                         </p>
                         <h1 className="mt-1 text-2xl font-semibold tracking-tight">
-                            Finance Dashboard
+                            <Stage5Text k="stage5.ui.fd67685200d8" />
                         </h1>
                         <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-                            Pantau penerimaan, pengeluaran, refund, piutang,
-                            deposit, dan kesehatan ledger dalam satu ringkasan
-                            lintas cabang yang dapat ditelusuri.
+                            <Stage5Text k="stage5.ui.a702256b61db" />
                         </p>
                     </div>
                     <p className="text-xs text-muted-foreground">
-                        Diperbarui {dateTime.format(new Date(generatedAt))}
+                        <Stage5Text k="stage5.ui.9d77dbd733a3" /> {stage5Date(new Date(generatedAt), stage5Locale)}
                     </p>
                 </header>
 
                 <FilterBar
-                    title="Filter dashboard"
-                    description="Periode memengaruhi transaksi, tren, dan perbandingan; piutang, deposit, refund outstanding, serta sesi kas adalah posisi saat ini."
+                    title={stage5Translate("stage5.ui.5491040aa52f", stage5Locale)}
+                    description={stage5Translate("stage5.ui.a49cf6781561", stage5Locale)}
                     contentClassName="grid-cols-1"
                 >
                     <div className="grid items-end gap-3 sm:grid-cols-2 md:grid-cols-[minmax(160px,0.8fr)_minmax(160px,0.8fr)_minmax(240px,1.2fr)_auto_auto]">
@@ -386,11 +380,11 @@ export default function FinanceDashboard({
                         />
                         <Select value={branchId} onValueChange={setBranchId}>
                             <SelectTrigger className="w-full">
-                                <SelectValue placeholder="Semua cabang" />
+                                <SelectValue placeholder={stage5Translate("stage5.ui.27d30aba48a4", stage5Locale)} />
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">
-                                    Semua cabang yang dapat diakses
+                                    <Stage5Text k="stage5.ui.1b8906804eb6" />
                                 </SelectItem>
                                 {branches.map((branch) => (
                                     <SelectItem
@@ -402,57 +396,57 @@ export default function FinanceDashboard({
                                 ))}
                             </SelectContent>
                         </Select>
-                        <Button onClick={applyFilters}>Terapkan</Button>
+                        <Button onClick={applyFilters}><Stage5Text k="stage5.ui.9ff8760b6d49" /></Button>
                         <Button variant="outline" onClick={resetFilters}>
                             <RotateCcw />
-                            Reset
+                            <Stage5Text k="stage5.ui.44c57abd888a" />
                         </Button>
                     </div>
                 </FilterBar>
 
                 <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                     <KpiCard
-                        label="Gross collections"
+                        label={stage5Translate("stage5.ui.4d2913fb691c", stage5Locale)}
                         value={money.format(summary.gross_collections)}
-                        note={`${number.format(summary.inbound_payment_count)} payment masuk · rata-rata ${money.format(summary.average_collection)}`}
+                        note={stage5Choice(`${number.format(summary.inbound_payment_count)} pembayaran masuk · rata-rata ${money.format(summary.average_collection)}`, `${number.format(summary.inbound_payment_count)} incoming payments · average ${money.format(summary.average_collection)}`, stage5Locale)}
                         icon={CircleDollarSign}
                         delta={comparison.gross_collections_percent}
                         href={paymentsUrl({ status: 'completed' })}
                     />
                     <KpiCard
-                        label="Arus kas bersih"
+                        label={stage5Translate("stage5.ui.87cc18989577", stage5Locale)}
                         value={money.format(summary.net_cash_flow)}
-                        note={`Keluar ${money.format(summary.operating_outflows)} · refund ${money.format(summary.paid_refunds)}`}
+                        note={stage5Choice(`Keluar ${money.format(summary.operating_outflows)} · refund ${money.format(summary.paid_refunds)}`, `Outflow ${money.format(summary.operating_outflows)} · refunds ${money.format(summary.paid_refunds)}`, stage5Locale)}
                         icon={TrendingUp}
                         delta={comparison.net_cash_flow_percent}
                         href={paymentsUrl({ status: 'completed' })}
                     />
                     <KpiCard
-                        label="Penerimaan rental"
+                        label={stage5Translate("stage5.ui.d25b7b5a395f", stage5Locale)}
                         value={money.format(summary.rental_collections)}
-                        note={`Di luar deposit ${money.format(summary.deposit_collections)}`}
+                        note={stage5Choice(`Di luar deposit ${money.format(summary.deposit_collections)}`, `Excluding deposits ${money.format(summary.deposit_collections)}`, stage5Locale)}
                         icon={WalletCards}
                         delta={comparison.rental_collections_percent}
                         href={paymentsUrl({ status: 'completed' })}
                     />
                     <KpiCard
-                        label="Refund dibayarkan"
+                        label={stage5Translate("stage5.ui.37ab7b7dc5a2", stage5Locale)}
                         value={money.format(summary.paid_refunds)}
-                        note={`${number.format(summary.paid_refund_count)} refund paid pada periode`}
+                        note={stage5Choice(`${number.format(summary.paid_refund_count)} refund dibayar pada periode ini`, `${number.format(summary.paid_refund_count)} refunds paid this period`, stage5Locale)}
                         icon={ReceiptText}
                         delta={comparison.paid_refunds_percent}
                         inverseDelta
                         href={refundsUrl('paid')}
                     />
                     <KpiCard
-                        label="Piutang rental saat ini"
+                        label={stage5Translate("stage5.ui.44ceed1ce138", stage5Locale)}
                         value={money.format(summary.receivable_amount)}
-                        note={`${number.format(summary.receivable_count)} rental masih memiliki saldo`}
+                        note={stage5Choice(`${number.format(summary.receivable_count)} rental masih memiliki saldo`, `${number.format(summary.receivable_count)} rentals have outstanding balances`, stage5Locale)}
                         icon={CreditCard}
                         href="/rentals"
                     />
                     <KpiCard
-                        label="Deposit masih ditahan"
+                        label={stage5Translate("stage5.ui.8c3a0f04b258", stage5Locale)}
                         value={money.format(summary.deposit_held)}
                         note="Payment deposit completed dikurangi refund deposit paid"
                         icon={ShieldCheck}
@@ -462,19 +456,19 @@ export default function FinanceDashboard({
 
                 <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                     <MetricCard
-                        label="Payment completed"
+                        label={stage5Translate("stage5.ui.456b71b47640", stage5Locale)}
                         value={number.format(summary.completed_payment_count)}
                         icon={WalletCards}
                     />
                     <MetricCard
-                        label="Payment void"
+                        label={stage5Translate("stage5.ui.1f476996de6f", stage5Locale)}
                         value={`${number.format(summary.void_count)} · ${money.format(summary.void_amount)}`}
                         icon={CreditCard}
                         tone={summary.void_count > 0 ? 'danger' : 'neutral'}
                         compact
                     />
                     <MetricCard
-                        label="Refund outstanding"
+                        label={stage5Translate("stage5.ui.8ec8976719f2", stage5Locale)}
                         value={`${number.format(summary.outstanding_refund_count)} · ${money.format(summary.outstanding_refund_amount)}`}
                         icon={ReceiptText}
                         tone={
@@ -485,7 +479,7 @@ export default function FinanceDashboard({
                         compact
                     />
                     <MetricCard
-                        label="Sesi kas terbuka"
+                        label={stage5Translate("stage5.ui.abbefd3a4ddf", stage5Locale)}
                         value={number.format(summary.open_cash_session_count)}
                         icon={ShieldCheck}
                     />
@@ -493,10 +487,9 @@ export default function FinanceDashboard({
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>Tren arus kas</CardTitle>
+                        <CardTitle><Stage5Text k="stage5.ui.cf370b8e0710" /></CardTitle>
                         <CardDescription>
-                            Payment void dikeluarkan dari grafik. Refund baru
-                            mengurangi arus kas ketika statusnya paid.
+                            <Stage5Text k="stage5.ui.dd6375bb4dd1" />
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -507,16 +500,15 @@ export default function FinanceDashboard({
                 <section className="grid gap-6 xl:grid-cols-[1.15fr_0.85fr]">
                     <Card>
                         <CardHeader>
-                            <CardTitle>Komposisi metode pembayaran</CardTitle>
+                            <CardTitle><Stage5Text k="stage5.ui.3e1348d4aace" /></CardTitle>
                             <CardDescription>
-                                Kontribusi terhadap gross collections pada
-                                periode.
+                                <Stage5Text k="stage5.ui.36b7aea6d400" />
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-5">
                             {paymentMethods.length === 0 ? (
                                 <p className="text-sm text-muted-foreground">
-                                    Belum ada transaksi pada periode ini.
+                                    <Stage5Text k="stage5.ui.6431b3964817" />
                                 </p>
                             ) : (
                                 paymentMethods.map((method) => (
@@ -538,7 +530,7 @@ export default function FinanceDashboard({
                                                     {number.format(
                                                         method.transaction_count,
                                                     )}{' '}
-                                                    transaksi
+                                                    <Stage5Text k="stage5.ui.6cf4f5f27a49" />
                                                 </p>
                                             </div>
                                             <div className="text-right">
@@ -548,7 +540,7 @@ export default function FinanceDashboard({
                                                     )}
                                                 </p>
                                                 <p className="text-xs text-muted-foreground">
-                                                    Net{' '}
+                                                    <Stage5Text k="stage5.ui.9bb81c2eccbe" />{' '}
                                                     {money.format(method.net)}
                                                 </p>
                                             </div>
@@ -562,8 +554,7 @@ export default function FinanceDashboard({
                                             />
                                         </div>
                                         <p className="text-xs text-muted-foreground">
-                                            {method.share_percent}% gross ·
-                                            refund{' '}
+                                            {method.share_percent}<Stage5Text k="stage5.ui.a6c19426de43" />{' '}
                                             {money.format(method.refunds)}
                                         </p>
                                     </Link>
@@ -574,34 +565,33 @@ export default function FinanceDashboard({
 
                     <Card>
                         <CardHeader>
-                            <CardTitle>Perlu perhatian</CardTitle>
+                            <CardTitle><Stage5Text k="stage5.ui.a380122e07b4" /></CardTitle>
                             <CardDescription>
-                                Antrian dan indikator yang perlu
-                                ditindaklanjuti.
+                                <Stage5Text k="stage5.ui.de6d1f2e8458" />
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-3">
                             {[
                                 {
-                                    label: 'Refund menunggu approval',
+                                    label: stage5Translate("stage5.ui.97f1cc7b073b", stage5Locale),
                                     count: attention.requested_refunds.count,
                                     value: attention.requested_refunds.amount,
                                     href: refundsUrl('requested'),
                                 },
                                 {
-                                    label: 'Refund siap dibayarkan',
+                                    label: stage5Translate("stage5.ui.16b5949f4ae4", stage5Locale),
                                     count: attention.approved_refunds.count,
                                     value: attention.approved_refunds.amount,
                                     href: refundsUrl('approved'),
                                 },
                                 {
-                                    label: 'Piutang melewati jatuh tempo',
+                                    label: stage5Translate("stage5.ui.fae9766497c8", stage5Locale),
                                     count: attention.overdue_receivables.count,
                                     value: attention.overdue_receivables.amount,
                                     href: '/rentals',
                                 },
                                 {
-                                    label: 'Selisih penutupan kas',
+                                    label: stage5Translate("stage5.ui.a68d9ccad678", stage5Locale),
                                     count: attention.cash_differences.count,
                                     value: attention.cash_differences.amount,
                                 },
@@ -610,10 +600,10 @@ export default function FinanceDashboard({
                                     <div className="flex items-center justify-between gap-4 rounded-lg border p-3">
                                         <div>
                                             <p className="text-sm font-medium">
-                                                {item.label}
+                                                {stage5Display(item.label, stage5Locale)}
                                             </p>
                                             <p className="text-xs text-muted-foreground">
-                                                {number.format(item.count)} item
+                                                {number.format(item.count)} <Stage5Text k="stage5.ui.3a7d9767b123" />
                                             </p>
                                         </div>
                                         <p className="text-sm font-semibold">
@@ -642,12 +632,12 @@ export default function FinanceDashboard({
                                     <ShieldCheck className="mt-0.5 size-5 shrink-0" />
                                     <div>
                                         <p className="text-sm font-medium">
-                                            Integritas cash ledger
+                                            <Stage5Text k="stage5.ui.3831e8eff775" />
                                         </p>
                                         <p className="mt-1 text-xs leading-5 text-muted-foreground">
                                             {integrityAlerts === 0
-                                                ? 'PASS — seluruh payment dan refund tunai memiliki ledger.'
-                                                : `${integrityAlerts} transaksi tunai tidak memiliki ledger sumber.`}
+                                                ? stage5Choice('PASS — seluruh pembayaran dan pengembalian dana tunai memiliki buku kas.', 'PASS — all cash payments and refunds have cash ledger entries.', stage5Locale)
+                                                : `${stage5Choice(`${integrityAlerts} transaksi tunai tidak memiliki sumber buku kas.`, `${integrityAlerts} cash transactions are missing a source ledger.`, stage5Locale)}`}
                                         </p>
                                     </div>
                                 </div>
@@ -659,10 +649,9 @@ export default function FinanceDashboard({
                 {branchPerformance.length > 1 && (
                     <Card>
                         <CardHeader>
-                            <CardTitle>Performa cabang</CardTitle>
+                            <CardTitle><Stage5Text k="stage5.ui.c1f902bdf25d" /></CardTitle>
                             <CardDescription>
-                                Perbandingan arus kas periode dan piutang saat
-                                ini.
+                                <Stage5Text k="stage5.ui.f87d58c2935a" />
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="overflow-x-auto">
@@ -670,25 +659,25 @@ export default function FinanceDashboard({
                                 <thead>
                                     <tr className="border-b text-left text-xs text-muted-foreground">
                                         <th className="pb-3 font-medium">
-                                            Cabang
+                                            <Stage5Text k="stage5.ui.1387475bd674" />
                                         </th>
                                         <th className="pb-3 text-right font-medium">
-                                            Transaksi
+                                            <Stage5Text k="stage5.ui.05ad114b6398" />
                                         </th>
                                         <th className="pb-3 text-right font-medium">
-                                            Masuk
+                                            <Stage5Text k="stage5.ui.f2dd30734a6a" />
                                         </th>
                                         <th className="pb-3 text-right font-medium">
-                                            Keluar
+                                            <Stage5Text k="stage5.ui.a421ce222c82" />
                                         </th>
                                         <th className="pb-3 text-right font-medium">
-                                            Refund
+                                            <Stage5Text k="stage5.ui.e17c8ad0dc2e" />
                                         </th>
                                         <th className="pb-3 text-right font-medium">
-                                            Net
+                                            <Stage5Text k="stage5.ui.9bb81c2eccbe" />
                                         </th>
                                         <th className="pb-3 text-right font-medium">
-                                            Piutang
+                                            <Stage5Text k="stage5.ui.e7615f6f4a10" />
                                         </th>
                                     </tr>
                                 </thead>
@@ -749,15 +738,15 @@ export default function FinanceDashboard({
                 <section className="grid gap-6 xl:grid-cols-[0.8fr_1.2fr]">
                     <Card>
                         <CardHeader>
-                            <CardTitle>Sumber transaksi</CardTitle>
+                            <CardTitle><Stage5Text k="stage5.ui.721bd26651ea" /></CardTitle>
                             <CardDescription>
-                                Arus masuk dan keluar berdasarkan konteks asal.
+                                <Stage5Text k="stage5.ui.008fbb7c9686" />
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-3">
                             {sourceContexts.length === 0 ? (
                                 <p className="text-sm text-muted-foreground">
-                                    Belum ada transaksi pada periode ini.
+                                    <Stage5Text k="stage5.ui.6431b3964817" />
                                 </p>
                             ) : (
                                 sourceContexts.map((source) => (
@@ -776,13 +765,13 @@ export default function FinanceDashboard({
                                     >
                                         <div>
                                             <p className="text-sm font-medium">
-                                                {source.label}
+                                                {stage5Display(source.label, stage5Locale)}
                                             </p>
                                             <p className="text-xs text-muted-foreground">
                                                 {number.format(
                                                     source.transaction_count,
                                                 )}{' '}
-                                                transaksi
+                                                <Stage5Text k="stage5.ui.6cf4f5f27a49" />
                                             </p>
                                         </div>
                                         <div className="text-right">
@@ -790,9 +779,8 @@ export default function FinanceDashboard({
                                                 {money.format(source.net)}
                                             </p>
                                             <p className="text-xs text-muted-foreground">
-                                                Masuk{' '}
-                                                {money.format(source.inflow)} ·
-                                                keluar{' '}
+                                                <Stage5Text k="stage5.ui.f2dd30734a6a" />{' '}
+                                                {money.format(source.inflow)} <Stage5Text k="stage5.ui.2f95b7333dd1" />{' '}
                                                 {money.format(source.outflow)}
                                             </p>
                                         </div>
@@ -804,16 +792,15 @@ export default function FinanceDashboard({
 
                     <Card>
                         <CardHeader>
-                            <CardTitle>Aktivitas keuangan terbaru</CardTitle>
+                            <CardTitle><Stage5Text k="stage5.ui.61fbacf9b515" /></CardTitle>
                             <CardDescription>
-                                Payment dan refund terbaru pada periode
-                                terpilih.
+                                <Stage5Text k="stage5.ui.df2f596d351d" />
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-2">
                             {recentActivity.length === 0 ? (
                                 <p className="text-sm text-muted-foreground">
-                                    Belum ada aktivitas pada periode ini.
+                                    <Stage5Text k="stage5.ui.285c492fbb8e" />
                                 </p>
                             ) : (
                                 recentActivity.map((activity) => (
@@ -841,18 +828,19 @@ export default function FinanceDashboard({
                                                             activity,
                                                         )}
                                                     >
-                                                        {activity.status}
+                                                        {stage5Display(activity.status, stage5Locale)}
                                                     </Badge>
                                                 </div>
                                                 <p className="mt-1 truncate text-xs text-muted-foreground">
                                                     {activity.branch_code} ·{' '}
                                                     {activity.customer_name ??
-                                                        'Tanpa pelanggan'}{' '}
+                                                        stage5Choice('Tanpa pelanggan', 'No customer', stage5Locale)}{' '}
                                                     ·{' '}
-                                                    {dateTime.format(
+                                                    {stage5Date(
                                                         new Date(
                                                             activity.occurred_at,
                                                         ),
+                                                        stage5Locale,
                                                     )}
                                                 </p>
                                             </div>
@@ -882,7 +870,7 @@ export default function FinanceDashboard({
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2 text-base">
                             <Info className="size-4" />
-                            Cara membaca angka
+                            <Stage5Text k="stage5.ui.ac1038297455" />
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="grid gap-3 text-xs leading-5 text-muted-foreground md:grid-cols-2">
@@ -890,8 +878,8 @@ export default function FinanceDashboard({
                             <p key={item}>{item}</p>
                         ))}
                         <p className="md:col-span-2">
-                            Perbandingan periode sebelumnya: {comparison.from}{' '}
-                            sampai {comparison.to}.
+                            <Stage5Text k="stage5.ui.1125de06aadd" /> {comparison.from}{' '}
+                            <Stage5Text k="stage5.ui.e28f87c89929" /> {comparison.to}.
                         </p>
                     </CardContent>
                 </Card>

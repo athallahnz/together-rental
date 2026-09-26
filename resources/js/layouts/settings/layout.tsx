@@ -1,8 +1,9 @@
 import { Link, usePage } from '@inertiajs/react';
-import { CircleUserRound, LockKeyhole, Palette, Settings2 } from 'lucide-react';
+import { CircleUserRound, Globe2, LockKeyhole, Palette, Settings2 } from 'lucide-react';
 import type { PropsWithChildren } from 'react';
 import { Button } from '@/components/ui/button';
 import { useCurrentUrl } from '@/hooks/use-current-url';
+import { useAppLocale } from '@/lib/i18n';
 import { cn, toUrl } from '@/lib/utils';
 import { edit as editAppearance } from '@/routes/appearance';
 import { edit } from '@/routes/profile';
@@ -11,6 +12,7 @@ import type { NavItem } from '@/types';
 
 export default function SettingsLayout({ children }: PropsWithChildren) {
     const { auth } = usePage().props;
+    const { tr } = useAppLocale();
     const { isCurrentOrParentUrl } = useCurrentUrl();
     const canOpenSettingsCenter =
         auth.permissions['company.view'] ||
@@ -24,24 +26,29 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
         ...(canOpenSettingsCenter
             ? [
                   {
-                      title: 'Pusat Pengaturan',
+                      title: tr('nav.settingsCenter'),
                       href: '/settings-center',
                       icon: Settings2,
                   },
               ]
             : []),
         {
-            title: 'Profil',
+            title: tr('nav.language'),
+            href: '/settings/language',
+            icon: Globe2,
+        },
+        {
+            title: tr('nav.profile'),
             href: edit(),
             icon: CircleUserRound,
         },
         {
-            title: 'Keamanan',
+            title: tr('nav.security'),
             href: editSecurity(),
             icon: LockKeyhole,
         },
         {
-            title: 'Tampilan',
+            title: tr('nav.appearance'),
             href: editAppearance(),
             icon: Palette,
         },
@@ -52,14 +59,13 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
             <header className="mb-7 border-b pb-6">
                 <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
                     <Settings2 className="size-4" />
-                    Pengaturan
+                    {tr('nav.settings')}
                 </div>
                 <h1 className="mt-2 text-2xl font-semibold tracking-tight sm:text-3xl">
-                    Pengaturan akun & sistem
+                    {tr('nav.accountSystemSettings')}
                 </h1>
                 <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-                    Kelola profil, keamanan, tampilan, serta konfigurasi
-                    operasional Together Kamera dari satu area yang konsisten.
+                    {tr('nav.settingsDescription')}
                 </p>
             </header>
 
@@ -68,7 +74,7 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                     <div className="rounded-xl border bg-card p-2 shadow-sm">
                         <nav
                             className="grid gap-1 sm:grid-cols-2 lg:grid-cols-1"
-                            aria-label="Pengaturan"
+                            aria-label={tr('nav.settings')}
                         >
                             {sidebarNavItems.map((item, index) => (
                                 <Button
@@ -98,8 +104,7 @@ export default function SettingsLayout({ children }: PropsWithChildren) {
                     </div>
 
                     <p className="mt-3 hidden px-3 text-xs leading-5 text-muted-foreground lg:block">
-                        Pengaturan operasional tetap menggunakan source-of-truth
-                        domain masing-masing.
+                        {tr('nav.domainSettingsNote')}
                     </p>
                 </aside>
 

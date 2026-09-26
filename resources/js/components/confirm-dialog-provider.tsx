@@ -8,6 +8,8 @@ import {
     useState,
 } from 'react';
 import { Button } from '@/components/ui/button';
+import { translateKey } from '@/lib/i18n';
+import { useGlobalLocale } from '@/lib/locale-store';
 import {
     Dialog,
     DialogContent,
@@ -39,6 +41,7 @@ export function ConfirmDialogProvider({
     children: React.ReactNode;
 }) {
     const [options, setOptions] = useState<ConfirmDialogOptions | null>(null);
+    const locale = useGlobalLocale();
     const resolverRef = useRef<((confirmed: boolean) => void) | null>(null);
 
     const finish = useCallback((confirmed: boolean) => {
@@ -104,14 +107,14 @@ export function ConfirmDialogProvider({
                             variant="outline"
                             onClick={() => finish(false)}
                         >
-                            {options?.cancelLabel ?? 'Batal'}
+                            {options?.cancelLabel ?? translateKey('common.cancel', locale)}
                         </Button>
                         <Button
                             type="button"
                             variant={destructive ? 'destructive' : 'default'}
                             onClick={() => finish(true)}
                         >
-                            {options?.confirmLabel ?? 'Lanjutkan'}
+                            {options?.confirmLabel ?? translateKey('common.continue', locale)}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

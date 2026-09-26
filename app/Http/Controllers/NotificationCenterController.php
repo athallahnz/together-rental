@@ -181,7 +181,7 @@ class NotificationCenterController extends Controller
             ->update(['read_at' => now(), 'updated_at' => now()]);
         $this->log($actor, 'notification.all_read', null, ['count' => $count]);
 
-        return back()->with('success', "{$count} notifikasi ditandai sudah dibaca.");
+        return back()->with('success', __('uat035b_stage5.flash.notifications_read', ['count' => $count]));
     }
 
     public function snooze(
@@ -197,7 +197,7 @@ class NotificationCenterController extends Controller
         ])->save();
         $this->log($actor, 'notification.snoozed', $notification, ['minutes' => $minutes]);
 
-        return back()->with('success', 'Notifikasi berhasil ditunda.');
+        return back()->with('success', __('uat035b_stage5.flash.notification_snoozed'));
     }
 
     public function dismiss(Request $request, NotificationMessage $notification): RedirectResponse
@@ -210,7 +210,7 @@ class NotificationCenterController extends Controller
         ])->save();
         $this->log($actor, 'notification.dismissed', $notification);
 
-        return back()->with('success', 'Notifikasi ditutup dari inbox.');
+        return back()->with('success', __('uat035b_stage5.flash.notification_dismissed'));
     }
 
     public function updatePreferences(
@@ -224,7 +224,7 @@ class NotificationCenterController extends Controller
         $preference->fill($data)->save();
         $this->log($actor, 'notification.preferences_updated');
 
-        return back()->with('success', 'Preferensi notifikasi berhasil diperbarui.');
+        return back()->with('success', __('uat035b_stage5.flash.notification_pref_updated'));
     }
 
     public function updateRule(
@@ -247,7 +247,7 @@ class NotificationCenterController extends Controller
             'rule_code' => $notificationRule->code,
         ]);
 
-        return back()->with('success', 'Aturan reminder berhasil diperbarui.');
+        return back()->with('success', __('uat035b_stage5.flash.notification_rule_updated'));
     }
 
     public function generate(
@@ -261,12 +261,11 @@ class NotificationCenterController extends Controller
 
         return back()->with(
             'success',
-            sprintf(
-                'Pemindaian selesai: %d sumber, %d notifikasi baru, %d reminder berulang.',
-                $result['sources'],
-                $result['created'],
-                $result['repeated'],
-            ),
+            __('uat035b_stage5.flash.notification_scan', [
+                'sources' => $result['sources'],
+                'created' => $result['created'],
+                'repeated' => $result['repeated'],
+            ]),
         );
     }
 

@@ -43,6 +43,10 @@ import {
     SelectValue,
 } from '@/components/ui/select';
 import { cn } from '@/lib/utils';
+import { useAppLocale, translateKey } from '@/lib/i18n';
+import type { AppLocale } from '@/lib/i18n';
+import type { MessageKey } from '@/lib/i18n-catalog';
+import { intlLocale } from '@/lib/locale-format';
 import { dashboard } from '@/routes';
 import type {
     DashboardAssetHealth,
@@ -58,26 +62,73 @@ import type {
     OperationalDashboardPageProps,
 } from '@/types';
 
-const numberFormatter = new Intl.NumberFormat('id-ID');
-const currencyFormatter = new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    maximumFractionDigits: 0,
-});
-const compactCurrencyFormatter = new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    notation: 'compact',
-    maximumFractionDigits: 1,
-});
-const timeFormatter = new Intl.DateTimeFormat('id-ID', {
-    hour: '2-digit',
-    minute: '2-digit',
-});
-const dateTimeFormatter = new Intl.DateTimeFormat('id-ID', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-});
+function createFormatters(locale: AppLocale) {
+    const intl = intlLocale(locale);
+
+    return {
+        numberFormatter: new Intl.NumberFormat(intl),
+        currencyFormatter: new Intl.NumberFormat(intl, {
+            style: 'currency', currency: 'IDR', maximumFractionDigits: 0,
+        }),
+        compactCurrencyFormatter: new Intl.NumberFormat(intl, {
+            style: 'currency', currency: 'IDR', notation: 'compact', maximumFractionDigits: 1,
+        }),
+        timeFormatter: new Intl.DateTimeFormat(intl, {
+            hour: '2-digit', minute: '2-digit',
+        }),
+        dateTimeFormatter: new Intl.DateTimeFormat(intl, {
+            dateStyle: 'medium', timeStyle: 'short',
+        }),
+        shortDateFormatter: new Intl.DateTimeFormat(intl, {
+            day: 'numeric', month: 'short',
+        }),
+    };
+}
+
+const formattersByLocale = {
+    id: createFormatters('id'),
+    en: createFormatters('en'),
+};
+
+function useDashboardLocale() {
+    const { locale, tr, tp } = useAppLocale();
+
+    return { locale, tr, tp, ...formattersByLocale[locale] };
+}
+
+const actionCopy: Record<DashboardQuickAction['key'], { title: MessageKey; description: MessageKey }> = {
+    booking: { title: 'dashboard.action.booking.title', description: 'dashboard.action.booking.description' },
+    'direct-rental': { title: 'dashboard.action.direct-rental.title', description: 'dashboard.action.direct-rental.description' },
+    return: { title: 'dashboard.action.return.title', description: 'dashboard.action.return.description' },
+    payment: { title: 'dashboard.action.payment.title', description: 'dashboard.action.payment.description' },
+    transfer: { title: 'dashboard.action.transfer.title', description: 'dashboard.action.transfer.description' },
+    'stock-opname': { title: 'dashboard.action.stock-opname.title', description: 'dashboard.action.stock-opname.description' },
+    maintenance: { title: 'dashboard.action.maintenance.title', description: 'dashboard.action.maintenance.description' },
+    notification: { title: 'dashboard.action.notification.title', description: 'dashboard.action.notification.description' },
+};
+
+const attentionCopy: Record<string, { title: MessageKey; description: MessageKey }> = {
+    'rental-overdue': { title: 'dashboard.attention.rental-overdue.title', description: 'dashboard.attention.rental-overdue.description' },
+    'rental-due-today': { title: 'dashboard.attention.rental-due-today.title', description: 'dashboard.attention.rental-due-today.description' },
+    'booking-pickup': { title: 'dashboard.attention.booking-pickup.title', description: 'dashboard.attention.booking-pickup.description' },
+    receivable: { title: 'dashboard.attention.receivable.title', description: 'dashboard.attention.receivable.description' },
+    'refund-approval': { title: 'dashboard.attention.refund-approval.title', description: 'dashboard.attention.refund-approval.description' },
+    'refund-payment': { title: 'dashboard.attention.refund-payment.title', description: 'dashboard.attention.refund-payment.description' },
+    'transfer-approval': { title: 'dashboard.attention.transfer-approval.title', description: 'dashboard.attention.transfer-approval.description' },
+    'transfer-dispatch': { title: 'dashboard.attention.transfer-dispatch.title', description: 'dashboard.attention.transfer-dispatch.description' },
+    'maintenance-open': { title: 'dashboard.attention.maintenance-open.title', description: 'dashboard.attention.maintenance-open.description' },
+    'inventory-approval': { title: 'dashboard.attention.inventory-approval.title', description: 'dashboard.attention.inventory-approval.description' },
+    'critical-notification': { title: 'dashboard.attention.critical-notification.title', description: 'dashboard.attention.critical-notification.description' },
+};
+
+const assetStatusCopy: Record<string, MessageKey> = {
+    available: 'dashboard.assetStatus.available',
+    reserved: 'dashboard.assetStatus.reserved',
+    rented: 'dashboard.assetStatus.rented',
+    maintenance: 'dashboard.assetStatus.maintenance',
+    in_transit: 'dashboard.assetStatus.in_transit',
+    lost: 'dashboard.assetStatus.lost',
+};
 
 const actionIcons: Record<DashboardQuickAction['key'], LucideIcon> = {
     booking: CalendarCheck2,
@@ -141,53 +192,54 @@ const assetStyles: Record<string, string> = {
     lost: 'bg-rose-500',
 };
 
-const statusLabels: Record<string, string> = {
-    active: 'Aktif',
-    approved: 'Disetujui',
-    cancelled: 'Dibatalkan',
-    completed: 'Selesai',
-    confirmed: 'Terkonfirmasi',
-    correction_pending: 'Menunggu koreksi',
-    draft: 'Draft',
-    partial_return: 'Kembali sebagian',
-    returned: 'Dikembalikan',
-    void: 'Void',
+const statusLabels: Record<string, MessageKey> = {
+    active: 'dashboard.status.active',
+    approved: 'dashboard.status.approved',
+    cancelled: 'dashboard.status.cancelled',
+    completed: 'dashboard.status.completed',
+    confirmed: 'dashboard.status.confirmed',
+    correction_pending: 'dashboard.status.correction_pending',
+    draft: 'dashboard.status.draft',
+    partial_return: 'dashboard.status.partial_return',
+    returned: 'dashboard.status.returned',
+    void: 'dashboard.status.void',
+    paid: 'dashboard.status.paid',
+    pending: 'dashboard.status.pending',
+    requested: 'dashboard.status.requested',
+    overdue: 'dashboard.status.overdue',
+    in_progress: 'dashboard.status.in_progress',
+    rejected: 'dashboard.status.rejected',
 };
 
-function greeting(): string {
+function greeting(locale: AppLocale): string {
     const hour = new Date().getHours();
+    const key: MessageKey = hour < 11
+        ? 'dashboard.greeting.morning'
+        : hour < 15
+          ? 'dashboard.greeting.noon'
+          : hour < 18
+            ? 'dashboard.greeting.afternoon'
+            : 'dashboard.greeting.evening';
 
-    if (hour < 11) {
-        return 'Selamat pagi';
-    }
-
-    if (hour < 15) {
-        return 'Selamat siang';
-    }
-
-    if (hour < 18) {
-        return 'Selamat sore';
-    }
-
-    return 'Selamat malam';
+    return translateKey(key, locale);
 }
 
-function statusLabel(status: string): string {
-    return (
-        statusLabels[status] ??
-        status
-            .split('_')
-            .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
-            .join(' ')
-    );
+function statusLabel(status: string, locale: AppLocale): string {
+    const key = statusLabels[status];
+
+    return key
+        ? translateKey(key, locale)
+        : status.split('_').map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(' ');
 }
 
 function Delta({ value }: { value: number | null }) {
+    const { tr, numberFormatter } = useDashboardLocale();
+
     if (value === null) {
         return (
             <span className="inline-flex items-center gap-1 text-xs font-medium text-sky-600 dark:text-sky-300">
                 <ArrowUpRight className="size-3.5" />
-                Baru periode ini
+                {tr('dashboard.delta.new')}
             </span>
         );
     }
@@ -205,7 +257,7 @@ function Delta({ value }: { value: number | null }) {
             )}
         >
             <Icon className="size-3.5" />
-            {Math.abs(value).toLocaleString('id-ID')}% vs periode lalu
+            {tr('dashboard.delta.compare', { percent: numberFormatter.format(Math.abs(value)) })}
         </span>
     );
 }
@@ -227,7 +279,8 @@ export default function Dashboard({
     generatedAt,
 }: OperationalDashboardPageProps) {
     const { auth } = usePage().props;
-    const firstName = auth.user?.name?.trim().split(/\s+/)[0] ?? 'Tim';
+    const { locale, tr, dateTimeFormatter } = useDashboardLocale();
+    const firstName = auth.user?.name?.trim().split(/\s+/)[0] ?? tr('dashboard.team');
     const hasOperationalAccess = Object.values(visibility).some(Boolean);
 
     const changeBranch = (value: string) => {
@@ -248,7 +301,7 @@ export default function Dashboard({
 
     return (
         <>
-            <Head title="Dashboard Operasional" />
+            <Head title={tr('dashboard.head')} />
 
             <main className="min-h-full space-y-5 p-4 md:p-6 xl:p-8">
                 <section className="relative overflow-hidden rounded-2xl border border-slate-800 bg-[radial-gradient(circle_at_top_right,rgba(56,189,248,0.22),transparent_36%),linear-gradient(135deg,#0f172a,#111827_60%,#0b1120)] px-5 py-6 text-white shadow-xl shadow-slate-950/10 md:px-7 md:py-7">
@@ -260,26 +313,23 @@ export default function Dashboard({
                             <div className="mb-3 flex flex-wrap items-center gap-2">
                                 <Badge className="border-white/10 bg-white/10 text-white hover:bg-white/10">
                                     <Activity className="size-3" />
-                                    Command Center
+                                    {tr('dashboard.commandCenter')}
                                 </Badge>
                                 <span className="text-xs text-slate-300">
-                                    Diperbarui{' '}
+                                    {tr('dashboard.updated')}{' '}
                                     {dateTimeFormatter.format(
                                         new Date(generatedAt),
                                     )}
                                 </span>
                             </div>
                             <p className="text-sm font-medium text-sky-300">
-                                {greeting()}, {firstName}
+                                {greeting(locale)}, {firstName}
                             </p>
                             <h1 className="mt-1 text-2xl font-semibold tracking-tight md:text-3xl">
-                                Apa yang perlu diselesaikan hari ini?
+                                {tr('dashboard.hero.title')}
                             </h1>
                             <p className="mt-2 max-w-2xl text-sm leading-6 text-slate-300 md:text-base">
-                                Pantau booking, rental, arus kas, dan kondisi
-                                aset dari satu tempat. Prioritas paling mendesak
-                                sudah diurutkan untuk mempercepat alur kerja
-                                tim.
+                                {tr('dashboard.hero.description')}
                             </p>
                         </div>
 
@@ -295,12 +345,12 @@ export default function Dashboard({
                                 >
                                     <SelectTrigger className="h-10 w-full border-white/15 bg-white/10 text-white shadow-none hover:bg-white/15 sm:w-64 [&_svg]:text-slate-300">
                                         <Building2 className="size-4 text-sky-300" />
-                                        <SelectValue placeholder="Pilih cabang" />
+                                        <SelectValue placeholder={tr('dashboard.selectBranch')} />
                                     </SelectTrigger>
                                     <SelectContent align="end">
                                         {scope.allow_all_branches && (
                                             <SelectItem value="all">
-                                                Semua cabang
+                                                {tr('dashboard.allBranches')}
                                             </SelectItem>
                                         )}
                                         {branches.map((branch) => (
@@ -320,7 +370,7 @@ export default function Dashboard({
                                 onClick={refresh}
                             >
                                 <RefreshCw className="size-4" />
-                                Refresh
+                                {tr('dashboard.refresh')}
                             </Button>
                         </div>
                     </div>
@@ -328,12 +378,12 @@ export default function Dashboard({
                     <div className="relative mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-white/10 pt-4 text-xs text-slate-300">
                         <span className="inline-flex items-center gap-1.5">
                             <Building2 className="size-3.5 text-sky-300" />
-                            {scope.label}
+                            {scope.is_company_scope && filters.branch_id === null ? tr('dashboard.allAccessibleBranches') : scope.label}
                         </span>
                         <span className="hidden size-1 rounded-full bg-slate-500 sm:block" />
-                        <span>Analitik {period.label}</span>
+                        <span>{tr('dashboard.analytics', { period: period.label })}</span>
                         <span className="hidden size-1 rounded-full bg-slate-500 sm:block" />
-                        <span>Pembanding {period.comparison_label}</span>
+                        <span>{tr('dashboard.comparison', { period: period.comparison_label })}</span>
                     </div>
                 </section>
 
@@ -345,16 +395,17 @@ export default function Dashboard({
                                     id="quick-actions-title"
                                     className="text-base font-semibold tracking-tight"
                                 >
-                                    Aksi cepat
+                                    {tr('dashboard.quickActions')}
                                 </h2>
                                 <p className="mt-0.5 text-xs text-muted-foreground">
-                                    Jalan pintas sesuai hak akses Anda.
+                                    {tr('dashboard.quickDescription')}
                                 </p>
                             </div>
                         </div>
                         <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
                             {quickActions.map((action) => {
                                 const Icon = actionIcons[action.key];
+                                const copy = actionCopy[action.key];
 
                                 return (
                                     <Link
@@ -374,10 +425,10 @@ export default function Dashboard({
                                             <ArrowUpRight className="size-4 text-muted-foreground transition-transform group-hover:translate-x-0.5 group-hover:-translate-y-0.5" />
                                         </div>
                                         <h3 className="mt-3 text-sm font-semibold">
-                                            {action.title}
+                                            {tr(copy.title)}
                                         </h3>
                                         <p className="mt-1 line-clamp-2 text-xs leading-5 text-muted-foreground">
-                                            {action.description}
+                                            {tr(copy.description)}
                                         </p>
                                     </Link>
                                 );
@@ -426,6 +477,8 @@ export default function Dashboard({
 }
 
 function NoOperationalAccess() {
+    const { tr } = useDashboardLocale();
+
     return (
         <Card className="border-dashed">
             <CardContent className="flex flex-col items-center py-14 text-center">
@@ -433,12 +486,10 @@ function NoOperationalAccess() {
                     <Activity className="size-6 text-muted-foreground" />
                 </div>
                 <h2 className="mt-4 font-semibold">
-                    Belum ada data operasional untuk ditampilkan
+                    {tr('dashboard.noAccess.title')}
                 </h2>
                 <p className="mt-1 max-w-lg text-sm leading-6 text-muted-foreground">
-                    Dashboard akan menyesuaikan isinya setelah role Anda
-                    memperoleh akses ke Booking, Rental, Finance, Pelanggan,
-                    atau Inventaris.
+                    {tr('dashboard.noAccess.description')}
                 </p>
             </CardContent>
         </Card>
@@ -454,28 +505,30 @@ function OverviewGrid({
     overview: DashboardOverview;
     periodLabel: string;
 }) {
+    const { tr, numberFormatter, currencyFormatter, compactCurrencyFormatter } = useDashboardLocale();
+
     return (
         <section
-            aria-label="Ringkasan performa"
+            aria-label={tr('dashboard.metrics.performance')}
             className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-5"
         >
             {visibility.bookings && (
                 <MetricCard
-                    title="Booking bulan ini"
+                    title={tr('dashboard.metrics.bookings')}
                     value={numberFormatter.format(overview.bookings_month)}
                     icon={CalendarCheck2}
                     iconClass="bg-sky-50 text-sky-600 dark:bg-sky-950/60 dark:text-sky-300"
-                    detail={`${overview.booking_conversion_percent.toLocaleString('id-ID')}% terkonversi ke rental`}
+                    detail={tr('dashboard.metrics.conversion', { percent: numberFormatter.format(overview.booking_conversion_percent) })}
                     footer={<Delta value={overview.bookings_change_percent} />}
                 />
             )}
             {visibility.rentals && (
                 <MetricCard
-                    title="Rental aktif"
+                    title={tr('dashboard.metrics.activeRentals')}
                     value={numberFormatter.format(overview.active_rentals)}
                     icon={ShoppingBag}
                     iconClass="bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-300"
-                    detail={`${numberFormatter.format(overview.due_today_rentals)} kembali hari ini`}
+                    detail={tr('dashboard.metrics.dueToday', { count: numberFormatter.format(overview.due_today_rentals) })}
                     footer={
                         <span
                             className={cn(
@@ -486,52 +539,51 @@ function OverviewGrid({
                             )}
                         >
                             {overview.overdue_rentals > 0
-                                ? `${numberFormatter.format(overview.overdue_rentals)} terlambat`
-                                : 'Tidak ada keterlambatan'}
+                                ? tr('dashboard.metrics.overdue', { count: numberFormatter.format(overview.overdue_rentals) })
+                                : tr('dashboard.metrics.noOverdue')}
                         </span>
                     }
                 />
             )}
             {visibility.finance && (
                 <MetricCard
-                    title={`Arus kas neto · ${periodLabel}`}
+                    title={tr('dashboard.metrics.netCash', { period: periodLabel })}
                     value={compactCurrencyFormatter.format(
                         overview.net_revenue_month,
                     )}
                     icon={WalletCards}
                     iconClass="bg-violet-50 text-violet-600 dark:bg-violet-950/60 dark:text-violet-300"
-                    detail={`${currencyFormatter.format(overview.receivable_amount)} belum tertagih`}
+                    detail={tr('dashboard.metrics.receivables', { amount: currencyFormatter.format(overview.receivable_amount) })}
                     footer={<Delta value={overview.revenue_change_percent} />}
                 />
             )}
             {visibility.assets && (
                 <MetricCard
-                    title="Utilisasi unit"
-                    value={`${overview.asset_utilization_percent.toLocaleString('id-ID')}%`}
+                    title={tr('dashboard.metrics.utilization')}
+                    value={`${numberFormatter.format(overview.asset_utilization_percent)}%`}
                     icon={Boxes}
                     iconClass="bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-300"
-                    detail={`${numberFormatter.format(overview.asset_rented)} disewa · ${numberFormatter.format(overview.asset_available)} tersedia`}
+                    detail={tr('dashboard.metrics.assetSplit', { rented: numberFormatter.format(overview.asset_rented), available: numberFormatter.format(overview.asset_available) })}
                     footer={
                         <span className="text-xs text-muted-foreground">
-                            {numberFormatter.format(overview.asset_total)} unit
-                            aktif terpantau
+                            {tr('dashboard.metrics.assetTotal', { count: numberFormatter.format(overview.asset_total) })}
                         </span>
                     }
                 />
             )}
             {visibility.customers && (
                 <MetricCard
-                    title="Pelanggan aktif"
+                    title={tr('dashboard.metrics.activeCustomers')}
                     value={numberFormatter.format(overview.customer_total)}
                     icon={UsersRound}
                     iconClass="bg-cyan-50 text-cyan-600 dark:bg-cyan-950/60 dark:text-cyan-300"
-                    detail={`${numberFormatter.format(overview.customer_new_this_month)} pelanggan baru bulan ini`}
+                    detail={tr('dashboard.metrics.newCustomers', { count: numberFormatter.format(overview.customer_new_this_month) })}
                     footer={
                         <Link
                             href="/customers"
                             className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
                         >
-                            Buka data pelanggan
+                            {tr('dashboard.metrics.openCustomers')}
                             <ArrowRight className="size-3" />
                         </Link>
                     }
@@ -570,6 +622,7 @@ function MetricCard({
 }
 
 function AttentionPanel({ items }: { items: DashboardAttentionItem[] }) {
+    const { tr, tp } = useDashboardLocale();
     const total = items.reduce((sum, item) => sum + item.count, 0);
 
     return (
@@ -579,15 +632,15 @@ function AttentionPanel({ items }: { items: DashboardAttentionItem[] }) {
                     <div>
                         <CardTitle className="flex items-center gap-2 text-base">
                             <CircleDollarSign className="size-4.5 text-primary" />
-                            Fokus hari ini
+                            {tr('dashboard.focus.title')}
                         </CardTitle>
                         <CardDescription className="mt-1">
-                            Antrean kerja diurutkan dari prioritas tertinggi.
+                            {tr('dashboard.focus.description')}
                         </CardDescription>
                     </div>
                     {total > 0 && (
                         <Badge variant="outline" className="bg-background">
-                            {numberFormatter.format(total)} tindakan
+                            {tp('dashboard.actionCount', total)}
                         </Badge>
                     )}
                 </div>
@@ -599,10 +652,10 @@ function AttentionPanel({ items }: { items: DashboardAttentionItem[] }) {
                             <CheckCircle2 className="size-5" />
                         </div>
                         <p className="mt-3 text-sm font-medium">
-                            Operasional terkendali
+                            {tr('dashboard.focus.emptyTitle')}
                         </p>
                         <p className="mt-1 text-xs text-muted-foreground">
-                            Tidak ada antrean prioritas pada scope saat ini.
+                            {tr('dashboard.focus.emptyDescription')}
                         </p>
                     </div>
                 ) : (
@@ -618,6 +671,8 @@ function AttentionPanel({ items }: { items: DashboardAttentionItem[] }) {
 }
 
 function AttentionRow({ item }: { item: DashboardAttentionItem }) {
+    const { tr, numberFormatter } = useDashboardLocale();
+    const copy = attentionCopy[item.key];
     const style = attentionStyles[item.tone];
 
     return (
@@ -634,9 +689,9 @@ function AttentionRow({ item }: { item: DashboardAttentionItem }) {
                 <span className={cn('size-2 rounded-full', style.dot)} />
             </span>
             <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium">{item.title}</p>
+                <p className="truncate text-sm font-medium">{copy ? tr(copy.title) : item.title}</p>
                 <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
-                    {item.description}
+                    {copy ? tr(copy.description) : item.description}
                 </p>
             </div>
             <span
@@ -653,15 +708,17 @@ function AttentionRow({ item }: { item: DashboardAttentionItem }) {
 }
 
 function TodaySchedule({ items }: { items: DashboardScheduleItem[] }) {
+    const { tr } = useDashboardLocale();
+
     return (
         <Card className="gap-0 overflow-hidden py-0 shadow-sm">
             <CardHeader className="border-b bg-muted/20 py-5">
                 <CardTitle className="flex items-center gap-2 text-base">
                     <CalendarClock className="size-4.5 text-primary" />
-                    Jadwal hari ini
+                    {tr('dashboard.schedule.title')}
                 </CardTitle>
                 <CardDescription>
-                    Pengambilan dan pengembalian unit.
+                    {tr('dashboard.schedule.description')}
                 </CardDescription>
             </CardHeader>
             <CardContent className="p-0">
@@ -669,10 +726,10 @@ function TodaySchedule({ items }: { items: DashboardScheduleItem[] }) {
                     <div className="flex flex-col items-center px-6 py-12 text-center">
                         <CalendarCheck2 className="size-9 text-muted-foreground/40" />
                         <p className="mt-3 text-sm font-medium">
-                            Tidak ada jadwal hari ini
+                            {tr('dashboard.schedule.emptyTitle')}
                         </p>
                         <p className="mt-1 text-xs text-muted-foreground">
-                            Jadwal pickup dan return akan muncul di sini.
+                            {tr('dashboard.schedule.emptyDescription')}
                         </p>
                     </div>
                 ) : (
@@ -691,6 +748,7 @@ function TodaySchedule({ items }: { items: DashboardScheduleItem[] }) {
 }
 
 function ScheduleRow({ item }: { item: DashboardScheduleItem }) {
+    const { locale, tr, timeFormatter } = useDashboardLocale();
     const pickup = item.kind === 'pickup';
     const Icon = pickup ? PackageOpen : PackageCheck;
 
@@ -719,7 +777,7 @@ function ScheduleRow({ item }: { item: DashboardScheduleItem }) {
                     </Badge>
                 </div>
                 <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                    {pickup ? 'Pickup' : 'Return'} · {item.number}
+                    {pickup ? tr('dashboard.schedule.pickup') : tr('dashboard.schedule.return')} · {item.number}
                 </p>
             </div>
             <div className="text-right">
@@ -727,7 +785,7 @@ function ScheduleRow({ item }: { item: DashboardScheduleItem }) {
                     {timeFormatter.format(new Date(item.scheduled_at))}
                 </p>
                 <p className="mt-0.5 text-[10px] text-muted-foreground">
-                    {statusLabel(item.status)}
+                    {statusLabel(item.status, locale)}
                 </p>
             </div>
         </Link>
@@ -735,6 +793,7 @@ function ScheduleRow({ item }: { item: DashboardScheduleItem }) {
 }
 
 function OperationalTrendChart({ data }: { data: DashboardTrendPoint[] }) {
+    const { tr, shortDateFormatter } = useDashboardLocale();
     const width = 760;
     const height = 240;
     const padding = { top: 20, right: 18, bottom: 38, left: 36 };
@@ -767,20 +826,20 @@ function OperationalTrendChart({ data }: { data: DashboardTrendPoint[] }) {
                 <div>
                     <CardTitle className="flex items-center gap-2 text-base">
                         <Activity className="size-4.5 text-primary" />
-                        Ritme operasional 14 hari
+                        {tr('dashboard.chart.title')}
                     </CardTitle>
                     <CardDescription className="mt-1">
-                        Jumlah booking dibuat dan rental di-checkout per hari.
+                        {tr('dashboard.chart.description')}
                     </CardDescription>
                 </div>
                 <div className="hidden items-center gap-3 text-[11px] text-muted-foreground sm:flex">
                     <span className="inline-flex items-center gap-1.5">
                         <span className="size-2 rounded-full bg-sky-500" />
-                        Booking
+                        {tr('dashboard.chart.booking')}
                     </span>
                     <span className="inline-flex items-center gap-1.5">
                         <span className="size-2 rounded-full bg-indigo-500" />
-                        Rental
+                        {tr('dashboard.chart.rental')}
                     </span>
                 </div>
             </CardHeader>
@@ -789,11 +848,10 @@ function OperationalTrendChart({ data }: { data: DashboardTrendPoint[] }) {
                     <div className="flex h-56 flex-col items-center justify-center text-center">
                         <Activity className="size-9 text-muted-foreground/35" />
                         <p className="mt-3 text-sm font-medium">
-                            Belum ada transaksi pada 14 hari terakhir
+                            {tr('dashboard.chart.emptyTitle')}
                         </p>
                         <p className="mt-1 text-xs text-muted-foreground">
-                            Tren akan terbentuk saat booking dan checkout mulai
-                            tercatat.
+                            {tr('dashboard.chart.emptyDescription')}
                         </p>
                     </div>
                 ) : (
@@ -801,7 +859,7 @@ function OperationalTrendChart({ data }: { data: DashboardTrendPoint[] }) {
                         viewBox={`0 0 ${width} ${height}`}
                         className="h-auto w-full overflow-visible"
                         role="img"
-                        aria-label="Grafik tren booking dan rental 14 hari terakhir"
+                        aria-label={tr('dashboard.chart.aria')}
                     >
                         {[0, 0.25, 0.5, 0.75, 1].map((ratio) => {
                             const lineY = padding.top + plotHeight * ratio;
@@ -856,7 +914,7 @@ function OperationalTrendChart({ data }: { data: DashboardTrendPoint[] }) {
                                     vectorEffect="non-scaling-stroke"
                                 >
                                     <title>
-                                        {point.label}: {point.bookings} booking
+                                        {shortDateFormatter.format(new Date(`${point.date}T12:00:00`))}: {tr('dashboard.chart.tooltipBooking', { count: point.bookings })}
                                     </title>
                                 </circle>
                                 <circle
@@ -868,7 +926,7 @@ function OperationalTrendChart({ data }: { data: DashboardTrendPoint[] }) {
                                     vectorEffect="non-scaling-stroke"
                                 >
                                     <title>
-                                        {point.label}: {point.rentals} rental
+                                        {shortDateFormatter.format(new Date(`${point.date}T12:00:00`))}: {tr('dashboard.chart.tooltipRental', { count: point.rentals })}
                                     </title>
                                 </circle>
                                 {(index === 0 ||
@@ -880,7 +938,7 @@ function OperationalTrendChart({ data }: { data: DashboardTrendPoint[] }) {
                                         textAnchor="middle"
                                         className="fill-muted-foreground text-[9px]"
                                     >
-                                        {point.label}
+                                        {shortDateFormatter.format(new Date(`${point.date}T12:00:00`))}
                                     </text>
                                 )}
                             </g>
@@ -899,15 +957,17 @@ function AssetHealthPanel({
     items: DashboardAssetHealth[];
     total: number;
 }) {
+    const { tr, numberFormatter } = useDashboardLocale();
+
     return (
         <Card className="gap-0 overflow-hidden py-0 shadow-sm">
             <CardHeader className="border-b bg-muted/20 py-5">
                 <CardTitle className="flex items-center gap-2 text-base">
                     <Boxes className="size-4.5 text-primary" />
-                    Kesehatan inventaris
+                    {tr('dashboard.asset.title')}
                 </CardTitle>
                 <CardDescription>
-                    Distribusi status unit serialized aktif.
+                    {tr('dashboard.asset.description')}
                 </CardDescription>
             </CardHeader>
             <CardContent className="py-5">
@@ -917,7 +977,7 @@ function AssetHealthPanel({
                             {numberFormatter.format(total)}
                         </p>
                         <p className="mt-1 text-xs text-muted-foreground">
-                            Total unit dalam scope
+                            {tr('dashboard.asset.total')}
                         </p>
                     </div>
                     <PackageCheck className="size-8 text-muted-foreground/35" />
@@ -956,7 +1016,7 @@ function AssetHealthPanel({
                                         assetStyles[item.key] ?? 'bg-slate-400',
                                     )}
                                 />
-                                <span className="truncate">{item.label}</span>
+                                <span className="truncate">{assetStatusCopy[item.key] ? tr(assetStatusCopy[item.key]) : item.label}</span>
                             </span>
                             <span className="text-xs font-semibold tabular-nums">
                                 {numberFormatter.format(item.count)}
@@ -976,56 +1036,58 @@ function BranchPerformanceTable({
     rows: DashboardBranchPerformance[];
     visibility: DashboardVisibility;
 }) {
+    const { tr, tp, numberFormatter, compactCurrencyFormatter } = useDashboardLocale();
+
     return (
         <Card className="gap-0 overflow-hidden py-0 shadow-sm">
             <CardHeader className="flex-row items-center justify-between gap-4 border-b bg-muted/20 py-5">
                 <div>
                     <CardTitle className="flex items-center gap-2 text-base">
                         <Building2 className="size-4.5 text-primary" />
-                        Performa cabang
+                        {tr('dashboard.branch.title')}
                     </CardTitle>
                     <CardDescription className="mt-1">
-                        Perbandingan operasional pada bulan berjalan.
+                        {tr('dashboard.branch.description')}
                     </CardDescription>
                 </div>
                 <Badge variant="outline" className="bg-background">
-                    {rows.length} cabang
+                    {tp('dashboard.branchCount', rows.length)}
                 </Badge>
             </CardHeader>
             <CardContent className="p-0">
                 {rows.length === 0 ? (
                     <div className="py-12 text-center text-sm text-muted-foreground">
-                        Belum ada cabang dalam scope dashboard.
+                        {tr('dashboard.branch.empty')}
                     </div>
                 ) : (
                     <div className="overflow-x-auto">
                         <table className="w-full min-w-[680px] text-sm">
                             <thead>
                                 <tr className="border-b bg-muted/15 text-left text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
-                                    <th className="px-5 py-3">Cabang</th>
+                                    <th className="px-5 py-3">{tr('dashboard.branch.column')}</th>
                                     {visibility.bookings && (
                                         <th className="px-4 py-3 text-right">
-                                            Booking
+                                            {tr('dashboard.chart.booking')}
                                         </th>
                                     )}
                                     {visibility.rentals && (
                                         <>
                                             <th className="px-4 py-3 text-right">
-                                                Rental aktif
+                                                {tr('dashboard.metrics.activeRentals')}
                                             </th>
                                             <th className="px-4 py-3 text-right">
-                                                Terlambat
+                                                {tr('dashboard.branch.overdue')}
                                             </th>
                                         </>
                                     )}
                                     {visibility.assets && (
                                         <th className="px-4 py-3 text-right">
-                                            Utilisasi
+                                            {tr('dashboard.branch.utilization')}
                                         </th>
                                     )}
                                     {visibility.finance && (
                                         <th className="px-5 py-3 text-right">
-                                            Kas neto
+                                            {tr('dashboard.branch.netCash')}
                                         </th>
                                     )}
                                 </tr>
@@ -1077,9 +1139,7 @@ function BranchPerformanceTable({
                                         {visibility.assets && (
                                             <td className="px-4 py-4 text-right">
                                                 <span className="inline-flex min-w-14 justify-center rounded-full bg-muted px-2 py-1 text-xs font-semibold tabular-nums">
-                                                    {row.utilization_percent.toLocaleString(
-                                                        'id-ID',
-                                                    )}
+                                                    {numberFormatter.format(row.utilization_percent)}
                                                     %
                                                 </span>
                                             </td>
@@ -1103,21 +1163,23 @@ function BranchPerformanceTable({
 }
 
 function RecentActivityPanel({ items }: { items: DashboardRecentActivity[] }) {
+    const { tr } = useDashboardLocale();
+
     return (
         <Card className="gap-0 overflow-hidden py-0 shadow-sm">
             <CardHeader className="border-b bg-muted/20 py-5">
                 <CardTitle className="flex items-center gap-2 text-base">
                     <Clock3 className="size-4.5 text-primary" />
-                    Aktivitas terbaru
+                    {tr('dashboard.recent.title')}
                 </CardTitle>
                 <CardDescription>
-                    Transaksi terkini pada scope aktif.
+                    {tr('dashboard.recent.description')}
                 </CardDescription>
             </CardHeader>
             <CardContent className="p-0">
                 {items.length === 0 ? (
                     <div className="py-12 text-center text-sm text-muted-foreground">
-                        Belum ada aktivitas terbaru.
+                        {tr('dashboard.recent.empty')}
                     </div>
                 ) : (
                     <div className="divide-y">
@@ -1135,25 +1197,26 @@ function RecentActivityPanel({ items }: { items: DashboardRecentActivity[] }) {
 }
 
 function ActivityRow({ item }: { item: DashboardRecentActivity }) {
+    const { locale, tr, compactCurrencyFormatter, dateTimeFormatter } = useDashboardLocale();
     const config: Record<
         DashboardRecentActivity['kind'],
         { icon: LucideIcon; label: string; className: string }
     > = {
         booking: {
             icon: CalendarCheck2,
-            label: 'Booking',
+            label: tr('dashboard.chart.booking'),
             className:
                 'bg-sky-50 text-sky-600 dark:bg-sky-950/60 dark:text-sky-300',
         },
         rental: {
             icon: ShoppingBag,
-            label: 'Rental',
+            label: tr('dashboard.chart.rental'),
             className:
                 'bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-300',
         },
         payment: {
             icon: HandCoins,
-            label: 'Payment',
+            label: tr('dashboard.recent.payment'),
             className:
                 'bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-300',
         },
@@ -1184,7 +1247,7 @@ function ActivityRow({ item }: { item: DashboardRecentActivity }) {
                     </span>
                 </div>
                 <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                    {current.label} · {item.number} · {statusLabel(item.status)}
+                    {current.label} · {item.number} · {statusLabel(item.status, locale)}
                 </p>
             </div>
             <div className="text-right">

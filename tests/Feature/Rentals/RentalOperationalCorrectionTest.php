@@ -196,10 +196,22 @@ class RentalOperationalCorrectionTest extends TestCase
             'checkout_condition' => 'good',
             'payment_amount' => 0,
             'deposit_paid' => 0,
+            // UAT-014: the direct-rental fixture must receive a real collateral.
+            'collaterals' => [[
+                'type' => 'Kartu Mahasiswa',
+                'number' => 'MHS-CORRECTION-FIXTURE-001',
+                'holder_name' => $customer->name,
+            ]],
         ])->assertSessionHasNoErrors()
             ->assertRedirect();
 
         $rental = Rental::query()->with('items.assets')->firstOrFail();
+        // Mark the mandatory collateral returned through the production endpoint;
+        // operational-correction tests must not bypass the business guard.
+        $this->actingAs($user)->post(route('rentals.collaterals.return', [
+            $rental,
+            $rental->collaterals()->firstOrFail(),
+        ]))->assertSessionHasNoErrors();
         $unit = $rental->items->first()->assets->first();
         $method = PaymentMethod::query()->where('code', 'CASH')->firstOrFail();
         $session = $this->openCashSession($user, $branch);

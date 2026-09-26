@@ -11,6 +11,8 @@ import {
     X,
 } from 'lucide-react';
 import { useState } from 'react';
+import { Stage4Text, stage4Translate, stage4TranslateDynamic, stage4FormatDateTime, stage4ItemCount } from '@/components/stage4-text';
+import { useAppLocale } from '@/lib/i18n';
 import { PaginationLinks } from '@/components/pagination-links';
 import { FilterBar } from '@/components/ui/filter-bar';
 import { MetricCard } from '@/components/ui/metric-card';
@@ -61,10 +63,6 @@ const money = new Intl.NumberFormat('id-ID', {
     currency: 'IDR',
     maximumFractionDigits: 0,
 });
-const dateTime = new Intl.DateTimeFormat('id-ID', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-});
 
 const statusLabels: Record<BookingStatus, string> = {
     draft: 'Draft',
@@ -98,6 +96,8 @@ export default function BookingIndex({
     branches,
     permissions,
 }: Props) {
+    const { locale: stage4Locale } = useAppLocale();
+
     const [search, setSearch] = useState(filters.search);
 
     const apply = (next: Partial<Filters> = {}) => {
@@ -141,27 +141,21 @@ export default function BookingIndex({
 
     return (
         <>
-            <Head title="Booking" />
+            <Head title={stage4Translate("stage4.ui.e38ea8eebe78", stage4Locale)} />
             <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
                 <header className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                     <div>
-                        <p className="text-sm font-medium text-primary">
-                            Operasional rental multi-cabang
+                        <p className="text-sm font-medium text-primary"><Stage4Text k="stage4.ui.f2ba8b28c155" />
                         </p>
-                        <h1 className="mt-1 text-2xl font-semibold">
-                            Booking Management
+                        <h1 className="mt-1 text-2xl font-semibold"><Stage4Text k="stage4.ui.2f266d8f6179" />
                         </h1>
-                        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
-                            Pantau jadwal, reservasi, booking kedaluwarsa, dan
-                            kebutuhan checkout dari seluruh cabang yang dapat
-                            Anda akses.
+                        <p className="mt-2 max-w-3xl text-sm text-muted-foreground"><Stage4Text k="stage4.ui.be99983aa074" />
                         </p>
                     </div>
                     {permissions.create && (
                         <Button asChild>
                             <Link href="/bookings/create">
-                                <Plus />
-                                Booking baru
+                                <Plus /><Stage4Text k="stage4.ui.eae4f64d5567" />
                             </Link>
                         </Button>
                     )}
@@ -169,32 +163,32 @@ export default function BookingIndex({
 
                 <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-6">
                     <SummaryCard
-                        label="Total booking"
+                        label={stage4Translate("stage4.ui.61cb469bb05f", stage4Locale)}
                         value={summary.total}
                         icon={CalendarDays}
                     />
                     <SummaryCard
-                        label="Draft"
+                        label={stage4Translate("stage4.ui.23d33e22acfc", stage4Locale)}
                         value={summary.draft}
                         icon={Clock3}
                     />
                     <SummaryCard
-                        label="Terkonfirmasi"
+                        label={stage4Translate("stage4.ui.b5f4b6bc6dec", stage4Locale)}
                         value={summary.confirmed}
                         icon={CircleCheck}
                     />
                     <SummaryCard
-                        label="Mulai hari ini"
+                        label={stage4Translate("stage4.ui.73fb0a4fa8a3", stage4Locale)}
                         value={summary.today}
                         icon={CalendarClock}
                     />
                     <SummaryCard
-                        label="7 hari ke depan"
+                        label={stage4Translate("stage4.ui.b45237e83022", stage4Locale)}
                         value={summary.upcoming}
                         icon={CalendarDays}
                     />
                     <SummaryCard
-                        label="Kedaluwarsa"
+                        label={stage4Translate("stage4.ui.488eb6459697", stage4Locale)}
                         value={summary.expired}
                         icon={TimerOff}
                         attention={summary.expired > 0}
@@ -202,12 +196,12 @@ export default function BookingIndex({
                 </section>
 
                 <FilterBar
-                    title="Pusat pencarian operasional"
-                    description="Cari nomor booking, pelanggan, produk, paket, kode aset, atau serial number."
+                    title={stage4Translate("stage4.ui.1cc59e54a593", stage4Locale)}
+                    description={stage4Translate("stage4.ui.6cdcb2c64852", stage4Locale)}
                     context={
                         <Badge variant="outline" className="w-fit">
                             <Building2 />
-                            {selectedBranch?.name ?? 'Semua cabang'}
+                            {selectedBranch?.name ?? stage4Translate("stage4.ui.27d30aba48a4", stage4Locale)}
                         </Badge>
                     }
                     contentClassName="grid-cols-1"
@@ -227,7 +221,7 @@ export default function BookingIndex({
                                     setSearch(event.target.value)
                                 }
                                 className="pl-9"
-                                placeholder="Booking, pelanggan, produk, aset..."
+                                placeholder={stage4Translate("stage4.ui.d8c824d3ee27", stage4Locale)}
                             />
                         </div>
                         <Select
@@ -235,11 +229,10 @@ export default function BookingIndex({
                             onValueChange={(value) => apply({ status: value })}
                         >
                             <SelectTrigger>
-                                <SelectValue placeholder="Semua status" />
+                                <SelectValue placeholder={stage4Translate("stage4.ui.baa2adda4148", stage4Locale)} />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all">
-                                    Semua status
+                                <SelectItem value="all"><Stage4Text k="stage4.ui.baa2adda4148" />
                                 </SelectItem>
                                 {(
                                     [
@@ -252,7 +245,7 @@ export default function BookingIndex({
                                     ] as BookingStatus[]
                                 ).map((status) => (
                                     <SelectItem key={status} value={status}>
-                                        {statusLabels[status]}
+                                        {stage4TranslateDynamic(statusLabels[status], stage4Locale)}
                                     </SelectItem>
                                 ))}
                             </SelectContent>
@@ -262,26 +255,20 @@ export default function BookingIndex({
                             onValueChange={(value) => apply({ period: value })}
                         >
                             <SelectTrigger>
-                                <SelectValue placeholder="Periode" />
+                                <SelectValue placeholder={stage4Translate("stage4.ui.85e181b57a56", stage4Locale)} />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all">
-                                    Semua periode
+                                <SelectItem value="all"><Stage4Text k="stage4.ui.e7225b6d509d" />
                                 </SelectItem>
-                                <SelectItem value="today">
-                                    Mulai hari ini
+                                <SelectItem value="today"><Stage4Text k="stage4.ui.73fb0a4fa8a3" />
                                 </SelectItem>
-                                <SelectItem value="tomorrow">
-                                    Mulai besok
+                                <SelectItem value="tomorrow"><Stage4Text k="stage4.ui.cfdbaebdc892" />
                                 </SelectItem>
-                                <SelectItem value="next7">
-                                    7 hari ke depan
+                                <SelectItem value="next7"><Stage4Text k="stage4.ui.b45237e83022" />
                                 </SelectItem>
-                                <SelectItem value="upcoming">
-                                    Semua mendatang
+                                <SelectItem value="upcoming"><Stage4Text k="stage4.ui.3c5ba7839b4c" />
                                 </SelectItem>
-                                <SelectItem value="past">
-                                    Sudah lewat
+                                <SelectItem value="past"><Stage4Text k="stage4.ui.b648780b62e4" />
                                 </SelectItem>
                             </SelectContent>
                         </Select>
@@ -290,23 +277,19 @@ export default function BookingIndex({
                             onValueChange={(value) => apply({ source: value })}
                         >
                             <SelectTrigger>
-                                <SelectValue placeholder="Sumber" />
+                                <SelectValue placeholder={stage4Translate("stage4.ui.ff648afc53ef", stage4Locale)} />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all">
-                                    Semua sumber
+                                <SelectItem value="all"><Stage4Text k="stage4.ui.7f8f0dfcaffd" />
                                 </SelectItem>
-                                <SelectItem value="counter">
-                                    Booking counter
+                                <SelectItem value="counter"><Stage4Text k="stage4.ui.d4550c51b395" />
                                 </SelectItem>
-                                <SelectItem value="phone">Telepon</SelectItem>
-                                <SelectItem value="whatsapp">
-                                    WhatsApp
+                                <SelectItem value="phone"><Stage4Text k="stage4.ui.396dc0e2976f" /></SelectItem>
+                                <SelectItem value="whatsapp"><Stage4Text k="stage4.ui.b336fc558722" />
                                 </SelectItem>
-                                <SelectItem value="website">Website</SelectItem>
-                                <SelectItem value="other">Lainnya</SelectItem>
-                                <SelectItem value="direct">
-                                    Rental In Store
+                                <SelectItem value="website"><Stage4Text k="stage4.ui.2e8a57cc5c47" /></SelectItem>
+                                <SelectItem value="other"><Stage4Text k="stage4.ui.844f8a723473" /></SelectItem>
+                                <SelectItem value="direct"><Stage4Text k="stage4.ui.fd25629b8a39" />
                                 </SelectItem>
                             </SelectContent>
                         </Select>
@@ -320,11 +303,10 @@ export default function BookingIndex({
                             }
                         >
                             <SelectTrigger>
-                                <SelectValue placeholder="Semua cabang" />
+                                <SelectValue placeholder={stage4Translate("stage4.ui.27d30aba48a4", stage4Locale)} />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all">
-                                    Semua cabang
+                                <SelectItem value="all"><Stage4Text k="stage4.ui.27d30aba48a4" />
                                 </SelectItem>
                                 {branches.map((branch) => (
                                     <SelectItem
@@ -337,8 +319,7 @@ export default function BookingIndex({
                             </SelectContent>
                         </Select>
                         <Button type="submit">
-                            <Search />
-                            Cari
+                            <Search /><Stage4Text k="stage4.ui.3f2275d79afb" />
                         </Button>
                     </form>
                     {hasFilters && (
@@ -348,7 +329,7 @@ export default function BookingIndex({
                             size="sm"
                             onClick={reset}
                         >
-                            <X /> Reset semua filter
+                            <X /><Stage4Text k="stage4.ui.165a47f62b2d" />
                         </Button>
                     )}
                 </FilterBar>
@@ -356,12 +337,9 @@ export default function BookingIndex({
                 <Card>
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2">
-                            <CalendarDays className="size-5" />
-                            Daftar booking
+                            <CalendarDays className="size-5" /><Stage4Text k="stage4.ui.5cd285282368" />
                         </CardTitle>
-                        <CardDescription>
-                            Prioritaskan booking terkonfirmasi yang akan segera
-                            mulai dan booking yang perlu ditindaklanjuti.
+                        <CardDescription><Stage4Text k="stage4.ui.77b45462de16" />
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
@@ -369,15 +347,14 @@ export default function BookingIndex({
                             <table className="w-full min-w-[980px] text-sm">
                                 <thead className="bg-muted/50 text-left">
                                     <tr>
-                                        <th className="p-3">Booking</th>
-                                        <th className="p-3">Pelanggan</th>
-                                        <th className="p-3">Periode</th>
-                                        <th className="p-3">
-                                            Item / reservasi
+                                        <th className="p-3"><Stage4Text k="stage4.ui.e38ea8eebe78" /></th>
+                                        <th className="p-3"><Stage4Text k="stage4.ui.af0ab4433946" /></th>
+                                        <th className="p-3"><Stage4Text k="stage4.ui.85e181b57a56" /></th>
+                                        <th className="p-3"><Stage4Text k="stage4.ui.fd234457fe2a" />
                                         </th>
-                                        <th className="p-3">Total</th>
-                                        <th className="p-3">Status</th>
-                                        <th className="p-3 text-right">Aksi</th>
+                                        <th className="p-3"><Stage4Text k="stage4.ui.b25928c69902" /></th>
+                                        <th className="p-3"><Stage4Text k="stage4.ui.bae7d5be7082" /></th>
+                                        <th className="p-3 text-right"><Stage4Text k="stage4.ui.60ad46d8cab9" /></th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -414,29 +391,22 @@ export default function BookingIndex({
                                             </td>
                                             <td className="p-3">
                                                 <p>
-                                                    {dateTime.format(
-                                                        new Date(
+                                                    {stage4FormatDateTime(new Date(
                                                             booking.starts_at,
-                                                        ),
-                                                    )}
+                                                        ), stage4Locale)}
                                                 </p>
-                                                <p className="text-xs text-muted-foreground">
-                                                    s.d.{' '}
-                                                    {dateTime.format(
-                                                        new Date(
+                                                <p className="text-xs text-muted-foreground"><Stage4Text k="stage4.ui.40e47803c0dc" />{' '}
+                                                    {stage4FormatDateTime(new Date(
                                                             booking.ends_at,
-                                                        ),
-                                                    )}
+                                                        ), stage4Locale)}
                                                 </p>
                                             </td>
                                             <td className="p-3">
                                                 <p>
-                                                    {booking.items_count ?? 0}{' '}
-                                                    item
+                                                    {stage4ItemCount(booking.items_count ?? 0, stage4Locale)}
                                                 </p>
                                                 <p className="text-xs text-muted-foreground">
-                                                    {(booking.reservations_count ?? 0) + Number(booking.bulk_units_count ?? 0)}{' '}
-                                                    unit terreservasi
+                                                    {(booking.reservations_count ?? 0) + Number(booking.bulk_units_count ?? 0)}{' '}<Stage4Text k="stage4.ui.23430ecfb355" />
                                                 </p>
                                             </td>
                                             <td className="p-3 font-medium">
@@ -453,9 +423,9 @@ export default function BookingIndex({
                                                     )}
                                                 >
                                                     {
-                                                        statusLabels[
+                                                        stage4TranslateDynamic(statusLabels[
                                                             booking.status
-                                                        ]
+                                                        ], stage4Locale)
                                                     }
                                                 </Badge>
                                             </td>
@@ -467,8 +437,7 @@ export default function BookingIndex({
                                                 >
                                                     <Link
                                                         href={`/bookings/${booking.id}`}
-                                                    >
-                                                        Detail
+                                                    ><Stage4Text k="stage4.ui.7c9a7c0610c1" />
                                                     </Link>
                                                 </Button>
                                             </td>
@@ -479,9 +448,7 @@ export default function BookingIndex({
                                             <td
                                                 colSpan={7}
                                                 className="p-10 text-center text-sm text-muted-foreground"
-                                            >
-                                                Tidak ada booking yang sesuai
-                                                dengan filter saat ini.
+                                            ><Stage4Text k="stage4.ui.f29239a83b11" />
                                             </td>
                                         </tr>
                                     )}

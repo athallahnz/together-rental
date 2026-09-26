@@ -1,12 +1,8 @@
 import { Link } from '@inertiajs/react';
 import { ArrowUpRight, Layers3 } from 'lucide-react';
+import { useAppLocale } from '@/lib/i18n';
+import { formatMoney } from '@/lib/locale-format';
 import type { PublicBranch, PublicPackage } from '@/types';
-
-const currency = new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    maximumFractionDigits: 0,
-});
 
 export default function PackageCard({
     rentalPackage,
@@ -15,6 +11,8 @@ export default function PackageCard({
     rentalPackage: PublicPackage;
     branch: PublicBranch;
 }) {
+    const { locale, tr } = useAppLocale();
+
     return (
         <Link
             href={`/rental/packages/${rentalPackage.slug}?branch=${branch.code}`}
@@ -36,9 +34,7 @@ export default function PackageCard({
             </div>
             <div className="flex flex-col justify-between p-6">
                 <div>
-                    <p className="text-xs font-semibold tracking-[0.18em] text-neutral-400 uppercase">
-                        Paket Rental
-                    </p>
+                    <p className="text-xs font-semibold tracking-[0.18em] text-neutral-400 uppercase">{tr('public.common.rentalPackage')}</p>
                     <div className="mt-2 flex items-start justify-between gap-4">
                         <h3 className="text-xl font-semibold tracking-tight">
                             {rentalPackage.name}
@@ -53,16 +49,15 @@ export default function PackageCard({
                 </div>
                 <div className="mt-8 flex items-end justify-between border-t border-black/5 pt-4">
                     <div>
-                        <p className="text-xs text-neutral-500">Mulai dari</p>
+                        <p className="text-xs text-neutral-500">{tr('public.common.from')}</p>
                         <p className="mt-1 font-semibold">
                             {rentalPackage.starting_price !== null
-                                ? currency.format(rentalPackage.starting_price)
-                                : 'Hubungi admin'}
+                                ? formatMoney(rentalPackage.starting_price, locale)
+                                : tr('public.common.contactAdmin')}
                         </p>
                     </div>
                     <p className="text-xs text-neutral-500">
-                        {rentalPackage.items_count} item
-                    </p>
+                        {rentalPackage.items_count}{' '}{tr('public.common.items')}</p>
                 </div>
             </div>
         </Link>

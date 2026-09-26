@@ -11,6 +11,9 @@ import AvailabilityPlanner from '@/components/public/availability-planner';
 import PublicAssetCalendar from '@/components/public/public-asset-calendar';
 import ProductCard from '@/components/public/product-card';
 import PublicShell from '@/components/public/public-shell';
+import { useAppLocale } from '@/lib/i18n';
+import { formatMoney } from '@/lib/locale-format';
+import { publicAvailabilityLabel, publicRateDurationLabel } from '@/lib/public-i18n';
 import type { PublicBranch, PublicProduct, PublicProductDetail } from '@/types';
 
 type Props = {
@@ -20,18 +23,14 @@ type Props = {
     relatedProducts: PublicProduct[];
 };
 
-const currency = new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    maximumFractionDigits: 0,
-});
-
 export default function PublicProductShow({
     branch,
     branches,
     product,
     relatedProducts,
 }: Props) {
+    const { locale, tr } = useAppLocale();
+
     return (
         <PublicShell branch={branch} branches={branches}>
             <Head title={product.seo_title}>
@@ -98,7 +97,7 @@ export default function PublicProductShow({
                             }
                             className="inline-flex items-center gap-2 text-sm font-medium text-neutral-500 transition hover:text-neutral-950"
                         >
-                            <ArrowLeft className="size-4" /> Kembali ke katalog
+                            <ArrowLeft className="size-4" /> {tr('public.detail.back')}
                         </Link>
                     </div>
                 </section>
@@ -155,14 +154,14 @@ export default function PublicProductShow({
                                 }`}
                             >
                                 <CheckCircle2 className="size-3.5" />{' '}
-                                {product.availability.label}
+                                {publicAvailabilityLabel(product.availability.status, locale)}
                             </span>
                         </div>
 
                         <p className="mt-6 text-sm font-semibold tracking-[0.14em] text-neutral-400 uppercase">
                             {[product.brand, product.model]
                                 .filter(Boolean)
-                                .join(' · ') || 'Creative equipment'}
+                                .join(' · ') || tr('public.detail.product.equipment')}
                         </p>
                         <h1 className="mt-2 text-4xl leading-tight font-semibold tracking-[-0.045em] sm:text-6xl">
                             {product.name}
@@ -177,23 +176,23 @@ export default function PublicProductShow({
                             <div className="flex items-center justify-between gap-4">
                                 <div>
                                     <p className="text-xs text-neutral-500">
-                                        Harga mulai
+                                        {tr('public.detail.product.starting')}
                                     </p>
                                     <p className="mt-1 text-2xl font-semibold">
                                         {product.starting_price !== null
-                                            ? currency.format(
-                                                  product.starting_price,
+                                            ? formatMoney(
+                                                  product.starting_price, locale,
                                               )
-                                            : 'Hubungi admin'}
+                                            : tr('public.common.contactAdmin')}
                                     </p>
                                 </div>
                                 <div className="text-right">
                                     <p className="text-xs text-neutral-500">
-                                        Unit tersedia
+                                        {tr('public.detail.product.availableUnits')}
                                     </p>
                                     <p className="mt-1 font-semibold">
                                         {product.availability.available_units}{' '}
-                                        unit
+                                        {tr('public.detail.product.unit')}
                                     </p>
                                 </div>
                             </div>
@@ -207,16 +206,16 @@ export default function PublicProductShow({
                                         >
                                             <p className="flex items-center gap-1 text-xs text-neutral-500">
                                                 <Clock3 className="size-3.5" />{' '}
-                                                {rate.duration_label}
+                                                {publicRateDurationLabel(rate.duration_label, locale)}
                                             </p>
                                             <p className="mt-2 font-semibold">
-                                                {currency.format(rate.amount)}
+                                                {formatMoney(rate.amount, locale)}
                                             </p>
                                             {rate.deposit_amount > 0 && (
                                                 <p className="mt-1 text-[11px] text-neutral-400">
                                                     Deposit{' '}
-                                                    {currency.format(
-                                                        rate.deposit_amount,
+                                                    {formatMoney(
+                                                        rate.deposit_amount, locale,
                                                     )}
                                                 </p>
                                             )}
@@ -247,7 +246,7 @@ export default function PublicProductShow({
                                 }
                                 className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-black/10 bg-white px-6 text-sm font-semibold"
                             >
-                                Lihat alat lain{' '}
+                                {tr('public.detail.product.other')}{' '}
                                 <ArrowRight className="size-4" />
                             </Link>
                         </div>
@@ -255,10 +254,7 @@ export default function PublicProductShow({
                         <div className="mt-8 flex items-start gap-3 rounded-2xl bg-emerald-50 p-4 text-sm text-emerald-900">
                             <ShieldCheck className="mt-0.5 size-5 shrink-0" />
                             <p className="leading-6">
-                                Ketersediaan periode dihitung dari booking,
-                                rental aktif, dan kapasitas cabang. Admin tetap
-                                melakukan konfirmasi final sebelum transaksi
-                                dibuat.
+                                {tr('public.detail.product.notice')}
                             </p>
                         </div>
                     </div>
@@ -281,19 +277,19 @@ export default function PublicProductShow({
                         <div className="mx-auto grid max-w-7xl gap-12 px-5 lg:grid-cols-2 lg:px-8">
                             <div>
                                 <p className="text-xs font-semibold tracking-[0.16em] text-neutral-400 uppercase">
-                                    Tentang produk
+                                    {tr('public.detail.product.about')}
                                 </p>
                                 <h2 className="mt-3 text-3xl font-semibold tracking-tight">
-                                    Detail yang perlu diketahui.
+                                    {tr('public.detail.product.details')}
                                 </h2>
                                 <p className="mt-5 text-base leading-8 whitespace-pre-line text-neutral-500">
                                     {product.description ||
-                                        'Informasi detail produk akan segera dilengkapi.'}
+                                        tr('public.detail.product.missingDetails')}
                                 </p>
                             </div>
                             {Object.keys(product.specifications).length > 0 && (
                                 <div className="rounded-[1.5rem] border border-black/7 p-6">
-                                    <p className="font-semibold">Spesifikasi</p>
+                                    <p className="font-semibold">{tr('public.detail.product.specifications')}</p>
                                     <dl className="mt-5 divide-y divide-black/5">
                                         {Object.entries(
                                             product.specifications,
@@ -322,17 +318,17 @@ export default function PublicProductShow({
                         <div className="flex items-end justify-between gap-4">
                             <div>
                                 <p className="text-xs font-semibold tracking-[0.16em] text-neutral-400 uppercase">
-                                    Pilihan lainnya
+                                    {tr('public.detail.product.otherEyebrow')}
                                 </p>
                                 <h2 className="mt-2 text-3xl font-semibold tracking-tight">
-                                    Produk serupa.
+                                    {tr('public.detail.product.similar')}
                                 </h2>
                             </div>
                             <Link
                                 href={`/rental?branch=${branch.code}`}
                                 className="text-sm font-semibold hover:text-neutral-500"
                             >
-                                Lihat semua
+                                {tr('public.detail.product.viewAll')}
                             </Link>
                         </div>
                         <div className="mt-8 grid gap-5 sm:grid-cols-2 lg:grid-cols-4">

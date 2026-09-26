@@ -251,8 +251,8 @@ class TransactionDocumentController extends Controller
         return to_route('documents.index')->with('toast', [
             'type' => 'success',
             'message' => $document->wasRecentlyCreated
-                ? "Dokumen {$document->document_number} berhasil diterbitkan."
-                : "Snapshot belum berubah. Dokumen {$document->document_number} digunakan kembali.",
+                ? __('uat035b_stage4.flash.document_issued', ['reference' => $document->document_number])
+                : __('uat035b_stage4.flash.document_reused', ['reference' => $document->document_number]),
         ]);
     }
 

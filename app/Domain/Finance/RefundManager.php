@@ -2,11 +2,14 @@
 
 namespace App\Domain\Finance;
 
+use App\Domain\Bookings\BookingManager;
 use App\Domain\Rentals\RentalNumberGenerator;
+use App\Models\Booking;
 use App\Models\Branch;
 use App\Models\CashSession;
 use App\Models\Payment;
 use App\Models\PaymentMethod;
+use App\Models\Rental;
 use App\Models\Refund;
 use App\Models\User;
 use Illuminate\Support\Facades\DB;
@@ -18,6 +21,8 @@ class RefundManager
         private readonly RentalNumberGenerator $numbers,
         private readonly RefundEligibility $eligibility,
         private readonly CashLedger $cashLedger,
+        private readonly BookingPaymentSettlement $settlement,
+        private readonly BookingManager $bookings,
     ) {}
 
     /** @param array<string, mixed> $data */
@@ -44,6 +49,24 @@ class RefundManager
                 ]);
             }
 
+            $bookingDp = $locked->booking_id !== null
+                && $locked->source_context === 'booking' && $locked->type === 'rental';
+            $purpose = $this->nullableString($data['purpose'] ?? null);
+            if ($bookingDp && ! in_array($purpose, Refund::BOOKING_PURPOSES, true)) {
+                throw ValidationException::withMessages([
+                    'purpose' => 'Pilih tujuan refund DP: Pembatalan Booking atau Koreksi Pembayaran.',
+                ]);
+            }
+            if (! $bookingDp && $purpose !== null) {
+                throw ValidationException::withMessages([
+                    'purpose' => 'Tujuan refund DP hanya tersedia untuk pembayaran booking.',
+                ]);
+            }
+            if ($purpose === Refund::PURPOSE_BOOKING_CANCELLATION) {
+                $booking = Booking::query()->lockForUpdate()->findOrFail($locked->booking_id);
+                $this->assertBookingMayBeCancelled($booking, $locked->branch_id);
+            }
+
             $method = PaymentMethod::query()
                 ->where('company_id', $locked->branch->company_id)
                 ->where('is_active', true)
@@ -65,6 +88,7 @@ class RefundManager
                 'refund_type' => abs($amount - $eligibility['refundable_amount']) < 0.005
                     ? 'full'
                     : 'partial',
+                'purpose' => $purpose,
                 'amount' => $amount,
                 'status' => 'requested',
                 'reason' => $this->requiredString($data['reason'] ?? null, 'reason'),
@@ -81,6 +105,26 @@ class RefundManager
             $this->guardStatus($locked, 'requested');
             $this->guardApproverSeparation($locked, $actor);
 
+            // Refund approval and stock release are atomic; payout is a later action.
+            if ($locked->purpose === Refund::PURPOSE_BOOKING_CANCELLATION) {
+                if (! $actor->can('bookings.cancel')) {
+                    throw ValidationException::withMessages([
+                        'refund' => 'Persetujuan refund pembatalan memerlukan izin bookings.cancel.',
+                    ]);
+                }
+
+                $booking = Booking::query()->lockForUpdate()->findOrFail($locked->booking_id);
+                $this->assertBookingMayBeCancelled($booking, $locked->branch_id);
+
+                if ($booking->status !== 'cancelled') {
+                    $this->bookings->cancel(
+                        $booking,
+                        "Pembatalan melalui refund {$locked->refund_number}: {$locked->reason}",
+                        $actor,
+                    );
+                }
+            }
+
             $locked->forceFill([
                 'status' => 'approved',
                 'approved_by' => $actor->id,
@@ -89,6 +133,17 @@ class RefundManager
 
             return $locked;
         }, 3);
+    }
+
+    private function assertBookingMayBeCancelled(Booking $booking, int $branchId): void
+    {
+        if ((int) $booking->branch_id !== $branchId
+            || Rental::query()->where('booking_id', $booking->id)->exists()
+            || ! in_array($booking->status, [...Booking::ACTIVE_STATUSES, 'cancelled'], true)) {
+            throw ValidationException::withMessages([
+                'purpose' => 'Pembatalan melalui refund hanya untuk booking belum checkout di cabang yang sama.',
+            ]);
+        }
     }
 
     public function reject(Refund $refund, string $reason, User $actor): Refund
@@ -153,8 +208,79 @@ class RefundManager
                 'processed_at' => now(),
             ])->save();
 
+            // Do not rewrite the original payment or contract. Reconcile live balances
+            // only when payout is confirmed, in the same transaction as the cash ledger.
+            $this->applyPaidRefund($locked);
+
             return $locked->load(['paymentMethod', 'cashSession.register']);
         }, 3);
+    }
+
+    /** Reconcile financial aggregates after one approved refund becomes paid. */
+    private function applyPaidRefund(Refund $refund): void
+    {
+        $payment = Payment::query()->findOrFail($refund->payment_id);
+        if ($payment->status !== 'completed' || $payment->direction !== 'in') {
+            throw ValidationException::withMessages([
+                'payment' => 'Payment sumber refund tidak lagi merupakan penerimaan yang valid.',
+            ]);
+        }
+
+        $booking = $payment->booking_id === null
+            ? null
+            : Booking::query()->lockForUpdate()->findOrFail($payment->booking_id);
+        $rental = $payment->rental_id !== null
+            ? Rental::query()->lockForUpdate()->findOrFail($payment->rental_id)
+            : ($booking === null ? null : Rental::query()
+                ->where('booking_id', $booking->id)->lockForUpdate()->first());
+
+        if (($booking !== null && (int) $booking->branch_id !== (int) $refund->branch_id)
+            || ($rental !== null && (int) $rental->branch_id !== (int) $refund->branch_id)) {
+            throw ValidationException::withMessages([
+                'payment' => 'Cabang transaksi refund tidak konsisten dengan dokumen sumber.',
+            ]);
+        }
+
+        $amount = round((float) $refund->amount, 2);
+
+        if ($booking !== null && $payment->type === 'deposit') {
+            $booking->forceFill([
+                'deposit_paid' => $this->settlement->net($booking, 'deposit'),
+            ])->save();
+        }
+
+        if ($rental === null || ! in_array($payment->type, ['rental', 'deposit'], true)) {
+            return;
+        }
+
+        if ($payment->type === 'deposit') {
+            if ((float) $rental->deposit_amount + 0.009 < $amount) {
+                throw ValidationException::withMessages([
+                    'refund' => 'Saldo deposit rental lebih kecil dari nominal refund. Periksa koreksi sebelumnya.',
+                ]);
+            }
+            $rental->forceFill([
+                'deposit_amount' => round((float) $rental->deposit_amount - $amount, 2),
+            ])->save();
+
+            return;
+        }
+
+        if ((float) $rental->paid_amount + 0.009 < $amount) {
+            throw ValidationException::withMessages([
+                'refund' => 'Saldo pembayaran rental lebih kecil dari nominal refund. Periksa koreksi sebelumnya.',
+            ]);
+        }
+        $updates = [
+            'paid_amount' => round((float) $rental->paid_amount - $amount, 2),
+            'balance_due' => round((float) $rental->balance_due + $amount, 2),
+        ];
+        if ($payment->source_context === 'booking') {
+            $updates['booking_payment_amount'] = max(0, round(
+                (float) $rental->booking_payment_amount - $amount, 2,
+            ));
+        }
+        $rental->forceFill($updates)->save();
     }
 
     public function cancel(Refund $refund, string $reason, User $actor): Refund

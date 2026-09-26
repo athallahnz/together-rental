@@ -1,5 +1,7 @@
 import { useForm } from '@inertiajs/react';
 import type { FormEvent, ReactNode } from 'react';
+import { Stage3Text, stage3Translate } from '@/components/stage3-text';
+import { useGlobalLocale } from '@/lib/locale-store';
 import InputError from '@/components/input-error';
 import { Button } from '@/components/ui/button';
 import { Checkbox } from '@/components/ui/checkbox';
@@ -54,6 +56,7 @@ export function ProductFormDialog({
     product: Product | null;
     categories: ProductCategory[];
 }) {
+    const stage3Locale = useGlobalLocale();
     const data = productData(product);
     const form = useForm<ProductFormData>(data);
     const submit = (event: FormEvent<HTMLFormElement>) => {
@@ -85,24 +88,17 @@ export function ProductFormDialog({
             <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-3xl">
                 <DialogHeader>
                     <DialogTitle>
-                        {product ? `Edit ${product.name}` : 'Tambah produk'}
+                        {product ? stage3Translate('stage3.ui.correction.edit.53016', stage3Locale) + ' ' + product.name : stage3Translate('stage3.ui.correction.tambah.produk.44b51', stage3Locale)}
                     </DialogTitle>
                     <DialogDescription>
-                        Produk adalah master jenis barang. Unit fisik dan serial
-                        number dikelola pada modul inventaris.
-                    </DialogDescription>
+                        <Stage3Text k="stage3.ui.produk.adalah.master.jenis.barang.unit.fisik.da.3093f" /></DialogDescription>
                 </DialogHeader>
                 <form onSubmit={submit} className="grid gap-5">
                     <div className="rounded-lg border border-primary/20 bg-primary/[0.03] p-3 text-sm">
                         <p className="font-medium">
-                            Lingkup master produk: Global perusahaan
-                        </p>
+                            <Stage3Text k="stage3.ui.lingkup.master.produk.global.perusahaan.c9f76" /></p>
                         <p className="mt-1 text-xs leading-5 text-muted-foreground">
-                            Produk dan kategori dipakai bersama oleh seluruh
-                            cabang. Lokasi aset, stok bulk, paket, rate plan,
-                            dan harga dapat memiliki lingkup cabang
-                            masing-masing.
-                        </p>
+                            <Stage3Text k="stage3.ui.produk.dan.kategori.dipakai.bersama.oleh.seluru.c7fa9" /></p>
                     </div>
                     <div className="grid gap-4 sm:grid-cols-2">
                         <Field label="SKU" name="sku" error={form.errors.sku}>
@@ -116,7 +112,7 @@ export function ProductFormDialog({
                             />
                         </Field>
                         <Field
-                            label="Nama produk"
+                            label={stage3Translate('stage3.ui.nama.produk.ece9d', stage3Locale)}
                             name="name"
                             error={form.errors.name}
                         >
@@ -130,7 +126,7 @@ export function ProductFormDialog({
                             />
                         </Field>
                         <Field
-                            label="Kategori"
+                            label={stage3Translate('stage3.ui.kategori.b7964', stage3Locale)}
                             name="category_id"
                             error={form.errors.category_id}
                         >
@@ -150,8 +146,7 @@ export function ProductFormDialog({
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="none">
-                                        Tanpa kategori
-                                    </SelectItem>
+                                        <Stage3Text k="stage3.ui.tanpa.kategori.a3fdc" /></SelectItem>
                                     {categories.map((category) => (
                                         <SelectItem
                                             key={category.id}
@@ -164,7 +159,7 @@ export function ProductFormDialog({
                             </Select>
                         </Field>
                         <Field
-                            label="Tracking inventaris"
+                            label={stage3Translate('stage3.ui.tracking.inventaris.a1850', stage3Locale)}
                             name="tracking_type"
                             error={form.errors.tracking_type}
                         >
@@ -182,16 +177,14 @@ export function ProductFormDialog({
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="serialized">
-                                        Per unit / serial
-                                    </SelectItem>
+                                        <Stage3Text k="stage3.ui.per.unit.serial.cc205" /></SelectItem>
                                     <SelectItem value="bulk">
-                                        Kuantitas / bulk
-                                    </SelectItem>
+                                        <Stage3Text k="stage3.ui.kuantitas.bulk.786e6" /></SelectItem>
                                 </SelectContent>
                             </Select>
                         </Field>
                         <Field
-                            label="Brand"
+                            label={stage3Translate('stage3.ui.brand.62b4a', stage3Locale)}
                             name="brand"
                             error={form.errors.brand}
                         >
@@ -204,7 +197,7 @@ export function ProductFormDialog({
                             />
                         </Field>
                         <Field
-                            label="Model"
+                            label={stage3Translate('stage3.ui.model.68c2c', stage3Locale)}
                             name="model"
                             error={form.errors.model}
                         >
@@ -217,7 +210,7 @@ export function ProductFormDialog({
                             />
                         </Field>
                         <Field
-                            label="Nilai penggantian"
+                            label={stage3Translate('stage3.ui.nilai.penggantian.e9edf', stage3Locale)}
                             name="replacement_value"
                             error={form.errors.replacement_value}
                         >
@@ -235,7 +228,7 @@ export function ProductFormDialog({
                         </Field>
                     </div>
                     <Field
-                        label="Deskripsi"
+                        label={stage3Translate('stage3.ui.deskripsi.7e9fd', stage3Locale)}
                         name="description"
                         error={form.errors.description}
                     >
@@ -251,7 +244,7 @@ export function ProductFormDialog({
                     <div className="flex flex-wrap gap-6">
                         <CheckField
                             id="is_rentable"
-                            label="Dapat disewakan"
+                            label={stage3Translate('stage3.ui.dapat.disewakan.60f5a', stage3Locale)}
                             checked={form.data.is_rentable}
                             onCheckedChange={(checked) =>
                                 form.setData('is_rentable', checked)
@@ -259,7 +252,7 @@ export function ProductFormDialog({
                         />
                         <CheckField
                             id="is_active"
-                            label="Produk aktif"
+                            label={stage3Translate('stage3.ui.produk.aktif.07ebc', stage3Locale)}
                             checked={form.data.is_active}
                             onCheckedChange={(checked) =>
                                 form.setData('is_active', checked)
@@ -272,10 +265,9 @@ export function ProductFormDialog({
                             variant="outline"
                             onClick={() => onOpenChange(false)}
                         >
-                            Batal
-                        </Button>
+                            <Stage3Text k="stage3.ui.batal.14335" /></Button>
                         <Button type="submit" disabled={form.processing}>
-                            {product ? 'Simpan perubahan' : 'Buat produk'}
+                            {product ? stage3Translate('stage3.ui.correction.simpan.perubahan.099b3', stage3Locale) : stage3Translate('stage3.ui.correction.buat.produk.9a4fb', stage3Locale)}
                         </Button>
                     </DialogFooter>
                 </form>
@@ -293,6 +285,7 @@ export function CategoryFormDialog({
     category: ProductCategory | null;
     categories: ProductCategory[];
 }) {
+    const stage3Locale = useGlobalLocale();
     const form = useForm<CategoryFormData>(categoryData(category));
     const submit = (event: FormEvent<HTMLFormElement>) => {
         event.preventDefault();
@@ -323,16 +316,15 @@ export function CategoryFormDialog({
             <DialogContent className="sm:max-w-xl">
                 <DialogHeader>
                     <DialogTitle>
-                        {category ? `Edit ${category.name}` : 'Tambah kategori'}
+                        {category ? stage3Translate('stage3.ui.correction.edit.53016', stage3Locale) + ' ' + category.name : stage3Translate('stage3.ui.correction.tambah.kategori.f1458', stage3Locale)}
                     </DialogTitle>
                     <DialogDescription>
-                        Susun kategori bertingkat agar katalog mudah dicari.
-                    </DialogDescription>
+                        <Stage3Text k="stage3.ui.susun.kategori.bertingkat.agar.katalog.mudah.di.db390" /></DialogDescription>
                 </DialogHeader>
                 <form onSubmit={submit} className="grid gap-4">
                     <div className="grid gap-4 sm:grid-cols-2">
                         <Field
-                            label="Kode"
+                            label={stage3Translate('stage3.ui.kode.3e25d', stage3Locale)}
                             name="category_code"
                             error={form.errors.code}
                         >
@@ -346,7 +338,7 @@ export function CategoryFormDialog({
                             />
                         </Field>
                         <Field
-                            label="Urutan"
+                            label={stage3Translate('stage3.ui.urutan.a465a', stage3Locale)}
                             name="sort_order"
                             error={form.errors.sort_order}
                         >
@@ -366,7 +358,7 @@ export function CategoryFormDialog({
                         </Field>
                     </div>
                     <Field
-                        label="Nama kategori"
+                        label={stage3Translate('stage3.ui.nama.kategori.458b2', stage3Locale)}
                         name="category_name"
                         error={form.errors.name}
                     >
@@ -380,7 +372,7 @@ export function CategoryFormDialog({
                         />
                     </Field>
                     <Field
-                        label="Kategori induk"
+                        label={stage3Translate('stage3.ui.kategori.induk.a0896', stage3Locale)}
                         name="parent_id"
                         error={form.errors.parent_id}
                     >
@@ -398,8 +390,7 @@ export function CategoryFormDialog({
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="none">
-                                    Kategori utama
-                                </SelectItem>
+                                    <Stage3Text k="stage3.ui.kategori.utama.eda08" /></SelectItem>
                                 {categories
                                     .filter((item) => item.id !== category?.id)
                                     .map((item) => (
@@ -414,7 +405,7 @@ export function CategoryFormDialog({
                         </Select>
                     </Field>
                     <Field
-                        label="Deskripsi"
+                        label={stage3Translate('stage3.ui.deskripsi.7e9fd', stage3Locale)}
                         name="category_description"
                         error={form.errors.description}
                     >
@@ -429,7 +420,7 @@ export function CategoryFormDialog({
                     </Field>
                     <CheckField
                         id="category_active"
-                        label="Kategori aktif"
+                        label={stage3Translate('stage3.ui.kategori.aktif.bcd3f', stage3Locale)}
                         checked={form.data.is_active}
                         onCheckedChange={(checked) =>
                             form.setData('is_active', checked)
@@ -441,11 +432,9 @@ export function CategoryFormDialog({
                             variant="outline"
                             onClick={() => onOpenChange(false)}
                         >
-                            Batal
-                        </Button>
+                            <Stage3Text k="stage3.ui.batal.14335" /></Button>
                         <Button type="submit" disabled={form.processing}>
-                            Simpan kategori
-                        </Button>
+                            <Stage3Text k="stage3.ui.simpan.kategori.9333c" /></Button>
                     </DialogFooter>
                 </form>
             </DialogContent>
@@ -464,6 +453,7 @@ export function RatePlanFormDialog({
     branches: AccessBranch[];
     manageGlobal: boolean;
 }) {
+    const stage3Locale = useGlobalLocale();
     const form = useForm<RatePlanFormData>(
         ratePlanData(ratePlan, branches, manageGlobal),
     );
@@ -499,13 +489,11 @@ export function RatePlanFormDialog({
                 <DialogHeader>
                     <DialogTitle>
                         {ratePlan
-                            ? `Edit ${ratePlan.name}`
-                            : 'Tambah rate plan'}
+                            ? stage3Translate('stage3.ui.correction.edit.53016', stage3Locale) + ' ' + ratePlan.name
+                            : stage3Translate('stage3.ui.correction.tambah.rate.plan.ad9db', stage3Locale)}
                     </DialogTitle>
                     <DialogDescription>
-                        Tentukan satuan durasi dan grace period yang dipakai
-                        harga produk maupun paket.
-                    </DialogDescription>
+                        <Stage3Text k="stage3.ui.tentukan.satuan.durasi.dan.grace.period.yang.di.a3bc6" /></DialogDescription>
                 </DialogHeader>
                 <form onSubmit={submit} className="grid gap-4">
                     <ScopeField
@@ -519,7 +507,7 @@ export function RatePlanFormDialog({
                     />
                     <div className="grid gap-4 sm:grid-cols-2">
                         <Field
-                            label="Kode"
+                            label={stage3Translate('stage3.ui.kode.3e25d', stage3Locale)}
                             name="rate_code"
                             error={form.errors.code}
                         >
@@ -533,7 +521,7 @@ export function RatePlanFormDialog({
                             />
                         </Field>
                         <Field
-                            label="Nama rate plan"
+                            label={stage3Translate('stage3.ui.nama.rate.plan.04289', stage3Locale)}
                             name="rate_name"
                             error={form.errors.name}
                         >
@@ -547,7 +535,7 @@ export function RatePlanFormDialog({
                             />
                         </Field>
                         <Field
-                            label="Satuan"
+                            label={stage3Translate('stage3.ui.satuan.24726', stage3Locale)}
                             name="duration_unit"
                             error={form.errors.duration_unit}
                         >
@@ -565,17 +553,16 @@ export function RatePlanFormDialog({
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="minute">
-                                        Menit
-                                    </SelectItem>
-                                    <SelectItem value="hour">Jam</SelectItem>
-                                    <SelectItem value="day">Hari</SelectItem>
-                                    <SelectItem value="week">Minggu</SelectItem>
-                                    <SelectItem value="month">Bulan</SelectItem>
+                                        <Stage3Text k="stage3.ui.menit.db6e6" /></SelectItem>
+                                    <SelectItem value="hour"><Stage3Text k="stage3.ui.jam.9d0eb" /></SelectItem>
+                                    <SelectItem value="day"><Stage3Text k="stage3.ui.hari.a140c" /></SelectItem>
+                                    <SelectItem value="week"><Stage3Text k="stage3.ui.minggu.ac299" /></SelectItem>
+                                    <SelectItem value="month"><Stage3Text k="stage3.ui.bulan.a72fd" /></SelectItem>
                                 </SelectContent>
                             </Select>
                         </Field>
                         <Field
-                            label="Nilai durasi"
+                            label={stage3Translate('stage3.ui.nilai.durasi.d06cb', stage3Locale)}
                             name="duration_value"
                             error={form.errors.duration_value}
                         >
@@ -594,7 +581,7 @@ export function RatePlanFormDialog({
                             />
                         </Field>
                         <Field
-                            label="Grace period (menit)"
+                            label={stage3Translate('stage3.ui.grace.period.menit.1b423', stage3Locale)}
                             name="grace_period_minutes"
                             error={form.errors.grace_period_minutes}
                         >
@@ -615,7 +602,7 @@ export function RatePlanFormDialog({
                     </div>
                     <CheckField
                         id="rate_active"
-                        label="Rate plan aktif"
+                        label={stage3Translate('stage3.ui.rate.plan.aktif.98527', stage3Locale)}
                         checked={form.data.is_active}
                         onCheckedChange={(checked) =>
                             form.setData('is_active', checked)
@@ -627,11 +614,9 @@ export function RatePlanFormDialog({
                             variant="outline"
                             onClick={() => onOpenChange(false)}
                         >
-                            Batal
-                        </Button>
+                            <Stage3Text k="stage3.ui.batal.14335" /></Button>
                         <Button type="submit" disabled={form.processing}>
-                            Simpan rate plan
-                        </Button>
+                            <Stage3Text k="stage3.ui.simpan.rate.plan.b05c4" /></Button>
                     </DialogFooter>
                 </form>
             </DialogContent>
@@ -650,6 +635,7 @@ export function PackageFormDialog({
     branches: AccessBranch[];
     manageGlobal: boolean;
 }) {
+    const stage3Locale = useGlobalLocale();
     const form = useForm<RentalPackageFormData>(
         packageData(rentalPackage, branches, manageGlobal),
     );
@@ -685,13 +671,11 @@ export function PackageFormDialog({
                 <DialogHeader>
                     <DialogTitle>
                         {rentalPackage
-                            ? `Edit ${rentalPackage.name}`
-                            : 'Tambah paket rental'}
+                            ? stage3Translate('stage3.ui.correction.edit.53016', stage3Locale) + ' ' + rentalPackage.name
+                            : stage3Translate('stage3.ui.correction.tambah.paket.rental.da009', stage3Locale)}
                     </DialogTitle>
                     <DialogDescription>
-                        Paket menggabungkan beberapa produk dengan harga
-                        sendiri.
-                    </DialogDescription>
+                        <Stage3Text k="stage3.ui.paket.menggabungkan.beberapa.produk.dengan.harg.3e604" /></DialogDescription>
                 </DialogHeader>
                 <form onSubmit={submit} className="grid gap-4">
                     <ScopeField
@@ -705,7 +689,7 @@ export function PackageFormDialog({
                     />
                     <div className="grid gap-4 sm:grid-cols-2">
                         <Field
-                            label="Kode paket"
+                            label={stage3Translate('stage3.ui.kode.paket.121fc', stage3Locale)}
                             name="package_code"
                             error={form.errors.code}
                         >
@@ -719,7 +703,7 @@ export function PackageFormDialog({
                             />
                         </Field>
                         <Field
-                            label="Nama paket"
+                            label={stage3Translate('stage3.ui.nama.paket.e181d', stage3Locale)}
                             name="package_name"
                             error={form.errors.name}
                         >
@@ -733,7 +717,7 @@ export function PackageFormDialog({
                             />
                         </Field>
                         <Field
-                            label="Berlaku mulai"
+                            label={stage3Translate('stage3.ui.berlaku.mulai.41c81', stage3Locale)}
                             name="valid_from"
                             error={form.errors.valid_from}
                         >
@@ -750,7 +734,7 @@ export function PackageFormDialog({
                             />
                         </Field>
                         <Field
-                            label="Berlaku sampai"
+                            label={stage3Translate('stage3.ui.berlaku.sampai.8b9f4', stage3Locale)}
                             name="valid_until"
                             error={form.errors.valid_until}
                         >
@@ -768,7 +752,7 @@ export function PackageFormDialog({
                         </Field>
                     </div>
                     <Field
-                        label="Deskripsi"
+                        label={stage3Translate('stage3.ui.deskripsi.7e9fd', stage3Locale)}
                         name="package_description"
                         error={form.errors.description}
                     >
@@ -783,7 +767,7 @@ export function PackageFormDialog({
                     </Field>
                     <CheckField
                         id="package_active"
-                        label="Paket aktif"
+                        label={stage3Translate('stage3.ui.paket.aktif.0f326', stage3Locale)}
                         checked={form.data.is_active}
                         onCheckedChange={(checked) =>
                             form.setData('is_active', checked)
@@ -795,11 +779,9 @@ export function PackageFormDialog({
                             variant="outline"
                             onClick={() => onOpenChange(false)}
                         >
-                            Batal
-                        </Button>
+                            <Stage3Text k="stage3.ui.batal.14335" /></Button>
                         <Button type="submit" disabled={form.processing}>
-                            Simpan paket
-                        </Button>
+                            <Stage3Text k="stage3.ui.simpan.paket.a01dc" /></Button>
                     </DialogFooter>
                 </form>
             </DialogContent>
@@ -822,6 +804,7 @@ export function ProductRateFormDialog({
     branches: AccessBranch[];
     manageGlobal: boolean;
 }) {
+    const stage3Locale = useGlobalLocale();
     const form = useForm<ProductRateFormData>(
         productRateData(rate, branches, manageGlobal),
     );
@@ -855,12 +838,11 @@ export function ProductRateFormDialog({
                 <DialogHeader>
                     <DialogTitle>
                         {rate
-                            ? 'Edit harga produk'
+                            ? stage3Translate('stage3.ui.correction.edit.harga.produk.1a2a6', stage3Locale)
                             : `Tambah harga ${product.name}`}
                     </DialogTitle>
                     <DialogDescription>
-                        Harga dapat berlaku global atau khusus satu cabang.
-                    </DialogDescription>
+                        <Stage3Text k="stage3.ui.harga.dapat.berlaku.global.atau.khusus.satu.cab.8b095" /></DialogDescription>
                 </DialogHeader>
                 <form onSubmit={submit} className="grid gap-4">
                     <ScopeField
@@ -873,7 +855,7 @@ export function ProductRateFormDialog({
                         error={form.errors.branch_id}
                     />
                     <Field
-                        label="Rate plan"
+                        label={stage3Translate('stage3.ui.rate.plan.31b1c', stage3Locale)}
                         name="product_rate_plan"
                         error={form.errors.rate_plan_id}
                     >
@@ -890,14 +872,14 @@ export function ProductRateFormDialog({
                     <div className="grid gap-4 sm:grid-cols-2">
                         <MoneyField
                             id="product_amount"
-                            label="Harga sewa"
+                            label={stage3Translate('stage3.ui.harga.sewa.489ab', stage3Locale)}
                             value={form.data.amount}
                             error={form.errors.amount}
                             onChange={(value) => form.setData('amount', value)}
                         />
                         <MoneyField
                             id="product_deposit"
-                            label="Deposit"
+                            label={stage3Translate('stage3.ui.deposit.e7b0b', stage3Locale)}
                             value={form.data.deposit_amount}
                             error={form.errors.deposit_amount}
                             onChange={(value) =>
@@ -906,7 +888,7 @@ export function ProductRateFormDialog({
                         />
                         <MoneyField
                             id="additional_hour"
-                            label="Tambahan per jam"
+                            label={stage3Translate('stage3.ui.tambahan.per.jam.c1269', stage3Locale)}
                             value={form.data.additional_hour_amount}
                             error={form.errors.additional_hour_amount}
                             onChange={(value) =>
@@ -915,7 +897,7 @@ export function ProductRateFormDialog({
                         />
                         <MoneyField
                             id="late_fee"
-                            label="Denda keterlambatan"
+                            label={stage3Translate('stage3.ui.denda.keterlambatan.97f63', stage3Locale)}
                             value={form.data.late_fee_amount}
                             error={form.errors.late_fee_amount}
                             onChange={(value) =>
@@ -923,7 +905,7 @@ export function ProductRateFormDialog({
                             }
                         />
                         <Field
-                            label="Berlaku mulai"
+                            label={stage3Translate('stage3.ui.berlaku.mulai.41c81', stage3Locale)}
                             name="product_valid_from"
                             error={form.errors.valid_from}
                         >
@@ -940,7 +922,7 @@ export function ProductRateFormDialog({
                             />
                         </Field>
                         <Field
-                            label="Berlaku sampai"
+                            label={stage3Translate('stage3.ui.berlaku.sampai.8b9f4', stage3Locale)}
                             name="product_valid_until"
                             error={form.errors.valid_until}
                         >
@@ -959,7 +941,7 @@ export function ProductRateFormDialog({
                     </div>
                     <CheckField
                         id="product_rate_active"
-                        label="Harga aktif"
+                        label={stage3Translate('stage3.ui.harga.aktif.8a98d', stage3Locale)}
                         checked={form.data.is_active}
                         onCheckedChange={(checked) =>
                             form.setData('is_active', checked)
@@ -971,11 +953,9 @@ export function ProductRateFormDialog({
                             variant="outline"
                             onClick={() => onOpenChange(false)}
                         >
-                            Batal
-                        </Button>
+                            <Stage3Text k="stage3.ui.batal.14335" /></Button>
                         <Button type="submit" disabled={form.processing}>
-                            Simpan harga
-                        </Button>
+                            <Stage3Text k="stage3.ui.simpan.harga.53b33" /></Button>
                     </DialogFooter>
                 </form>
             </DialogContent>
@@ -992,6 +972,7 @@ export function PackageItemFormDialog({
     rentalPackage: RentalPackage;
     products: Product[];
 }) {
+    const stage3Locale = useGlobalLocale();
     const form = useForm({
         product_id: null as number | null,
         quantity: 1,
@@ -1013,10 +994,9 @@ export function PackageItemFormDialog({
         >
             <DialogContent className="sm:max-w-xl">
                 <DialogHeader>
-                    <DialogTitle>Tambah produk ke paket</DialogTitle>
+                    <DialogTitle><Stage3Text k="stage3.ui.tambah.produk.ke.paket.93ab6" /></DialogTitle>
                     <DialogDescription>
-                        Pilih produk aktif dan jumlah unit yang termasuk.
-                    </DialogDescription>
+                        <Stage3Text k="stage3.ui.pilih.produk.aktif.dan.jumlah.unit.yang.termasu.89bb9" /></DialogDescription>
                 </DialogHeader>
                 <form
                     className="grid gap-4"
@@ -1032,7 +1012,7 @@ export function PackageItemFormDialog({
                     }}
                 >
                     <Field
-                        label="Produk"
+                        label={stage3Translate('stage3.ui.produk.869eb', stage3Locale)}
                         name="package_product"
                         error={form.errors.product_id}
                     >
@@ -1043,7 +1023,7 @@ export function PackageItemFormDialog({
                             }
                         >
                             <SelectTrigger id="package_product">
-                                <SelectValue placeholder="Pilih produk" />
+                                <SelectValue placeholder={stage3Translate('stage3.ui.pilih.produk.75abb', stage3Locale)} />
                             </SelectTrigger>
                             <SelectContent>
                                 {products.map((product) => (
@@ -1059,7 +1039,7 @@ export function PackageItemFormDialog({
                     </Field>
                     <div className="grid gap-4 sm:grid-cols-2">
                         <Field
-                            label="Jumlah"
+                            label={stage3Translate('stage3.ui.jumlah.755c9', stage3Locale)}
                             name="package_quantity"
                             error={form.errors.quantity}
                         >
@@ -1077,7 +1057,7 @@ export function PackageItemFormDialog({
                             />
                         </Field>
                         <Field
-                            label="Urutan"
+                            label={stage3Translate('stage3.ui.urutan.a465a', stage3Locale)}
                             name="package_sort_order"
                             error={form.errors.sort_order}
                         >
@@ -1097,7 +1077,7 @@ export function PackageItemFormDialog({
                     </div>
                     <CheckField
                         id="package_optional"
-                        label="Item opsional"
+                        label={stage3Translate('stage3.ui.item.opsional.604e8', stage3Locale)}
                         checked={form.data.is_optional}
                         onCheckedChange={(checked) =>
                             form.setData('is_optional', checked)
@@ -1109,11 +1089,9 @@ export function PackageItemFormDialog({
                             variant="outline"
                             onClick={() => onOpenChange(false)}
                         >
-                            Batal
-                        </Button>
+                            <Stage3Text k="stage3.ui.batal.14335" /></Button>
                         <Button type="submit" disabled={form.processing}>
-                            Tambahkan
-                        </Button>
+                            <Stage3Text k="stage3.ui.tambahkan.51a71" /></Button>
                     </DialogFooter>
                 </form>
             </DialogContent>
@@ -1136,6 +1114,7 @@ export function PackageRateFormDialog({
     branches: AccessBranch[];
     manageGlobal: boolean;
 }) {
+    const stage3Locale = useGlobalLocale();
     const form = useForm<PackageRateFormData>(
         packageRateData(rate, branches, manageGlobal),
     );
@@ -1168,11 +1147,10 @@ export function PackageRateFormDialog({
             <DialogContent className="sm:max-w-xl">
                 <DialogHeader>
                     <DialogTitle>
-                        {rate ? 'Edit harga paket' : 'Tambah harga paket'}
+                        {rate ? stage3Translate('stage3.ui.correction.edit.harga.paket.f2c05', stage3Locale) : stage3Translate('stage3.ui.correction.tambah.harga.paket.a1963', stage3Locale)}
                     </DialogTitle>
                     <DialogDescription>
-                        Tetapkan harga paket berdasarkan rate plan.
-                    </DialogDescription>
+                        <Stage3Text k="stage3.ui.tetapkan.harga.paket.berdasarkan.rate.plan.02e44" /></DialogDescription>
                 </DialogHeader>
                 <form onSubmit={submit} className="grid gap-4">
                     <ScopeField
@@ -1185,7 +1163,7 @@ export function PackageRateFormDialog({
                         error={form.errors.branch_id}
                     />
                     <Field
-                        label="Rate plan"
+                        label={stage3Translate('stage3.ui.rate.plan.31b1c', stage3Locale)}
                         name="package_rate_plan"
                         error={form.errors.rate_plan_id}
                     >
@@ -1202,14 +1180,14 @@ export function PackageRateFormDialog({
                     <div className="grid gap-4 sm:grid-cols-2">
                         <MoneyField
                             id="package_amount"
-                            label="Harga paket"
+                            label={stage3Translate('stage3.ui.harga.paket.12c54', stage3Locale)}
                             value={form.data.amount}
                             error={form.errors.amount}
                             onChange={(value) => form.setData('amount', value)}
                         />
                         <MoneyField
                             id="package_deposit"
-                            label="Deposit"
+                            label={stage3Translate('stage3.ui.deposit.e7b0b', stage3Locale)}
                             value={form.data.deposit_amount}
                             error={form.errors.deposit_amount}
                             onChange={(value) =>
@@ -1219,7 +1197,7 @@ export function PackageRateFormDialog({
                     </div>
                     <CheckField
                         id="package_rate_active"
-                        label="Harga aktif"
+                        label={stage3Translate('stage3.ui.harga.aktif.8a98d', stage3Locale)}
                         checked={form.data.is_active}
                         onCheckedChange={(checked) =>
                             form.setData('is_active', checked)
@@ -1231,11 +1209,9 @@ export function PackageRateFormDialog({
                             variant="outline"
                             onClick={() => onOpenChange(false)}
                         >
-                            Batal
-                        </Button>
+                            <Stage3Text k="stage3.ui.batal.14335" /></Button>
                         <Button type="submit" disabled={form.processing}>
-                            Simpan harga
-                        </Button>
+                            <Stage3Text k="stage3.ui.simpan.harga.53b33" /></Button>
                     </DialogFooter>
                 </form>
             </DialogContent>
@@ -1299,8 +1275,10 @@ function ScopeField({
     manageGlobal: boolean;
     error?: string;
 }) {
+    const stage3Locale = useGlobalLocale();
+
     return (
-        <Field label="Lingkup / cabang" name="branch_id" error={error}>
+        <Field label={stage3Translate('stage3.ui.lingkup.cabang.92969', stage3Locale)} name="branch_id" error={error}>
             <Select
                 value={value?.toString() ?? 'global'}
                 onValueChange={(next) =>
@@ -1313,8 +1291,7 @@ function ScopeField({
                 <SelectContent>
                     {manageGlobal && (
                         <SelectItem value="global">
-                            Global · seluruh cabang
-                        </SelectItem>
+                            <Stage3Text k="stage3.ui.global.seluruh.cabang.472d1" /></SelectItem>
                     )}
                     {branches.map((branch) => (
                         <SelectItem
@@ -1343,6 +1320,7 @@ function RatePlanSelect({
     ratePlans: RatePlan[];
     branchId: number | null;
 }) {
+    const stage3Locale = useGlobalLocale();
     const options = ratePlans.filter(
         (plan) => plan.branch_id === null || plan.branch_id === branchId,
     );
@@ -1353,7 +1331,7 @@ function RatePlanSelect({
             onValueChange={(next) => onValueChange(Number(next))}
         >
             <SelectTrigger id={id}>
-                <SelectValue placeholder="Pilih rate plan" />
+                <SelectValue placeholder={stage3Translate('stage3.ui.pilih.rate.plan.cc50a', stage3Locale)} />
             </SelectTrigger>
             <SelectContent>
                 {options.map((plan) => (

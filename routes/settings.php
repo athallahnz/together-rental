@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Settings\LanguageController;
 use App\Http\Controllers\Settings\ProfileController;
 use App\Http\Controllers\Settings\SecurityController;
 use Illuminate\Auth\Middleware\RequirePassword;
@@ -7,6 +8,12 @@ use Illuminate\Support\Facades\Route;
 
 Route::middleware(['auth', 'active'])->group(function () {
     Route::redirect('settings', '/settings/profile');
+
+    // Personal preference: available to every authenticated, active user.
+    Route::get('settings/language', [LanguageController::class, 'edit'])->name('language.edit');
+    Route::patch('settings/language', [LanguageController::class, 'update'])
+        ->middleware('throttle:12,1')
+        ->name('language.update');
 
     Route::get('settings/profile', [ProfileController::class, 'edit'])->name('profile.edit');
     Route::patch('settings/profile', [ProfileController::class, 'update'])->name('profile.update');

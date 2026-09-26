@@ -11,6 +11,9 @@ import {
 } from 'lucide-react';
 import type { FormEvent } from 'react';
 import { useMemo, useState } from 'react';
+import { useGlobalLocale } from '@/lib/locale-store';
+import { stage3PermissionModule, stage3PermissionName } from '@/lib/stage3-display';
+import { Stage3Text, stage3Translate } from '@/components/stage3-text';
 import { AccessNav } from '@/components/access-nav';
 import InputError from '@/components/input-error';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -80,26 +83,14 @@ const emptyForm: RoleForm = {
     permission_ids: [],
 };
 
-const moduleLabels: Record<string, string> = {
-    branches: 'Cabang',
-    users: 'Pengguna',
-    roles: 'Role & permission',
-    customers: 'Pelanggan',
-    catalog: 'Katalog',
-    inventory: 'Inventaris',
-    bookings: 'Booking',
-    rentals: 'Rental',
-    finance: 'Keuangan',
-    reports: 'Laporan',
-    settings: 'Pengaturan',
-    legacy_imports: 'Legacy import',
-};
+
 
 export default function RoleIndex({
     roles,
     permissionGroups,
     permissions,
 }: Props) {
+    const stage3Locale = useGlobalLocale();
     const { errors: pageErrors } = usePage().props;
     const [dialogOpen, setDialogOpen] = useState(false);
     const [editingRole, setEditingRole] = useState<Role | null>(null);
@@ -186,28 +177,22 @@ export default function RoleIndex({
 
     return (
         <>
-            <Head title="Role & Permission" />
+            <Head title={stage3Translate('stage3.ui.role.permission.b2491', stage3Locale)} />
 
             <div className="flex h-full flex-1 flex-col gap-6 overflow-x-auto rounded-xl p-4 md:p-6">
                 <header className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                     <div>
                         <p className="text-sm font-medium text-primary">
-                            Modul Pengguna & Akses
-                        </p>
+                            <Stage3Text k="stage3.ui.administrasi.580b7" /></p>
                         <h1 className="mt-1 text-2xl font-semibold tracking-tight">
-                            Role & permission
-                        </h1>
+                            <Stage3Text k="stage3.ui.role.permission.fb006" /></h1>
                         <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-                            Role perusahaan berlaku lintas cabang, sedangkan
-                            role cabang membatasi kemampuan pengguna pada lokasi
-                            yang ditugaskan.
-                        </p>
+                            <Stage3Text k="stage3.ui.role.perusahaan.berlaku.lintas.cabang.sedangkan.d6454" /></p>
                     </div>
                     {permissions.manage && (
                         <Button onClick={openCreate}>
                             <Plus />
-                            Buat role khusus
-                        </Button>
+                            <Stage3Text k="stage3.ui.buat.role.khusus.0740c" /></Button>
                     )}
                 </header>
 
@@ -216,20 +201,16 @@ export default function RoleIndex({
                 {typeof pageErrors.role === 'string' && (
                     <Alert variant="destructive">
                         <CircleOff />
-                        <AlertTitle>Perubahan role ditolak</AlertTitle>
+                        <AlertTitle><Stage3Text k="stage3.ui.perubahan.role.ditolak.df6e2" /></AlertTitle>
                         <AlertDescription>{pageErrors.role}</AlertDescription>
                     </Alert>
                 )}
 
                 <Alert>
                     <ShieldCheck />
-                    <AlertTitle>Guardrail akses aktif</AlertTitle>
+                    <AlertTitle><Stage3Text k="stage3.ui.guardrail.akses.aktif.8718c" /></AlertTitle>
                     <AlertDescription>
-                        Identitas role sistem dikunci, tetapi permission-nya
-                        dapat disesuaikan oleh Super Admin. Role scope cabang
-                        selalu membawa izin berpindah ke cabang yang memang
-                        ditugaskan.
-                    </AlertDescription>
+                        <Stage3Text k="stage3.ui.identitas.role.sistem.dikunci.tetapi.permission.1701c" /></AlertDescription>
                 </Alert>
 
                 <section className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
@@ -243,8 +224,7 @@ export default function RoleIndex({
                                             {role.is_system && (
                                                 <Badge>
                                                     <LockKeyhole />
-                                                    Sistem
-                                                </Badge>
+                                                    <Stage3Text k="stage3.ui.sistem.991f3" /></Badge>
                                             )}
                                         </div>
                                         <CardDescription className="mt-2 font-mono">
@@ -258,8 +238,8 @@ export default function RoleIndex({
                                             <BadgeCheck />
                                         )}
                                         {role.scope === 'company'
-                                            ? 'Perusahaan'
-                                            : 'Cabang'}
+                                            ? stage3Translate('stage3.ui.correction.perusahaan.8de8b', stage3Locale)
+                                            : stage3Translate('stage3.ui.correction.cabang.13874', stage3Locale)}
                                     </Badge>
                                 </div>
                             </CardHeader>
@@ -270,24 +250,21 @@ export default function RoleIndex({
                                             {role.users_count}
                                         </p>
                                         <p className="text-xs text-muted-foreground">
-                                            Penugasan user
-                                        </p>
+                                            <Stage3Text k="stage3.ui.penugasan.user.9393c" /></p>
                                     </div>
                                     <div>
                                         <p className="text-xl font-semibold">
                                             {role.permissions.length}
                                         </p>
                                         <p className="text-xs text-muted-foreground">
-                                            Permission
-                                        </p>
+                                            <Stage3Text k="stage3.ui.permission.17857" /></p>
                                     </div>
                                 </div>
 
                                 <div className="flex min-h-16 flex-wrap content-start gap-1.5">
                                     {role.permissions.length === 0 ? (
                                         <p className="text-sm text-muted-foreground">
-                                            Belum memiliki permission.
-                                        </p>
+                                            <Stage3Text k="stage3.ui.belum.memiliki.permission.06eff" /></p>
                                     ) : (
                                         role.permissions
                                             .slice(0, 8)
@@ -318,16 +295,14 @@ export default function RoleIndex({
                                             <Pencil />
                                         )}
                                         {role.is_system
-                                            ? 'Atur permission'
+                                            ? stage3Translate('stage3.ui.correction.atur.permission.d5a5c', stage3Locale)
                                             : 'Edit role'}
                                     </Button>
                                 )}
                                 {role.is_system && (
                                     <p className="flex items-center gap-2 text-xs text-muted-foreground">
                                         <LockKeyhole className="size-4" />
-                                        Identitas role dikunci. Permission dapat
-                                        disesuaikan oleh Super Admin.
-                                    </p>
+                                        <Stage3Text k="stage3.ui.identitas.role.dikunci.permission.dapat.disesua.4e87e" /></p>
                                 )}
                             </CardContent>
                         </Card>
@@ -339,12 +314,9 @@ export default function RoleIndex({
                         <CardContent className="py-16 text-center">
                             <Users className="mx-auto size-9 text-muted-foreground" />
                             <p className="mt-4 font-medium">
-                                Role belum tersedia
-                            </p>
+                                <Stage3Text k="stage3.ui.role.belum.tersedia.72b26" /></p>
                             <p className="mt-1 text-sm text-muted-foreground">
-                                Jalankan foundation seeder atau buat role
-                                khusus.
-                            </p>
+                                <Stage3Text k="stage3.ui.jalankan.foundation.seeder.atau.buat.role.khusu.af636" /></p>
                         </CardContent>
                     </Card>
                 )}
@@ -355,22 +327,22 @@ export default function RoleIndex({
                     <DialogHeader>
                         <DialogTitle>
                             {editingRole?.is_system
-                                ? `Atur permission ${editingRole.name}`
+                                ? stage3Translate('stage3.ui.correction.atur.permission.d5a5c', stage3Locale) + ' ' + editingRole.name
                                 : editingRole
-                                  ? `Edit ${editingRole.name}`
-                                  : 'Buat role khusus'}
+                                  ? stage3Translate('stage3.ui.correction.edit.53016', stage3Locale) + ' ' + editingRole.name
+                                  : stage3Translate('stage3.ui.correction.buat.role.khusus.0740c', stage3Locale)}
                         </DialogTitle>
                         <DialogDescription>
                             {editingRole?.is_system
-                                ? 'Nama, slug, dan scope role sistem tetap dikunci. Sesuaikan hanya permission yang diperlukan.'
-                                : 'Berikan permission minimum yang diperlukan sesuai tanggung jawab pengguna.'}
+                                ? stage3Translate('stage3.ui.correction.nama.slug.dan.scope.role.sistem.tetap.dikun.3ca25', stage3Locale)
+                                : stage3Translate('stage3.ui.correction.berikan.permission.minimum.yang.diperlukan..304a0', stage3Locale)}
                         </DialogDescription>
                     </DialogHeader>
 
                     <form onSubmit={submit} className="grid gap-6">
                         <div className="grid gap-4 sm:grid-cols-3">
                             <FormField
-                                label="Nama role"
+                                label={stage3Translate('stage3.ui.nama.role.dfe12', stage3Locale)}
                                 name="role_name"
                                 error={form.errors.name}
                             >
@@ -385,7 +357,7 @@ export default function RoleIndex({
                                 />
                             </FormField>
                             <FormField
-                                label="Slug"
+                                label={stage3Translate('stage3.ui.slug.094da', stage3Locale)}
                                 name="role_slug"
                                 error={form.errors.slug}
                             >
@@ -395,12 +367,12 @@ export default function RoleIndex({
                                     onChange={(event) =>
                                         form.setData('slug', event.target.value)
                                     }
-                                    placeholder="otomatis-dari-nama"
+                                    placeholder={stage3Translate('stage3.ui.correction.otomatis.dari.nama.14543', stage3Locale)}
                                     disabled={editingRole?.is_system}
                                 />
                             </FormField>
                             <FormField
-                                label="Scope akses"
+                                label={stage3Translate('stage3.ui.scope.akses.a9959', stage3Locale)}
                                 name="role_scope"
                                 error={form.errors.scope}
                             >
@@ -420,11 +392,9 @@ export default function RoleIndex({
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="branch">
-                                            Per cabang
-                                        </SelectItem>
+                                            <Stage3Text k="stage3.ui.per.cabang.ed167" /></SelectItem>
                                         <SelectItem value="company">
-                                            Seluruh perusahaan
-                                        </SelectItem>
+                                            <Stage3Text k="stage3.ui.seluruh.perusahaan.fac1d" /></SelectItem>
                                     </SelectContent>
                                 </Select>
                             </FormField>
@@ -434,16 +404,12 @@ export default function RoleIndex({
                             <div className="flex flex-col gap-1 sm:flex-row sm:items-end sm:justify-between">
                                 <div>
                                     <h3 className="font-medium">
-                                        Matriks permission
-                                    </h3>
+                                        <Stage3Text k="stage3.ui.matriks.permission.134f1" /></h3>
                                     <p className="mt-1 text-xs text-muted-foreground">
-                                        Permission dikelompokkan berdasarkan
-                                        modul bisnis.
-                                    </p>
+                                        <Stage3Text k="stage3.ui.permission.dikelompokkan.berdasarkan.modul.bisn.10000" /></p>
                                 </div>
                                 <p className="text-xs font-medium text-muted-foreground">
-                                    {form.data.permission_ids.length} dipilih
-                                </p>
+                                    {form.data.permission_ids.length} <Stage3Text k="stage3.ui.dipilih.3edb9" /></p>
                             </div>
                             <InputError
                                 message={form.errors.permission_ids}
@@ -457,7 +423,7 @@ export default function RoleIndex({
                                             className="rounded-xl border p-4"
                                         >
                                             <h4 className="font-medium">
-                                                {moduleLabels[module] ?? module}
+                                                {stage3PermissionModule(module, stage3Locale)}
                                             </h4>
                                             <div className="mt-3 grid gap-3">
                                                 {modulePermissions.map(
@@ -495,10 +461,10 @@ export default function RoleIndex({
                                                                 <span className="min-w-0">
                                                                     <span className="block text-sm font-medium">
                                                                         {
-                                                                            permission.name
+                                                                            stage3PermissionName(permission.slug, permission.name, stage3Locale)
                                                                         }
                                                                         {required &&
-                                                                            ' · wajib'}
+                                                                            stage3Translate('stage3.ui.correction.confirm.required', stage3Locale)}
                                                                     </span>
                                                                     <span className="mt-0.5 block font-mono text-[11px] text-muted-foreground">
                                                                         {
@@ -531,15 +497,14 @@ export default function RoleIndex({
                                 onClick={() => setDialogOpen(false)}
                                 disabled={form.processing}
                             >
-                                Batal
-                            </Button>
+                                <Stage3Text k="stage3.ui.batal.14335" /></Button>
                             <Button type="submit" disabled={form.processing}>
                                 {form.processing
-                                    ? 'Menyimpan…'
+                                    ? stage3Translate('stage3.ui.correction.menyimpan.92e24', stage3Locale)
                                     : editingRole?.is_system
                                       ? 'Simpan permission'
                                       : editingRole
-                                        ? 'Simpan perubahan'
+                                        ? stage3Translate('stage3.ui.correction.simpan.perubahan.099b3', stage3Locale)
                                         : 'Buat role'}
                             </Button>
                         </DialogFooter>

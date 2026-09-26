@@ -14,6 +14,9 @@ import {
 } from 'lucide-react';
 import type { FormEvent } from 'react';
 import { useState } from 'react';
+import { useGlobalLocale } from '@/lib/locale-store';
+import { formatStage3Date } from '@/lib/stage3-display';
+import { Stage3Text, stage3Translate } from '@/components/stage3-text';
 import { useConfirmDialog } from '@/components/confirm-dialog-provider';
 import InputError from '@/components/input-error';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -144,6 +147,7 @@ export default function BranchIndex({
     filters,
     permissions,
 }: Props) {
+    const stage3Locale = useGlobalLocale();
     const { auth, errors: pageErrors } = usePage().props;
     const confirm = useConfirmDialog();
     const [dialogOpen, setDialogOpen] = useState(false);
@@ -199,9 +203,13 @@ export default function BranchIndex({
     const toggleStatus = async (branch: Branch) => {
         const activating = !branch.is_active;
         const confirmed = await confirm({
-            title: activating ? 'Aktifkan cabang?' : 'Nonaktifkan cabang?',
-            description: `${branch.code} · ${branch.name} akan ${activating ? 'diaktifkan kembali' : 'dinonaktifkan dari operasional aktif'}.`,
-            confirmLabel: activating ? 'Aktifkan' : 'Nonaktifkan',
+            title: activating ? stage3Translate('stage3.ui.correction.aktifkan.cabang.82c5f', stage3Locale) : stage3Translate('stage3.ui.correction.nonaktifkan.cabang.2a14d', stage3Locale),
+            description: stage3Translate(
+                activating ? 'stage3.ui.correction.confirm.branch.activate' : 'stage3.ui.correction.confirm.branch.deactivate',
+                stage3Locale,
+                { code: branch.code, name: branch.name },
+            ),
+            confirmLabel: activating ? stage3Translate('stage3.ui.correction.aktifkan.b2fe9', stage3Locale) : stage3Translate('stage3.ui.correction.nonaktifkan.42191', stage3Locale),
             variant: activating ? 'default' : 'destructive',
         });
 
@@ -218,35 +226,29 @@ export default function BranchIndex({
 
     return (
         <>
-            <Head title="Manajemen Cabang" />
+            <Head title={stage3Translate('stage3.ui.manajemen.cabang.301b3', stage3Locale)} />
 
             <div className="flex h-full flex-1 flex-col gap-6 overflow-x-auto rounded-xl p-4 md:p-6">
                 <header className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                     <div>
                         <p className="text-sm font-medium text-primary">
-                            Database Rental Management V2
-                        </p>
+                            <Stage3Text k="stage3.ui.administrasi.580b7" /></p>
                         <h1 className="mt-1 text-2xl font-semibold tracking-tight">
-                            Manajemen Cabang
-                        </h1>
+                            <Stage3Text k="stage3.ui.manajemen.cabang.301b3" /></h1>
                         <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-                            Kelola identitas, status operasional, akses, dan
-                            konteks kerja setiap cabang dari satu database
-                            terpusat.
-                        </p>
+                            <Stage3Text k="stage3.ui.kelola.identitas.status.operasional.akses.dan.k.c4bed" /></p>
                     </div>
                     {permissions.manage && (
                         <Button onClick={openCreate}>
                             <Plus />
-                            Tambah cabang
-                        </Button>
+                            <Stage3Text k="stage3.ui.tambah.cabang.aff17" /></Button>
                     )}
                 </header>
 
                 {typeof pageErrors.branch === 'string' && (
                     <Alert variant="destructive">
                         <CircleOff />
-                        <AlertTitle>Perubahan cabang ditolak</AlertTitle>
+                        <AlertTitle><Stage3Text k="stage3.ui.perubahan.cabang.ditolak.50130" /></AlertTitle>
                         <AlertDescription>{pageErrors.branch}</AlertDescription>
                     </Alert>
                 )}
@@ -254,22 +256,22 @@ export default function BranchIndex({
                 <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                     {[
                         {
-                            label: 'Total cabang',
+                            label: stage3Translate('stage3.ui.correction.total.cabang.de76d', stage3Locale),
                             value: summary.total,
                             icon: Building2,
                         },
                         {
-                            label: 'Cabang aktif',
+                            label: stage3Translate('stage3.ui.correction.cabang.aktif.a0bd6', stage3Locale),
                             value: summary.active,
                             icon: CheckCircle2,
                         },
                         {
-                            label: 'Nonaktif',
+                            label: stage3Translate('stage3.ui.correction.nonaktif.60944', stage3Locale),
                             value: summary.inactive,
                             icon: CircleOff,
                         },
                         {
-                            label: 'Tampil publik',
+                            label: stage3Translate('stage3.ui.correction.tampil.publik.db39a', stage3Locale),
                             value: summary.public,
                             icon: Globe2,
                         },
@@ -286,11 +288,9 @@ export default function BranchIndex({
                 <Card>
                     <CardHeader className="gap-4">
                         <div>
-                            <CardTitle>Daftar cabang</CardTitle>
+                            <CardTitle><Stage3Text k="stage3.ui.daftar.cabang.3636f" /></CardTitle>
                             <CardDescription>
-                                Cabang aktif dapat dipilih sebagai konteks kerja
-                                pada sidebar.
-                            </CardDescription>
+                                <Stage3Text k="stage3.ui.cabang.aktif.dapat.dipilih.sebagai.konteks.kerj.647bf" /></CardDescription>
                         </div>
                         <div
                             data-slot="filter-grid"
@@ -311,14 +311,14 @@ export default function BranchIndex({
                                             setSearch(event.target.value)
                                         }
                                         className="w-full pl-9"
-                                        placeholder="Kode, nama, atau kota"
+                                        placeholder={stage3Translate('stage3.ui.kode.nama.atau.kota.a838a', stage3Locale)}
                                     />
                                 </div>
                                 <Button
                                     type="submit"
                                     variant="outline"
                                     size="icon"
-                                    aria-label="Cari cabang"
+                                    aria-label={stage3Translate('stage3.ui.cari.cabang.22305', stage3Locale)}
                                 >
                                     <Search />
                                 </Button>
@@ -334,14 +334,11 @@ export default function BranchIndex({
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="all">
-                                        Semua status
-                                    </SelectItem>
+                                        <Stage3Text k="stage3.ui.semua.status.baa2a" /></SelectItem>
                                     <SelectItem value="active">
-                                        Aktif
-                                    </SelectItem>
+                                        <Stage3Text k="stage3.ui.aktif.89f29" /></SelectItem>
                                     <SelectItem value="inactive">
-                                        Nonaktif
-                                    </SelectItem>
+                                        <Stage3Text k="stage3.ui.nonaktif.60944" /></SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
@@ -351,12 +348,9 @@ export default function BranchIndex({
                             <div className="py-16 text-center">
                                 <Building2 className="mx-auto size-9 text-muted-foreground" />
                                 <p className="mt-4 font-medium">
-                                    Cabang tidak ditemukan
-                                </p>
+                                    <Stage3Text k="stage3.ui.cabang.tidak.ditemukan.e29b1" /></p>
                                 <p className="mt-1 text-sm text-muted-foreground">
-                                    Ubah filter pencarian atau tambahkan cabang
-                                    baru.
-                                </p>
+                                    <Stage3Text k="stage3.ui.ubah.filter.pencarian.atau.tambahkan.cabang.bar.ad2fd" /></p>
                             </div>
                         ) : (
                             <div className="grid gap-4 xl:grid-cols-2">
@@ -384,9 +378,7 @@ export default function BranchIndex({
                                                             </h2>
                                                             {isCurrent && (
                                                                 <Badge>
-                                                                    Aktif
-                                                                    sekarang
-                                                                </Badge>
+                                                                    <Stage3Text k="stage3.ui.aktif.sekarang.7f10a" /></Badge>
                                                             )}
                                                             <Badge
                                                                 variant={
@@ -396,8 +388,8 @@ export default function BranchIndex({
                                                                 }
                                                             >
                                                                 {branch.is_active
-                                                                    ? 'Operasional'
-                                                                    : 'Nonaktif'}
+                                                                    ? stage3Translate('stage3.ui.correction.operasional.425f3', stage3Locale)
+                                                                    : stage3Translate('stage3.ui.correction.nonaktif.60944', stage3Locale)}
                                                             </Badge>
                                                             <Badge
                                                                 variant={
@@ -409,8 +401,8 @@ export default function BranchIndex({
                                                             >
                                                                 {branch.is_active &&
                                                                 branch.public_catalog_enabled
-                                                                    ? 'Tampil publik'
-                                                                    : 'Tidak publik'}
+                                                                    ? stage3Translate('stage3.ui.correction.tampil.publik.db39a', stage3Locale)
+                                                                    : stage3Translate('stage3.ui.correction.tidak.publik.f9352', stage3Locale)}
                                                             </Badge>
                                                         </div>
                                                         <p className="mt-1 font-mono text-xs text-muted-foreground">
@@ -429,19 +421,13 @@ export default function BranchIndex({
                                                     ]
                                                         .filter(Boolean)
                                                         .join(', ') ||
-                                                        'Lokasi belum diisi'}
+                                                        stage3Translate('stage3.ui.correction.lokasi.belum.diisi.fef9c', stage3Locale)}
                                                 </p>
                                                 <p className="flex items-center gap-2">
                                                     <CalendarDays className="size-4" />
                                                     {branch.opened_at
-                                                        ? `Buka ${new Intl.DateTimeFormat(
-                                                              'id-ID',
-                                                          ).format(
-                                                              new Date(
-                                                                  branch.opened_at,
-                                                              ),
-                                                          )}`
-                                                        : 'Tanggal buka belum diisi'}
+                                                        ? stage3Translate('stage3.ui.correction.branch.opened', stage3Locale) + ' ' + formatStage3Date(branch.opened_at, stage3Locale)
+                                                        : stage3Translate('stage3.ui.correction.tanggal.buka.belum.diisi.b1b69', stage3Locale)}
                                                 </p>
                                             </div>
 
@@ -451,16 +437,14 @@ export default function BranchIndex({
                                                         {branch.customers_count}
                                                     </p>
                                                     <p className="text-[11px] text-muted-foreground">
-                                                        Pelanggan
-                                                    </p>
+                                                        <Stage3Text k="stage3.ui.pelanggan.af0ab" /></p>
                                                 </div>
                                                 <div>
                                                     <p className="text-lg font-semibold">
                                                         {branch.assets_count}
                                                     </p>
                                                     <p className="text-[11px] text-muted-foreground">
-                                                        Aset
-                                                    </p>
+                                                        <Stage3Text k="stage3.ui.aset.a2eed" /></p>
                                                 </div>
                                                 <div>
                                                     <p className="text-lg font-semibold">
@@ -469,8 +453,7 @@ export default function BranchIndex({
                                                         }
                                                     </p>
                                                     <p className="text-[11px] text-muted-foreground">
-                                                        Rental aktif
-                                                    </p>
+                                                        <Stage3Text k="stage3.ui.rental.aktif.de680" /></p>
                                                 </div>
                                             </div>
 
@@ -479,10 +462,8 @@ export default function BranchIndex({
                                                 {
                                                     branch.active_employees_count
                                                 }{' '}
-                                                karyawan ·{' '}
-                                                {branch.active_users_count} user
-                                                aktif
-                                            </div>
+                                                <Stage3Text k="stage3.ui.karyawan.69edd" />{' '}
+                                                {branch.active_users_count} <Stage3Text k="stage3.ui.user.aktif.42bc0" /></div>
 
                                             <div className="mt-5 flex flex-wrap gap-2 border-t pt-4">
                                                 {permissions.switch &&
@@ -501,8 +482,7 @@ export default function BranchIndex({
                                                             }
                                                         >
                                                             <ArrowRightLeft />
-                                                            Gunakan cabang
-                                                        </Button>
+                                                            <Stage3Text k="stage3.ui.gunakan.cabang.204cc" /></Button>
                                                     )}
                                                 {permissions.manage && (
                                                     <>
@@ -515,8 +495,7 @@ export default function BranchIndex({
                                                                 href={`/branches/${branch.id}/public-profile`}
                                                             >
                                                                 <Globe2 />
-                                                                Katalog publik
-                                                            </Link>
+                                                                <Stage3Text k="stage3.ui.katalog.publik.60e66" /></Link>
                                                         </Button>
                                                         <Button
                                                             size="sm"
@@ -526,8 +505,7 @@ export default function BranchIndex({
                                                             }
                                                         >
                                                             <Pencil />
-                                                            Edit
-                                                        </Button>
+                                                            <Stage3Text k="stage3.ui.edit.53016" /></Button>
                                                         <Button
                                                             size="sm"
                                                             variant={
@@ -548,8 +526,8 @@ export default function BranchIndex({
                                                                 <CheckCircle2 />
                                                             )}
                                                             {branch.is_active
-                                                                ? 'Nonaktifkan'
-                                                                : 'Aktifkan'}
+                                                                ? stage3Translate('stage3.ui.correction.nonaktifkan.42191', stage3Locale)
+                                                                : stage3Translate('stage3.ui.correction.aktifkan.b2fe9', stage3Locale)}
                                                         </Button>
                                                     </>
                                                 )}
@@ -575,20 +553,20 @@ export default function BranchIndex({
                     <DialogHeader>
                         <DialogTitle>
                             {editingBranch
-                                ? `Edit cabang ${editingBranch.code}`
-                                : 'Tambah cabang baru'}
+                                ? stage3Translate('stage3.ui.correction.edit.53016', stage3Locale) + ' ' + editingBranch.code
+                                : stage3Translate('stage3.ui.correction.tambah.cabang.baru.1145d', stage3Locale)}
                         </DialogTitle>
                         <DialogDescription>
                             {editingBranch
-                                ? 'Perbarui identitas dan lokasi cabang.'
-                                : 'Setting, kas utama, dan nomor dokumen akan dibuat otomatis.'}
+                                ? stage3Translate('stage3.ui.correction.perbarui.identitas.dan.lokasi.cabang.2e140', stage3Locale)
+                                : stage3Translate('stage3.ui.correction.setting.kas.utama.dan.nomor.dokumen.akan.di.07983', stage3Locale)}
                         </DialogDescription>
                     </DialogHeader>
 
                     <form onSubmit={submit} className="space-y-5">
                         <div className="grid gap-4 sm:grid-cols-2">
                             <FormField
-                                label="Kode cabang"
+                                label={stage3Translate('stage3.ui.kode.cabang.20779', stage3Locale)}
                                 name="code"
                                 error={form.errors.code}
                             >
@@ -607,7 +585,7 @@ export default function BranchIndex({
                                 />
                             </FormField>
                             <FormField
-                                label="Nama cabang"
+                                label={stage3Translate('stage3.ui.nama.cabang.08a87', stage3Locale)}
                                 name="name"
                                 error={form.errors.name}
                             >
@@ -622,7 +600,7 @@ export default function BranchIndex({
                                 />
                             </FormField>
                             <FormField
-                                label="Telepon"
+                                label={stage3Translate('stage3.ui.telepon.396dc', stage3Locale)}
                                 name="phone"
                                 error={form.errors.phone}
                             >
@@ -657,7 +635,7 @@ export default function BranchIndex({
                                 />
                             </FormField>
                             <FormField
-                                label="Desa/Kelurahan"
+                                label={stage3Translate('stage3.ui.desa.kelurahan.0e36d', stage3Locale)}
                                 name="village"
                                 error={form.errors.village}
                             >
@@ -673,7 +651,7 @@ export default function BranchIndex({
                                 />
                             </FormField>
                             <FormField
-                                label="Kecamatan"
+                                label={stage3Translate('stage3.ui.kecamatan.b1d85', stage3Locale)}
                                 name="district"
                                 error={form.errors.district}
                             >
@@ -689,7 +667,7 @@ export default function BranchIndex({
                                 />
                             </FormField>
                             <FormField
-                                label="Kota/Kabupaten"
+                                label={stage3Translate('stage3.ui.kota.kabupaten.47f65', stage3Locale)}
                                 name="city"
                                 error={form.errors.city}
                             >
@@ -702,7 +680,7 @@ export default function BranchIndex({
                                 />
                             </FormField>
                             <FormField
-                                label="Provinsi"
+                                label={stage3Translate('stage3.ui.provinsi.7a5b1', stage3Locale)}
                                 name="province"
                                 error={form.errors.province}
                             >
@@ -718,7 +696,7 @@ export default function BranchIndex({
                                 />
                             </FormField>
                             <FormField
-                                label="Kode pos"
+                                label={stage3Translate('stage3.ui.kode.pos.0344a', stage3Locale)}
                                 name="postal_code"
                                 error={form.errors.postal_code}
                             >
@@ -735,7 +713,7 @@ export default function BranchIndex({
                                 />
                             </FormField>
                             <FormField
-                                label="Tanggal buka"
+                                label={stage3Translate('stage3.ui.tanggal.buka.fd1ce', stage3Locale)}
                                 name="opened_at"
                                 error={form.errors.opened_at}
                             >
@@ -752,7 +730,7 @@ export default function BranchIndex({
                                 />
                             </FormField>
                             <FormField
-                                label="Zona waktu"
+                                label={stage3Translate('stage3.ui.zona.waktu.27df0', stage3Locale)}
                                 name="timezone"
                                 error={form.errors.timezone}
                             >
@@ -784,7 +762,7 @@ export default function BranchIndex({
                         </div>
 
                         <FormField
-                            label="Alamat lengkap"
+                            label={stage3Translate('stage3.ui.alamat.lengkap.328e8', stage3Locale)}
                             name="address"
                             error={form.errors.address}
                         >
@@ -813,12 +791,9 @@ export default function BranchIndex({
                                 />
                                 <div>
                                     <Label htmlFor="is_active">
-                                        Aktifkan cabang setelah dibuat
-                                    </Label>
+                                        <Stage3Text k="stage3.ui.aktifkan.cabang.setelah.dibuat.00c43" /></Label>
                                     <p className="mt-1 text-xs text-muted-foreground">
-                                        Cabang aktif langsung tersedia pada
-                                        branch switcher.
-                                    </p>
+                                        <Stage3Text k="stage3.ui.cabang.aktif.langsung.tersedia.pada.branch.swit.4f61b" /></p>
                                 </div>
                             </div>
                         )}
@@ -830,14 +805,13 @@ export default function BranchIndex({
                                 onClick={() => setDialogOpen(false)}
                                 disabled={form.processing}
                             >
-                                Batal
-                            </Button>
+                                <Stage3Text k="stage3.ui.batal.14335" /></Button>
                             <Button type="submit" disabled={form.processing}>
                                 {form.processing
-                                    ? 'Menyimpan…'
+                                    ? stage3Translate('stage3.ui.correction.menyimpan.92e24', stage3Locale)
                                     : editingBranch
-                                      ? 'Simpan perubahan'
-                                      : 'Buat cabang'}
+                                      ? stage3Translate('stage3.ui.correction.simpan.perubahan.099b3', stage3Locale)
+                                      : stage3Translate('stage3.ui.correction.buat.cabang.3491c', stage3Locale)}
                             </Button>
                         </DialogFooter>
                     </form>

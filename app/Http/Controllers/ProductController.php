@@ -33,7 +33,7 @@ class ProductController extends Controller
 
         return to_route('catalog.products.show', $product)->with('toast', [
             'type' => 'success',
-            'message' => "Produk {$product->name} berhasil dibuat.",
+            'message' => __('uat035b_stage3.toast.product_1', ['name' => $product->name]),
         ]);
     }
 
@@ -67,7 +67,7 @@ class ProductController extends Controller
 
         return back()->with('toast', [
             'type' => 'success',
-            'message' => "Produk {$product->name} berhasil diperbarui.",
+            'message' => __('uat035b_stage3.toast.product_2', ['name' => $product->name]),
         ]);
     }
 
@@ -116,7 +116,7 @@ class ProductController extends Controller
 
         return to_route('catalog.index')->with('toast', [
             'type' => 'success',
-            'message' => "Produk {$product->name} berhasil diarsipkan.",
+            'message' => __('uat035b_stage3.toast.product_3', ['name' => $product->name]),
         ]);
     }
 

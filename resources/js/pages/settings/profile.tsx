@@ -3,6 +3,7 @@ import { Form, Head, usePage } from '@inertiajs/react';
 import { Link } from '@inertiajs/react';
 /* @end-chisel-email-verification */
 import { CircleUserRound } from 'lucide-react';
+import { useAppLocale } from '@/lib/i18n';
 import ProfileController from '@/actions/App/Http/Controllers/Settings/ProfileController';
 import DeleteUser from '@/components/delete-user';
 import Heading from '@/components/heading';
@@ -38,29 +39,29 @@ export default function Profile(
     },
     /* @end-chisel-email-verification */
 ) {
+    const { tr } = useAppLocale();
     const { auth } = usePage<PageProps>().props;
 
     return (
         <>
-            <Head title="Pengaturan profil" />
+            <Head title={tr('settings.profile.page')} />
 
-            <h1 className="sr-only">Pengaturan profil</h1>
+            <h1 className="sr-only">{tr('settings.profile.page')}</h1>
 
             <div className="space-y-6">
                 <Heading
-                    title="Profil akun"
-                    description="Perbarui identitas akun yang digunakan untuk masuk dan beraktivitas di Together Kamera."
+                    title={tr('settings.profile.title')}
+                    description={tr('settings.profile.description')}
                 />
 
                 <Card className="overflow-hidden">
                     <CardHeader className="border-b bg-muted/20">
                         <CardTitle className="flex items-center gap-2 text-base">
                             <CircleUserRound className="size-5" />
-                            Informasi profil
+                            {tr('settings.profile.card')}
                         </CardTitle>
                         <CardDescription>
-                            Nama dan email ini melekat pada akun pengguna, bukan
-                            identitas perusahaan atau cabang.
+                            {tr('settings.profile.cardDescription')}
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="pt-6">
@@ -76,7 +77,7 @@ export default function Profile(
                                     <div className="grid gap-5 md:grid-cols-2">
                                         <div className="grid gap-2">
                                             <Label htmlFor="name">
-                                                Nama lengkap
+                                                {tr('settings.profile.name')}
                                             </Label>
 
                                             <Input
@@ -85,7 +86,7 @@ export default function Profile(
                                                 name="name"
                                                 required
                                                 autoComplete="name"
-                                                placeholder="Nama lengkap"
+                                                placeholder={tr('settings.profile.name')}
                                             />
 
                                             <InputError message={errors.name} />
@@ -93,7 +94,7 @@ export default function Profile(
 
                                         <div className="grid gap-2">
                                             <Label htmlFor="email">
-                                                Alamat email
+                                                {tr('settings.profile.email')}
                                             </Label>
 
                                             <Input
@@ -118,15 +119,13 @@ export default function Profile(
                                             null && (
                                             <div className="rounded-lg border border-dashed bg-muted/20 p-4">
                                                 <p className="text-sm text-muted-foreground">
-                                                    Alamat email belum
-                                                    terverifikasi.{' '}
+                                                    {tr('settings.profile.unverified')}{' '}
                                                     <Link
                                                         href={send()}
                                                         as="button"
                                                         className="font-medium text-foreground underline decoration-neutral-300 underline-offset-4 transition-colors hover:decoration-current dark:decoration-neutral-500"
                                                     >
-                                                        Kirim ulang email
-                                                        verifikasi
+                                                        {tr('settings.profile.resend')}
                                                     </Link>
                                                     .
                                                 </p>
@@ -134,9 +133,7 @@ export default function Profile(
                                                 {status ===
                                                     'verification-link-sent' && (
                                                     <p className="mt-2 text-sm font-medium text-green-600">
-                                                        Tautan verifikasi baru
-                                                        sudah dikirim ke email
-                                                        Anda.
+                                                        {tr('settings.profile.sent')}
                                                     </p>
                                                 )}
                                             </div>
@@ -149,8 +146,8 @@ export default function Profile(
                                             data-test="update-profile-button"
                                         >
                                             {processing
-                                                ? 'Menyimpan...'
-                                                : 'Simpan perubahan'}
+                                                ? tr('settings.profile.saving')
+                                                : tr('settings.profile.save')}
                                         </Button>
                                     </div>
                                 </>

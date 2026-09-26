@@ -161,7 +161,7 @@ class UserManagementController extends Controller
 
         return to_route('users.index')->with('toast', [
             'type' => 'success',
-            'message' => "Akun {$user->name} berhasil dibuat.",
+            'message' => __('uat035b_stage3.toast.usermanagement_1', ['name' => $user->name]),
         ]);
     }
 
@@ -233,7 +233,7 @@ class UserManagementController extends Controller
 
         return back()->with('toast', [
             'type' => 'success',
-            'message' => "Akun {$user->name} berhasil diperbarui.",
+            'message' => __('uat035b_stage3.toast.usermanagement_2', ['name' => $user->name]),
         ]);
     }
 
@@ -283,8 +283,7 @@ class UserManagementController extends Controller
 
         return back()->with('toast', [
             'type' => 'success',
-            'message' => "Akun {$user->name} berhasil ".
-                ($newStatus === 'active' ? 'diaktifkan.' : 'dinonaktifkan.'),
+            'message' => ($newStatus === 'active' ? __('uat035b_stage3.toast.usermanagement_3_on', ['name' => $user->name]) : __('uat035b_stage3.toast.usermanagement_3_off', ['name' => $user->name])),
         ]);
     }
 

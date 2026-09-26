@@ -232,7 +232,7 @@ class CustomerController extends Controller
 
         return to_route('customers.show', $customer)->with('toast', [
             'type' => 'success',
-            'message' => "Pelanggan {$customer->name} berhasil dibuat.",
+            'message' => __('uat035b_stage3.toast.customer_1', ['name' => $customer->name]),
         ]);
     }
 
@@ -271,7 +271,7 @@ class CustomerController extends Controller
 
         return back()->with('toast', [
             'type' => 'success',
-            'message' => "Pelanggan {$customer->name} berhasil diperbarui.",
+            'message' => __('uat035b_stage3.toast.customer_2', ['name' => $customer->name]),
         ]);
     }
 
@@ -308,7 +308,7 @@ class CustomerController extends Controller
 
         return to_route('customers.index')->with('toast', [
             'type' => 'success',
-            'message' => "Pelanggan {$customer->name} berhasil diarsipkan.",
+            'message' => __('uat035b_stage3.toast.customer_3', ['name' => $customer->name]),
         ]);
     }
 

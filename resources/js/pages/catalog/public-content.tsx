@@ -62,6 +62,11 @@ type PublicProductContent = {
     is_featured: boolean;
     public_sort_order: number;
     short_description: string | null;
+    short_description_en: string | null;
+    description: string | null;
+    description_en: string | null;
+    seo_title_en: string | null;
+    seo_description_en: string | null;
     primary_image_path: string | null;
     image_url: string | null;
     gallery: string[];
@@ -80,6 +85,9 @@ type PublicPackageContent = {
     name: string;
     slug: string;
     description: string | null;
+    description_en: string | null;
+    seo_title_en: string | null;
+    seo_description_en: string | null;
     is_active: boolean;
     is_public: boolean;
     is_featured: boolean;
@@ -594,6 +602,11 @@ function ProductContentDialog({
             is_featured: product?.is_featured ?? false,
             public_sort_order: product?.public_sort_order ?? 0,
             short_description: product?.short_description ?? '',
+            short_description_en: product?.short_description_en ?? '',
+            description: product?.description ?? '',
+            description_en: product?.description_en ?? '',
+            seo_title_en: product?.seo_title_en ?? '',
+            seo_description_en: product?.seo_description_en ?? '',
             seo_title: product?.seo_title ?? '',
             seo_description: product?.seo_description ?? '',
             primary_image: null as File | null,
@@ -677,7 +690,7 @@ function ProductContentDialog({
                         </div>
                     </div>
                     <div className="grid gap-2">
-                        <Label>Deskripsi singkat</Label>
+                        <Label>Deskripsi singkat (Indonesia)</Label>
                         <textarea
                             className={textareaClass}
                             value={form.data.short_description}
@@ -689,6 +702,36 @@ function ProductContentDialog({
                             }
                         />
                         <InputError message={form.errors.short_description} />
+                    </div>
+                    <div className="grid gap-2">
+                        <Label>Short description (English · optional)</Label>
+                        <textarea
+                            className={textareaClass}
+                            value={form.data.short_description_en}
+                            maxLength={320}
+                            onChange={(e) => form.setData('short_description_en', e.target.value)}
+                        />
+                        <InputError message={form.errors.short_description_en} />
+                    </div>
+                    <div className="grid gap-2">
+                        <Label>Deskripsi lengkap (Indonesia)</Label>
+                        <textarea
+                            className={textareaClass}
+                            value={form.data.description}
+                            maxLength={3000}
+                            onChange={(e) => form.setData('description', e.target.value)}
+                        />
+                        <InputError message={form.errors.description} />
+                    </div>
+                    <div className="grid gap-2">
+                        <Label>Full description (English · optional)</Label>
+                        <textarea
+                            className={textareaClass}
+                            value={form.data.description_en}
+                            maxLength={3000}
+                            onChange={(e) => form.setData('description_en', e.target.value)}
+                        />
+                        <InputError message={form.errors.description_en} />
                     </div>
                     <div className="grid gap-2">
                         <Label>Galeri tambahan (maks. 8)</Label>
@@ -721,7 +764,7 @@ function ProductContentDialog({
                         />
                     </div>
                     <div className="grid gap-2">
-                        <Label>SEO title</Label>
+                        <Label>SEO title (Indonesia)</Label>
                         <Input
                             value={form.data.seo_title}
                             onChange={(e) =>
@@ -731,7 +774,7 @@ function ProductContentDialog({
                         />
                     </div>
                     <div className="grid gap-2">
-                        <Label>SEO description</Label>
+                        <Label>SEO description (Indonesia)</Label>
                         <textarea
                             className={textareaClass}
                             value={form.data.seo_description}
@@ -740,6 +783,25 @@ function ProductContentDialog({
                             }
                             maxLength={320}
                         />
+                    </div>
+                    <div className="grid gap-2">
+                        <Label>SEO title (English · optional)</Label>
+                        <Input
+                            value={form.data.seo_title_en}
+                            maxLength={180}
+                            onChange={(e) => form.setData('seo_title_en', e.target.value)}
+                        />
+                        <InputError message={form.errors.seo_title_en} />
+                    </div>
+                    <div className="grid gap-2">
+                        <Label>SEO description (English · optional)</Label>
+                        <textarea
+                            className={textareaClass}
+                            value={form.data.seo_description_en}
+                            maxLength={320}
+                            onChange={(e) => form.setData('seo_description_en', e.target.value)}
+                        />
+                        <InputError message={form.errors.seo_description_en} />
                     </div>
                     <DialogFooter>
                         <Button
@@ -770,6 +832,10 @@ function PackageContentDialog({
         is_public: rentalPackage?.is_public ?? false,
         is_featured: rentalPackage?.is_featured ?? false,
         public_sort_order: rentalPackage?.public_sort_order ?? 0,
+        description: rentalPackage?.description ?? '',
+        description_en: rentalPackage?.description_en ?? '',
+        seo_title_en: rentalPackage?.seo_title_en ?? '',
+        seo_description_en: rentalPackage?.seo_description_en ?? '',
         seo_title: rentalPackage?.seo_title ?? '',
         seo_description: rentalPackage?.seo_description ?? '',
         primary_image: null as File | null,
@@ -795,7 +861,7 @@ function PackageContentDialog({
             open={rentalPackage !== null}
             onOpenChange={(open) => !open && onClose()}
         >
-            <DialogContent>
+            <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
                 <DialogHeader>
                     <DialogTitle>
                         Konten paket {rentalPackage?.name}
@@ -857,7 +923,27 @@ function PackageContentDialog({
                         }
                     />
                     <div className="grid gap-2">
-                        <Label>SEO title</Label>
+                        <Label>Deskripsi paket (Indonesia)</Label>
+                        <textarea
+                            className={textareaClass}
+                            value={form.data.description}
+                            maxLength={3000}
+                            onChange={(e) => form.setData('description', e.target.value)}
+                        />
+                        <InputError message={form.errors.description} />
+                    </div>
+                    <div className="grid gap-2">
+                        <Label>Package description (English · optional)</Label>
+                        <textarea
+                            className={textareaClass}
+                            value={form.data.description_en}
+                            maxLength={3000}
+                            onChange={(e) => form.setData('description_en', e.target.value)}
+                        />
+                        <InputError message={form.errors.description_en} />
+                    </div>
+                    <div className="grid gap-2">
+                        <Label>SEO title (Indonesia)</Label>
                         <Input
                             value={form.data.seo_title}
                             onChange={(e) =>
@@ -866,7 +952,7 @@ function PackageContentDialog({
                         />
                     </div>
                     <div className="grid gap-2">
-                        <Label>SEO description</Label>
+                        <Label>SEO description (Indonesia)</Label>
                         <textarea
                             className={textareaClass}
                             value={form.data.seo_description}
@@ -874,6 +960,25 @@ function PackageContentDialog({
                                 form.setData('seo_description', e.target.value)
                             }
                         />
+                    </div>
+                    <div className="grid gap-2">
+                        <Label>SEO title (English · optional)</Label>
+                        <Input
+                            value={form.data.seo_title_en}
+                            maxLength={180}
+                            onChange={(e) => form.setData('seo_title_en', e.target.value)}
+                        />
+                        <InputError message={form.errors.seo_title_en} />
+                    </div>
+                    <div className="grid gap-2">
+                        <Label>SEO description (English · optional)</Label>
+                        <textarea
+                            className={textareaClass}
+                            value={form.data.seo_description_en}
+                            maxLength={320}
+                            onChange={(e) => form.setData('seo_description_en', e.target.value)}
+                        />
+                        <InputError message={form.errors.seo_description_en} />
                     </div>
                     <DialogFooter>
                         <Button

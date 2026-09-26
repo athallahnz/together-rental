@@ -37,6 +37,22 @@ class RentalCollateralController extends Controller
             throw $exception;
         }
 
+        if (
+            $request->string('source_mode')->toString() === 'new'
+            && $request->boolean('save_to_customer360')
+            && $collateral->customer_identity_id !== null
+        ) {
+            $identity = $collateral->customerIdentity()->firstOrFail();
+            $recorder->record(
+                $request,
+                'customer.identity_created',
+                $identity,
+                null,
+                $identity->toArray(),
+                $identity->customer()->value('registered_branch_id'),
+            );
+        }
+
         $recorder->record(
             $request,
             'rental.collateral_received',
@@ -124,6 +140,9 @@ class RentalCollateralController extends Controller
             'id',
             'rental_id',
             'customer_id',
+            'customer_identity_id',
+            'source_type',
+            'identity_snapshot',
             'type',
             'number',
             'holder_name',

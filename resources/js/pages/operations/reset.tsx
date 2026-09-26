@@ -13,6 +13,7 @@ import {
     Wrench,
 } from 'lucide-react';
 import type { FormEvent } from 'react';
+import { stage5Choice, Stage5Text, stage5Translate, stage5IntlLocale } from '@/components/stage5-text';
 import { useConfirmDialog } from '@/components/confirm-dialog-provider';
 import InputError from '@/components/input-error';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -28,6 +29,7 @@ import { Checkbox } from '@/components/ui/checkbox';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { MetricCard } from '@/components/ui/metric-card';
+import { useAppLocale } from '@/lib/i18n';
 import {
     Select,
     SelectContent,
@@ -91,10 +93,12 @@ function SummaryCard({
     detail: string;
     icon: typeof CalendarDays;
 }) {
+    const { locale: stage5Locale } = useAppLocale();
+
     return (
         <MetricCard
             label={label}
-            value={value.toLocaleString('id-ID')}
+            value={value.toLocaleString(stage5IntlLocale(stage5Locale))}
             detail={detail}
             icon={Icon}
             tone="primary"
@@ -110,6 +114,7 @@ export default function OperationalDataReset({
     summary,
     environment,
 }: Props) {
+    const { locale: stage5Locale } = useAppLocale();
     const confirm = useConfirmDialog();
     const form = useForm<ResetForm>({
         scope: selectedScope,
@@ -133,8 +138,8 @@ export default function OperationalDataReset({
         event.preventDefault();
 
         const approved = await confirm({
-            title: 'Reset data operasional sekarang?',
-            description: `Booking, rental, transaksi keuangan terkait, dokumen transaksi, return, maintenance, stock opname, dan transfer pada ${scopeLabel} akan dihapus permanen dari environment ${environment}. Master pelanggan, katalog, aset, harga, cabang, pengguna, dan role tetap dipertahankan.`,
+            title: stage5Translate("stage5.ui.c71a7063881f", stage5Locale),
+            description: stage5Choice(`Pemesanan, rental, transaksi keuangan terkait, dokumen, pengembalian, perawatan, pemeriksaan stok, dan transfer pada ${scopeLabel} akan dihapus permanen dari lingkungan ${environment}. Data induk pelanggan, katalog, aset, harga, cabang, pengguna, dan peran tetap dipertahankan.`, `Bookings, rentals, associated financial transactions, documents, returns, maintenance, stocktaking, and transfers in ${scopeLabel} will be permanently deleted from ${environment}. Customer, catalog, asset, pricing, branch, user and role master data will be preserved.`, stage5Locale),
             confirmLabel: 'Ya, reset operasional',
             variant: 'destructive',
         });
@@ -157,26 +162,24 @@ export default function OperationalDataReset({
 
     return (
         <>
-            <Head title="Reset Data Operasional" />
+            <Head title={stage5Translate("stage5.ui.4341da9b183f", stage5Locale)} />
 
             <div className="flex h-full flex-1 flex-col gap-6 overflow-x-auto rounded-xl p-4 md:p-6">
                 <header className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
                     <div>
                         <p className="text-sm font-medium text-destructive">
-                            Utilitas UAT / Development
+                            <Stage5Text k="stage5.ui.95107c3bc6c6" />
                         </p>
                         <h1 className="mt-1 text-2xl font-semibold tracking-tight">
-                            Reset Data Operasional
+                            <Stage5Text k="stage5.ui.4341da9b183f" />
                         </h1>
                         <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-                            Kembalikan data transaksi ke baseline kosong tanpa
-                            menghapus master pelanggan, katalog, aset, harga,
-                            cabang, pengguna, atau role.
+                            <Stage5Text k="stage5.ui.d34e792396dc" />
                         </p>
                     </div>
 
                     <div className="w-full max-w-sm space-y-2">
-                        <Label htmlFor="reset-scope">Lingkup reset</Label>
+                        <Label htmlFor="reset-scope"><Stage5Text k="stage5.ui.a5da1c3778e0" /></Label>
                         <Select
                             value={selectedScope}
                             onValueChange={switchScope}
@@ -186,7 +189,7 @@ export default function OperationalDataReset({
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">
-                                    Semua cabang perusahaan
+                                    <Stage5Text k="stage5.ui.ce3a190738ab" />
                                 </SelectItem>
                                 {branches.map((branch) => (
                                     <SelectItem
@@ -205,70 +208,67 @@ export default function OperationalDataReset({
                 <Alert variant="destructive">
                     <AlertTriangle />
                     <AlertTitle>
-                        Aksi destruktif khusus non-production
+                        <Stage5Text k="stage5.ui.3e731aed27d2" />
                     </AlertTitle>
                     <AlertDescription>
-                        Halaman ini hanya tersedia untuk Super Admin pada
-                        environment local, testing, atau staging. Reset tidak
-                        dapat dibatalkan. Gunakan checkpoint Git/database backup
-                        sebelum menjalankannya pada data UAT yang penting.
+                        <Stage5Text k="stage5.ui.a7627d12ce43" />
                     </AlertDescription>
                 </Alert>
 
                 <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                     <SummaryCard
-                        label="Booking"
+                        label={stage5Translate("stage5.ui.e38ea8eebe78", stage5Locale)}
                         value={summary.bookings}
-                        detail={`${summary.reservations.toLocaleString('id-ID')} reservasi aset ikut dilepas`}
+                        detail={`${summary.reservations.toLocaleString(stage5IntlLocale(stage5Locale))} reservasi aset ikut dilepas`}
                         icon={CalendarDays}
                     />
                     <SummaryCard
-                        label="Rental"
+                        label={stage5Translate("stage5.ui.e703935c66bf", stage5Locale)}
                         value={summary.rentals}
-                        detail={`${summary.returns.toLocaleString('id-ID')} pengembalian ikut dibersihkan`}
+                        detail={`${summary.returns.toLocaleString(stage5IntlLocale(stage5Locale))} pengembalian ikut dibersihkan`}
                         icon={ShoppingBag}
                     />
                     <SummaryCard
-                        label="Keuangan transaksi"
+                        label={stage5Translate("stage5.ui.15f141a61e02", stage5Locale)}
                         value={totalFinance}
-                        detail={`${summary.payments.toLocaleString('id-ID')} payment · ${summary.refunds.toLocaleString('id-ID')} refund · ${summary.operational_expenses.toLocaleString('id-ID')} expense · ${summary.transaction_documents.toLocaleString('id-ID')} dokumen`}
+                        detail={`${summary.payments.toLocaleString(stage5IntlLocale(stage5Locale))} payment · ${summary.refunds.toLocaleString(stage5IntlLocale(stage5Locale))} refund · ${summary.operational_expenses.toLocaleString(stage5IntlLocale(stage5Locale))} expense · ${summary.transaction_documents.toLocaleString(stage5IntlLocale(stage5Locale))} dokumen`}
                         icon={CircleDollarSign}
                     />
                     <SummaryCard
-                        label="Maintenance"
+                        label={stage5Translate("stage5.ui.94de303bbef8", stage5Locale)}
                         value={summary.maintenance}
-                        detail={`${summary.inspections.toLocaleString('id-ID')} inspection pada lingkup reset`}
+                        detail={`${summary.inspections.toLocaleString(stage5IntlLocale(stage5Locale))} inspection pada lingkup reset`}
                         icon={Wrench}
                     />
                     <SummaryCard
-                        label="Stock opname"
+                        label={stage5Translate("stage5.ui.5b358c94674d", stage5Locale)}
                         value={summary.inventory_audits}
                         detail={
-                            summary.notifications.toLocaleString('id-ID') +
+                            summary.notifications.toLocaleString(stage5IntlLocale(stage5Locale)) +
                             ' reminder operasional terkait ikut dibersihkan'
                         }
                         icon={ClipboardCheck}
                     />
                     <SummaryCard
-                        label="Transfer aset"
+                        label={stage5Translate("stage5.ui.b7480f1ffbe7", stage5Locale)}
                         value={summary.transfers}
-                        detail={`${summary.transfer_expenses.toLocaleString('id-ID')} biaya transfer terkait`}
+                        detail={`${summary.transfer_expenses.toLocaleString(stage5IntlLocale(stage5Locale))} biaya transfer terkait`}
                         icon={ArrowLeftRight}
                     />
                     <SummaryCard
-                        label="Aset serialized"
+                        label={stage5Translate("stage5.ui.7dba4563705a", stage5Locale)}
                         value={summary.serialized_assets}
                         detail="Aset aktif akan dikembalikan ke status available"
                         icon={PackageCheck}
                     />
                     <SummaryCard
-                        label="Stok bulk"
+                        label={stage5Translate("stage5.ui.3722564cb316", stage5Locale)}
                         value={summary.bulk_inventory_rows}
                         detail="Counter reserved, rented, maintenance, dan transfer → 0"
                         icon={Database}
                     />
                     <SummaryCard
-                        label="Lingkup"
+                        label={stage5Translate("stage5.ui.7f0e0b23bf61", stage5Locale)}
                         value={selectedScope === 'all' ? branches.length : 1}
                         detail={scopeLabel}
                         icon={ShieldCheck}
@@ -278,10 +278,9 @@ export default function OperationalDataReset({
                 <div className="grid gap-6 xl:grid-cols-2">
                     <Card>
                         <CardHeader>
-                            <CardTitle>Data yang dibersihkan</CardTitle>
+                            <CardTitle><Stage5Text k="stage5.ui.ac0c8b0bcc50" /></CardTitle>
                             <CardDescription>
-                                Semua data berikut diperlakukan sebagai data
-                                transaksi/operasional UAT.
+                                <Stage5Text k="stage5.ui.ee66f28d4a35" />
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -308,10 +307,9 @@ export default function OperationalDataReset({
 
                     <Card>
                         <CardHeader>
-                            <CardTitle>Master data tetap aman</CardTitle>
+                            <CardTitle><Stage5Text k="stage5.ui.5d456a91ba3e" /></CardTitle>
                             <CardDescription>
-                                Reset tidak mengubah fondasi bisnis dan
-                                identitas aset.
+                                <Stage5Text k="stage5.ui.f3c2b6a5bd4d" />
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -340,22 +338,18 @@ export default function OperationalDataReset({
                 <form onSubmit={submit} className="space-y-6">
                     <Card>
                         <CardHeader>
-                            <CardTitle>Pemulihan inventaris</CardTitle>
+                            <CardTitle><Stage5Text k="stage5.ui.ae1618687629" /></CardTitle>
                             <CardDescription>
-                                Setelah transaksi dihapus, seluruh aset aktif
-                                pada lingkup reset dibuat available dan counter
-                                stok operasional dikembalikan ke nol.
+                                <Stage5Text k="stage5.ui.14adff6c5281" />
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <div className="rounded-xl border bg-muted/30 p-4 text-sm leading-6 text-muted-foreground">
                                 <p>
                                     <strong className="text-foreground">
-                                        Lokasi aset tidak dipindahkan.
+                                        <Stage5Text k="stage5.ui.2b3da7cf2b3a" />
                                     </strong>{' '}
-                                    current branch dan owning branch tetap
-                                    seperti kondisi terakhir. Quantity on hand
-                                    stok bulk juga tetap dipertahankan.
+                                    <Stage5Text k="stage5.ui.9d9fbfcff77c" />
                                 </p>
                             </div>
 
@@ -371,14 +365,10 @@ export default function OperationalDataReset({
                                 />
                                 <span>
                                     <span className="block text-sm font-medium">
-                                        Normalisasi kondisi aset menjadi good
+                                        <Stage5Text k="stage5.ui.62c169432423" />
                                     </span>
                                     <span className="mt-1 block text-sm leading-6 text-muted-foreground">
-                                        Aktifkan hanya untuk membuat baseline
-                                        UAT benar-benar bersih. Jika tidak
-                                        dicentang, status menjadi available
-                                        tetapi catatan kondisi fisik terakhir
-                                        tetap dipertahankan.
+                                        <Stage5Text k="stage5.ui.8e14745d02e7" />
                                     </span>
                                 </span>
                             </label>
@@ -391,19 +381,17 @@ export default function OperationalDataReset({
                     <Card className="border-destructive/40">
                         <CardHeader>
                             <CardTitle className="text-destructive">
-                                Konfirmasi reset
+                                <Stage5Text k="stage5.ui.1d606a7ebb5a" />
                             </CardTitle>
                             <CardDescription>
-                                Untuk mencegah reset tidak disengaja, ketik
-                                frasa konfirmasi dan masukkan password akun
-                                Super Admin.
+                                <Stage5Text k="stage5.ui.0e0c73e8c562" />
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-5">
                             <div className="grid gap-5 lg:grid-cols-2">
                                 <div className="space-y-2">
                                     <Label htmlFor="confirmation_phrase">
-                                        Ketik{' '}
+                                        <Stage5Text k="stage5.ui.e0a37a7a2bdd" />{' '}
                                         <span className="font-mono font-semibold text-destructive">
                                             {confirmationPhrase}
                                         </span>
@@ -429,7 +417,7 @@ export default function OperationalDataReset({
 
                                 <div className="space-y-2">
                                     <Label htmlFor="password">
-                                        Password Super Admin
+                                        <Stage5Text k="stage5.ui.83d7665e0004" />
                                     </Label>
                                     <Input
                                         id="password"
@@ -442,7 +430,7 @@ export default function OperationalDataReset({
                                             )
                                         }
                                         autoComplete="current-password"
-                                        placeholder="Masukkan password saat ini"
+                                        placeholder={stage5Translate("stage5.ui.5bbfdb51d1c0", stage5Locale)}
                                     />
                                     <InputError
                                         message={form.errors.password}
@@ -454,11 +442,7 @@ export default function OperationalDataReset({
 
                             <div className="flex flex-col gap-3 border-t pt-5 sm:flex-row sm:items-center sm:justify-between">
                                 <p className="max-w-2xl text-xs leading-5 text-muted-foreground">
-                                    Target: <strong>{scopeLabel}</strong> ·
-                                    Environment: <strong>{environment}</strong>.
-                                    Transfer yang melibatkan cabang target ikut
-                                    dibersihkan karena satu transfer tidak boleh
-                                    tersisa hanya pada salah satu sisi.
+                                    <Stage5Text k="stage5.ui.652ac2cbbafc" /> <strong>{scopeLabel}</strong> <Stage5Text k="stage5.ui.17568ffbc7ac" /> <strong>{environment}</strong><Stage5Text k="stage5.ui.75e1f0b8a405" />
                                 </p>
                                 <Button
                                     type="submit"

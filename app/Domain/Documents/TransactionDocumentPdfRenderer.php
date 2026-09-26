@@ -33,6 +33,14 @@ class TransactionDocumentPdfRenderer
 
     private string $contentHash = '';
 
+    /** Presentation-only translation; document snapshots and agreement terms remain unchanged. */
+    private function l(string $label): string
+    {
+        $labels = trans('uat035b_stage4.pdf');
+
+        return is_array($labels) ? (string) ($labels[$label] ?? $label) : $label;
+    }
+
     public function render(TransactionDocument $document): string
     {
         /** @var array<string, mixed> $snapshot */
@@ -54,7 +62,7 @@ class TransactionDocumentPdfRenderer
             'invoice' => $this->invoice($snapshot, $issuer),
             'receipt' => $this->receipt($snapshot, $issuer),
             'agreement' => $this->agreement($snapshot, $issuer),
-            default => $this->paragraph('Jenis dokumen tidak dikenali.'),
+            default => $this->paragraph($this->l('Jenis dokumen tidak dikenali.')),
         };
 
         $this->finishPage();
@@ -70,10 +78,10 @@ class TransactionDocumentPdfRenderer
         $source = is_array($snapshot['source'] ?? null) ? $snapshot['source'] : [];
         $branchName = $this->value($branch['name'] ?? 'Together Kamera');
         $title = match ($document->document_type) {
-            'invoice' => 'INVOICE',
-            'receipt' => 'NOTA PEMBAYARAN',
-            'agreement' => 'SURAT PERJANJIAN SEWA',
-            default => 'DOKUMEN TRANSAKSI',
+            'invoice' => $this->l('INVOICE'),
+            'receipt' => $this->l('NOTA PEMBAYARAN'),
+            'agreement' => $this->l('SURAT PERJANJIAN SEWA'),
+            default => $this->l('DOKUMEN TRANSAKSI'),
         };
         $cw = self::W - (2 * self::MX);
 
@@ -92,14 +100,14 @@ class TransactionDocumentPdfRenderer
         $this->text($title, self::MX, $this->y, 14, true, 'center', $cw);
         $this->y -= 19;
 
-        $this->label('No. Dokumen', (string) $document->document_number, self::MX, 72);
-        $this->label('Versi', (string) $document->version, 320, 60);
+        $this->label($this->l('No. Dokumen'), (string) $document->document_number, self::MX, 72);
+        $this->label($this->l('Versi'), (string) $document->version, 320, 60);
         $this->y -= 13;
-        $this->label('Sumber', $this->value($source['reference'] ?? $document->source_reference), self::MX, 72);
-        $this->label('Status', $this->value($source['status'] ?? null), 320, 60);
+        $this->label($this->l('Sumber'), $this->value($source['reference'] ?? $document->source_reference), self::MX, 72);
+        $this->label($this->l('Status'), $this->value($source['status'] ?? null), 320, 60);
         $this->y -= 13;
-        $this->label('Diterbitkan', $this->dateTime($document->issued_at).' WIB', self::MX, 72);
-        $this->label('Petugas', $issuer['name'], 320, 60);
+        $this->label($this->l('Diterbitkan'), $this->dateTime($document->issued_at).' WIB', self::MX, 72);
+        $this->label($this->l('Petugas'), $issuer['name'], 320, 60);
         $this->y -= 16;
 
         $this->line(self::MX, $this->y, self::W - self::MX, $this->y, .6);
@@ -114,28 +122,28 @@ class TransactionDocumentPdfRenderer
         $customer = is_array($snapshot['customer'] ?? null) ? $snapshot['customer'] : [];
 
         $this->infoPair(
-            'DATA PELANGGAN',
+            $this->l('DATA PELANGGAN'),
             [
-                ['Nama', $this->value($customer['name'] ?? null)],
-                ['No. Pelanggan', $this->value($customer['customer_number'] ?? null)],
-                ['Telepon', $this->value($customer['phone'] ?? null)],
-                ['Alamat', $this->customerAddress($customer)],
+                [$this->l('Nama'), $this->value($customer['name'] ?? null)],
+                [$this->l('No. Pelanggan'), $this->value($customer['customer_number'] ?? null)],
+                [$this->l('Telepon'), $this->value($customer['phone'] ?? null)],
+                [$this->l('Alamat'), $this->customerAddress($customer)],
             ],
-            'DATA TRANSAKSI',
+            $this->l('DATA TRANSAKSI'),
             [
-                ['Mulai', $this->dateTime($source['starts_at'] ?? $source['checked_out_at'] ?? null)],
-                ['Kembali', $this->dateTime($source['ends_at'] ?? $source['due_at'] ?? null)],
-                ['Selesai', $this->dateTime($source['returned_at'] ?? null)],
-                ['Status', $this->value($source['status'] ?? null)],
+                [$this->l('Mulai'), $this->dateTime($source['starts_at'] ?? $source['checked_out_at'] ?? null)],
+                [$this->l('Kembali'), $this->dateTime($source['ends_at'] ?? $source['due_at'] ?? null)],
+                [$this->l('Selesai'), $this->dateTime($source['returned_at'] ?? null)],
+                [$this->l('Status'), $this->value($source['status'] ?? null)],
             ],
         );
 
-        $this->section('RINCIAN BARANG / JASA');
+        $this->section($this->l('RINCIAN BARANG / JASA'));
         $items = is_array($snapshot['items'] ?? null) ? $snapshot['items'] : [];
-        $this->tableHeader(['No', 'Item', 'Qty', 'Harga', 'Total'], [28, 300, 40, 78, 77]);
+        $this->tableHeader([$this->l('No'), $this->l('Item'), $this->l('Qty'), $this->l('Harga'), $this->l('Total')], [28, 300, 40, 78, 77]);
 
         if ($items === []) {
-            $this->paragraph('Tidak ada rincian item.', 8);
+            $this->paragraph($this->l('Tidak ada rincian item.'), 8);
         }
 
         foreach ($items as $i => $item) {
@@ -153,24 +161,24 @@ class TransactionDocumentPdfRenderer
         }
 
         $this->y -= 4;
-        $this->section('RINGKASAN TAGIHAN');
+        $this->section($this->l('RINGKASAN TAGIHAN'));
         $financial = is_array($snapshot['financial'] ?? null) ? $snapshot['financial'] : [];
         foreach ([
-            'Subtotal' => $financial['subtotal'] ?? null,
-            'Diskon' => $financial['discount_amount'] ?? null,
-            'Pajak' => $financial['tax_amount'] ?? null,
-            'Denda keterlambatan' => $financial['late_fee_amount'] ?? null,
-            'Biaya kerusakan' => $financial['damage_fee_amount'] ?? null,
-            'TOTAL' => $financial['total_amount'] ?? null,
-            'Terbayar' => $financial['rental_paid'] ?? $financial['paid_amount'] ?? null,
-            'Sisa tagihan' => $financial['balance_due'] ?? null,
-            'Deposit jaminan' => $financial['deposit_required'] ?? $financial['deposit_amount'] ?? null,
-            'Deposit dibayar' => $financial['deposit_paid'] ?? null,
+            $this->l('Subtotal') => $financial['subtotal'] ?? null,
+            $this->l('Diskon') => $financial['discount_amount'] ?? null,
+            $this->l('Pajak') => $financial['tax_amount'] ?? null,
+            $this->l('Denda keterlambatan') => $financial['late_fee_amount'] ?? null,
+            $this->l('Biaya kerusakan') => $financial['damage_fee_amount'] ?? null,
+            $this->l('TOTAL') => $financial['total_amount'] ?? null,
+            $this->l('Terbayar') => $financial['rental_paid'] ?? $financial['paid_amount'] ?? null,
+            $this->l('Sisa tagihan') => $financial['balance_due'] ?? null,
+            $this->l('Deposit jaminan') => $financial['deposit_required'] ?? $financial['deposit_amount'] ?? null,
+            $this->l('Deposit dibayar') => $financial['deposit_paid'] ?? null,
         ] as $label => $value) {
             if ($value === null) {
                 continue;
             }
-            $bold = in_array($label, ['TOTAL', 'Sisa tagihan'], true);
+            $bold = in_array($label, [$this->l('TOTAL'), $this->l('Sisa tagihan')], true);
             $this->text($label, 330, $this->y, 8.5, $bold);
             $this->text($this->money((float) $value), 445, $this->y, 8.5, $bold, 'right', 110);
             $this->y -= 12;
@@ -179,7 +187,7 @@ class TransactionDocumentPdfRenderer
         $payments = is_array($snapshot['payments'] ?? null) ? $snapshot['payments'] : [];
         if ($payments !== []) {
             $this->y -= 5;
-            $this->section('HISTORI PEMBAYARAN');
+            $this->section($this->l('HISTORI PEMBAYARAN'));
             foreach ($payments as $payment) {
                 if (! is_array($payment)) {
                     continue;
@@ -191,11 +199,19 @@ class TransactionDocumentPdfRenderer
                     $this->money((float) ($payment['amount'] ?? 0)),
                     $this->value($payment['status'] ?? null),
                 ), 7.8, 10);
+                $refunded = (float) ($payment['refunded_amount'] ?? 0);
+                if ($refunded > 0) {
+                    $this->paragraph(sprintf(
+                        $this->l('Refund dibayar: -%s | Bersih: %s'),
+                        $this->money($refunded),
+                        $this->money((float) ($payment['net_amount'] ?? 0)),
+                    ), 7.8, 10);
+                }
             }
         }
 
         $this->y -= 8;
-        $this->sign2('Diterbitkan oleh', $issuer['name'], 'Pelanggan', $this->value($customer['name'] ?? null));
+        $this->sign2($this->l('Diterbitkan oleh'), $issuer['name'], $this->l('Pelanggan'), $this->value($customer['name'] ?? null));
     }
 
     /** @param array<string,mixed> $snapshot
@@ -209,30 +225,30 @@ class TransactionDocumentPdfRenderer
         $receiver = is_array($payment['receiver'] ?? null) ? $payment['receiver'] : [];
 
         $this->infoPair(
-            'DITERIMA DARI',
+            $this->l('DITERIMA DARI'),
             [
-                ['Nama', $this->value($customer['name'] ?? null)],
-                ['No. Pelanggan', $this->value($customer['customer_number'] ?? null)],
-                ['Telepon', $this->value($customer['phone'] ?? null)],
-                ['Alamat', $this->customerAddress($customer)],
+                [$this->l('Nama'), $this->value($customer['name'] ?? null)],
+                [$this->l('No. Pelanggan'), $this->value($customer['customer_number'] ?? null)],
+                [$this->l('Telepon'), $this->value($customer['phone'] ?? null)],
+                [$this->l('Alamat'), $this->customerAddress($customer)],
             ],
-            'DETAIL PEMBAYARAN',
+            $this->l('DETAIL PEMBAYARAN'),
             [
-                ['No. Payment', $this->value($payment['payment_number'] ?? null)],
-                ['Tanggal', $this->dateTime($payment['paid_at'] ?? null)],
-                ['Metode', $this->value($method['name'] ?? null)],
-                ['Petugas', $this->value($receiver['name'] ?? $issuer['name'])],
+                [$this->l('No. Payment'), $this->value($payment['payment_number'] ?? null)],
+                [$this->l('Tanggal'), $this->dateTime($payment['paid_at'] ?? null)],
+                [$this->l('Metode'), $this->value($method['name'] ?? null)],
+                [$this->l('Petugas'), $this->value($receiver['name'] ?? $issuer['name'])],
             ],
         );
 
         $this->ensure(82);
         $top = $this->y;
         $this->rect(self::MX, $top - 66, self::W - 2 * self::MX, 66, false, .7);
-        $this->text('TELAH DITERIMA PEMBAYARAN SEBESAR', self::MX, $top - 20, 8, true, 'center', self::W - 2 * self::MX);
+        $this->text($this->l('TELAH DITERIMA PEMBAYARAN SEBESAR'), self::MX, $top - 20, 8, true, 'center', self::W - 2 * self::MX);
         $this->text($this->money((float) ($payment['amount'] ?? 0)), self::MX, $top - 46, 18, true, 'center', self::W - 2 * self::MX);
         $this->y -= 78;
 
-        $this->section('REFERENSI TRANSAKSI');
+        $this->section($this->l('REFERENSI TRANSAKSI'));
         foreach ([
             'Booking' => $related['booking_reference'] ?? null,
             'Rental' => $related['rental_reference'] ?? null,
@@ -249,7 +265,7 @@ class TransactionDocumentPdfRenderer
         }
 
         $this->y -= 8;
-        $this->sign2('Diterbitkan oleh', $issuer['name'], 'Pembayar', $this->value($customer['name'] ?? null));
+        $this->sign2($this->l('Diterbitkan oleh'), $issuer['name'], $this->l('Pembayar'), $this->value($customer['name'] ?? null));
     }
 
     /** @param array<string,mixed> $snapshot
@@ -262,23 +278,23 @@ class TransactionDocumentPdfRenderer
         $collaterals = is_array($snapshot['collaterals'] ?? null) ? $snapshot['collaterals'] : [];
 
         $this->infoPair(
-            'DATA PENYEWA',
+            $this->l('DATA PENYEWA'),
             [
-                ['Nama', $this->value($customer['name'] ?? null)],
-                ['No. Pelanggan', $this->value($customer['customer_number'] ?? null)],
-                ['Telepon', $this->value($customer['phone'] ?? null)],
-                ['Alamat', $this->customerAddress($customer)],
+                [$this->l('Nama'), $this->value($customer['name'] ?? null)],
+                [$this->l('No. Pelanggan'), $this->value($customer['customer_number'] ?? null)],
+                [$this->l('Telepon'), $this->value($customer['phone'] ?? null)],
+                [$this->l('Alamat'), $this->customerAddress($customer)],
             ],
-            'DATA SEWA',
+            $this->l('DATA SEWA'),
             [
-                ['No. Sewa', $this->value($source['reference'] ?? null)],
-                ['Tanggal sewa', $this->dateTime($source['checked_out_at'] ?? null)],
-                ['Tanggal kembali', $this->dateTime($source['due_at'] ?? null)],
-                ['Booking', $this->value($source['booking_reference'] ?? null)],
+                [$this->l('No. Sewa'), $this->value($source['reference'] ?? null)],
+                [$this->l('Tanggal sewa'), $this->dateTime($source['checked_out_at'] ?? null)],
+                [$this->l('Tanggal kembali'), $this->dateTime($source['due_at'] ?? null)],
+                [$this->l('Booking'), $this->value($source['booking_reference'] ?? null)],
             ],
         );
 
-        $this->section('BARANG SEWA');
+        $this->section($this->l('BARANG SEWA'));
         $items = is_array($snapshot['items'] ?? null) ? $snapshot['items'] : [];
         foreach ($items as $i => $item) {
             if (! is_array($item)) {
@@ -298,7 +314,7 @@ class TransactionDocumentPdfRenderer
                     continue;
                 }
                 $this->paragraph(sprintf(
-                    '   Unit %s | SN %s | kondisi %s',
+                    $this->l('Unit %s | SN %s | kondisi %s'),
                     $this->value($asset['asset_code'] ?? null),
                     $this->value($asset['serial_number'] ?? null),
                     $this->value($asset['checkout_condition'] ?? null),
@@ -307,13 +323,13 @@ class TransactionDocumentPdfRenderer
         }
 
         if ($collaterals !== []) {
-            $this->section('JAMINAN');
+            $this->section($this->l('JAMINAN'));
             foreach ($collaterals as $i => $collateral) {
                 if (! is_array($collateral)) {
                     continue;
                 }
                 $this->paragraph(sprintf(
-                    '%d. %s - %s | atas nama %s | status %s',
+                    $this->l('%d. %s - %s | atas nama %s | status %s'),
                     $i + 1,
                     $this->upper($this->value($collateral['type'] ?? null)),
                     $this->value($collateral['number'] ?? null),
@@ -323,14 +339,14 @@ class TransactionDocumentPdfRenderer
             }
         }
 
-        $this->section('RINGKASAN BIAYA');
+        $this->section($this->l('RINGKASAN BIAYA'));
         foreach ([
-            'Total sewa' => $financial['total_amount'] ?? null,
-            'Terbayar' => $financial['rental_paid'] ?? $financial['paid_amount'] ?? null,
-            'Sisa tagihan' => $financial['balance_due'] ?? null,
-            'Deposit' => $financial['deposit_amount'] ?? $financial['deposit_required'] ?? null,
-            'Denda' => $financial['late_fee_amount'] ?? null,
-            'Kerusakan' => $financial['damage_fee_amount'] ?? null,
+            $this->l('Total sewa') => $financial['total_amount'] ?? null,
+            $this->l('Terbayar') => $financial['rental_paid'] ?? $financial['paid_amount'] ?? null,
+            $this->l('Sisa tagihan') => $financial['balance_due'] ?? null,
+            $this->l('Deposit') => $financial['deposit_amount'] ?? $financial['deposit_required'] ?? null,
+            $this->l('Denda') => $financial['late_fee_amount'] ?? null,
+            $this->l('Kerusakan') => $financial['damage_fee_amount'] ?? null,
         ] as $label => $value) {
             if ($value === null) {
                 continue;
@@ -349,9 +365,9 @@ class TransactionDocumentPdfRenderer
         }
 
         $this->sign3(
-            ['Karyawan / Petugas', $issuer['name']],
-            ['Penjamin', $guarantor],
-            ['Peminjam', $this->value($customer['name'] ?? null)],
+            [$this->l('Karyawan / Petugas'), $issuer['name']],
+            [$this->l('Penjamin'), $guarantor],
+            [$this->l('Peminjam'), $this->value($customer['name'] ?? null)],
         );
     }
 
@@ -385,7 +401,7 @@ class TransactionDocumentPdfRenderer
         if ($this->y - $height < self::BOTTOM + 105) {
             $this->finishPage();
             $this->newPage();
-            $this->continuedHeader('SURAT PERJANJIAN SEWA - HAK, KEWAJIBAN & KETENTUAN');
+            $this->continuedHeader($this->l('SURAT PERJANJIAN SEWA - HAK, KEWAJIBAN & KETENTUAN'));
         }
 
         $start = $this->y;
@@ -397,8 +413,8 @@ class TransactionDocumentPdfRenderer
 
         $this->fillRect($leftX, $start - 18, $leftWidth, 18, .94);
         $this->fillRect($rightX, $start - 18, $rightWidth, 18, .94);
-        $this->text('HAK DAN KEWAJIBAN PENYEWA', $leftX + 5, $start - 12, 7.2, true);
-        $this->text('KETENTUAN SEWA', $rightX + 5, $start - 12, 7.2, true);
+        $this->text($this->l('HAK DAN KEWAJIBAN PENYEWA'), $leftX + 5, $start - 12, 7.2, true);
+        $this->text($this->l('KETENTUAN SEWA'), $rightX + 5, $start - 12, 7.2, true);
 
         $textStart = $start - $headerHeight - 4;
         $bottom = $textStart - max(64.0, $rows * $lineHeight) + 4;

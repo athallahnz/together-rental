@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Domain\Access\ActivityRecorder;
 use App\Domain\Bookings\BookingManager;
+use App\Domain\Finance\BookingPaymentSettlement;
 use App\Http\Requests\BookingAvailabilityRequest;
 use App\Http\Requests\CancelBookingRequest;
 use App\Http\Requests\SaveBookingRequest;
@@ -272,11 +273,11 @@ class BookingController extends Controller
         $recorder->record($request, 'booking.created', $booking, null, $this->audit($booking), $booking->branch_id);
 
         return to_route('bookings.show', $booking)->with('toast', [
-            'type' => 'success', 'message' => "Booking {$booking->booking_number} berhasil dibuat.",
+            'type' => 'success', 'message' => __('uat035b_stage4.flash.booking_created', ['reference' => $booking->booking_number]),
         ]);
     }
 
-    public function show(Request $request, Booking $booking): Response
+    public function show(Request $request, Booking $booking, BookingPaymentSettlement $settlement): Response
     {
         Gate::authorize('bookings.view');
         $this->guardAccess($request, $booking);
@@ -291,17 +292,13 @@ class BookingController extends Controller
             'statusHistories.changer:id,name',
             'payments:id,booking_id,payment_method_id,cash_session_id,payment_number,type,source_context,status,amount,paid_at,external_reference,voided_at,void_reason',
             'payments.paymentMethod:id,name',
+            'payments.refunds:id,payment_id,status,refund_number,amount,processed_at',
         ]);
 
         return Inertia::render('bookings/show', [
             'booking' => $booking,
             'permissions' => $this->permissions($request->user()),
-            'financialSummary' => [
-                'rental_paid' => (float) $booking->payments
-                    ->where('status', 'completed')->where('type', 'rental')->sum('amount'),
-                'deposit_paid' => (float) $booking->payments
-                    ->where('status', 'completed')->where('type', 'deposit')->sum('amount'),
-            ],
+            'financialSummary' => $settlement->summary($booking),
             'paymentMethods' => PaymentMethod::query()
                 ->where('company_id', $request->user()->company_id)
                 ->where('is_active', true)
@@ -337,7 +334,7 @@ class BookingController extends Controller
         $recorder->record($request, 'booking.updated', $updated, $old, $this->audit($updated), $updated->branch_id);
 
         return to_route('bookings.show', $updated)->with('toast', [
-            'type' => 'success', 'message' => "Booking {$updated->booking_number} berhasil diperbarui.",
+            'type' => 'success', 'message' => __('uat035b_stage4.flash.booking_updated', ['reference' => $updated->booking_number]),
         ]);
     }
 
@@ -353,7 +350,7 @@ class BookingController extends Controller
         $confirmed = $manager->confirm($booking, $request->user());
         $recorder->record($request, 'booking.confirmed', $confirmed, $old, $this->audit($confirmed), $confirmed->branch_id);
 
-        return back()->with('toast', ['type' => 'success', 'message' => 'Booking berhasil dikonfirmasi.']);
+        return back()->with('toast', ['type' => 'success', 'message' => __('uat035b_stage4.flash.booking_confirmed')]);
     }
 
     public function storePayment(
@@ -375,7 +372,7 @@ class BookingController extends Controller
 
         return back()->with('toast', [
             'type' => 'success',
-            'message' => 'Pembayaran booking berhasil dicatat.',
+            'message' => __('uat035b_stage4.flash.booking_payment'),
         ]);
     }
 
@@ -390,7 +387,7 @@ class BookingController extends Controller
         $cancelled = $manager->cancel($booking, $request->string('reason')->toString(), $request->user());
         $recorder->record($request, 'booking.cancelled', $cancelled, $old, $this->audit($cancelled), $cancelled->branch_id);
 
-        return back()->with('toast', ['type' => 'success', 'message' => 'Booking berhasil dibatalkan dan reservasi stok dilepas.']);
+        return back()->with('toast', ['type' => 'success', 'message' => __('uat035b_stage4.flash.booking_cancelled')]);
     }
 
     public function availability(BookingAvailabilityRequest $request, BookingManager $manager): JsonResponse

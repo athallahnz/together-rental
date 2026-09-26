@@ -12,6 +12,8 @@ import {
     Warehouse,
 } from 'lucide-react';
 import { useState } from 'react';
+import { useGlobalLocale } from '@/lib/locale-store';
+import { Stage3Text, stage3Translate } from '@/components/stage3-text';
 import {
     ProductFormDialog,
     ProductRateFormDialog,
@@ -84,6 +86,7 @@ export default function ProductShow({
     branches,
     permissions,
 }: Props) {
+    const stage3Locale = useGlobalLocale();
     const { errors } = usePage().props;
     const confirm = useConfirmDialog();
     const [productDialog, setProductDialog] = useState(false);
@@ -116,8 +119,7 @@ export default function ProductShow({
                     <Button asChild variant="ghost" className="w-fit">
                         <Link href={catalogHref}>
                             <ArrowLeft />
-                            Semua produk
-                        </Link>
+                            <Stage3Text k="stage3.ui.semua.produk.9b21f" /></Link>
                     </Button>
                     <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                         <div>
@@ -130,11 +132,11 @@ export default function ProductShow({
                                             : 'secondary'
                                     }
                                 >
-                                    {product.is_active ? 'Aktif' : 'Nonaktif'}
+                                    {product.is_active ? stage3Translate('stage3.ui.correction.aktif.89f29', stage3Locale) : stage3Translate('stage3.ui.correction.nonaktif.60944', stage3Locale)}
                                 </Badge>
                                 <Badge variant="secondary">
                                     {product.tracking_type === 'serialized'
-                                        ? 'Per unit / serial'
+                                        ? stage3Translate('stage3.ui.correction.per.unit.serial.cc205', stage3Locale)
                                         : 'Kuantitas / bulk'}
                                 </Badge>
                                 <Badge
@@ -169,15 +171,13 @@ export default function ProductShow({
                                     onClick={() => setProductDialog(true)}
                                 >
                                     <Pencil />
-                                    Edit produk
-                                </Button>
+                                    <Stage3Text k="stage3.ui.edit.produk.9a50b" /></Button>
                                 <Button
                                     variant="outline"
                                     onClick={() => openRate(null)}
                                 >
                                     <Plus />
-                                    Tambah harga
-                                </Button>
+                                    <Stage3Text k="stage3.ui.tambah.harga.56e4f" /></Button>
                             </div>
                         )}
                     </div>
@@ -186,14 +186,14 @@ export default function ProductShow({
                 <ProductErrors errors={errors} />
 
                 <FilterBar
-                    title="Lingkup inventaris produk"
-                    description="Aset, stok, dan daftar harga mengikuti cabang yang dipilih; master produk tetap global."
+                    title={stage3Translate('stage3.ui.lingkup.inventaris.produk.b0b83', stage3Locale)}
+                    description={stage3Translate('stage3.ui.aset.stok.dan.daftar.harga.mengikuti.cabang.yan.1c1a1', stage3Locale)}
                     context={
-                        <Badge variant="outline">Aktif: {scopeLabel}</Badge>
+                        <Badge variant="outline"><Stage3Text k="stage3.ui.aktif.62c8b" />{scopeLabel}</Badge>
                     }
                     contentClassName="grid-cols-1 md:grid-cols-[minmax(260px,360px)]"
                 >
-                    <FilterField label="Cabang operasional">
+                    <FilterField label={stage3Translate('stage3.ui.cabang.operasional.2c54a', stage3Locale)}>
                         <Select
                             value={filters.branch_id?.toString() ?? 'all'}
                             onValueChange={(value) =>
@@ -212,13 +212,12 @@ export default function ProductShow({
                                 )
                             }
                         >
-                            <SelectTrigger aria-label="Filter cabang produk">
+                            <SelectTrigger aria-label={stage3Translate('stage3.ui.filter.cabang.produk.cb621', stage3Locale)}>
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">
-                                    Semua cabang yang dapat diakses
-                                </SelectItem>
+                                    <Stage3Text k="stage3.ui.semua.cabang.yang.dapat.diakses.1b890" /></SelectItem>
                                 {branches.map((branch) => (
                                     <SelectItem
                                         key={branch.id}
@@ -234,7 +233,7 @@ export default function ProductShow({
 
                 <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                     <Metric
-                        label="Nilai penggantian"
+                        label={stage3Translate('stage3.ui.nilai.penggantian.e9edf', stage3Locale)}
                         value={formatCurrency(product.replacement_value)}
                         icon={CircleDollarSign}
                     />
@@ -264,17 +263,12 @@ export default function ProductShow({
                                 <div>
                                     <CardTitle className="flex items-center gap-2">
                                         <CalendarDays className="size-5" />
-                                        Smart Calendar per aset
-                                    </CardTitle>
+                                        <Stage3Text k="stage3.ui.smart.calendar.per.aset.5df68" /></CardTitle>
                                     <CardDescription>
-                                        Setiap unit memiliki kalender sendiri
-                                        untuk booking, rental, maintenance, dan
-                                        transfer.
-                                    </CardDescription>
+                                        <Stage3Text k="stage3.ui.setiap.unit.memiliki.kalender.sendiri.untuk.boo.c7da7" /></CardDescription>
                                 </div>
                                 <Badge variant="outline">
-                                    {assetUnits.length} unit pada scope ini
-                                </Badge>
+                                    {assetUnits.length} <Stage3Text k="stage3.ui.unit.pada.scope.ini.0a15f" /></Badge>
                             </div>
                         </CardHeader>
                         <CardContent>
@@ -308,7 +302,7 @@ export default function ProductShow({
                                             </Badge>
                                         </div>
                                         <p className="mt-3 text-xs text-muted-foreground">
-                                            Kondisi {asset.condition} ·{' '}
+                                            <Stage3Text k="stage3.ui.kondisi.b723b" />{asset.condition} ·{' '}
                                             {asset.is_active
                                                 ? 'aktif'
                                                 : 'nonaktif'}
@@ -323,15 +317,12 @@ export default function ProductShow({
                                             }
                                         >
                                             <CalendarDays />
-                                            Lihat kalender unit
-                                        </Button>
+                                            <Stage3Text k="stage3.ui.lihat.kalender.unit.f84a2" /></Button>
                                     </div>
                                 ))}
                                 {assetUnits.length === 0 && (
                                     <div className="col-span-full rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">
-                                        Belum ada aset serialized pada cabang
-                                        yang dipilih.
-                                    </div>
+                                        <Stage3Text k="stage3.ui.belum.ada.aset.serialized.pada.cabang.yang.dipi.2d093" /></div>
                                 )}
                             </div>
                         </CardContent>
@@ -342,11 +333,9 @@ export default function ProductShow({
                     <Card>
                         <CardHeader className="flex-row items-start justify-between gap-4">
                             <div>
-                                <CardTitle>Daftar harga</CardTitle>
+                                <CardTitle><Stage3Text k="stage3.ui.daftar.harga.a29c2" /></CardTitle>
                                 <CardDescription>
-                                    Harga global menjadi fallback; harga cabang
-                                    dipakai untuk override operasional lokal.
-                                </CardDescription>
+                                    <Stage3Text k="stage3.ui.harga.global.menjadi.fallback.harga.cabang.dipa.ca445" /></CardDescription>
                             </div>
                             {permissions.manage && (
                                 <Button
@@ -354,8 +343,7 @@ export default function ProductShow({
                                     onClick={() => openRate(null)}
                                 >
                                     <Plus />
-                                    Harga
-                                </Button>
+                                    <Stage3Text k="stage3.ui.harga.059e7" /></Button>
                             )}
                         </CardHeader>
                         <CardContent className="grid gap-3">
@@ -382,7 +370,7 @@ export default function ProductShow({
                                                     <Badge variant="outline">
                                                         {rate.branch
                                                             ? rate.branch.code
-                                                            : 'Global'}
+                                                            : stage3Translate('stage3.ui.correction.global.5f118', stage3Locale)}
                                                     </Badge>
                                                     <Badge
                                                         variant={
@@ -392,8 +380,8 @@ export default function ProductShow({
                                                         }
                                                     >
                                                         {rate.is_active
-                                                            ? 'Aktif'
-                                                            : 'Nonaktif'}
+                                                            ? stage3Translate('stage3.ui.correction.aktif.89f29', stage3Locale)
+                                                            : stage3Translate('stage3.ui.correction.nonaktif.60944', stage3Locale)}
                                                     </Badge>
                                                 </div>
                                                 <p className="mt-2 text-lg font-semibold">
@@ -402,21 +390,21 @@ export default function ProductShow({
                                                     )}
                                                 </p>
                                                 <p className="mt-1 text-xs text-muted-foreground">
-                                                    Deposit{' '}
+                                                    <Stage3Text k="stage3.ui.deposit.e7b0b" />{' '}
                                                     {formatCurrency(
                                                         rate.deposit_amount,
                                                     )}{' '}
-                                                    · tambahan/jam{' '}
+                                                    <Stage3Text k="stage3.ui.tambahan.jam.26f57" />{' '}
                                                     {formatCurrency(
                                                         rate.additional_hour_amount,
                                                     )}{' '}
-                                                    · denda{' '}
+                                                    <Stage3Text k="stage3.ui.denda.b8686" />{' '}
                                                     {formatCurrency(
                                                         rate.late_fee_amount,
                                                     )}
                                                 </p>
                                                 <p className="mt-1 text-xs text-muted-foreground">
-                                                    Berlaku{' '}
+                                                    <Stage3Text k="stage3.ui.berlaku.a84a4" />{' '}
                                                     {rate.valid_from
                                                         ? formatDate(
                                                               rate.valid_from,
@@ -440,12 +428,11 @@ export default function ProductShow({
                                                         }
                                                     >
                                                         <Pencil />
-                                                        Edit
-                                                    </Button>
+                                                        <Stage3Text k="stage3.ui.edit.53016" /></Button>
                                                     <Button
                                                         size="icon"
                                                         variant="ghost"
-                                                        aria-label="Hapus harga"
+                                                        aria-label={stage3Translate('stage3.ui.hapus.harga.be63c', stage3Locale)}
                                                         onClick={async () => {
                                                             const confirmed =
                                                                 await confirm({
@@ -484,23 +471,23 @@ export default function ProductShow({
                     <div className="grid content-start gap-6">
                         <Card>
                             <CardHeader>
-                                <CardTitle>Profil produk</CardTitle>
+                                <CardTitle><Stage3Text k="stage3.ui.profil.produk.509bc" /></CardTitle>
                             </CardHeader>
                             <CardContent className="grid gap-4 text-sm">
                                 <Info
-                                    label="Kategori"
+                                    label={stage3Translate('stage3.ui.kategori.b7964', stage3Locale)}
                                     value={
                                         product.category
                                             ? `${product.category.code} · ${product.category.name}`
-                                            : 'Tanpa kategori'
+                                            : stage3Translate('stage3.ui.correction.tanpa.kategori.a3fdc', stage3Locale)
                                     }
                                 />
                                 <Info
-                                    label="Dapat disewakan"
-                                    value={product.is_rentable ? 'Ya' : 'Tidak'}
+                                    label={stage3Translate('stage3.ui.dapat.disewakan.60f5a', stage3Locale)}
+                                    value={product.is_rentable ? stage3Translate('stage3.ui.correction.ya.c42a9', stage3Locale) : stage3Translate('stage3.ui.correction.tidak.39c99', stage3Locale)}
                                 />
                                 <Info
-                                    label="Deskripsi"
+                                    label={stage3Translate('stage3.ui.deskripsi.7e9fd', stage3Locale)}
                                     value={
                                         product.description ||
                                         'Belum ada deskripsi.'
@@ -510,11 +497,9 @@ export default function ProductShow({
                         </Card>
                         <Card>
                             <CardHeader>
-                                <CardTitle>Distribusi per cabang</CardTitle>
+                                <CardTitle><Stage3Text k="stage3.ui.distribusi.per.cabang.e77e5" /></CardTitle>
                                 <CardDescription>
-                                    Ringkasan aset serialized dan stok bulk
-                                    untuk seluruh cabang yang dapat Anda akses.
-                                </CardDescription>
+                                    <Stage3Text k="stage3.ui.ringkasan.aset.serialized.dan.stok.bulk.untuk.s.06e54" /></CardDescription>
                             </CardHeader>
                             <CardContent className="grid gap-3">
                                 {branchStock.map((item) => {
@@ -545,36 +530,34 @@ export default function ProductShow({
                                             'serialized' ? (
                                                 <>
                                                     <p className="mt-2 text-sm">
-                                                        {item.assets.total} aset
-                                                        ·{' '}
+                                                        {item.assets.total} <Stage3Text k="stage3.ui.aset.bcfee" />{' '}
                                                         {item.assets.available}{' '}
-                                                        tersedia ·{' '}
+                                                        <Stage3Text k="stage3.ui.tersedia.bdc84" />{' '}
                                                         {item.assets.rented}{' '}
                                                         disewa
                                                     </p>
                                                     <p className="mt-1 text-xs text-muted-foreground">
                                                         Reservasi{' '}
-                                                        {item.assets.reserved} ·
-                                                        maintenance{' '}
+                                                        {item.assets.reserved} <Stage3Text k="stage3.ui.maintenance.7fb37" />{' '}
                                                         {
                                                             item.assets
                                                                 .maintenance
                                                         }{' '}
-                                                        · transit{' '}
+                                                        <Stage3Text k="stage3.ui.transit.07baa" />{' '}
                                                         {item.assets.in_transit}{' '}
-                                                        · hilang{' '}
+                                                        <Stage3Text k="stage3.ui.hilang.084bf" />{' '}
                                                         {item.assets.lost}
                                                     </p>
                                                 </>
                                             ) : (
                                                 <>
                                                     <p className="mt-2 text-sm">
-                                                        Stok{' '}
+                                                        <Stage3Text k="stage3.ui.stok.e3cf2" />{' '}
                                                         {
                                                             item.inventory
                                                                 .quantity_on_hand
                                                         }{' '}
-                                                        · disewa{' '}
+                                                        <Stage3Text k="stage3.ui.disewa.1a778" />{' '}
                                                         {
                                                             item.inventory
                                                                 .quantity_rented
@@ -586,12 +569,12 @@ export default function ProductShow({
                                                             item.inventory
                                                                 .quantity_reserved
                                                         }{' '}
-                                                        · maintenance{' '}
+                                                        <Stage3Text k="stage3.ui.maintenance.7fb37" />{' '}
                                                         {
                                                             item.inventory
                                                                 .quantity_maintenance
                                                         }{' '}
-                                                        · transfer{' '}
+                                                        <Stage3Text k="stage3.ui.transfer.1fd07" />{' '}
                                                         {
                                                             item.inventory
                                                                 .quantity_in_transfer
@@ -608,12 +591,9 @@ export default function ProductShow({
                             <Card className="border-destructive/30">
                                 <CardHeader>
                                     <CardTitle className="text-base">
-                                        Arsipkan produk
-                                    </CardTitle>
+                                        <Stage3Text k="stage3.ui.arsipkan.produk.2d468" /></CardTitle>
                                     <CardDescription>
-                                        Ditolak otomatis bila masih dipakai
-                                        aset, paket, booking, atau rental aktif.
-                                    </CardDescription>
+                                        <Stage3Text k="stage3.ui.ditolak.otomatis.bila.masih.dipakai.aset.paket.b1153" /></CardDescription>
                                 </CardHeader>
                                 <CardContent>
                                     <Button
@@ -636,8 +616,7 @@ export default function ProductShow({
                                         }}
                                     >
                                         <Trash2 />
-                                        Arsipkan produk
-                                    </Button>
+                                        <Stage3Text k="stage3.ui.arsipkan.produk.2d468" /></Button>
                                 </CardContent>
                             </Card>
                         )}
@@ -715,10 +694,9 @@ function EmptyRates() {
     return (
         <div className="py-14 text-center">
             <CircleDollarSign className="mx-auto size-9 text-muted-foreground" />
-            <p className="mt-4 font-medium">Produk belum memiliki harga</p>
+            <p className="mt-4 font-medium"><Stage3Text k="stage3.ui.produk.belum.memiliki.harga.6b4a5" /></p>
             <p className="mt-1 text-sm text-muted-foreground">
-                Tambahkan harga berdasarkan rate plan dan scope cabang.
-            </p>
+                <Stage3Text k="stage3.ui.tambahkan.harga.berdasarkan.rate.plan.dan.scope.14f3a" /></p>
         </div>
     );
 }
@@ -733,7 +711,7 @@ function ProductErrors({ errors }: { errors: Record<string, string> }) {
     return (
         <Alert variant="destructive">
             <CircleOff />
-            <AlertTitle>Perubahan produk ditolak</AlertTitle>
+            <AlertTitle><Stage3Text k="stage3.ui.perubahan.produk.ditolak.ac6ba" /></AlertTitle>
             <AlertDescription>{message}</AlertDescription>
         </Alert>
     );

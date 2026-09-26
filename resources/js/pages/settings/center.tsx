@@ -11,6 +11,7 @@ import {
     Truck,
 } from 'lucide-react';
 import type { FormEvent, ReactNode } from 'react';
+import { useAppLocale } from '@/lib/i18n';
 import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -98,12 +99,6 @@ type Props = {
     permissions: Permissions;
 };
 
-const captureModeLabels: Record<string, string> = {
-    camera_required: 'Kamera wajib',
-    camera_preferred: 'Kamera diutamakan',
-    gallery_allowed: 'Galeri diizinkan',
-};
-
 export default function SettingsCenter({
     company,
     branches,
@@ -114,6 +109,16 @@ export default function SettingsCenter({
     notifications,
     permissions,
 }: Props) {
+    const { tr } = useAppLocale();
+    const captureMode = (mode: string): string => {
+        const labels: Record<string, string> = {
+            camera_required: tr('settings.center.cameraRequired'),
+            camera_preferred: tr('settings.center.cameraPreferred'),
+            gallery_allowed: tr('settings.center.galleryAllowed'),
+        };
+
+        return labels[mode] ?? mode;
+    };
     const companyForm = useForm({
         name: company.name,
         legal_name: company.legal_name ?? '',
@@ -146,7 +151,7 @@ export default function SettingsCenter({
 
     return (
         <>
-            <Head title="Pusat Pengaturan" />
+            <Head title={tr('settings.center.head')} />
 
             <div className="space-y-6">
                 <Card className="overflow-hidden border-border/70 bg-gradient-to-br from-card via-card to-muted/30">
@@ -155,16 +160,13 @@ export default function SettingsCenter({
                             <div className="max-w-3xl">
                                 <div className="flex items-center gap-2 text-sm font-medium text-muted-foreground">
                                     <Settings2 className="size-4" />
-                                    Konfigurasi operasional
+                                    {tr('settings.center.operation')}
                                 </div>
                                 <h2 className="mt-2 text-2xl font-semibold tracking-tight">
-                                    Pusat Pengaturan
+                                    {tr('settings.center.hero')}
                                 </h2>
                                 <p className="mt-2 text-sm leading-6 text-muted-foreground">
-                                    Kelola identitas perusahaan dan pantau
-                                    konfigurasi cabang, transfer, notifikasi,
-                                    serta governance tanpa menduplikasi
-                                    source-of-truth domain yang sudah ada.
+                                    {tr('settings.center.heroDescription')}
                                 </p>
                             </div>
 
@@ -172,7 +174,7 @@ export default function SettingsCenter({
                                 selectedBranchId !== null && (
                                     <div className="w-full space-y-2 xl:max-w-sm">
                                         <Label htmlFor="settings-branch">
-                                            Konteks cabang
+                                            {tr('settings.center.branchContext')}
                                         </Label>
                                         <Select
                                             value={String(selectedBranchId)}
@@ -195,7 +197,7 @@ export default function SettingsCenter({
                                                         {branch.code} ·{' '}
                                                         {branch.name}
                                                         {!branch.is_active
-                                                            ? ' · Nonaktif'
+                                                            ? ` · ${tr('settings.center.inactive')}`
                                                             : ''}
                                                     </SelectItem>
                                                 ))}
@@ -209,25 +211,25 @@ export default function SettingsCenter({
 
                 <div className="grid gap-4 md:grid-cols-3">
                     <SummaryCard
-                        title="Perusahaan"
+                        title={tr('settings.center.company')}
                         value={company.code}
                         detail={
                             company.is_active
-                                ? 'Status perusahaan aktif'
-                                : 'Status perusahaan nonaktif'
+                                ? tr('settings.center.activeCompany')
+                                : tr('settings.center.inactiveCompany')
                         }
                     />
                     <SummaryCard
-                        title="Cabang tersedia"
+                        title={tr('settings.center.branches')}
                         value={String(branches.length)}
                         detail={
                             selectedBranch
                                 ? `${selectedBranch.code} · ${selectedBranch.name}`
-                                : 'Tidak ada cabang dalam scope'
+                                : tr('settings.center.noneScope')
                         }
                     />
                     <SummaryCard
-                        title="Regional"
+                        title={tr('settings.center.regional')}
                         value={company.currency}
                         detail={company.timezone}
                     />
@@ -240,19 +242,16 @@ export default function SettingsCenter({
                                 <div>
                                     <CardTitle className="flex items-center gap-2">
                                         <Building2 className="size-5" />
-                                        Identitas perusahaan
+                                        {tr('settings.center.identity')}
                                     </CardTitle>
                                     <CardDescription className="mt-2">
-                                        Source-of-truth langsung dari tabel
-                                        perusahaan. Kode {company.code} dan mata
-                                        uang {company.currency} tetap bersifat
-                                        identitas sistem.
+                                        {tr('settings.center.companyDescription', { code: company.code, currency: company.currency })}
                                     </CardDescription>
                                 </div>
                                 <Badge variant="outline">
                                     {permissions.company_manage
-                                        ? 'Dapat diedit'
-                                        : 'Read only'}
+                                        ? tr('settings.center.editable')
+                                        : tr('settings.center.readonly')}
                                 </Badge>
                             </div>
                         </CardHeader>
@@ -263,7 +262,7 @@ export default function SettingsCenter({
                             >
                                 <div className="grid gap-4 md:grid-cols-2">
                                     <Field
-                                        label="Nama perusahaan"
+                                        label={tr('settings.center.companyName')}
                                         name="name"
                                         value={companyForm.data.name}
                                         disabled={!permissions.company_manage}
@@ -273,7 +272,7 @@ export default function SettingsCenter({
                                         }
                                     />
                                     <Field
-                                        label="Nama legal"
+                                        label={tr('settings.center.legalName')}
                                         name="legal_name"
                                         value={companyForm.data.legal_name}
                                         disabled={!permissions.company_manage}
@@ -286,7 +285,7 @@ export default function SettingsCenter({
                                         }
                                     />
                                     <Field
-                                        label="NPWP / nomor pajak"
+                                        label={tr('settings.center.tax')}
                                         name="tax_number"
                                         value={companyForm.data.tax_number}
                                         disabled={!permissions.company_manage}
@@ -299,7 +298,7 @@ export default function SettingsCenter({
                                         }
                                     />
                                     <Field
-                                        label="Telepon"
+                                        label={tr('settings.center.telephone')}
                                         name="phone"
                                         value={companyForm.data.phone}
                                         disabled={!permissions.company_manage}
@@ -309,7 +308,7 @@ export default function SettingsCenter({
                                         }
                                     />
                                     <Field
-                                        label="Email"
+                                        label={tr('settings.center.email')}
                                         name="email"
                                         type="email"
                                         value={companyForm.data.email}
@@ -320,7 +319,7 @@ export default function SettingsCenter({
                                         }
                                     />
                                     <Field
-                                        label="Timezone"
+                                        label={tr('settings.center.timezone')}
                                         name="timezone"
                                         value={companyForm.data.timezone}
                                         disabled={!permissions.company_manage}
@@ -336,7 +335,7 @@ export default function SettingsCenter({
 
                                 <div className="space-y-2">
                                     <Label htmlFor="company-address">
-                                        Alamat perusahaan
+                                        {tr('settings.center.address')}
                                     </Label>
                                     <textarea
                                         id="company-address"
@@ -364,8 +363,8 @@ export default function SettingsCenter({
                                         >
                                             <Save className="size-4" />
                                             {companyForm.processing
-                                                ? 'Menyimpan...'
-                                                : 'Simpan perusahaan'}
+                                                ? tr('settings.center.saving')
+                                                : tr('settings.center.save')}
                                         </Button>
                                     </div>
                                 )}
@@ -379,34 +378,32 @@ export default function SettingsCenter({
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <Globe2 className="size-5" />
-                                Cabang & katalog publik
+                                {tr('settings.center.branchPublic')}
                             </CardTitle>
                             <CardDescription>
-                                Identitas cabang tetap dikelola dari Branch
-                                Center; profil publik tetap menggunakan
-                                branch_settings.
+                                {tr('settings.center.branchDescription')}
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             {selectedBranch === null ? (
-                                <EmptyState text="Tidak ada cabang yang dapat dikonfigurasi." />
+                                <EmptyState text={tr('settings.center.branchEmpty')} />
                             ) : (
                                 <>
                                     <SettingStatus
-                                        label="Cabang aktif"
+                                        label={tr('settings.center.branchActive')}
                                         value={
                                             selectedBranch.is_active
-                                                ? 'Aktif'
-                                                : 'Nonaktif'
+                                                ? tr('settings.center.active')
+                                                : tr('settings.center.inactive')
                                         }
                                         positive={selectedBranch.is_active}
                                     />
                                     <SettingStatus
-                                        label="Katalog publik"
+                                        label={tr('settings.center.publicCatalog')}
                                         value={
                                             publicProfile?.catalog_enabled
-                                                ? 'Ditayangkan'
-                                                : 'Tidak ditayangkan'
+                                                ? tr('settings.center.published')
+                                                : tr('settings.center.notPublished')
                                         }
                                         positive={
                                             publicProfile?.catalog_enabled ===
@@ -414,8 +411,8 @@ export default function SettingsCenter({
                                         }
                                     />
                                     <SettingStatus
-                                        label="Kelengkapan profil"
-                                        value={`${publicProfile?.configured_fields ?? 0}/${publicProfile?.total_fields ?? 0} field`}
+                                        label={tr('settings.center.profileCompleteness')}
+                                        value={`${publicProfile?.configured_fields ?? 0}/${publicProfile?.total_fields ?? 0} ${tr('settings.center.fields')}`}
                                     />
 
                                     <div className="flex flex-wrap gap-2 pt-2">
@@ -432,7 +429,7 @@ export default function SettingsCenter({
                                                 <Link
                                                     href={`/branches/${selectedBranch.id}/public-profile`}
                                                 >
-                                                    Profil publik
+                                                    {tr('settings.center.publicProfile')}
                                                     <ArrowUpRight className="size-4" />
                                                 </Link>
                                             </Button>
@@ -447,45 +444,44 @@ export default function SettingsCenter({
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <Truck className="size-5" />
-                                Kebijakan transfer
+                                {tr('settings.center.transfer')}
                             </CardTitle>
                             <CardDescription>
-                                Nilai berasal langsung dari TransferSettings dan
-                                branch_settings cabang yang dipilih.
+                                {tr('settings.center.transferDescription')}
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             {selectedBranch === null ? (
-                                <EmptyState text="Pilih cabang untuk melihat kebijakan transfer." />
+                                <EmptyState text={tr('settings.center.chooseBranch')} />
                             ) : transferPolicy === null ? (
-                                <EmptyState text="Permission transfer settings belum diberikan ke akun ini." />
+                                <EmptyState text={tr('settings.center.noTransferPermission')} />
                             ) : (
                                 <>
                                     <SettingStatus
-                                        label="Dispatch"
-                                        value={`${captureModeLabels[transferPolicy.dispatch_capture_mode] ?? transferPolicy.dispatch_capture_mode} · min. ${transferPolicy.dispatch_min_photos} foto`}
+                                        label={tr('settings.center.dispatch')}
+                                        value={`${captureMode(transferPolicy.dispatch_capture_mode)} · min. ${transferPolicy.dispatch_min_photos} ${tr('settings.center.minimumPhotos')}`}
                                     />
                                     <SettingStatus
-                                        label="Receiving"
-                                        value={`${captureModeLabels[transferPolicy.receiving_capture_mode] ?? transferPolicy.receiving_capture_mode} · min. ${transferPolicy.receiving_min_photos} foto`}
+                                        label={tr('settings.center.receiving')}
+                                        value={`${captureMode(transferPolicy.receiving_capture_mode)} · min. ${transferPolicy.receiving_min_photos} ${tr('settings.center.minimumPhotos')}`}
                                     />
                                     <SettingStatus
-                                        label="Surat jalan"
+                                        label={tr('settings.center.waybill')}
                                         value={
                                             transferPolicy.require_waybill
-                                                ? 'Wajib'
-                                                : 'Opsional'
+                                                ? tr('settings.center.required')
+                                                : tr('settings.center.optional')
                                         }
                                         positive={
                                             transferPolicy.require_waybill
                                         }
                                     />
                                     <SettingStatus
-                                        label="Override galeri"
+                                        label={tr('settings.center.gallery')}
                                         value={
                                             transferPolicy.allow_gallery_override
-                                                ? 'Diizinkan dengan permission'
-                                                : 'Dinonaktifkan'
+                                                ? tr('settings.center.permitted')
+                                                : tr('settings.center.disabled')
                                         }
                                     />
 
@@ -493,7 +489,7 @@ export default function SettingsCenter({
                                         <Link
                                             href={`/transfers/settings?branch_id=${selectedBranch.id}`}
                                         >
-                                            Atur kebijakan transfer
+                                            {tr('settings.center.configureTransfer')}
                                             <ArrowUpRight className="size-4" />
                                         </Link>
                                     </Button>
@@ -506,28 +502,26 @@ export default function SettingsCenter({
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <BellRing className="size-5" />
-                                Notifikasi & reminder
+                                {tr('settings.center.notifications')}
                             </CardTitle>
                             <CardDescription>
-                                Rules tetap disimpan di notification_rules;
-                                preferensi personal tetap berada di Notification
-                                Center.
+                                {tr('settings.center.notificationDescription')}
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             {notifications === null ? (
-                                <EmptyState text="Akun ini tidak memiliki akses ke Notification Center." />
+                                <EmptyState text={tr('settings.center.noNotificationAccess')} />
                             ) : (
                                 <>
                                     <SettingStatus
-                                        label="Rule aktif"
+                                        label={tr('settings.center.activeRules')}
                                         value={`${notifications.enabled_rules}/${notifications.total_rules}`}
                                         positive={
                                             notifications.enabled_rules > 0
                                         }
                                     />
                                     <SettingStatus
-                                        label="Rule critical aktif"
+                                        label={tr('settings.center.criticalRules')}
                                         value={String(
                                             notifications.critical_rules,
                                         )}
@@ -542,8 +536,8 @@ export default function SettingsCenter({
                                     >
                                         <Link href="/notifications">
                                             {permissions.notifications_manage
-                                                ? 'Kelola reminder'
-                                                : 'Buka Notification Center'}
+                                                ? tr('settings.center.manageNotifications')
+                                                : tr('settings.center.openNotifications')}
                                             <ArrowUpRight className="size-4" />
                                         </Link>
                                     </Button>
@@ -556,31 +550,30 @@ export default function SettingsCenter({
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <ShieldCheck className="size-5" />
-                                Governance & audit
+                                {tr('settings.center.governance')}
                             </CardTitle>
                             <CardDescription>
-                                Hak akses dan histori tetap memakai modul
-                                otorisasi serta audit trail yang sudah ada.
+                                {tr('settings.center.governanceDescription')}
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="grid gap-3 sm:grid-cols-2">
                             {permissions.roles_view && (
                                 <Shortcut
                                     icon={<ShieldCheck className="size-4" />}
-                                    title="Role & Hak Akses"
+                                    title={tr('settings.center.roles')}
                                     href="/roles"
                                 />
                             )}
                             {permissions.audit_view && (
                                 <Shortcut
                                     icon={<History className="size-4" />}
-                                    title="Audit Trail"
+                                    title={tr('settings.center.audit')}
                                     href="/audit-trail"
                                 />
                             )}
                             {!permissions.roles_view &&
                                 !permissions.audit_view && (
-                                    <EmptyState text="Tidak ada permission governance pada akun ini." />
+                                    <EmptyState text={tr('settings.center.governanceEmpty')} />
                                 )}
                         </CardContent>
                     </Card>

@@ -11,6 +11,8 @@ import {
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import type { FormEvent } from 'react';
+import { useAppLocale } from '@/lib/i18n';
+import { formatNumber } from '@/lib/locale-format';
 import PackageCard from '@/components/public/package-card';
 import ProductCard from '@/components/public/product-card';
 import PublicShell from '@/components/public/public-shell';
@@ -46,6 +48,7 @@ export default function PublicCatalog({
     packages,
     filters,
 }: Props) {
+    const { locale, tr } = useAppLocale();
     const [form, setForm] = useState<PublicCatalogFilters>(filters);
     const [mobileFilters, setMobileFilters] = useState(false);
     const activeFilterCount = useMemo(
@@ -83,15 +86,15 @@ export default function PublicCatalog({
 
     return (
         <PublicShell branch={branch} branches={branches}>
-            <Head title="Katalog Rental">
+            <Head title={tr('public.catalog.head')}>
                 <meta
                     name="description"
-                    content="Jelajahi katalog kamera, lensa, lighting, audio, dan perlengkapan kreatif Together Kamera."
+                    content={tr('public.catalog.description')}
                 />
                 <meta property="og:type" content="website" />
                 <meta
                     property="og:title"
-                    content="Katalog Rental Together Kamera"
+                    content={tr('public.catalog.ogTitle')}
                 />
                 <link
                     rel="canonical"
@@ -102,25 +105,17 @@ export default function PublicCatalog({
             <main>
                 <section className="border-b border-black/5 bg-white">
                     <div className="mx-auto max-w-7xl px-5 py-14 lg:px-8 lg:py-20">
-                        <p className="text-xs font-semibold tracking-[0.18em] text-neutral-400 uppercase">
-                            Katalog publik · {branch?.name ?? 'Together Kamera'}
+                        <p className="text-xs font-semibold tracking-[0.18em] text-neutral-400 uppercase">{tr('public.catalog.eyebrow')}{branch?.name ?? 'Together Kamera'}
                         </p>
                         <div className="mt-3 flex flex-col gap-5 lg:flex-row lg:items-end lg:justify-between">
                             <div>
-                                <h1 className="text-4xl font-semibold tracking-[-0.045em] sm:text-6xl">
-                                    Alat yang tepat untuk setiap karya.
-                                </h1>
-                                <p className="mt-4 max-w-2xl text-base leading-7 text-neutral-500">
-                                    Harga, pilihan durasi, dan ketersediaan unit
-                                    terhubung langsung dengan data operasional
-                                    cabang.
-                                </p>
+                                <h1 className="text-4xl font-semibold tracking-[-0.045em] sm:text-6xl">{tr('public.catalog.heroTitle')}</h1>
+                                <p className="mt-4 max-w-2xl text-base leading-7 text-neutral-500">{tr('public.catalog.heroDescription')}</p>
                             </div>
                             <div className="rounded-2xl border border-black/7 bg-[#f7f7f3] px-5 py-4 text-sm">
-                                <p className="text-neutral-500">Menampilkan</p>
+                                <p className="text-neutral-500">{tr('public.catalog.showing')}</p>
                                 <p className="mt-1 font-semibold">
-                                    {products.total} produk publik
-                                </p>
+                                    {formatNumber(products.total, locale)}{' '}{tr('public.catalog.publicProducts')}</p>
                             </div>
                         </div>
                     </div>
@@ -143,7 +138,7 @@ export default function PublicCatalog({
                                             search: event.target.value,
                                         })
                                     }
-                                    placeholder="Cari kamera, lensa, brand, atau model..."
+                                    placeholder={tr('public.catalog.searchPlaceholder')}
                                     className="h-12 w-full rounded-xl border border-black/10 bg-[#fafaf8] pr-4 pl-11 text-sm transition outline-none placeholder:text-neutral-400 focus:border-black/30"
                                 />
                             </label>
@@ -153,7 +148,7 @@ export default function PublicCatalog({
                                     setMobileFilters((value) => !value)
                                 }
                                 className="relative inline-flex size-12 shrink-0 items-center justify-center rounded-xl border border-black/10 lg:hidden"
-                                aria-label="Buka filter"
+                                aria-label={tr('public.catalog.showFilters')}
                             >
                                 <SlidersHorizontal className="size-4" />
                                 {activeFilterCount > 0 && (
@@ -165,8 +160,7 @@ export default function PublicCatalog({
                             <button
                                 type="submit"
                                 className="hidden h-12 items-center gap-2 rounded-xl bg-neutral-950 px-6 text-sm font-semibold text-white lg:inline-flex"
-                            >
-                                Cari <ArrowRight className="size-4" />
+                            >{tr('public.catalog.search')}{' '}<ArrowRight className="size-4" />
                             </button>
                         </div>
 
@@ -183,7 +177,7 @@ export default function PublicCatalog({
                                 }
                                 className={selectClass}
                             >
-                                <option value="">Semua kategori</option>
+                                <option value="">{tr('public.catalog.allCategories')}</option>
                                 {categories.map((category) => (
                                     <option
                                         key={category.id}
@@ -204,7 +198,7 @@ export default function PublicCatalog({
                                 }
                                 className={selectClass}
                             >
-                                <option value="">Semua brand</option>
+                                <option value="">{tr('public.catalog.allBrands')}</option>
                                 {brands.map((brand) => (
                                     <option key={brand.id} value={brand.slug}>
                                         {brand.name} ({brand.products_count})
@@ -222,10 +216,8 @@ export default function PublicCatalog({
                                 }
                                 className={selectClass}
                             >
-                                <option value="all">Semua ketersediaan</option>
-                                <option value="available">
-                                    Tersedia saat ini
-                                </option>
+                                <option value="all">{tr('public.catalog.allAvailability')}</option>
+                                <option value="available">{tr('public.catalog.availableNow')}</option>
                             </select>
                             <select
                                 value={form.sort}
@@ -238,14 +230,10 @@ export default function PublicCatalog({
                                 }
                                 className={selectClass}
                             >
-                                <option value="recommended">Rekomendasi</option>
-                                <option value="name">Nama A–Z</option>
-                                <option value="price_low">
-                                    Harga terendah
-                                </option>
-                                <option value="price_high">
-                                    Harga tertinggi
-                                </option>
+                                <option value="recommended">{tr('public.catalog.recommended')}</option>
+                                <option value="name">{tr('public.catalog.nameAZ')}</option>
+                                <option value="price_low">{tr('public.catalog.lowestPrice')}</option>
+                                <option value="price_high">{tr('public.catalog.highestPrice')}</option>
                             </select>
                             <div className="flex gap-2">
                                 <button
@@ -253,14 +241,11 @@ export default function PublicCatalog({
                                     onClick={reset}
                                     className="inline-flex h-11 flex-1 items-center justify-center gap-2 rounded-xl border border-black/10 text-sm font-medium"
                                 >
-                                    <X className="size-4" /> Reset
-                                </button>
+                                    <X className="size-4" />{' '}{tr('public.catalog.reset')}</button>
                                 <button
                                     type="submit"
                                     className="inline-flex h-11 flex-1 items-center justify-center rounded-xl bg-neutral-950 text-sm font-semibold text-white lg:hidden"
-                                >
-                                    Terapkan
-                                </button>
+                                >{tr('public.catalog.apply')}</button>
                             </div>
                         </div>
                     </form>
@@ -280,31 +265,24 @@ export default function PublicCatalog({
                             <div className="flex size-14 items-center justify-center rounded-2xl bg-neutral-100">
                                 <Camera className="size-6 text-neutral-400" />
                             </div>
-                            <h2 className="mt-5 text-lg font-semibold">
-                                Produk belum ditemukan
-                            </h2>
-                            <p className="mt-2 max-w-md text-sm leading-6 text-neutral-500">
-                                Ubah kata pencarian atau reset filter untuk
-                                melihat pilihan lainnya.
-                            </p>
+                            <h2 className="mt-5 text-lg font-semibold">{tr('public.catalog.notFound')}</h2>
+                            <p className="mt-2 max-w-md text-sm leading-6 text-neutral-500">{tr('public.catalog.noResults')}</p>
                             <button
                                 type="button"
                                 onClick={reset}
                                 className="mt-5 text-sm font-semibold underline underline-offset-4"
-                            >
-                                Reset filter
-                            </button>
+                            >{tr('public.catalog.resetFilters')}</button>
                         </div>
                     )}
 
                     {products.last_page > 1 && (
                         <nav
                             className="mt-10 flex items-center justify-between border-t border-black/5 pt-6"
-                            aria-label="Pagination katalog"
+                            aria-label={tr('public.catalog.pagination')}
                         >
                             <p className="text-sm text-neutral-500">
-                                {products.from}–{products.to} dari{' '}
-                                {products.total}
+                                {products.from}–{products.to}{' '}{tr('public.catalog.of')}{' '}
+                                {formatNumber(products.total, locale)}
                             </p>
                             <div className="flex gap-2">
                                 {products.prev_page_url ? (
@@ -350,12 +328,8 @@ export default function PublicCatalog({
                                     <PackageOpen className="size-5" />
                                 </div>
                                 <div>
-                                    <p className="text-xs font-semibold tracking-[0.16em] text-neutral-400 uppercase">
-                                        Paket praktis
-                                    </p>
-                                    <h2 className="mt-1 text-2xl font-semibold tracking-tight">
-                                        Kombinasi alat siap produksi
-                                    </h2>
+                                    <p className="text-xs font-semibold tracking-[0.16em] text-neutral-400 uppercase">{tr('public.catalog.packagesEyebrow')}</p>
+                                    <h2 className="mt-1 text-2xl font-semibold tracking-tight">{tr('public.catalog.packagesTitle')}</h2>
                                 </div>
                             </div>
                             <div className="mt-8 grid gap-5 lg:grid-cols-2">

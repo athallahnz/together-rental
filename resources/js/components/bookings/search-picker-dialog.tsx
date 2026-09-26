@@ -6,6 +6,8 @@ import {
     LoaderCircle,
     Search,
 } from 'lucide-react';
+import { Stage4Text, stage4Translate } from '@/components/stage4-text';
+import { useAppLocale } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -65,13 +67,17 @@ export function SearchPickerDialog({
     ratePlanId,
     disabled = false,
 }: Props) {
+    const { locale: stage4Locale } = useAppLocale();
+
     const [open, setOpen] = useState(false);
     const [query, setQuery] = useState('');
     const [results, setResults] = useState<BookingSearchOption[]>([]);
     const [loading, setLoading] = useState(false);
     const [failed, setFailed] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
-    const label = labels[type];
+    const label = stage4Locale === 'en'
+        ? { customer: 'customer', product: 'product', package: 'package' }[type]
+        : labels[type];
     const missingContext = type !== 'customer' && (!branchId || !ratePlanId);
 
     useEffect(() => {
@@ -195,7 +201,7 @@ export function SearchPickerDialog({
                 >
                     {value
                         ? `${value.name}${optionMeta(value) ? ` · ${optionMeta(value)}` : ''}`
-                        : `Pilih ${label}`}
+                        : `${stage4Translate("stage4.ui.e137919915b5", stage4Locale)} ${label}`}
                 </span>
                 <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
             </Button>
@@ -203,16 +209,13 @@ export function SearchPickerDialog({
             <Dialog open={open} onOpenChange={handleOpenChange}>
                 <DialogContent className="flex max-h-[88vh] flex-col sm:max-w-3xl">
                     <DialogHeader>
-                        <DialogTitle>Pilih {label}</DialogTitle>
-                        <DialogDescription>
-                            Ketik minimal 2 karakter. Hasil muncul otomatis
-                            tanpa berpindah halaman.
+                        <DialogTitle><Stage4Text k="stage4.ui.e137919915b5" /> {label}</DialogTitle>
+                        <DialogDescription><Stage4Text k="stage4.ui.72b7034fe2b9" />
                         </DialogDescription>
                     </DialogHeader>
 
                     {missingContext ? (
-                        <p className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
-                            Pilih cabang dan rate plan terlebih dahulu.
+                        <p className="rounded-md border border-dashed p-4 text-sm text-muted-foreground"><Stage4Text k="stage4.ui.601ffccbb716" />
                         </p>
                     ) : (
                         <>
@@ -222,7 +225,7 @@ export function SearchPickerDialog({
                                     ref={inputRef}
                                     value={query}
                                     className="pr-9 pl-9"
-                                    placeholder={`Cari nama atau kode ${label}...`}
+                                    placeholder={`${stage4Translate("stage4.ui.560e3c2f18d3", stage4Locale)} ${label}...`}
                                     onChange={(event) =>
                                         handleQueryChange(event.target.value)
                                     }
@@ -234,13 +237,11 @@ export function SearchPickerDialog({
 
                             <div className="min-h-52 flex-1 overflow-y-auto rounded-md border">
                                 {query.trim().length < 2 && (
-                                    <p className="p-6 text-center text-sm text-muted-foreground">
-                                        Mulai ketik untuk mencari {label}.
+                                    <p className="p-6 text-center text-sm text-muted-foreground"><Stage4Text k="stage4.ui.8fdea1923869" /> {label}.
                                     </p>
                                 )}
                                 {failed && (
-                                    <p className="p-6 text-center text-sm text-destructive">
-                                        Pencarian gagal. Silakan coba kembali.
+                                    <p className="p-6 text-center text-sm text-destructive"><Stage4Text k="stage4.ui.8a6bc6513c46" />
                                     </p>
                                 )}
                                 {!loading &&
@@ -248,7 +249,7 @@ export function SearchPickerDialog({
                                     query.trim().length >= 2 &&
                                     results.length === 0 && (
                                         <p className="p-6 text-center text-sm text-muted-foreground">
-                                            {label} tidak ditemukan.
+                                            {label} {stage4Translate("stage4.ui.a26e90671794", stage4Locale)}
                                         </p>
                                     )}
                                 {results.map((option) => (
@@ -277,7 +278,7 @@ export function SearchPickerDialog({
                                                             }
                                                             alt={
                                                                 option.brand ??
-                                                                'Brand'
+                                                                stage4Translate("stage4.ui.62b4aa574f70", stage4Locale)
                                                             }
                                                             className="max-h-5 max-w-full object-contain"
                                                         />

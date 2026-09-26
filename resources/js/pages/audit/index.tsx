@@ -12,12 +12,14 @@ import {
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
+import { stage5AuditLabel, Stage5Text, stage5Translate, stage5Date, stage5IntlLocale } from '@/components/stage5-text';
 import { PaginationLinks } from '@/components/pagination-links';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
+import { useAppLocale } from '@/lib/i18n';
 import {
     Select,
     SelectContent,
@@ -85,10 +87,7 @@ type Props = {
     filters: Filters;
 };
 
-const dateTime = new Intl.DateTimeFormat('id-ID', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-});
+
 
 export default function AuditTrailIndex({
     activities,
@@ -99,6 +98,7 @@ export default function AuditTrailIndex({
     events,
     filters,
 }: Props) {
+    const { locale: stage5Locale } = useAppLocale();
     const [openId, setOpenId] = useState<number | null>(null);
     const [search, setSearch] = useState(filters.search);
     const [requestId, setRequestId] = useState(filters.request_id);
@@ -142,41 +142,39 @@ export default function AuditTrailIndex({
 
     return (
         <>
-            <Head title="Audit Trail" />
+            <Head title={stage5Translate("stage5.ui.e01eacc119b7", stage5Locale)} />
             <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
                 <header>
                     <p className="text-sm font-medium text-primary">
-                        Modul 14 · Governance
+                        <Stage5Text k="stage5.ui.580b76bbdf67" />
                     </p>
                     <h1 className="mt-1 flex items-center gap-2 text-2xl font-semibold tracking-tight">
                         <History className="size-6" />
-                        Audit Trail Center
+                        <Stage5Text k="stage5.ui.91f30c56f30c" />
                     </h1>
                     <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-                        Timeline read-only untuk menelusuri siapa melakukan apa,
-                        kapan, di cabang mana, serta perubahan sebelum dan
-                        sesudah. Data sensitif di-redact pada tampilan.
+                        <Stage5Text k="stage5.ui.7b9ac20e01c7" />
                     </p>
                 </header>
 
                 <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                     <SummaryCard
-                        label="Aktivitas"
+                        label={stage5Translate("stage5.ui.08901d88457c", stage5Locale)}
                         value={summary.total}
                         icon={History}
                     />
                     <SummaryCard
-                        label="Hari ini"
+                        label={stage5Translate("stage5.ui.2c6ad1441fa8", stage5Locale)}
                         value={summary.today}
                         icon={Clock3}
                     />
                     <SummaryCard
-                        label="Aktor"
+                        label={stage5Translate("stage5.ui.3edd93bea8ae", stage5Locale)}
                         value={summary.actors}
                         icon={UserRound}
                     />
                     <SummaryCard
-                        label="Dengan perubahan"
+                        label={stage5Translate("stage5.ui.28aa101f736a", stage5Locale)}
                         value={summary.with_changes}
                         icon={ShieldCheck}
                     />
@@ -184,7 +182,7 @@ export default function AuditTrailIndex({
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>Filter audit</CardTitle>
+                        <CardTitle><Stage5Text k="stage5.ui.4b6b57782762" /></CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <form
@@ -194,7 +192,7 @@ export default function AuditTrailIndex({
                             }}
                             className="grid gap-4 md:grid-cols-2 xl:grid-cols-4"
                         >
-                            <Field label="Cari">
+                            <Field label={stage5Translate("stage5.ui.3f2275d79afb", stage5Locale)}>
                                 <div className="relative">
                                     <Search className="absolute top-2.5 left-3 size-4 text-muted-foreground" />
                                     <Input
@@ -203,11 +201,11 @@ export default function AuditTrailIndex({
                                             setSearch(event.target.value)
                                         }
                                         className="pl-9"
-                                        placeholder="event, aktor, cabang, subject..."
+                                        placeholder={stage5Translate("stage5.ui.9c1514400aab", stage5Locale)}
                                     />
                                 </div>
                             </Field>
-                            <Field label="Cabang">
+                            <Field label={stage5Translate("stage5.ui.1387475bd674", stage5Locale)}>
                                 <Select
                                     value={
                                         filters.branch_id?.toString() ?? 'all'
@@ -226,7 +224,7 @@ export default function AuditTrailIndex({
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="all">
-                                            Semua cabang
+                                            <Stage5Text k="stage5.ui.27d30aba48a4" />
                                         </SelectItem>
                                         {branches.map((branch) => (
                                             <SelectItem
@@ -242,7 +240,7 @@ export default function AuditTrailIndex({
                                     </SelectContent>
                                 </Select>
                             </Field>
-                            <Field label="Aktor">
+                            <Field label={stage5Translate("stage5.ui.3edd93bea8ae", stage5Locale)}>
                                 <Select
                                     value={
                                         filters.actor_id?.toString() ?? 'all'
@@ -261,7 +259,7 @@ export default function AuditTrailIndex({
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="all">
-                                            Semua aktor
+                                            <Stage5Text k="stage5.ui.736c66c14331" />
                                         </SelectItem>
                                         {actors.map((actor) => (
                                             <SelectItem
@@ -274,7 +272,7 @@ export default function AuditTrailIndex({
                                     </SelectContent>
                                 </Select>
                             </Field>
-                            <Field label="Modul">
+                            <Field label={stage5Translate("stage5.ui.7182982745ee", stage5Locale)}>
                                 <Select
                                     value={filters.module || 'all'}
                                     onValueChange={(value) =>
@@ -290,20 +288,20 @@ export default function AuditTrailIndex({
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="all">
-                                            Semua modul
+                                            <Stage5Text k="stage5.ui.6a0fa78c0a41" />
                                         </SelectItem>
                                         {modules.map((module) => (
                                             <SelectItem
                                                 key={module.value}
                                                 value={module.value}
                                             >
-                                                {module.label}
+                                                {stage5AuditLabel(module.value, module.label)}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
                             </Field>
-                            <Field label="Event">
+                            <Field label={stage5Translate("stage5.ui.ad8919ace091", stage5Locale)}>
                                 <Select
                                     value={filters.event || 'all'}
                                     onValueChange={(value) =>
@@ -317,20 +315,20 @@ export default function AuditTrailIndex({
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="all">
-                                            Semua event
+                                            <Stage5Text k="stage5.ui.2f9329356155" />
                                         </SelectItem>
                                         {filteredEvents.map((event) => (
                                             <SelectItem
                                                 key={event.value}
                                                 value={event.value}
                                             >
-                                                {event.label}
+                                                {stage5AuditLabel(event.value, event.label)}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
                             </Field>
-                            <Field label="Request ID">
+                            <Field label={stage5Translate("stage5.ui.63aa59d5d8b6", stage5Locale)}>
                                 <Input
                                     value={requestId}
                                     onChange={(event) =>
@@ -339,7 +337,7 @@ export default function AuditTrailIndex({
                                     placeholder="X-Request-Id"
                                 />
                             </Field>
-                            <Field label="Dari tanggal">
+                            <Field label={stage5Translate("stage5.ui.30b35bf928d5", stage5Locale)}>
                                 <Input
                                     type="date"
                                     value={dateFrom}
@@ -348,7 +346,7 @@ export default function AuditTrailIndex({
                                     }
                                 />
                             </Field>
-                            <Field label="Sampai tanggal">
+                            <Field label={stage5Translate("stage5.ui.95b58818f0a3", stage5Locale)}>
                                 <Input
                                     type="date"
                                     value={dateTo}
@@ -359,14 +357,14 @@ export default function AuditTrailIndex({
                             </Field>
                             <div className="flex gap-2 md:col-span-2 xl:col-span-4">
                                 <Button type="submit">
-                                    <Search /> Terapkan
+                                    <Search /> <Stage5Text k="stage5.ui.9ff8760b6d49" />
                                 </Button>
                                 <Button
                                     type="button"
                                     variant="outline"
                                     onClick={clear}
                                 >
-                                    Reset filter
+                                    <Stage5Text k="stage5.ui.9c4a6ab48318" />
                                 </Button>
                             </div>
                         </form>
@@ -375,21 +373,21 @@ export default function AuditTrailIndex({
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>Timeline aktivitas</CardTitle>
+                        <CardTitle><Stage5Text k="stage5.ui.28c8a80889cf" /></CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="overflow-x-auto">
                             <table className="w-full min-w-[1050px] text-sm">
                                 <thead className="border-b bg-muted/40 text-left text-muted-foreground">
                                     <tr>
-                                        <th className="px-3 py-3">Waktu</th>
-                                        <th className="px-3 py-3">Aktor</th>
-                                        <th className="px-3 py-3">Cabang</th>
-                                        <th className="px-3 py-3">Event</th>
-                                        <th className="px-3 py-3">Subjek</th>
-                                        <th className="px-3 py-3">Request</th>
+                                        <th className="px-3 py-3"><Stage5Text k="stage5.ui.d546c40c22ca" /></th>
+                                        <th className="px-3 py-3"><Stage5Text k="stage5.ui.3edd93bea8ae" /></th>
+                                        <th className="px-3 py-3"><Stage5Text k="stage5.ui.1387475bd674" /></th>
+                                        <th className="px-3 py-3"><Stage5Text k="stage5.ui.ad8919ace091" /></th>
+                                        <th className="px-3 py-3"><Stage5Text k="stage5.ui.f5f7e53dcab1" /></th>
+                                        <th className="px-3 py-3"><Stage5Text k="stage5.ui.4aed03cac49d" /></th>
                                         <th className="px-3 py-3 text-right">
-                                            Detail
+                                            <Stage5Text k="stage5.ui.7c9a7c0610c1" />
                                         </th>
                                     </tr>
                                 </thead>
@@ -418,8 +416,7 @@ export default function AuditTrailIndex({
                                                 colSpan={7}
                                                 className="px-3 py-12 text-center text-muted-foreground"
                                             >
-                                                Tidak ada aktivitas sesuai
-                                                filter.
+                                                <Stage5Text k="stage5.ui.1b4cea961a96" />
                                             </td>
                                         </tr>
                                     )}
@@ -448,11 +445,13 @@ function AuditRows({
     open: boolean;
     onToggle: () => void;
 }) {
+    const { locale: stage5Locale } = useAppLocale();
+
     return (
         <>
             <tr className="align-top">
                 <td className="px-3 py-3 whitespace-nowrap">
-                    {dateTime.format(new Date(activity.created_at))}
+                    {stage5Date(new Date(activity.created_at), stage5Locale)}
                 </td>
                 <td className="px-3 py-3">
                     <div className="font-medium">
@@ -468,9 +467,9 @@ function AuditRows({
                         : 'Company/System'}
                 </td>
                 <td className="px-3 py-3">
-                    <Badge variant="secondary">{activity.module_label}</Badge>
+                    <Badge variant="secondary">{stage5AuditLabel(activity.module, activity.module_label)}</Badge>
                     <div className="mt-1 font-medium">
-                        {activity.event_label}
+                        {stage5AuditLabel(activity.event, activity.event_label)}
                     </div>
                     <code className="text-xs text-muted-foreground">
                         {activity.event}
@@ -489,7 +488,7 @@ function AuditRows({
                             href={activity.subject.url}
                             className="mt-1 inline-flex items-center gap-1 text-xs text-primary hover:underline"
                         >
-                            Buka sumber <ArrowUpRight className="size-3" />
+                            <Stage5Text k="stage5.ui.d33a5b9e6895" /> <ArrowUpRight className="size-3" />
                         </Link>
                     )}
                 </td>
@@ -525,16 +524,18 @@ function AuditRows({
 }
 
 function AuditDetail({ activity }: { activity: Activity }) {
+    const { locale: stage5Locale } = useAppLocale();
+
     return (
         <div className="space-y-4">
             <div className="grid gap-3 md:grid-cols-3">
                 <Meta
-                    label="Request ID"
+                    label={stage5Translate("stage5.ui.63aa59d5d8b6", stage5Locale)}
                     value={activity.request_id ?? '—'}
                     icon={Fingerprint}
                 />
                 <Meta
-                    label="IP Address"
+                    label={stage5Translate("stage5.ui.11f51070cecf", stage5Locale)}
                     value={activity.ip_address ?? '—'}
                     icon={ShieldCheck}
                 />
@@ -549,9 +550,9 @@ function AuditDetail({ activity }: { activity: Activity }) {
                     <table className="w-full text-sm">
                         <thead className="bg-muted/50 text-left">
                             <tr>
-                                <th className="px-3 py-2">Field</th>
-                                <th className="px-3 py-2">Sebelum</th>
-                                <th className="px-3 py-2">Sesudah</th>
+                                <th className="px-3 py-2"><Stage5Text k="stage5.ui.c326a4660b67" /></th>
+                                <th className="px-3 py-2"><Stage5Text k="stage5.ui.9a8474d94f35" /></th>
+                                <th className="px-3 py-2"><Stage5Text k="stage5.ui.79b83a829990" /></th>
                             </tr>
                         </thead>
                         <tbody className="divide-y">
@@ -573,7 +574,7 @@ function AuditDetail({ activity }: { activity: Activity }) {
                 </div>
             ) : (
                 <p className="text-sm text-muted-foreground">
-                    Event ini tidak membawa pasangan before/after.
+                    <Stage5Text k="stage5.ui.ae5b53652ec7" />
                 </p>
             )}
         </div>
@@ -614,6 +615,8 @@ function SummaryCard({
     value: number;
     icon: typeof History;
 }) {
+    const { locale: stage5Locale } = useAppLocale();
+
     return (
         <Card>
             <CardContent className="flex items-center justify-between p-5">
@@ -622,7 +625,7 @@ function SummaryCard({
                         {label}
                     </p>
                     <p className="mt-2 text-3xl font-semibold">
-                        {value.toLocaleString('id-ID')}
+                        {value.toLocaleString(stage5IntlLocale(stage5Locale))}
                     </p>
                 </div>
                 <Icon className="size-5 text-muted-foreground" />

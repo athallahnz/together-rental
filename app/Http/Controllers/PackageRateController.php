@@ -30,7 +30,7 @@ class PackageRateController extends Controller
 
         return back()->with('toast', [
             'type' => 'success',
-            'message' => "Harga paket {$rentalPackage->name} berhasil ditambahkan.",
+            'message' => __('uat035b_stage3.toast.packagerate_1', ['name' => $rentalPackage->name]),
         ]);
     }
 
@@ -52,7 +52,7 @@ class PackageRateController extends Controller
 
         return back()->with('toast', [
             'type' => 'success',
-            'message' => 'Harga paket berhasil diperbarui.',
+            'message' => __('uat035b_stage3.toast.packagerate_2'),
         ]);
     }
 
@@ -81,7 +81,7 @@ class PackageRateController extends Controller
 
         return back()->with('toast', [
             'type' => 'success',
-            'message' => 'Harga paket berhasil dihapus.',
+            'message' => __('uat035b_stage3.toast.packagerate_3'),
         ]);
     }
 }

@@ -22,6 +22,11 @@ import {
 } from 'lucide-react';
 import type { FormEvent } from 'react';
 import { useState } from 'react';
+import { getEffectiveLocale, useGlobalLocale } from '@/lib/locale-store';
+import { formatStage3Date } from '@/lib/stage3-display';
+import { stage3CustomerHistoryStatus, stage3LoyaltyTier } from '@/lib/stage3-customer-history';
+import type { AppLocale } from '@/lib/i18n';
+import { Stage3Text, stage3Translate } from '@/components/stage3-text';
 import { useConfirmDialog } from '@/components/confirm-dialog-provider';
 import { CustomerFormDialog } from '@/components/customers/customer-form-dialog';
 import InputError from '@/components/input-error';
@@ -121,6 +126,7 @@ export default function CustomerShow({
     branches,
     permissions,
 }: Props) {
+    const stage3Locale = useGlobalLocale();
     const { errors: pageErrors } = usePage().props;
     const confirm = useConfirmDialog();
     const [editOpen, setEditOpen] = useState(false);
@@ -137,9 +143,9 @@ export default function CustomerShow({
 
     const archiveCustomer = async () => {
         const confirmed = await confirm({
-            title: 'Arsipkan pelanggan?',
-            description: `${customer.name} tidak akan tersedia untuk transaksi baru. Seluruh histori tetap disimpan.`,
-            confirmLabel: 'Arsipkan pelanggan',
+            title: stage3Translate('stage3.ui.correction.confirm.customer.archive.title', stage3Locale),
+            description: stage3Translate('stage3.ui.correction.confirm.customer.archive', stage3Locale, { name: customer.name }),
+            confirmLabel: stage3Translate('stage3.ui.correction.confirm.customer.archive.action', stage3Locale),
             variant: 'destructive',
         });
 
@@ -169,8 +175,7 @@ export default function CustomerShow({
                     <Button asChild variant="ghost" size="sm">
                         <Link href="/customers">
                             <ArrowLeft />
-                            Semua pelanggan
-                        </Link>
+                            <Stage3Text k="stage3.ui.semua.pelanggan.50b93" /></Link>
                     </Button>
                 </div>
 
@@ -193,7 +198,7 @@ export default function CustomerShow({
                             {customer.name}
                         </h1>
                         <p className="mt-2 text-sm text-muted-foreground">
-                            Customer 360° · Terdaftar di{' '}
+                            <Stage3Text k="stage3.ui.customer.360.terdaftar.di.c9bc5" />{' '}
                             {customer.registered_branch
                                 ? `${customer.registered_branch.code} · ${customer.registered_branch.name}`
                                 : 'cabang yang sudah tidak tersedia'}
@@ -206,8 +211,7 @@ export default function CustomerShow({
                                 onClick={() => setEditOpen(true)}
                             >
                                 <Pencil />
-                                Edit profil
-                            </Button>
+                                <Stage3Text k="stage3.ui.edit.profil.190e4" /></Button>
                         )}
                         {permissions.archive && (
                             <Button
@@ -215,8 +219,7 @@ export default function CustomerShow({
                                 onClick={archiveCustomer}
                             >
                                 <Trash2 />
-                                Arsipkan
-                            </Button>
+                                <Stage3Text k="stage3.ui.arsipkan.5d7c1" /></Button>
                         )}
                     </div>
                 </header>
@@ -225,7 +228,7 @@ export default function CustomerShow({
                     typeof pageErrors.loyalty === 'string') && (
                     <Alert variant="destructive">
                         <CircleOff />
-                        <AlertTitle>Perubahan ditolak</AlertTitle>
+                        <AlertTitle><Stage3Text k="stage3.ui.perubahan.ditolak.1750a" /></AlertTitle>
                         <AlertDescription>
                             {String(pageErrors.customer ?? pageErrors.loyalty)}
                         </AlertDescription>
@@ -234,27 +237,27 @@ export default function CustomerShow({
 
                 <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
                     <StatisticCard
-                        label="Total rental"
+                        label={stage3Translate('stage3.ui.total.rental.27c39', stage3Locale)}
                         value={statistics.rentals.toString()}
                         icon={ReceiptText}
                     />
                     <StatisticCard
-                        label="Rental aktif"
+                        label={stage3Translate('stage3.ui.rental.aktif.de680', stage3Locale)}
                         value={statistics.activeRentals.toString()}
                         icon={Clock3}
                     />
                     <StatisticCard
-                        label="Nilai rental"
+                        label={stage3Translate('stage3.ui.nilai.rental.ef458', stage3Locale)}
                         value={currency(statistics.rentalValue)}
                         icon={Banknote}
                     />
                     <StatisticCard
-                        label="Terbayar"
+                        label={stage3Translate('stage3.ui.terbayar.78327', stage3Locale)}
                         value={currency(statistics.paidAmount)}
                         icon={ShieldCheck}
                     />
                     <StatisticCard
-                        label="Outstanding"
+                        label={stage3Translate('stage3.ui.outstanding.f8ee5', stage3Locale)}
                         value={currency(statistics.outstanding)}
                         icon={AlertTriangle}
                     />
@@ -263,16 +266,14 @@ export default function CustomerShow({
                 <section className="grid gap-6 xl:grid-cols-[1.15fr_.85fr]">
                     <Card>
                         <CardHeader>
-                            <CardTitle>Profil pelanggan</CardTitle>
+                            <CardTitle><Stage3Text k="stage3.ui.profil.pelanggan.7301c" /></CardTitle>
                             <CardDescription>
-                                Informasi utama untuk pelayanan dan penilaian
-                                risiko.
-                            </CardDescription>
+                                <Stage3Text k="stage3.ui.informasi.utama.untuk.pelayanan.dan.penilaian.r.8ff19" /></CardDescription>
                         </CardHeader>
                         <CardContent className="grid gap-4 sm:grid-cols-2">
                             <Info
                                 icon={Phone}
-                                label="Telepon"
+                                label={stage3Translate('stage3.ui.telepon.396dc', stage3Locale)}
                                 value={customer.phone}
                             />
                             <Info
@@ -282,18 +283,18 @@ export default function CustomerShow({
                             />
                             <Info
                                 icon={UserRound}
-                                label="Jenis kelamin"
+                                label={stage3Translate('stage3.ui.jenis.kelamin.64cd3', stage3Locale)}
                                 value={
                                     customer.gender === 'male'
-                                        ? 'Laki-laki'
+                                        ? stage3Translate('stage3.ui.correction.laki.laki.afdcb', stage3Locale)
                                         : customer.gender === 'female'
-                                          ? 'Perempuan'
+                                          ? stage3Translate('stage3.ui.correction.perempuan.bc797', stage3Locale)
                                           : null
                                 }
                             />
                             <Info
                                 icon={CalendarDays}
-                                label="Tempat, tanggal lahir"
+                                label={stage3Translate('stage3.ui.tempat.tanggal.lahir.c7ef3', stage3Locale)}
                                 value={
                                     [
                                         customer.birth_place,
@@ -305,20 +306,19 @@ export default function CustomerShow({
                             />
                             <Info
                                 icon={BadgeCheck}
-                                label="Institusi"
+                                label={stage3Translate('stage3.ui.institusi.305f2', stage3Locale)}
                                 value={customer.institution}
                             />
                             <Info
                                 icon={ReceiptText}
-                                label="Rental terakhir"
+                                label={stage3Translate('stage3.ui.rental.terakhir.f6a5c', stage3Locale)}
                                 value={shortDate(statistics.lastRentalAt)}
                             />
                             <div className="sm:col-span-2">
                                 <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
-                                    Catatan internal
-                                </p>
+                                    <Stage3Text k="stage3.ui.catatan.internal.1ae31" /></p>
                                 <p className="mt-2 text-sm leading-6 whitespace-pre-wrap">
-                                    {customer.notes || 'Belum ada catatan.'}
+                                    {customer.notes || stage3Translate('stage3.ui.correction.belum.ada.catatan.be505', stage3Locale)}
                                 </p>
                             </div>
                         </CardContent>
@@ -327,10 +327,9 @@ export default function CustomerShow({
                     <Card>
                         <CardHeader className="flex-row items-start justify-between">
                             <div>
-                                <CardTitle>Loyalty</CardTitle>
+                                <CardTitle><Stage3Text k="stage3.ui.loyalty.e2b31" /></CardTitle>
                                 <CardDescription>
-                                    Saldo, tier, dan lifetime points.
-                                </CardDescription>
+                                    <Stage3Text k="stage3.ui.saldo.tier.dan.lifetime.points.27a7b" /></CardDescription>
                             </div>
                             {permissions.loyalty && (
                                 <Button
@@ -338,8 +337,7 @@ export default function CustomerShow({
                                     onClick={() => setLoyaltyOpen(true)}
                                 >
                                     <Coins />
-                                    Transaksi poin
-                                </Button>
+                                    <Stage3Text k="stage3.ui.transaksi.poin.fd386" /></Button>
                             )}
                         </CardHeader>
                         <CardContent>
@@ -349,24 +347,21 @@ export default function CustomerShow({
                                         {number(loyalty?.points_balance ?? 0)}
                                     </p>
                                     <p className="mt-1 text-xs text-muted-foreground">
-                                        Saldo
-                                    </p>
+                                        <Stage3Text k="stage3.ui.saldo.8b0fc" /></p>
                                 </div>
                                 <div>
                                     <p className="text-2xl font-semibold">
                                         {number(loyalty?.lifetime_points ?? 0)}
                                     </p>
                                     <p className="mt-1 text-xs text-muted-foreground">
-                                        Lifetime
-                                    </p>
+                                        <Stage3Text k="stage3.ui.lifetime.8d33f" /></p>
                                 </div>
                                 <div>
                                     <p className="text-lg font-semibold capitalize">
-                                        {loyalty?.tier ?? 'regular'}
+                                        {stage3LoyaltyTier(loyalty?.tier ?? 'regular', stage3Locale)}
                                     </p>
                                     <p className="mt-1 text-xs text-muted-foreground">
-                                        Tier
-                                    </p>
+                                        <Stage3Text k="stage3.ui.tier.5bd44" /></p>
                                 </div>
                             </div>
 
@@ -407,8 +402,7 @@ export default function CustomerShow({
                                     ))}
                                 {(loyalty?.transactions ?? []).length === 0 && (
                                     <p className="py-6 text-center text-sm text-muted-foreground">
-                                        Belum ada transaksi loyalty.
-                                    </p>
+                                        <Stage3Text k="stage3.ui.belum.ada.transaksi.loyalty.c3804" /></p>
                                 )}
                             </div>
                         </CardContent>
@@ -419,10 +413,9 @@ export default function CustomerShow({
                     <Card>
                         <CardHeader className="flex-row items-start justify-between">
                             <div>
-                                <CardTitle>Identitas</CardTitle>
+                                <CardTitle><Stage3Text k="stage3.ui.identitas.bac26" /></CardTitle>
                                 <CardDescription>
-                                    Dokumen identitas dan status verifikasi.
-                                </CardDescription>
+                                    <Stage3Text k="stage3.ui.dokumen.identitas.dan.status.verifikasi.cebfb" /></CardDescription>
                             </div>
                             {permissions.update && (
                                 <Button
@@ -431,8 +424,7 @@ export default function CustomerShow({
                                     onClick={() => openIdentity(null)}
                                 >
                                     <Plus />
-                                    Tambah
-                                </Button>
+                                    <Stage3Text k="stage3.ui.tambah.a44eb" /></Button>
                             )}
                         </CardHeader>
                         <CardContent className="grid gap-3">
@@ -451,7 +443,7 @@ export default function CustomerShow({
                                                     )}
                                                 </p>
                                                 {identity.is_primary && (
-                                                    <Badge>Utama</Badge>
+                                                    <Badge><Stage3Text k="stage3.ui.utama.de8e2" /></Badge>
                                                 )}
                                                 <Badge
                                                     variant={
@@ -461,8 +453,8 @@ export default function CustomerShow({
                                                     }
                                                 >
                                                     {identity.verified_at
-                                                        ? 'Terverifikasi'
-                                                        : 'Belum diverifikasi'}
+                                                        ? stage3Translate('stage3.ui.correction.terverifikasi.b76a0', stage3Locale)
+                                                        : stage3Translate('stage3.ui.correction.belum.diverifikasi.53109', stage3Locale)}
                                                 </Badge>
                                             </div>
                                             <p className="mt-2 font-mono text-sm">
@@ -472,7 +464,7 @@ export default function CustomerShow({
                                                 {identity.name_on_identity ||
                                                     customer.name}
                                                 {identity.expires_at &&
-                                                    ` · Berlaku sampai ${shortDate(identity.expires_at)}`}
+                                                    ` · ${stage3Translate('stage3.ui.r2.customer.valid.until', stage3Locale, { date: shortDate(identity.expires_at) ?? '—' })}`}
                                             </p>
                                         </div>
                                         <div className="flex flex-wrap gap-2">
@@ -491,15 +483,14 @@ export default function CustomerShow({
                                                         }
                                                     >
                                                         <BadgeCheck />
-                                                        Verifikasi
-                                                    </Button>
+                                                        <Stage3Text k="stage3.ui.verifikasi.84a23" /></Button>
                                                 )}
                                             {permissions.update && (
                                                 <>
                                                     <Button
                                                         size="icon"
                                                         variant="outline"
-                                                        aria-label="Edit identitas"
+                                                        aria-label={stage3Translate('stage3.ui.edit.identitas.40a46', stage3Locale)}
                                                         onClick={() =>
                                                             openIdentity(
                                                                 identity,
@@ -511,11 +502,12 @@ export default function CustomerShow({
                                                     <Button
                                                         size="icon"
                                                         variant="ghost"
-                                                        aria-label="Hapus identitas"
+                                                        aria-label={stage3Translate('stage3.ui.hapus.identitas.24b65', stage3Locale)}
                                                         onClick={() =>
                                                             void destroyIdentity(
                                                                 identity,
                                                                 confirm,
+                                                                stage3Locale,
                                                             )
                                                         }
                                                     >
@@ -530,7 +522,7 @@ export default function CustomerShow({
                             {identities.length === 0 && (
                                 <EmptyState
                                     icon={IdCard}
-                                    text="Identitas belum ditambahkan."
+                                    text={stage3Translate('stage3.ui.r2.customer.empty.identities', stage3Locale)}
                                 />
                             )}
                         </CardContent>
@@ -539,11 +531,9 @@ export default function CustomerShow({
                     <Card>
                         <CardHeader className="flex-row items-start justify-between">
                             <div>
-                                <CardTitle>Alamat</CardTitle>
+                                <CardTitle><Stage3Text k="stage3.ui.alamat.85b6e" /></CardTitle>
                                 <CardDescription>
-                                    Alamat identitas, domisili, atau tempat
-                                    kerja.
-                                </CardDescription>
+                                    <Stage3Text k="stage3.ui.alamat.identitas.domisili.atau.tempat.kerja.85021" /></CardDescription>
                             </div>
                             {permissions.update && (
                                 <Button
@@ -552,8 +542,7 @@ export default function CustomerShow({
                                     onClick={() => openAddress(null)}
                                 >
                                     <Plus />
-                                    Tambah
-                                </Button>
+                                    <Stage3Text k="stage3.ui.tambah.a44eb" /></Button>
                             )}
                         </CardHeader>
                         <CardContent className="grid gap-3">
@@ -569,7 +558,7 @@ export default function CustomerShow({
                                                     {address.type}
                                                 </p>
                                                 {address.is_primary && (
-                                                    <Badge>Utama</Badge>
+                                                    <Badge><Stage3Text k="stage3.ui.utama.de8e2" /></Badge>
                                                 )}
                                             </div>
                                             <p className="mt-2 text-sm leading-6">
@@ -592,7 +581,7 @@ export default function CustomerShow({
                                                 <Button
                                                     size="icon"
                                                     variant="outline"
-                                                    aria-label="Edit alamat"
+                                                    aria-label={stage3Translate('stage3.ui.edit.alamat.3354d', stage3Locale)}
                                                     onClick={() =>
                                                         openAddress(address)
                                                     }
@@ -602,11 +591,12 @@ export default function CustomerShow({
                                                 <Button
                                                     size="icon"
                                                     variant="ghost"
-                                                    aria-label="Hapus alamat"
+                                                    aria-label={stage3Translate('stage3.ui.hapus.alamat.97df4', stage3Locale)}
                                                     onClick={() =>
                                                         void destroyAddress(
                                                             address,
                                                             confirm,
+                                                            stage3Locale,
                                                         )
                                                     }
                                                 >
@@ -620,7 +610,7 @@ export default function CustomerShow({
                             {addresses.length === 0 && (
                                 <EmptyState
                                     icon={MapPin}
-                                    text="Alamat belum ditambahkan."
+                                    text={stage3Translate('stage3.ui.r2.customer.empty.addresses', stage3Locale)}
                                 />
                             )}
                         </CardContent>
@@ -629,9 +619,9 @@ export default function CustomerShow({
 
                 <section className="grid gap-6 xl:grid-cols-2">
                     <HistoryCard
-                        title="Rental terakhir"
-                        description="Sepuluh transaksi rental terbaru pelanggan."
-                        empty="Belum ada histori rental."
+                        title={stage3Translate('stage3.ui.rental.terakhir.f6a5c', stage3Locale)}
+                        description={stage3Translate('stage3.ui.sepuluh.transaksi.rental.terbaru.pelanggan.66a01', stage3Locale)}
+                        empty={stage3Translate('stage3.ui.r2.customer.empty.rentals', stage3Locale)}
                     >
                         {recentRentals.map((rental) => (
                             <div
@@ -644,13 +634,12 @@ export default function CustomerShow({
                                     </p>
                                     <p className="mt-1 text-xs text-muted-foreground">
                                         {rental.branch?.code ?? '—'} ·{' '}
-                                        {dateTime(rental.checked_out_at)} ·
-                                        Jatuh tempo {dateTime(rental.due_at)}
+                                        {dateTime(rental.checked_out_at)} <Stage3Text k="stage3.ui.jatuh.tempo.e1a6d" />{dateTime(rental.due_at)}
                                     </p>
                                 </div>
                                 <div className="sm:text-right">
                                     <Badge variant="outline">
-                                        {rental.status}
+                                        {stage3CustomerHistoryStatus(rental.status, 'rental', stage3Locale)}
                                     </Badge>
                                     <p className="mt-1 text-sm font-medium">
                                         {currency(rental.total_amount)}
@@ -661,9 +650,9 @@ export default function CustomerShow({
                     </HistoryCard>
 
                     <HistoryCard
-                        title="Booking terakhir"
-                        description="Sepuluh reservasi terbaru pelanggan."
-                        empty="Belum ada histori booking."
+                        title={stage3Translate('stage3.ui.booking.terakhir.54fed', stage3Locale)}
+                        description={stage3Translate('stage3.ui.sepuluh.reservasi.terbaru.pelanggan.b07bb', stage3Locale)}
+                        empty={stage3Translate('stage3.ui.r2.customer.empty.bookings', stage3Locale)}
                     >
                         {recentBookings.map((booking) => (
                             <div
@@ -675,13 +664,13 @@ export default function CustomerShow({
                                         {booking.booking_number}
                                     </p>
                                     <p className="mt-1 text-xs text-muted-foreground">
-                                        {booking.branch?.code ?? '—'} · Mulai{' '}
+                                        {booking.branch?.code ?? '—'} <Stage3Text k="stage3.ui.mulai.65f56" />{' '}
                                         {dateTime(booking.starts_at)}
                                     </p>
                                 </div>
                                 <div className="sm:text-right">
                                     <Badge variant="outline">
-                                        {booking.status}
+                                        {stage3CustomerHistoryStatus(booking.status, 'booking', stage3Locale)}
                                     </Badge>
                                     <p className="mt-1 text-sm font-medium">
                                         {currency(booking.total_amount)}
@@ -738,6 +727,7 @@ function IdentityDialog({
     identity: CustomerIdentity | null;
     customerName: string;
 }) {
+    const stage3Locale = useGlobalLocale();
     const form = useForm({
         type: identity?.type ?? ('ktp' as CustomerIdentity['type']),
         number: identity?.number ?? '',
@@ -767,16 +757,14 @@ function IdentityDialog({
             <DialogContent>
                 <DialogHeader>
                     <DialogTitle>
-                        {identity ? 'Edit identitas' : 'Tambah identitas'}
+                        {identity ? stage3Translate('stage3.ui.correction.edit.identitas.40a46', stage3Locale) : stage3Translate('stage3.ui.correction.tambah.identitas.dcb13', stage3Locale)}
                     </DialogTitle>
                     <DialogDescription>
-                        Dokumen yang diverifikasi dapat digunakan sebagai
-                        referensi proses rental.
-                    </DialogDescription>
+                        <Stage3Text k="stage3.ui.dokumen.yang.diverifikasi.dapat.digunakan.sebag.6551e" /></DialogDescription>
                 </DialogHeader>
                 <form onSubmit={submit} className="grid gap-4">
                     <FormField
-                        label="Jenis identitas"
+                        label={stage3Translate('stage3.ui.jenis.identitas.f891f', stage3Locale)}
                         name="identity_type"
                         error={form.errors.type}
                     >
@@ -793,21 +781,19 @@ function IdentityDialog({
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="ktp">KTP</SelectItem>
-                                <SelectItem value="sim">SIM</SelectItem>
-                                <SelectItem value="passport">Paspor</SelectItem>
+                                <SelectItem value="ktp"><Stage3Text k="stage3.ui.ktp.101c2" /></SelectItem>
+                                <SelectItem value="sim"><Stage3Text k="stage3.ui.sim.9563e" /></SelectItem>
+                                <SelectItem value="passport"><Stage3Text k="stage3.ui.paspor.31953" /></SelectItem>
                                 <SelectItem value="student_card">
-                                    Kartu pelajar
-                                </SelectItem>
+                                    <Stage3Text k="stage3.ui.kartu.pelajar.868f2" /></SelectItem>
                                 <SelectItem value="employee_card">
-                                    Kartu karyawan
-                                </SelectItem>
-                                <SelectItem value="other">Lainnya</SelectItem>
+                                    <Stage3Text k="stage3.ui.kartu.karyawan.5a740" /></SelectItem>
+                                <SelectItem value="other"><Stage3Text k="stage3.ui.lainnya.844f8" /></SelectItem>
                             </SelectContent>
                         </Select>
                     </FormField>
                     <FormField
-                        label="Nomor identitas"
+                        label={stage3Translate('stage3.ui.nomor.identitas.54fdf', stage3Locale)}
                         name="identity_number"
                         error={form.errors.number}
                     >
@@ -821,7 +807,7 @@ function IdentityDialog({
                         />
                     </FormField>
                     <FormField
-                        label="Nama pada identitas"
+                        label={stage3Translate('stage3.ui.nama.pada.identitas.a8a50', stage3Locale)}
                         name="name_on_identity"
                         error={form.errors.name_on_identity}
                     >
@@ -837,7 +823,7 @@ function IdentityDialog({
                         />
                     </FormField>
                     <FormField
-                        label="Masa berlaku"
+                        label={stage3Translate('stage3.ui.masa.berlaku.2d469', stage3Locale)}
                         name="identity_expires_at"
                         error={form.errors.expires_at}
                     >
@@ -858,8 +844,7 @@ function IdentityDialog({
                             }
                         />
                         <span className="text-sm font-medium">
-                            Jadikan identitas utama
-                        </span>
+                            <Stage3Text k="stage3.ui.jadikan.identitas.utama.10074" /></span>
                     </label>
                     <DialogFooter>
                         <Button
@@ -867,12 +852,11 @@ function IdentityDialog({
                             variant="outline"
                             onClick={() => onOpenChange(false)}
                         >
-                            Batal
-                        </Button>
+                            <Stage3Text k="stage3.ui.batal.14335" /></Button>
                         <Button type="submit" disabled={form.processing}>
                             {form.processing
-                                ? 'Menyimpan…'
-                                : 'Simpan identitas'}
+                                ? stage3Translate('stage3.ui.correction.menyimpan.92e24', stage3Locale)
+                                : stage3Translate('stage3.ui.correction.simpan.identitas.807e3', stage3Locale)}
                         </Button>
                     </DialogFooter>
                 </form>
@@ -892,6 +876,7 @@ function AddressDialog({
     customerId: number;
     address: CustomerAddress | null;
 }) {
+    const stage3Locale = useGlobalLocale();
     const form = useForm({
         type: address?.type ?? ('domicile' as CustomerAddress['type']),
         address: address?.address ?? '',
@@ -924,16 +909,14 @@ function AddressDialog({
             <DialogContent className="sm:max-w-2xl">
                 <DialogHeader>
                     <DialogTitle>
-                        {address ? 'Edit alamat' : 'Tambah alamat'}
+                        {address ? stage3Translate('stage3.ui.correction.edit.alamat.3354d', stage3Locale) : stage3Translate('stage3.ui.correction.tambah.alamat.83ad0', stage3Locale)}
                     </DialogTitle>
                     <DialogDescription>
-                        Simpan alamat secara terstruktur untuk verifikasi dan
-                        operasional rental.
-                    </DialogDescription>
+                        <Stage3Text k="stage3.ui.simpan.alamat.secara.terstruktur.untuk.verifika.f1ca6" /></DialogDescription>
                 </DialogHeader>
                 <form onSubmit={submit} className="grid gap-4">
                     <FormField
-                        label="Jenis alamat"
+                        label={stage3Translate('stage3.ui.jenis.alamat.37325', stage3Locale)}
                         name="address_type"
                         error={form.errors.type}
                     >
@@ -951,20 +934,17 @@ function AddressDialog({
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="identity">
-                                    Identitas
-                                </SelectItem>
+                                    <Stage3Text k="stage3.ui.identitas.bac26" /></SelectItem>
                                 <SelectItem value="domicile">
-                                    Domisili
-                                </SelectItem>
+                                    <Stage3Text k="stage3.ui.domisili.89bfd" /></SelectItem>
                                 <SelectItem value="work">
-                                    Tempat kerja
-                                </SelectItem>
-                                <SelectItem value="other">Lainnya</SelectItem>
+                                    <Stage3Text k="stage3.ui.tempat.kerja.32b42" /></SelectItem>
+                                <SelectItem value="other"><Stage3Text k="stage3.ui.lainnya.844f8" /></SelectItem>
                             </SelectContent>
                         </Select>
                     </FormField>
                     <FormField
-                        label="Alamat lengkap"
+                        label={stage3Translate('stage3.ui.alamat.lengkap.328e8', stage3Locale)}
                         name="address_text"
                         error={form.errors.address}
                     >
@@ -1027,8 +1007,7 @@ function AddressDialog({
                             }
                         />
                         <span className="text-sm font-medium">
-                            Jadikan alamat utama
-                        </span>
+                            <Stage3Text k="stage3.ui.jadikan.alamat.utama.06332" /></span>
                     </label>
                     <DialogFooter>
                         <Button
@@ -1036,10 +1015,9 @@ function AddressDialog({
                             variant="outline"
                             onClick={() => onOpenChange(false)}
                         >
-                            Batal
-                        </Button>
+                            <Stage3Text k="stage3.ui.batal.14335" /></Button>
                         <Button type="submit" disabled={form.processing}>
-                            {form.processing ? 'Menyimpan…' : 'Simpan alamat'}
+                            {form.processing ? stage3Translate('stage3.ui.correction.menyimpan.92e24', stage3Locale) : stage3Translate('stage3.ui.correction.simpan.alamat.78405', stage3Locale)}
                         </Button>
                     </DialogFooter>
                 </form>
@@ -1059,6 +1037,7 @@ function LoyaltyDialog({
     customerId: number;
     balance: number;
 }) {
+    const stage3Locale = useGlobalLocale();
     const form = useForm({
         type: 'earn' as 'earn' | 'redeem' | 'adjustment',
         points: 0,
@@ -1080,15 +1059,13 @@ function LoyaltyDialog({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>Transaksi loyalty</DialogTitle>
+                    <DialogTitle><Stage3Text k="stage3.ui.transaksi.loyalty.6331c" /></DialogTitle>
                     <DialogDescription>
-                        Saldo sekarang {number(balance)} poin. Redeem tidak
-                        dapat membuat saldo menjadi negatif.
-                    </DialogDescription>
+                        <Stage3Text k="stage3.ui.saldo.sekarang.f98ee" />{number(balance)} <Stage3Text k="stage3.ui.poin.redeem.tidak.dapat.membuat.saldo.menjadi.n.1bd42" /></DialogDescription>
                 </DialogHeader>
                 <form onSubmit={submit} className="grid gap-4">
                     <FormField
-                        label="Jenis transaksi"
+                        label={stage3Translate('stage3.ui.jenis.transaksi.4d19f', stage3Locale)}
                         name="loyalty_type"
                         error={form.errors.type}
                     >
@@ -1106,19 +1083,16 @@ function LoyaltyDialog({
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="earn">
-                                    Tambah poin
-                                </SelectItem>
+                                    <Stage3Text k="stage3.ui.tambah.poin.cb670" /></SelectItem>
                                 <SelectItem value="redeem">
-                                    Tukar poin
-                                </SelectItem>
+                                    <Stage3Text k="stage3.ui.tukar.poin.a1cb4" /></SelectItem>
                                 <SelectItem value="adjustment">
-                                    Koreksi manual
-                                </SelectItem>
+                                    <Stage3Text k="stage3.ui.koreksi.manual.fc56d" /></SelectItem>
                             </SelectContent>
                         </Select>
                     </FormField>
                     <FormField
-                        label="Jumlah poin"
+                        label={stage3Translate('stage3.ui.jumlah.poin.2fc65', stage3Locale)}
                         name="loyalty_points"
                         error={form.errors.points}
                     >
@@ -1136,7 +1110,7 @@ function LoyaltyDialog({
                         />
                     </FormField>
                     <FormField
-                        label="Keterangan"
+                        label={stage3Translate('stage3.ui.keterangan.557f5', stage3Locale)}
                         name="loyalty_description"
                         error={form.errors.description}
                     >
@@ -1155,12 +1129,11 @@ function LoyaltyDialog({
                             variant="outline"
                             onClick={() => onOpenChange(false)}
                         >
-                            Batal
-                        </Button>
+                            <Stage3Text k="stage3.ui.batal.14335" /></Button>
                         <Button type="submit" disabled={form.processing}>
                             {form.processing
-                                ? 'Menyimpan…'
-                                : 'Simpan transaksi'}
+                                ? stage3Translate('stage3.ui.correction.menyimpan.92e24', stage3Locale)
+                                : stage3Translate('stage3.ui.correction.simpan.transaksi.40d7d', stage3Locale)}
                         </Button>
                     </DialogFooter>
                 </form>
@@ -1190,13 +1163,15 @@ function Info({
     label: string;
     value: string | null | undefined;
 }) {
+    const stage3Locale = useGlobalLocale();
+
     return (
         <div className="flex gap-3 rounded-lg border p-3">
             <Icon className="mt-0.5 size-4 shrink-0 text-muted-foreground" />
             <div className="min-w-0">
                 <p className="text-xs text-muted-foreground">{label}</p>
                 <p className="mt-1 truncate text-sm font-medium">
-                    {value || 'Belum diisi'}
+                    {value || stage3Translate('stage3.ui.correction.belum.diisi.098d4', stage3Locale)}
                 </p>
             </div>
         </div>
@@ -1273,18 +1248,28 @@ function FormField({
 }
 
 function CustomerStatusBadge({ status }: { status: Customer['status'] }) {
+    const stage3Locale = useGlobalLocale();
+
     return (
         <Badge variant={status === 'active' ? 'outline' : 'secondary'}>
             {status === 'active'
-                ? 'Aktif'
+                ? stage3Translate('stage3.ui.correction.aktif.89f29', stage3Locale)
                 : status === 'blocked'
-                  ? 'Diblokir'
-                  : 'Nonaktif'}
+                  ? stage3Translate('stage3.ui.correction.diblokir.ae752', stage3Locale)
+                  : stage3Translate('stage3.ui.correction.nonaktif.60944', stage3Locale)}
         </Badge>
     );
 }
 
 function RiskBadge({ risk }: { risk: Customer['risk_level'] }) {
+    const stage3Locale = useGlobalLocale();
+    const riskLabels = {
+        low: stage3Locale === 'en' ? 'low' : 'rendah',
+        normal: stage3Locale === 'en' ? 'normal' : 'normal',
+        high: stage3Locale === 'en' ? 'high' : 'tinggi',
+        critical: stage3Locale === 'en' ? 'critical' : 'kritis',
+    };
+
     return (
         <Badge
             variant={
@@ -1295,24 +1280,17 @@ function RiskBadge({ risk }: { risk: Customer['risk_level'] }) {
                       : 'outline'
             }
         >
-            Risiko{' '}
-            {
-                {
-                    low: 'rendah',
-                    normal: 'normal',
-                    high: 'tinggi',
-                    critical: 'kritis',
-                }[risk]
-            }
+            <Stage3Text k="stage3.ui.risiko.25055" />{' '}
+            {riskLabels[risk]}
         </Badge>
     );
 }
 
-async function destroyIdentity(identity: CustomerIdentity, confirm: Confirm) {
+async function destroyIdentity(identity: CustomerIdentity, confirm: Confirm, stage3Locale: AppLocale) {
     const confirmed = await confirm({
-        title: 'Hapus identitas pelanggan?',
-        description: `Identitas ${identity.number} akan dihapus dari profil pelanggan.`,
-        confirmLabel: 'Hapus identitas',
+        title: stage3Translate('stage3.ui.correction.confirm.identity.delete.title', stage3Locale),
+        description: stage3Translate('stage3.ui.correction.confirm.identity.delete', stage3Locale, { number: identity.number }),
+        confirmLabel: stage3Translate('stage3.ui.correction.confirm.identity.delete.action', stage3Locale),
         variant: 'destructive',
     });
 
@@ -1325,11 +1303,11 @@ async function destroyIdentity(identity: CustomerIdentity, confirm: Confirm) {
     });
 }
 
-async function destroyAddress(address: CustomerAddress, confirm: Confirm) {
+async function destroyAddress(address: CustomerAddress, confirm: Confirm, stage3Locale: AppLocale) {
     const confirmed = await confirm({
-        title: 'Hapus alamat pelanggan?',
-        description: 'Alamat ini akan dihapus dari profil pelanggan.',
-        confirmLabel: 'Hapus alamat',
+        title: stage3Translate('stage3.ui.correction.confirm.address.delete.title', stage3Locale),
+        description: stage3Translate('stage3.ui.correction.confirm.address.delete', stage3Locale),
+        confirmLabel: stage3Translate('stage3.ui.correction.confirm.address.delete.action', stage3Locale),
         variant: 'destructive',
     });
 
@@ -1355,26 +1333,19 @@ function number(value: number) {
 }
 
 function shortDate(value: string | null | undefined) {
-    if (!value) {
-        return null;
-    }
-
-    return new Intl.DateTimeFormat('id-ID', {
-        day: '2-digit',
-        month: 'short',
-        year: 'numeric',
-    }).format(new Date(value));
+    return value ? formatStage3Date(value, getEffectiveLocale()) : null;
 }
 
 function dateTime(value: string | null | undefined) {
     if (!value) {
-        return 'Waktu tidak tersedia';
+        return getEffectiveLocale() === 'en' ? 'Time unavailable' : 'Waktu tidak tersedia';
     }
 
-    return new Intl.DateTimeFormat('id-ID', {
+    return new Intl.DateTimeFormat(getEffectiveLocale() === 'en' ? 'en-GB' : 'id-ID', {
         day: '2-digit',
         month: 'short',
         year: 'numeric',
+        timeZone: 'Asia/Jakarta',
         hour: '2-digit',
         minute: '2-digit',
     }).format(new Date(value));

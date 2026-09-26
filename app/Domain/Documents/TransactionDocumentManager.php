@@ -2,6 +2,7 @@
 
 namespace App\Domain\Documents;
 
+use App\Domain\Finance\BookingPaymentSettlement;
 use App\Domain\Rentals\RentalNumberGenerator;
 use App\Models\Booking;
 use App\Models\BookingItem;
@@ -108,6 +109,7 @@ class TransactionDocumentManager
                 'items.package:id,code,name',
                 'payments:id,booking_id,payment_method_id,payment_number,type,direction,status,amount,paid_at,external_reference',
                 'payments.paymentMethod:id,code,name,type',
+                'payments.refunds:id,payment_id,status,amount',
             ])
             ->first();
 
@@ -118,16 +120,9 @@ class TransactionDocumentManager
         }
         $this->guardBranch($booking->branch, $actor);
 
-        $rentalPaid = (float) $booking->payments
-            ->where('status', 'completed')
-            ->where('direction', 'in')
-            ->where('type', 'rental')
-            ->sum('amount');
-        $depositPaid = (float) $booking->payments
-            ->where('status', 'completed')
-            ->where('direction', 'in')
-            ->where('type', 'deposit')
-            ->sum('amount');
+        $settlement = app(BookingPaymentSettlement::class)->summary($booking);
+        $rentalPaid = $settlement['rental_paid'];
+        $depositPaid = $settlement['deposit_paid'];
 
         return [
             (int) $booking->id,
@@ -192,6 +187,7 @@ class TransactionDocumentManager
                 'items.assets.asset:id,asset_code,serial_number',
                 'payments:id,rental_id,payment_method_id,payment_number,type,direction,status,amount,paid_at,external_reference',
                 'payments.paymentMethod:id,code,name,type',
+                'payments.refunds:id,payment_id,status,amount',
                 'extensions:id,rental_id,extension_number,status,previous_due_at,extended_due_at,subtotal,discount_amount,total_amount,paid_amount,approved_at',
                 'collaterals:id,rental_id,type,number,holder_name,status,received_at,returned_at,notes',
             ])
@@ -436,12 +432,19 @@ class TransactionDocumentManager
         $lines = [];
 
         foreach ($payments as $payment) {
+            $paidRefund = $payment->relationLoaded('refunds')
+                ? (float) $payment->refunds->where('status', 'paid')->sum('amount')
+                : 0.0;
             $lines[] = [
                 'payment_number' => $payment->payment_number,
                 'type' => $payment->type,
                 'direction' => $payment->direction,
                 'status' => $payment->status,
                 'amount' => (float) $payment->amount,
+                ...($paidRefund > 0 ? [
+                    'refunded_amount' => round($paidRefund, 2),
+                    'net_amount' => max(0, round((float) $payment->amount - $paidRefund, 2)),
+                ] : []),
                 'paid_at' => $this->isoDateTime($payment->paid_at),
                 'external_reference' => $payment->external_reference,
                 'method' => $payment->paymentMethod?->name,
