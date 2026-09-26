@@ -8,7 +8,15 @@ import {
     UploadCloud,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
-import { stage5Choice, stage5PaginatorLabel, stage5Number, stage5Date, stage5Display, Stage5Text, stage5Translate } from '@/components/stage5-text';
+import {
+    stage5Choice,
+    stage5PaginatorLabel,
+    stage5Number,
+    stage5Date,
+    stage5Display,
+    Stage5Text,
+    stage5Translate,
+} from '@/components/stage5-text';
 import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -71,7 +79,6 @@ type Props = {
     };
 };
 
-
 export default function LegacyImportIndex({
     branches,
     defaultBranchId,
@@ -102,7 +109,9 @@ export default function LegacyImportIndex({
 
     return (
         <>
-            <Head title={stage5Translate("stage5.ui.1a71ed4aa718", stage5Locale)} />
+            <Head
+                title={stage5Translate('stage5.ui.1a71ed4aa718', stage5Locale)}
+            />
 
             <div className="flex h-full flex-1 flex-col gap-6 overflow-x-auto rounded-xl p-4 md:p-6">
                 <header className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
@@ -118,7 +127,8 @@ export default function LegacyImportIndex({
                         </p>
                     </div>
                     <Badge variant="outline" className="h-7 px-3">
-                        {branches.length} <Stage5Text k="stage5.ui.44d3894c59ae" />
+                        {branches.length}{' '}
+                        <Stage5Text k="stage5.ui.44d3894c59ae" />
                     </Badge>
                 </header>
 
@@ -130,7 +140,9 @@ export default function LegacyImportIndex({
                                 <Stage5Text k="stage5.ui.97e282e6af6d" />
                             </CardTitle>
                             <CardDescription>
-                                <Stage5Text k="stage5.ui.e7db6b30860a" /> {maxUploadMegabytes} <Stage5Text k="stage5.ui.0dd949d2ec49" />
+                                <Stage5Text k="stage5.ui.e7db6b30860a" />{' '}
+                                {maxUploadMegabytes}{' '}
+                                <Stage5Text k="stage5.ui.0dd949d2ec49" />
                             </CardDescription>
                         </CardHeader>
                         <CardContent>
@@ -328,8 +340,16 @@ export default function LegacyImportIndex({
                                                 >
                                                     <UploadCloud />
                                                     {processing
-                                                        ? stage5Choice('Mengunggah…', 'Uploading…', stage5Locale)
-                                                        : stage5Choice('Unggah dan buat batch', 'Upload and create batch', stage5Locale)}
+                                                        ? stage5Choice(
+                                                              'Mengunggah…',
+                                                              'Uploading…',
+                                                              stage5Locale,
+                                                          )
+                                                        : stage5Choice(
+                                                              'Unggah dan buat batch',
+                                                              'Upload and create batch',
+                                                              stage5Locale,
+                                                          )}
                                                 </Button>
                                             </>
                                         )}
@@ -349,7 +369,9 @@ export default function LegacyImportIndex({
 
                     <Card>
                         <CardHeader>
-                            <CardTitle><Stage5Text k="stage5.ui.f9fc8c5ae6af" /></CardTitle>
+                            <CardTitle>
+                                <Stage5Text k="stage5.ui.f9fc8c5ae6af" />
+                            </CardTitle>
                             <CardDescription>
                                 <Stage5Text k="stage5.ui.971b11394d08" />
                             </CardDescription>
@@ -359,17 +381,37 @@ export default function LegacyImportIndex({
                                 [
                                     FileCode2,
                                     'Allowlist parser',
-                                    stage5Choice('Hanya tabel RentalV1 yang dikenali yang dibaca.', 'Only recognized RentalV1 tables are read.', stage5Locale),
+                                    stage5Choice(
+                                        'Hanya tabel RentalV1 yang dikenali yang dibaca.',
+                                        'Only recognized RentalV1 tables are read.',
+                                        stage5Locale,
+                                    ),
                                 ],
                                 [
                                     ShieldCheck,
-                                    stage5Choice('Kota & PREFIX terkunci sebelum eksekusi', 'City and prefix locked before execution', stage5Locale),
-                                    stage5Choice('Jika tujuan diubah setelah pratinjau, data sementara dihapus dan wajib dipratinjau ulang.', 'If the destination changes after preview, staged data is reset and preview must be repeated.', stage5Locale),
+                                    stage5Choice(
+                                        'Kota & PREFIX terkunci sebelum eksekusi',
+                                        'City and prefix locked before execution',
+                                        stage5Locale,
+                                    ),
+                                    stage5Choice(
+                                        'Jika tujuan diubah setelah pratinjau, data sementara dihapus dan wajib dipratinjau ulang.',
+                                        'If the destination changes after preview, staged data is reset and preview must be repeated.',
+                                        stage5Locale,
+                                    ),
                                 ],
                                 [
                                     DatabaseZap,
-                                    stage5Choice('SHA-256 & pemetaan ID per cabang', 'SHA-256 & branch-specific ID mapping', stage5Locale),
-                                    stage5Choice('Berkas duplikat dan pemetaan ID ganda diblokir.', 'Duplicate files and duplicate record ID mappings are blocked.', stage5Locale),
+                                    stage5Choice(
+                                        'SHA-256 & pemetaan ID per cabang',
+                                        'SHA-256 & branch-specific ID mapping',
+                                        stage5Locale,
+                                    ),
+                                    stage5Choice(
+                                        'Berkas duplikat dan pemetaan ID ganda diblokir.',
+                                        'Duplicate files and duplicate record ID mappings are blocked.',
+                                        stage5Locale,
+                                    ),
                                 ],
                             ].map(([Icon, title, description]) => (
                                 <div key={String(title)} className="flex gap-3">
@@ -392,7 +434,9 @@ export default function LegacyImportIndex({
 
                 <Card>
                     <CardHeader>
-                        <CardTitle><Stage5Text k="stage5.ui.cfa0a46b60f6" /></CardTitle>
+                        <CardTitle>
+                            <Stage5Text k="stage5.ui.cfa0a46b60f6" />
+                        </CardTitle>
                         <CardDescription>
                             <Stage5Text k="stage5.ui.bf8e3d90d088" />
                         </CardDescription>
@@ -525,9 +569,7 @@ function StatusBadge({ status }: { status: string }) {
               : 'secondary';
 
     return (
-        <Badge variant={variant}>
-            {stage5Display(status, stage5Locale)}
-        </Badge>
+        <Badge variant={variant}>{stage5Display(status, stage5Locale)}</Badge>
     );
 }
 
@@ -555,7 +597,12 @@ function Pagination({
                         <Link
                             href={link.url}
                             preserveScroll
-                            dangerouslySetInnerHTML={{ __html: stage5PaginatorLabel(link.label, stage5Locale) }}
+                            dangerouslySetInnerHTML={{
+                                __html: stage5PaginatorLabel(
+                                    link.label,
+                                    stage5Locale,
+                                ),
+                            }}
                         />
                     </Button>
                 ) : (
@@ -564,7 +611,12 @@ function Pagination({
                         size="sm"
                         variant="outline"
                         disabled
-                        dangerouslySetInnerHTML={{ __html: stage5PaginatorLabel(link.label, stage5Locale) }}
+                        dangerouslySetInnerHTML={{
+                            __html: stage5PaginatorLabel(
+                                link.label,
+                                stage5Locale,
+                            ),
+                        }}
                     />
                 ),
             )}

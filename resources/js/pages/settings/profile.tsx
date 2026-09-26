@@ -86,7 +86,9 @@ export default function Profile(
                                                 name="name"
                                                 required
                                                 autoComplete="name"
-                                                placeholder={tr('settings.profile.name')}
+                                                placeholder={tr(
+                                                    'settings.profile.name',
+                                                )}
                                             />
 
                                             <InputError message={errors.name} />
@@ -119,13 +121,17 @@ export default function Profile(
                                             null && (
                                             <div className="rounded-lg border border-dashed bg-muted/20 p-4">
                                                 <p className="text-sm text-muted-foreground">
-                                                    {tr('settings.profile.unverified')}{' '}
+                                                    {tr(
+                                                        'settings.profile.unverified',
+                                                    )}{' '}
                                                     <Link
                                                         href={send()}
                                                         as="button"
                                                         className="font-medium text-foreground underline decoration-neutral-300 underline-offset-4 transition-colors hover:decoration-current dark:decoration-neutral-500"
                                                     >
-                                                        {tr('settings.profile.resend')}
+                                                        {tr(
+                                                            'settings.profile.resend',
+                                                        )}
                                                     </Link>
                                                     .
                                                 </p>
@@ -133,7 +139,9 @@ export default function Profile(
                                                 {status ===
                                                     'verification-link-sent' && (
                                                     <p className="mt-2 text-sm font-medium text-green-600">
-                                                        {tr('settings.profile.sent')}
+                                                        {tr(
+                                                            'settings.profile.sent',
+                                                        )}
                                                     </p>
                                                 )}
                                             </div>

@@ -107,14 +107,16 @@ export function ConfirmDialogProvider({
                             variant="outline"
                             onClick={() => finish(false)}
                         >
-                            {options?.cancelLabel ?? translateKey('common.cancel', locale)}
+                            {options?.cancelLabel ??
+                                translateKey('common.cancel', locale)}
                         </Button>
                         <Button
                             type="button"
                             variant={destructive ? 'destructive' : 'default'}
                             onClick={() => finish(true)}
                         >
-                            {options?.confirmLabel ?? translateKey('common.continue', locale)}
+                            {options?.confirmLabel ??
+                                translateKey('common.continue', locale)}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

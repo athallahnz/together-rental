@@ -37,9 +37,13 @@ export function formatDate(
 ): string {
     const date = asDate(value);
 
-    const usesSpecificDateParts = ['year', 'month', 'day', 'weekday', 'era'].some(
-        (field) => Object.prototype.hasOwnProperty.call(options, field),
-    );
+    const usesSpecificDateParts = [
+        'year',
+        'month',
+        'day',
+        'weekday',
+        'era',
+    ].some((field) => Object.prototype.hasOwnProperty.call(options, field));
 
     return date
         ? new Intl.DateTimeFormat(intlLocale(locale), {

@@ -1,7 +1,14 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { RefreshCcw, Search, WalletCards } from 'lucide-react';
 import { useState } from 'react';
-import { stage5Choice, stage5Display, Stage5Text, stage5Translate, stage5Date, stage5Money } from '@/components/stage5-text';
+import {
+    stage5Choice,
+    stage5Display,
+    Stage5Text,
+    stage5Translate,
+    stage5Date,
+    stage5Money,
+} from '@/components/stage5-text';
 import { PaginationLinks } from '@/components/pagination-links';
 import { MetricCard } from '@/components/ui/metric-card';
 import { Badge } from '@/components/ui/badge';
@@ -86,7 +93,9 @@ export default function PaymentCenterIndex({
 
     return (
         <>
-            <Head title={stage5Translate("stage5.ui.78a5e1538bc3", stage5Locale)} />
+            <Head
+                title={stage5Translate('stage5.ui.78a5e1538bc3', stage5Locale)}
+            />
             <div className="space-y-6 p-4 md:p-6">
                 <header className="flex flex-wrap items-center justify-between gap-3">
                     <div>
@@ -102,37 +111,71 @@ export default function PaymentCenterIndex({
 
                 <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
                     <SummaryCard
-                        title={stage5Translate("stage5.ui.a20f18610f7d", stage5Locale)}
+                        title={stage5Translate(
+                            'stage5.ui.a20f18610f7d',
+                            stage5Locale,
+                        )}
                         amount={summary.gross_amount}
                         description={`${summary.total_count} transaksi`}
                     />
                     <SummaryCard
-                        title={stage5Translate("stage5.ui.3a15bec74e36", stage5Locale)}
+                        title={stage5Translate(
+                            'stage5.ui.3a15bec74e36',
+                            stage5Locale,
+                        )}
                         amount={summary.cash_amount}
-                        description={stage5Translate("stage5.ui.ee995e5c6766", stage5Locale)}
+                        description={stage5Translate(
+                            'stage5.ui.ee995e5c6766',
+                            stage5Locale,
+                        )}
                     />
                     <SummaryCard
-                        title={stage5Translate("stage5.ui.d8720c3314ba", stage5Locale)}
+                        title={stage5Translate(
+                            'stage5.ui.d8720c3314ba',
+                            stage5Locale,
+                        )}
                         amount={summary.non_cash_amount}
-                        description={stage5Translate("stage5.ui.7cd0307fadd4", stage5Locale)}
+                        description={stage5Translate(
+                            'stage5.ui.7cd0307fadd4',
+                            stage5Locale,
+                        )}
                     />
                     <SummaryCard
-                        title={stage5Translate("stage5.ui.207c7c00630b", stage5Locale)}
+                        title={stage5Translate(
+                            'stage5.ui.207c7c00630b',
+                            stage5Locale,
+                        )}
                         amount={summary.void_amount}
-                        description={stage5Choice(`${summary.void_count} transaksi dibatalkan`, `${summary.void_count} voided transactions`, stage5Locale)}
+                        description={stage5Choice(
+                            `${summary.void_count} transaksi dibatalkan`,
+                            `${summary.void_count} voided transactions`,
+                            stage5Locale,
+                        )}
                         tone="danger"
                     />
                     <SummaryCard
-                        title={stage5Translate("stage5.ui.c2aaa04e9659", stage5Locale)}
+                        title={stage5Translate(
+                            'stage5.ui.c2aaa04e9659',
+                            stage5Locale,
+                        )}
                         amount={summary.net_amount}
-                        description={stage5Translate("stage5.ui.cdf55ff98be2", stage5Locale)}
+                        description={stage5Translate(
+                            'stage5.ui.cdf55ff98be2',
+                            stage5Locale,
+                        )}
                         tone="primary"
                     />
                 </section>
 
                 <FilterBar
-                    title={stage5Translate("stage5.ui.bea3febe483a", stage5Locale)}
-                    description={stage5Translate("stage5.ui.7fd3d77a8762", stage5Locale)}
+                    title={stage5Translate(
+                        'stage5.ui.bea3febe483a',
+                        stage5Locale,
+                    )}
+                    description={stage5Translate(
+                        'stage5.ui.7fd3d77a8762',
+                        stage5Locale,
+                    )}
                     contentClassName="md:grid-cols-2 xl:grid-cols-4"
                 >
                     <div className="flex gap-2 md:col-span-2">
@@ -144,7 +187,10 @@ export default function PaymentCenterIndex({
                                     applyFilters();
                                 }
                             }}
-                            placeholder={stage5Translate("stage5.ui.f82573d63fa1", stage5Locale)}
+                            placeholder={stage5Translate(
+                                'stage5.ui.f82573d63fa1',
+                                stage5Locale,
+                            )}
                         />
                         <Button
                             type="button"
@@ -164,12 +210,23 @@ export default function PaymentCenterIndex({
                         }
                     >
                         <SelectTrigger>
-                            <SelectValue placeholder={stage5Translate("stage5.ui.baa2adda4148", stage5Locale)} />
+                            <SelectValue
+                                placeholder={stage5Translate(
+                                    'stage5.ui.baa2adda4148',
+                                    stage5Locale,
+                                )}
+                            />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="all"><Stage5Text k="stage5.ui.baa2adda4148" /></SelectItem>
-                            <SelectItem value="completed"><Stage5Text k="stage5.ui.1798b3ba42ee" /></SelectItem>
-                            <SelectItem value="void"><Stage5Text k="stage5.ui.207c7c00630b" /></SelectItem>
+                            <SelectItem value="all">
+                                <Stage5Text k="stage5.ui.baa2adda4148" />
+                            </SelectItem>
+                            <SelectItem value="completed">
+                                <Stage5Text k="stage5.ui.1798b3ba42ee" />
+                            </SelectItem>
+                            <SelectItem value="void">
+                                <Stage5Text k="stage5.ui.207c7c00630b" />
+                            </SelectItem>
                         </SelectContent>
                     </Select>
                     <Select
@@ -181,10 +238,17 @@ export default function PaymentCenterIndex({
                         }
                     >
                         <SelectTrigger>
-                            <SelectValue placeholder={stage5Translate("stage5.ui.7f8f0dfcaffd", stage5Locale)} />
+                            <SelectValue
+                                placeholder={stage5Translate(
+                                    'stage5.ui.7f8f0dfcaffd',
+                                    stage5Locale,
+                                )}
+                            />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="all"><Stage5Text k="stage5.ui.7f8f0dfcaffd" /></SelectItem>
+                            <SelectItem value="all">
+                                <Stage5Text k="stage5.ui.7f8f0dfcaffd" />
+                            </SelectItem>
                             {Object.entries(sourceLabels).map(
                                 ([value, label]) => (
                                     <SelectItem key={value} value={value}>
@@ -208,10 +272,17 @@ export default function PaymentCenterIndex({
                         }
                     >
                         <SelectTrigger>
-                            <SelectValue placeholder={stage5Translate("stage5.ui.27d30aba48a4", stage5Locale)} />
+                            <SelectValue
+                                placeholder={stage5Translate(
+                                    'stage5.ui.27d30aba48a4',
+                                    stage5Locale,
+                                )}
+                            />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="all"><Stage5Text k="stage5.ui.27d30aba48a4" /></SelectItem>
+                            <SelectItem value="all">
+                                <Stage5Text k="stage5.ui.27d30aba48a4" />
+                            </SelectItem>
                             {branches.map((branch) => (
                                 <SelectItem
                                     key={branch.id}
@@ -236,10 +307,17 @@ export default function PaymentCenterIndex({
                         }
                     >
                         <SelectTrigger>
-                            <SelectValue placeholder={stage5Translate("stage5.ui.816684ab79ec", stage5Locale)} />
+                            <SelectValue
+                                placeholder={stage5Translate(
+                                    'stage5.ui.816684ab79ec',
+                                    stage5Locale,
+                                )}
+                            />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="all"><Stage5Text k="stage5.ui.816684ab79ec" /></SelectItem>
+                            <SelectItem value="all">
+                                <Stage5Text k="stage5.ui.816684ab79ec" />
+                            </SelectItem>
                             {paymentMethods.map((method) => (
                                 <SelectItem
                                     key={method.id}
@@ -254,7 +332,9 @@ export default function PaymentCenterIndex({
                         </SelectContent>
                     </Select>
                     <div className="space-y-1.5">
-                        <Label htmlFor="payment-date-from"><Stage5Text k="stage5.ui.30b35bf928d5" /></Label>
+                        <Label htmlFor="payment-date-from">
+                            <Stage5Text k="stage5.ui.30b35bf928d5" />
+                        </Label>
                         <Input
                             id="payment-date-from"
                             type="date"
@@ -267,7 +347,9 @@ export default function PaymentCenterIndex({
                         />
                     </div>
                     <div className="space-y-1.5">
-                        <Label htmlFor="payment-date-to"><Stage5Text k="stage5.ui.95b58818f0a3" /></Label>
+                        <Label htmlFor="payment-date-to">
+                            <Stage5Text k="stage5.ui.95b58818f0a3" />
+                        </Label>
                         <Input
                             id="payment-date-to"
                             type="date"
@@ -292,19 +374,33 @@ export default function PaymentCenterIndex({
 
                 <Card>
                     <CardHeader>
-                        <CardTitle><Stage5Text k="stage5.ui.24a2fe1047a8" /></CardTitle>
+                        <CardTitle>
+                            <Stage5Text k="stage5.ui.24a2fe1047a8" />
+                        </CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="overflow-x-auto">
                             <table className="w-full min-w-[960px] text-sm">
                                 <thead className="border-b bg-muted/40 text-left text-muted-foreground">
                                     <tr>
-                                        <th className="px-3 py-3"><Stage5Text k="stage5.ui.b41a92bed032" /></th>
-                                        <th className="px-3 py-3"><Stage5Text k="stage5.ui.ff648afc53ef" /></th>
-                                        <th className="px-3 py-3"><Stage5Text k="stage5.ui.af0ab4433946" /></th>
-                                        <th className="px-3 py-3"><Stage5Text k="stage5.ui.5ac33f2c588b" /></th>
-                                        <th className="px-3 py-3"><Stage5Text k="stage5.ui.1387475bd674" /></th>
-                                        <th className="px-3 py-3"><Stage5Text k="stage5.ui.bae7d5be7082" /></th>
+                                        <th className="px-3 py-3">
+                                            <Stage5Text k="stage5.ui.b41a92bed032" />
+                                        </th>
+                                        <th className="px-3 py-3">
+                                            <Stage5Text k="stage5.ui.ff648afc53ef" />
+                                        </th>
+                                        <th className="px-3 py-3">
+                                            <Stage5Text k="stage5.ui.af0ab4433946" />
+                                        </th>
+                                        <th className="px-3 py-3">
+                                            <Stage5Text k="stage5.ui.5ac33f2c588b" />
+                                        </th>
+                                        <th className="px-3 py-3">
+                                            <Stage5Text k="stage5.ui.1387475bd674" />
+                                        </th>
+                                        <th className="px-3 py-3">
+                                            <Stage5Text k="stage5.ui.bae7d5be7082" />
+                                        </th>
                                         <th className="px-3 py-3 text-right">
                                             <Stage5Text k="stage5.ui.1795d163388f" />
                                         </th>
@@ -337,10 +433,13 @@ export default function PaymentCenterIndex({
                                                 </td>
                                                 <td className="px-3 py-3">
                                                     <p>
-                                                        {stage5Display(sourceLabels[
-                                                            payment.source_context ??
-                                                                ''
-                                                        ] ?? 'Legacy', stage5Locale)}
+                                                        {stage5Display(
+                                                            sourceLabels[
+                                                                payment.source_context ??
+                                                                    ''
+                                                            ] ?? 'Legacy',
+                                                            stage5Locale,
+                                                        )}
                                                     </p>
                                                     {source.href ? (
                                                         <Link
@@ -379,8 +478,14 @@ export default function PaymentCenterIndex({
                                                     >
                                                         {payment.status ===
                                                         'void'
-                                                            ? stage5Display('Void', stage5Locale)
-                                                            : stage5Display('completed', stage5Locale)}
+                                                            ? stage5Display(
+                                                                  'Void',
+                                                                  stage5Locale,
+                                                              )
+                                                            : stage5Display(
+                                                                  'completed',
+                                                                  stage5Locale,
+                                                              )}
                                                     </Badge>
                                                 </td>
                                                 <td
@@ -398,9 +503,12 @@ export default function PaymentCenterIndex({
                                                         signedAmount(payment),
                                                     )}
                                                     <p className="mt-1 text-xs font-normal text-muted-foreground">
-                                                        {stage5Display(typeLabels[
-                                                            payment.type
-                                                        ] ?? payment.type, stage5Locale)}
+                                                        {stage5Display(
+                                                            typeLabels[
+                                                                payment.type
+                                                            ] ?? payment.type,
+                                                            stage5Locale,
+                                                        )}
                                                     </p>
                                                 </td>
                                             </tr>

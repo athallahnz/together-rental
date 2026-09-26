@@ -119,7 +119,8 @@ export default function ProductShow({
                     <Button asChild variant="ghost" className="w-fit">
                         <Link href={catalogHref}>
                             <ArrowLeft />
-                            <Stage3Text k="stage3.ui.semua.produk.9b21f" /></Link>
+                            <Stage3Text k="stage3.ui.semua.produk.9b21f" />
+                        </Link>
                     </Button>
                     <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                         <div>
@@ -132,11 +133,22 @@ export default function ProductShow({
                                             : 'secondary'
                                     }
                                 >
-                                    {product.is_active ? stage3Translate('stage3.ui.correction.aktif.89f29', stage3Locale) : stage3Translate('stage3.ui.correction.nonaktif.60944', stage3Locale)}
+                                    {product.is_active
+                                        ? stage3Translate(
+                                              'stage3.ui.correction.aktif.89f29',
+                                              stage3Locale,
+                                          )
+                                        : stage3Translate(
+                                              'stage3.ui.correction.nonaktif.60944',
+                                              stage3Locale,
+                                          )}
                                 </Badge>
                                 <Badge variant="secondary">
                                     {product.tracking_type === 'serialized'
-                                        ? stage3Translate('stage3.ui.correction.per.unit.serial.cc205', stage3Locale)
+                                        ? stage3Translate(
+                                              'stage3.ui.correction.per.unit.serial.cc205',
+                                              stage3Locale,
+                                          )
                                         : 'Kuantitas / bulk'}
                                 </Badge>
                                 <Badge
@@ -171,13 +183,15 @@ export default function ProductShow({
                                     onClick={() => setProductDialog(true)}
                                 >
                                     <Pencil />
-                                    <Stage3Text k="stage3.ui.edit.produk.9a50b" /></Button>
+                                    <Stage3Text k="stage3.ui.edit.produk.9a50b" />
+                                </Button>
                                 <Button
                                     variant="outline"
                                     onClick={() => openRate(null)}
                                 >
                                     <Plus />
-                                    <Stage3Text k="stage3.ui.tambah.harga.56e4f" /></Button>
+                                    <Stage3Text k="stage3.ui.tambah.harga.56e4f" />
+                                </Button>
                             </div>
                         )}
                     </div>
@@ -186,14 +200,28 @@ export default function ProductShow({
                 <ProductErrors errors={errors} />
 
                 <FilterBar
-                    title={stage3Translate('stage3.ui.lingkup.inventaris.produk.b0b83', stage3Locale)}
-                    description={stage3Translate('stage3.ui.aset.stok.dan.daftar.harga.mengikuti.cabang.yan.1c1a1', stage3Locale)}
+                    title={stage3Translate(
+                        'stage3.ui.lingkup.inventaris.produk.b0b83',
+                        stage3Locale,
+                    )}
+                    description={stage3Translate(
+                        'stage3.ui.aset.stok.dan.daftar.harga.mengikuti.cabang.yan.1c1a1',
+                        stage3Locale,
+                    )}
                     context={
-                        <Badge variant="outline"><Stage3Text k="stage3.ui.aktif.62c8b" />{scopeLabel}</Badge>
+                        <Badge variant="outline">
+                            <Stage3Text k="stage3.ui.aktif.62c8b" />
+                            {scopeLabel}
+                        </Badge>
                     }
                     contentClassName="grid-cols-1 md:grid-cols-[minmax(260px,360px)]"
                 >
-                    <FilterField label={stage3Translate('stage3.ui.cabang.operasional.2c54a', stage3Locale)}>
+                    <FilterField
+                        label={stage3Translate(
+                            'stage3.ui.cabang.operasional.2c54a',
+                            stage3Locale,
+                        )}
+                    >
                         <Select
                             value={filters.branch_id?.toString() ?? 'all'}
                             onValueChange={(value) =>
@@ -212,12 +240,18 @@ export default function ProductShow({
                                 )
                             }
                         >
-                            <SelectTrigger aria-label={stage3Translate('stage3.ui.filter.cabang.produk.cb621', stage3Locale)}>
+                            <SelectTrigger
+                                aria-label={stage3Translate(
+                                    'stage3.ui.filter.cabang.produk.cb621',
+                                    stage3Locale,
+                                )}
+                            >
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">
-                                    <Stage3Text k="stage3.ui.semua.cabang.yang.dapat.diakses.1b890" /></SelectItem>
+                                    <Stage3Text k="stage3.ui.semua.cabang.yang.dapat.diakses.1b890" />
+                                </SelectItem>
                                 {branches.map((branch) => (
                                     <SelectItem
                                         key={branch.id}
@@ -233,7 +267,10 @@ export default function ProductShow({
 
                 <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                     <Metric
-                        label={stage3Translate('stage3.ui.nilai.penggantian.e9edf', stage3Locale)}
+                        label={stage3Translate(
+                            'stage3.ui.nilai.penggantian.e9edf',
+                            stage3Locale,
+                        )}
                         value={formatCurrency(product.replacement_value)}
                         icon={CircleDollarSign}
                     />
@@ -263,12 +300,16 @@ export default function ProductShow({
                                 <div>
                                     <CardTitle className="flex items-center gap-2">
                                         <CalendarDays className="size-5" />
-                                        <Stage3Text k="stage3.ui.smart.calendar.per.aset.5df68" /></CardTitle>
+                                        <Stage3Text k="stage3.ui.smart.calendar.per.aset.5df68" />
+                                    </CardTitle>
                                     <CardDescription>
-                                        <Stage3Text k="stage3.ui.setiap.unit.memiliki.kalender.sendiri.untuk.boo.c7da7" /></CardDescription>
+                                        <Stage3Text k="stage3.ui.setiap.unit.memiliki.kalender.sendiri.untuk.boo.c7da7" />
+                                    </CardDescription>
                                 </div>
                                 <Badge variant="outline">
-                                    {assetUnits.length} <Stage3Text k="stage3.ui.unit.pada.scope.ini.0a15f" /></Badge>
+                                    {assetUnits.length}{' '}
+                                    <Stage3Text k="stage3.ui.unit.pada.scope.ini.0a15f" />
+                                </Badge>
                             </div>
                         </CardHeader>
                         <CardContent>
@@ -302,7 +343,8 @@ export default function ProductShow({
                                             </Badge>
                                         </div>
                                         <p className="mt-3 text-xs text-muted-foreground">
-                                            <Stage3Text k="stage3.ui.kondisi.b723b" />{asset.condition} ·{' '}
+                                            <Stage3Text k="stage3.ui.kondisi.b723b" />
+                                            {asset.condition} ·{' '}
                                             {asset.is_active
                                                 ? 'aktif'
                                                 : 'nonaktif'}
@@ -317,12 +359,14 @@ export default function ProductShow({
                                             }
                                         >
                                             <CalendarDays />
-                                            <Stage3Text k="stage3.ui.lihat.kalender.unit.f84a2" /></Button>
+                                            <Stage3Text k="stage3.ui.lihat.kalender.unit.f84a2" />
+                                        </Button>
                                     </div>
                                 ))}
                                 {assetUnits.length === 0 && (
                                     <div className="col-span-full rounded-xl border border-dashed p-8 text-center text-sm text-muted-foreground">
-                                        <Stage3Text k="stage3.ui.belum.ada.aset.serialized.pada.cabang.yang.dipi.2d093" /></div>
+                                        <Stage3Text k="stage3.ui.belum.ada.aset.serialized.pada.cabang.yang.dipi.2d093" />
+                                    </div>
                                 )}
                             </div>
                         </CardContent>
@@ -333,9 +377,12 @@ export default function ProductShow({
                     <Card>
                         <CardHeader className="flex-row items-start justify-between gap-4">
                             <div>
-                                <CardTitle><Stage3Text k="stage3.ui.daftar.harga.a29c2" /></CardTitle>
+                                <CardTitle>
+                                    <Stage3Text k="stage3.ui.daftar.harga.a29c2" />
+                                </CardTitle>
                                 <CardDescription>
-                                    <Stage3Text k="stage3.ui.harga.global.menjadi.fallback.harga.cabang.dipa.ca445" /></CardDescription>
+                                    <Stage3Text k="stage3.ui.harga.global.menjadi.fallback.harga.cabang.dipa.ca445" />
+                                </CardDescription>
                             </div>
                             {permissions.manage && (
                                 <Button
@@ -343,7 +390,8 @@ export default function ProductShow({
                                     onClick={() => openRate(null)}
                                 >
                                     <Plus />
-                                    <Stage3Text k="stage3.ui.harga.059e7" /></Button>
+                                    <Stage3Text k="stage3.ui.harga.059e7" />
+                                </Button>
                             )}
                         </CardHeader>
                         <CardContent className="grid gap-3">
@@ -370,7 +418,10 @@ export default function ProductShow({
                                                     <Badge variant="outline">
                                                         {rate.branch
                                                             ? rate.branch.code
-                                                            : stage3Translate('stage3.ui.correction.global.5f118', stage3Locale)}
+                                                            : stage3Translate(
+                                                                  'stage3.ui.correction.global.5f118',
+                                                                  stage3Locale,
+                                                              )}
                                                     </Badge>
                                                     <Badge
                                                         variant={
@@ -380,8 +431,14 @@ export default function ProductShow({
                                                         }
                                                     >
                                                         {rate.is_active
-                                                            ? stage3Translate('stage3.ui.correction.aktif.89f29', stage3Locale)
-                                                            : stage3Translate('stage3.ui.correction.nonaktif.60944', stage3Locale)}
+                                                            ? stage3Translate(
+                                                                  'stage3.ui.correction.aktif.89f29',
+                                                                  stage3Locale,
+                                                              )
+                                                            : stage3Translate(
+                                                                  'stage3.ui.correction.nonaktif.60944',
+                                                                  stage3Locale,
+                                                              )}
                                                     </Badge>
                                                 </div>
                                                 <p className="mt-2 text-lg font-semibold">
@@ -428,11 +485,15 @@ export default function ProductShow({
                                                         }
                                                     >
                                                         <Pencil />
-                                                        <Stage3Text k="stage3.ui.edit.53016" /></Button>
+                                                        <Stage3Text k="stage3.ui.edit.53016" />
+                                                    </Button>
                                                     <Button
                                                         size="icon"
                                                         variant="ghost"
-                                                        aria-label={stage3Translate('stage3.ui.hapus.harga.be63c', stage3Locale)}
+                                                        aria-label={stage3Translate(
+                                                            'stage3.ui.hapus.harga.be63c',
+                                                            stage3Locale,
+                                                        )}
                                                         onClick={async () => {
                                                             const confirmed =
                                                                 await confirm({
@@ -471,23 +532,47 @@ export default function ProductShow({
                     <div className="grid content-start gap-6">
                         <Card>
                             <CardHeader>
-                                <CardTitle><Stage3Text k="stage3.ui.profil.produk.509bc" /></CardTitle>
+                                <CardTitle>
+                                    <Stage3Text k="stage3.ui.profil.produk.509bc" />
+                                </CardTitle>
                             </CardHeader>
                             <CardContent className="grid gap-4 text-sm">
                                 <Info
-                                    label={stage3Translate('stage3.ui.kategori.b7964', stage3Locale)}
+                                    label={stage3Translate(
+                                        'stage3.ui.kategori.b7964',
+                                        stage3Locale,
+                                    )}
                                     value={
                                         product.category
                                             ? `${product.category.code} · ${product.category.name}`
-                                            : stage3Translate('stage3.ui.correction.tanpa.kategori.a3fdc', stage3Locale)
+                                            : stage3Translate(
+                                                  'stage3.ui.correction.tanpa.kategori.a3fdc',
+                                                  stage3Locale,
+                                              )
                                     }
                                 />
                                 <Info
-                                    label={stage3Translate('stage3.ui.dapat.disewakan.60f5a', stage3Locale)}
-                                    value={product.is_rentable ? stage3Translate('stage3.ui.correction.ya.c42a9', stage3Locale) : stage3Translate('stage3.ui.correction.tidak.39c99', stage3Locale)}
+                                    label={stage3Translate(
+                                        'stage3.ui.dapat.disewakan.60f5a',
+                                        stage3Locale,
+                                    )}
+                                    value={
+                                        product.is_rentable
+                                            ? stage3Translate(
+                                                  'stage3.ui.correction.ya.c42a9',
+                                                  stage3Locale,
+                                              )
+                                            : stage3Translate(
+                                                  'stage3.ui.correction.tidak.39c99',
+                                                  stage3Locale,
+                                              )
+                                    }
                                 />
                                 <Info
-                                    label={stage3Translate('stage3.ui.deskripsi.7e9fd', stage3Locale)}
+                                    label={stage3Translate(
+                                        'stage3.ui.deskripsi.7e9fd',
+                                        stage3Locale,
+                                    )}
                                     value={
                                         product.description ||
                                         'Belum ada deskripsi.'
@@ -497,9 +582,12 @@ export default function ProductShow({
                         </Card>
                         <Card>
                             <CardHeader>
-                                <CardTitle><Stage3Text k="stage3.ui.distribusi.per.cabang.e77e5" /></CardTitle>
+                                <CardTitle>
+                                    <Stage3Text k="stage3.ui.distribusi.per.cabang.e77e5" />
+                                </CardTitle>
                                 <CardDescription>
-                                    <Stage3Text k="stage3.ui.ringkasan.aset.serialized.dan.stok.bulk.untuk.s.06e54" /></CardDescription>
+                                    <Stage3Text k="stage3.ui.ringkasan.aset.serialized.dan.stok.bulk.untuk.s.06e54" />
+                                </CardDescription>
                             </CardHeader>
                             <CardContent className="grid gap-3">
                                 {branchStock.map((item) => {
@@ -530,7 +618,8 @@ export default function ProductShow({
                                             'serialized' ? (
                                                 <>
                                                     <p className="mt-2 text-sm">
-                                                        {item.assets.total} <Stage3Text k="stage3.ui.aset.bcfee" />{' '}
+                                                        {item.assets.total}{' '}
+                                                        <Stage3Text k="stage3.ui.aset.bcfee" />{' '}
                                                         {item.assets.available}{' '}
                                                         <Stage3Text k="stage3.ui.tersedia.bdc84" />{' '}
                                                         {item.assets.rented}{' '}
@@ -538,7 +627,8 @@ export default function ProductShow({
                                                     </p>
                                                     <p className="mt-1 text-xs text-muted-foreground">
                                                         Reservasi{' '}
-                                                        {item.assets.reserved} <Stage3Text k="stage3.ui.maintenance.7fb37" />{' '}
+                                                        {item.assets.reserved}{' '}
+                                                        <Stage3Text k="stage3.ui.maintenance.7fb37" />{' '}
                                                         {
                                                             item.assets
                                                                 .maintenance
@@ -591,9 +681,11 @@ export default function ProductShow({
                             <Card className="border-destructive/30">
                                 <CardHeader>
                                     <CardTitle className="text-base">
-                                        <Stage3Text k="stage3.ui.arsipkan.produk.2d468" /></CardTitle>
+                                        <Stage3Text k="stage3.ui.arsipkan.produk.2d468" />
+                                    </CardTitle>
                                     <CardDescription>
-                                        <Stage3Text k="stage3.ui.ditolak.otomatis.bila.masih.dipakai.aset.paket.b1153" /></CardDescription>
+                                        <Stage3Text k="stage3.ui.ditolak.otomatis.bila.masih.dipakai.aset.paket.b1153" />
+                                    </CardDescription>
                                 </CardHeader>
                                 <CardContent>
                                     <Button
@@ -616,7 +708,8 @@ export default function ProductShow({
                                         }}
                                     >
                                         <Trash2 />
-                                        <Stage3Text k="stage3.ui.arsipkan.produk.2d468" /></Button>
+                                        <Stage3Text k="stage3.ui.arsipkan.produk.2d468" />
+                                    </Button>
                                 </CardContent>
                             </Card>
                         )}
@@ -694,9 +787,12 @@ function EmptyRates() {
     return (
         <div className="py-14 text-center">
             <CircleDollarSign className="mx-auto size-9 text-muted-foreground" />
-            <p className="mt-4 font-medium"><Stage3Text k="stage3.ui.produk.belum.memiliki.harga.6b4a5" /></p>
+            <p className="mt-4 font-medium">
+                <Stage3Text k="stage3.ui.produk.belum.memiliki.harga.6b4a5" />
+            </p>
             <p className="mt-1 text-sm text-muted-foreground">
-                <Stage3Text k="stage3.ui.tambahkan.harga.berdasarkan.rate.plan.dan.scope.14f3a" /></p>
+                <Stage3Text k="stage3.ui.tambahkan.harga.berdasarkan.rate.plan.dan.scope.14f3a" />
+            </p>
         </div>
     );
 }
@@ -711,7 +807,9 @@ function ProductErrors({ errors }: { errors: Record<string, string> }) {
     return (
         <Alert variant="destructive">
             <CircleOff />
-            <AlertTitle><Stage3Text k="stage3.ui.perubahan.produk.ditolak.ac6ba" /></AlertTitle>
+            <AlertTitle>
+                <Stage3Text k="stage3.ui.perubahan.produk.ditolak.ac6ba" />
+            </AlertTitle>
             <AlertDescription>{message}</AlertDescription>
         </Alert>
     );

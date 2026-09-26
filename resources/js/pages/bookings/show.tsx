@@ -1,7 +1,12 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { ArrowLeft, CheckCircle2, LogOut, Pencil, XCircle } from 'lucide-react';
 import { useState } from 'react';
-import { Stage4Text, stage4Translate, stage4FormatDateTime, stage4TranslateDynamic } from '@/components/stage4-text';
+import {
+    Stage4Text,
+    stage4Translate,
+    stage4FormatDateTime,
+    stage4TranslateDynamic,
+} from '@/components/stage4-text';
 import { useAppLocale } from '@/lib/i18n';
 import { TransactionDocumentActions } from '@/components/documents/transaction-document-actions';
 import { CashSessionSelect } from '@/components/finance/cash-session-select';
@@ -85,24 +90,33 @@ export default function BookingShow({
                     <div>
                         <Button variant="ghost" size="sm" asChild>
                             <Link href="/bookings">
-                                <ArrowLeft /><Stage4Text k="stage4.ui.5cd285282368" />
+                                <ArrowLeft />
+                                <Stage4Text k="stage4.ui.5cd285282368" />
                             </Link>
                         </Button>
                         <div className="mt-3 flex items-center gap-3">
                             <h1 className="text-2xl font-semibold">
                                 {booking.booking_number}
                             </h1>
-                            <Badge>{stage4TranslateDynamic(booking.status, stage4Locale)}</Badge>
+                            <Badge>
+                                {stage4TranslateDynamic(
+                                    booking.status,
+                                    stage4Locale,
+                                )}
+                            </Badge>
                         </div>
                         <p className="mt-2 text-sm text-muted-foreground">
-                            {booking.branch?.name}<Stage4Text k="stage4.ui.e21a079b3a50" /> {booking.customer?.name}
+                            {booking.branch?.name}
+                            <Stage4Text k="stage4.ui.e21a079b3a50" />{' '}
+                            {booking.customer?.name}
                         </p>
                     </div>
                     <div className="flex gap-2">
                         {permissions.update && booking.status === 'draft' && (
                             <Button variant="outline" asChild>
                                 <Link href={`/bookings/${booking.id}/edit`}>
-                                    <Pencil /><Stage4Text k="stage4.ui.5301648dcf6b" />
+                                    <Pencil />
+                                    <Stage4Text k="stage4.ui.5301648dcf6b" />
                                 </Link>
                             </Button>
                         )}
@@ -112,7 +126,8 @@ export default function BookingShow({
                                     <Link
                                         href={`/rentals/checkout/${booking.id}`}
                                     >
-                                        <LogOut /><Stage4Text k="stage4.ui.e52caf59c035" />
+                                        <LogOut />
+                                        <Stage4Text k="stage4.ui.e52caf59c035" />
                                     </Link>
                                 </Button>
                             )}
@@ -124,18 +139,25 @@ export default function BookingShow({
                                     )
                                 }
                             >
-                                <CheckCircle2 /><Stage4Text k="stage4.ui.67b7bd6433f2" />
+                                <CheckCircle2 />
+                                <Stage4Text k="stage4.ui.67b7bd6433f2" />
                             </Button>
                         )}
                     </div>
                 </header>
 
-                <TransactionDocumentActions sourceType="booking" sourceReference={booking.booking_number} />
+                <TransactionDocumentActions
+                    sourceType="booking"
+                    sourceReference={booking.booking_number}
+                />
                 {booking.status === 'expired' && (
                     <Alert variant="destructive">
                         <XCircle className="size-4" />
-                        <AlertTitle><Stage4Text k="stage4.ui.8be837ad9fff" /></AlertTitle>
-                        <AlertDescription><Stage4Text k="stage4.ui.d3aebf2e6cd3" />
+                        <AlertTitle>
+                            <Stage4Text k="stage4.ui.8be837ad9fff" />
+                        </AlertTitle>
+                        <AlertDescription>
+                            <Stage4Text k="stage4.ui.d3aebf2e6cd3" />
                         </AlertDescription>
                     </Alert>
                 )}
@@ -143,28 +165,51 @@ export default function BookingShow({
                 <section className="grid gap-4 lg:grid-cols-3">
                     <Card>
                         <CardHeader>
-                            <CardTitle><Stage4Text k="stage4.ui.92d937165b09" /></CardTitle>
+                            <CardTitle>
+                                <Stage4Text k="stage4.ui.92d937165b09" />
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-2 text-sm">
                             <p>
-                                <b><Stage4Text k="stage4.ui.328767d2bead" /></b>{' '}
-                                {stage4FormatDateTime(new Date(booking.starts_at), stage4Locale)}
+                                <b>
+                                    <Stage4Text k="stage4.ui.328767d2bead" />
+                                </b>{' '}
+                                {stage4FormatDateTime(
+                                    new Date(booking.starts_at),
+                                    stage4Locale,
+                                )}
                             </p>
                             <p>
-                                <b><Stage4Text k="stage4.ui.44a01a73b05e" /></b>{' '}
-                                {stage4FormatDateTime(new Date(booking.ends_at), stage4Locale)}
+                                <b>
+                                    <Stage4Text k="stage4.ui.44a01a73b05e" />
+                                </b>{' '}
+                                {stage4FormatDateTime(
+                                    new Date(booking.ends_at),
+                                    stage4Locale,
+                                )}
                             </p>
                             <p>
-                                <b><Stage4Text k="stage4.ui.0fb712917439" /></b> {stage4TranslateDynamic(booking.source, stage4Locale)}
+                                <b>
+                                    <Stage4Text k="stage4.ui.0fb712917439" />
+                                </b>{' '}
+                                {stage4TranslateDynamic(
+                                    booking.source,
+                                    stage4Locale,
+                                )}
                             </p>
                             <p>
-                                <b><Stage4Text k="stage4.ui.cf6b5fa84600" /></b> {booking.rate_plan?.name}
+                                <b>
+                                    <Stage4Text k="stage4.ui.cf6b5fa84600" />
+                                </b>{' '}
+                                {booking.rate_plan?.name}
                             </p>
                         </CardContent>
                     </Card>
                     <Card>
                         <CardHeader>
-                            <CardTitle><Stage4Text k="stage4.ui.af0ab4433946" /></CardTitle>
+                            <CardTitle>
+                                <Stage4Text k="stage4.ui.af0ab4433946" />
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-2 text-sm">
                             <p className="font-medium">
@@ -172,21 +217,30 @@ export default function BookingShow({
                             </p>
                             <p>{booking.customer?.customer_number}</p>
                             <p>{booking.customer?.phone || '-'}</p>
-                            <p><Stage4Text k="stage4.ui.9511746039e4" /> {booking.customer?.risk_level || '-'}</p>
+                            <p>
+                                <Stage4Text k="stage4.ui.9511746039e4" />{' '}
+                                {booking.customer?.risk_level || '-'}
+                            </p>
                         </CardContent>
                     </Card>
                     <Card>
                         <CardHeader>
-                            <CardTitle><Stage4Text k="stage4.ui.c88d9cec0c60" /></CardTitle>
+                            <CardTitle>
+                                <Stage4Text k="stage4.ui.c88d9cec0c60" />
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-2 text-sm">
                             <p className="flex justify-between">
-                                <span><Stage4Text k="stage4.ui.97f7359ed801" /></span>
+                                <span>
+                                    <Stage4Text k="stage4.ui.97f7359ed801" />
+                                </span>
                                 <b>{money.format(Number(booking.subtotal))}</b>
                             </p>
                             {Number(booking.discount_amount) > 0 && (
                                 <p className="flex justify-between text-emerald-600">
-                                    <span><Stage4Text k="stage4.ui.6cc10ed56760" /></span>
+                                    <span>
+                                        <Stage4Text k="stage4.ui.6cc10ed56760" />
+                                    </span>
                                     <b>
                                         -
                                         {money.format(
@@ -197,17 +251,22 @@ export default function BookingShow({
                             )}
                             {booking.promotion && (
                                 <p className="flex justify-between text-muted-foreground">
-                                    <span><Stage4Text k="stage4.ui.e0f4f87da3de" /></span>
+                                    <span>
+                                        <Stage4Text k="stage4.ui.e0f4f87da3de" />
+                                    </span>
                                     <b>{booking.promotion.code}</b>
                                 </p>
                             )}
                             {!booking.promotion &&
                                 booking.customer?.is_member && (
-                                    <p className="text-xs text-muted-foreground"><Stage4Text k="stage4.ui.1f1cdd5cc4c9" />
+                                    <p className="text-xs text-muted-foreground">
+                                        <Stage4Text k="stage4.ui.1f1cdd5cc4c9" />
                                     </p>
                                 )}
                             <p className="flex justify-between">
-                                <span><Stage4Text k="stage4.ui.51d7d22341f4" /></span>
+                                <span>
+                                    <Stage4Text k="stage4.ui.51d7d22341f4" />
+                                </span>
                                 <b>
                                     {money.format(
                                         Number(booking.deposit_required),
@@ -215,29 +274,43 @@ export default function BookingShow({
                                 </b>
                             </p>
                             <p className="flex justify-between border-t pt-2 text-base">
-                                <span><Stage4Text k="stage4.ui.b25928c69902" /></span>
+                                <span>
+                                    <Stage4Text k="stage4.ui.b25928c69902" />
+                                </span>
                                 <b>
                                     {money.format(Number(booking.total_amount))}
                                 </b>
                             </p>
                             <p className="flex justify-between text-emerald-600">
-                                <span><Stage4Text k="stage4.ui.ccc4b12e0fb8" /></span>
+                                <span>
+                                    <Stage4Text k="stage4.ui.ccc4b12e0fb8" />
+                                </span>
                                 <b>
                                     {money.format(financialSummary.rental_paid)}
                                 </b>
                             </p>
                             {financialSummary.rental_refunded > 0 && (
                                 <p className="flex justify-between text-xs text-amber-700 dark:text-amber-400">
-                                    <span><Stage4Text k="stage4.ui.37510868761e" /></span>
-                                    <span>{money.format(financialSummary.rental_refunded)}</span>
+                                    <span>
+                                        <Stage4Text k="stage4.ui.37510868761e" />
+                                    </span>
+                                    <span>
+                                        {money.format(
+                                            financialSummary.rental_refunded,
+                                        )}
+                                    </span>
                                 </p>
                             )}
                             <p className="flex justify-between font-semibold">
-                                <span><Stage4Text k="stage4.ui.c0fd40e41b59" /></span>
+                                <span>
+                                    <Stage4Text k="stage4.ui.c0fd40e41b59" />
+                                </span>
                                 <b>{money.format(balanceDue)}</b>
                             </p>
                             <p className="flex justify-between text-muted-foreground">
-                                <span><Stage4Text k="stage4.ui.6f4d4e48915f" /></span>
+                                <span>
+                                    <Stage4Text k="stage4.ui.6f4d4e48915f" />
+                                </span>
                                 <b>
                                     {money.format(
                                         financialSummary.deposit_paid,
@@ -249,7 +322,9 @@ export default function BookingShow({
                 </section>
                 <Card>
                     <CardHeader>
-                        <CardTitle><Stage4Text k="stage4.ui.8d3fc7602767" /></CardTitle>
+                        <CardTitle>
+                            <Stage4Text k="stage4.ui.8d3fc7602767" />
+                        </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         {booking.items.map((item) => (
@@ -263,7 +338,8 @@ export default function BookingShow({
                                             {item.description}
                                         </p>
                                         <p className="text-sm text-muted-foreground">
-                                            {item.quantity}<Stage4Text k="stage4.ui.ee75f098d581" />{' '}
+                                            {item.quantity}
+                                            <Stage4Text k="stage4.ui.ee75f098d581" />{' '}
                                             {money.format(
                                                 Number(item.unit_rate),
                                             )}
@@ -276,18 +352,30 @@ export default function BookingShow({
                                     </b>
                                 </div>
                                 <div className="mt-3 flex flex-wrap gap-2">
-                                    {item.bulk_reservations?.map((reservation) => (
-                                        <Badge key={`bulk-${reservation.id}`} variant="secondary">
-                                            {reservation.product.name}<Stage4Text k="stage4.ui.7ed3a04cc02c" /> {reservation.quantity}<Stage4Text k="stage4.ui.0df9eea0bad5" />
-                                        </Badge>
-                                    ))}
+                                    {item.bulk_reservations?.map(
+                                        (reservation) => (
+                                            <Badge
+                                                key={`bulk-${reservation.id}`}
+                                                variant="secondary"
+                                            >
+                                                {reservation.product.name}
+                                                <Stage4Text k="stage4.ui.7ed3a04cc02c" />{' '}
+                                                {reservation.quantity}
+                                                <Stage4Text k="stage4.ui.0df9eea0bad5" />
+                                            </Badge>
+                                        ),
+                                    )}
                                     {item.reservations?.map((reservation) => (
                                         <Badge
                                             key={reservation.id}
                                             variant="secondary"
                                         >
-                                            {reservation.asset.asset_code}<Stage4Text k="stage4.ui.e21a079b3a50" />{' '}
-                                            {stage4TranslateDynamic(reservation.asset.condition, stage4Locale)}
+                                            {reservation.asset.asset_code}
+                                            <Stage4Text k="stage4.ui.e21a079b3a50" />{' '}
+                                            {stage4TranslateDynamic(
+                                                reservation.asset.condition,
+                                                stage4Locale,
+                                            )}
                                         </Badge>
                                     ))}
                                 </div>
@@ -298,7 +386,9 @@ export default function BookingShow({
                 <div className="grid gap-4 lg:grid-cols-2">
                     <Card>
                         <CardHeader>
-                            <CardTitle><Stage4Text k="stage4.ui.03d06fe851ed" /></CardTitle>
+                            <CardTitle>
+                                <Stage4Text k="stage4.ui.03d06fe851ed" />
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-3">
                             {booking.payments?.length ? (
@@ -310,11 +400,18 @@ export default function BookingShow({
                                         <div>
                                             <p className="font-medium">
                                                 {payment.type === 'deposit'
-                                                    ? stage4Translate("stage4.ui.8aa57d61dfa3", stage4Locale)
-                                                    : stage4Translate("stage4.ui.855413f32255", stage4Locale)}
+                                                    ? stage4Translate(
+                                                          'stage4.ui.8aa57d61dfa3',
+                                                          stage4Locale,
+                                                      )
+                                                    : stage4Translate(
+                                                          'stage4.ui.855413f32255',
+                                                          stage4Locale,
+                                                      )}
                                             </p>
                                             <p className="text-muted-foreground">
-                                                {payment.payment_number}<Stage4Text k="stage4.ui.e21a079b3a50" />{' '}
+                                                {payment.payment_number}
+                                                <Stage4Text k="stage4.ui.e21a079b3a50" />{' '}
                                                 {payment.payment_method?.name ??
                                                     '-'}
                                             </p>
@@ -328,16 +425,21 @@ export default function BookingShow({
                                             {payment.refunds
                                                 ?.filter(
                                                     (refund) =>
-                                                        refund.status === 'paid',
+                                                        refund.status ===
+                                                        'paid',
                                                 )
                                                 .map((refund) => (
                                                     <p
                                                         key={refund.id}
                                                         className="text-xs text-amber-700 dark:text-amber-400"
-                                                    ><Stage4Text k="stage4.ui.e17c8ad0dc2e" /> {refund.refund_number}
-                                                        : -
+                                                    >
+                                                        <Stage4Text k="stage4.ui.e17c8ad0dc2e" />{' '}
+                                                        {refund.refund_number}:
+                                                        -
                                                         {money.format(
-                                                            Number(refund.amount),
+                                                            Number(
+                                                                refund.amount,
+                                                            ),
                                                         )}
                                                     </p>
                                                 ))}
@@ -345,7 +447,8 @@ export default function BookingShow({
                                     </div>
                                 ))
                             ) : (
-                                <p className="text-sm text-muted-foreground"><Stage4Text k="stage4.ui.b1f156bad5b7" />
+                                <p className="text-sm text-muted-foreground">
+                                    <Stage4Text k="stage4.ui.b1f156bad5b7" />
                                 </p>
                             )}
                         </CardContent>
@@ -355,7 +458,9 @@ export default function BookingShow({
                         (balanceDue > 0 || depositDue > 0) && (
                             <Card>
                                 <CardHeader>
-                                    <CardTitle><Stage4Text k="stage4.ui.89ceb3850e02" /></CardTitle>
+                                    <CardTitle>
+                                        <Stage4Text k="stage4.ui.89ceb3850e02" />
+                                    </CardTitle>
                                 </CardHeader>
                                 <CardContent>
                                     <form
@@ -373,7 +478,7 @@ export default function BookingShow({
                                         }}
                                     >
                                         <RupiahInput
-                                            placeholder={`${stage4Translate("stage4.ui.c0fd40e41b59", stage4Locale)} ${money.format(balanceDue)}`}
+                                            placeholder={`${stage4Translate('stage4.ui.c0fd40e41b59', stage4Locale)} ${money.format(balanceDue)}`}
                                             value={
                                                 paymentForm.data.payment_amount
                                             }
@@ -413,7 +518,12 @@ export default function BookingShow({
                                             }}
                                         >
                                             <SelectTrigger>
-                                                <SelectValue placeholder={stage4Translate("stage4.ui.53eb1a623ade", stage4Locale)} />
+                                                <SelectValue
+                                                    placeholder={stage4Translate(
+                                                        'stage4.ui.53eb1a623ade',
+                                                        stage4Locale,
+                                                    )}
+                                                />
                                             </SelectTrigger>
                                             <SelectContent>
                                                 {paymentMethods.map(
@@ -453,7 +563,10 @@ export default function BookingShow({
                                             }
                                         />
                                         <Input
-                                            placeholder={stage4Translate("stage4.ui.e657fd4a7334", stage4Locale)}
+                                            placeholder={stage4Translate(
+                                                'stage4.ui.e657fd4a7334',
+                                                stage4Locale,
+                                            )}
                                             value={
                                                 paymentForm.data
                                                     .payment_reference
@@ -467,7 +580,8 @@ export default function BookingShow({
                                         />
                                         <Button
                                             disabled={paymentForm.processing}
-                                        ><Stage4Text k="stage4.ui.a24f4a17df98" />
+                                        >
+                                            <Stage4Text k="stage4.ui.a24f4a17df98" />
                                         </Button>
                                     </form>
                                 </CardContent>
@@ -477,7 +591,9 @@ export default function BookingShow({
                 <div className="grid gap-4 lg:grid-cols-2">
                     <Card>
                         <CardHeader>
-                            <CardTitle><Stage4Text k="stage4.ui.b4a4bddfcda6" /></CardTitle>
+                            <CardTitle>
+                                <Stage4Text k="stage4.ui.b4a4bddfcda6" />
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-3">
                             {booking.status_histories?.map((history) => (
@@ -486,11 +602,29 @@ export default function BookingShow({
                                     className="border-l-2 pl-3 text-sm"
                                 >
                                     <p className="font-medium">
-                                        {history.from_status ? stage4TranslateDynamic(history.from_status, stage4Locale) : stage4Translate("stage4.ui.99bc6e24bcd6", stage4Locale)} {"→"} {stage4TranslateDynamic(history.to_status, stage4Locale)}
+                                        {history.from_status
+                                            ? stage4TranslateDynamic(
+                                                  history.from_status,
+                                                  stage4Locale,
+                                              )
+                                            : stage4Translate(
+                                                  'stage4.ui.99bc6e24bcd6',
+                                                  stage4Locale,
+                                              )}{' '}
+                                        {'→'}{' '}
+                                        {stage4TranslateDynamic(
+                                            history.to_status,
+                                            stage4Locale,
+                                        )}
                                     </p>
                                     <p className="text-muted-foreground">
-                                        {history.reason}<Stage4Text k="stage4.ui.e21a079b3a50" />{' '}
-                                        {history.changer?.name ?? stage4Translate("stage4.ui.991f31a64b52", stage4Locale)}
+                                        {history.reason}
+                                        <Stage4Text k="stage4.ui.e21a079b3a50" />{' '}
+                                        {history.changer?.name ??
+                                            stage4Translate(
+                                                'stage4.ui.991f31a64b52',
+                                                stage4Locale,
+                                            )}
                                     </p>
                                 </div>
                             ))}
@@ -499,12 +633,17 @@ export default function BookingShow({
                     {permissions.cancel && active && (
                         <Card>
                             <CardHeader>
-                                <CardTitle><Stage4Text k="stage4.ui.8a24cedef3d0" /></CardTitle>
+                                <CardTitle>
+                                    <Stage4Text k="stage4.ui.8a24cedef3d0" />
+                                </CardTitle>
                             </CardHeader>
                             <CardContent className="space-y-3">
                                 <textarea
                                     className="min-h-24 w-full rounded-md border bg-transparent p-3 text-sm"
-                                    placeholder={stage4Translate("stage4.ui.ee41545fc5ae", stage4Locale)}
+                                    placeholder={stage4Translate(
+                                        'stage4.ui.ee41545fc5ae',
+                                        stage4Locale,
+                                    )}
                                     value={reason}
                                     onChange={(event) =>
                                         setReason(event.target.value)
@@ -528,7 +667,8 @@ export default function BookingShow({
                                         )
                                     }
                                 >
-                                    <XCircle /><Stage4Text k="stage4.ui.9bd9e72193c2" />
+                                    <XCircle />
+                                    <Stage4Text k="stage4.ui.9bd9e72193c2" />
                                 </Button>
                             </CardContent>
                         </Card>

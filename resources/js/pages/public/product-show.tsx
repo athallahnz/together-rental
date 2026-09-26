@@ -13,7 +13,10 @@ import ProductCard from '@/components/public/product-card';
 import PublicShell from '@/components/public/public-shell';
 import { useAppLocale } from '@/lib/i18n';
 import { formatMoney } from '@/lib/locale-format';
-import { publicAvailabilityLabel, publicRateDurationLabel } from '@/lib/public-i18n';
+import {
+    publicAvailabilityLabel,
+    publicRateDurationLabel,
+} from '@/lib/public-i18n';
 import type { PublicBranch, PublicProduct, PublicProductDetail } from '@/types';
 
 type Props = {
@@ -97,7 +100,8 @@ export default function PublicProductShow({
                             }
                             className="inline-flex items-center gap-2 text-sm font-medium text-neutral-500 transition hover:text-neutral-950"
                         >
-                            <ArrowLeft className="size-4" /> {tr('public.detail.back')}
+                            <ArrowLeft className="size-4" />{' '}
+                            {tr('public.detail.back')}
                         </Link>
                     </div>
                 </section>
@@ -154,14 +158,18 @@ export default function PublicProductShow({
                                 }`}
                             >
                                 <CheckCircle2 className="size-3.5" />{' '}
-                                {publicAvailabilityLabel(product.availability.status, locale)}
+                                {publicAvailabilityLabel(
+                                    product.availability.status,
+                                    locale,
+                                )}
                             </span>
                         </div>
 
                         <p className="mt-6 text-sm font-semibold tracking-[0.14em] text-neutral-400 uppercase">
                             {[product.brand, product.model]
                                 .filter(Boolean)
-                                .join(' · ') || tr('public.detail.product.equipment')}
+                                .join(' · ') ||
+                                tr('public.detail.product.equipment')}
                         </p>
                         <h1 className="mt-2 text-4xl leading-tight font-semibold tracking-[-0.045em] sm:text-6xl">
                             {product.name}
@@ -181,14 +189,17 @@ export default function PublicProductShow({
                                     <p className="mt-1 text-2xl font-semibold">
                                         {product.starting_price !== null
                                             ? formatMoney(
-                                                  product.starting_price, locale,
+                                                  product.starting_price,
+                                                  locale,
                                               )
                                             : tr('public.common.contactAdmin')}
                                     </p>
                                 </div>
                                 <div className="text-right">
                                     <p className="text-xs text-neutral-500">
-                                        {tr('public.detail.product.availableUnits')}
+                                        {tr(
+                                            'public.detail.product.availableUnits',
+                                        )}
                                     </p>
                                     <p className="mt-1 font-semibold">
                                         {product.availability.available_units}{' '}
@@ -206,16 +217,23 @@ export default function PublicProductShow({
                                         >
                                             <p className="flex items-center gap-1 text-xs text-neutral-500">
                                                 <Clock3 className="size-3.5" />{' '}
-                                                {publicRateDurationLabel(rate.duration_label, locale)}
+                                                {publicRateDurationLabel(
+                                                    rate.duration_label,
+                                                    locale,
+                                                )}
                                             </p>
                                             <p className="mt-2 font-semibold">
-                                                {formatMoney(rate.amount, locale)}
+                                                {formatMoney(
+                                                    rate.amount,
+                                                    locale,
+                                                )}
                                             </p>
                                             {rate.deposit_amount > 0 && (
                                                 <p className="mt-1 text-[11px] text-neutral-400">
                                                     Deposit{' '}
                                                     {formatMoney(
-                                                        rate.deposit_amount, locale,
+                                                        rate.deposit_amount,
+                                                        locale,
                                                     )}
                                                 </p>
                                             )}
@@ -284,12 +302,18 @@ export default function PublicProductShow({
                                 </h2>
                                 <p className="mt-5 text-base leading-8 whitespace-pre-line text-neutral-500">
                                     {product.description ||
-                                        tr('public.detail.product.missingDetails')}
+                                        tr(
+                                            'public.detail.product.missingDetails',
+                                        )}
                                 </p>
                             </div>
                             {Object.keys(product.specifications).length > 0 && (
                                 <div className="rounded-[1.5rem] border border-black/7 p-6">
-                                    <p className="font-semibold">{tr('public.detail.product.specifications')}</p>
+                                    <p className="font-semibold">
+                                        {tr(
+                                            'public.detail.product.specifications',
+                                        )}
+                                    </p>
                                     <dl className="mt-5 divide-y divide-black/5">
                                         {Object.entries(
                                             product.specifications,

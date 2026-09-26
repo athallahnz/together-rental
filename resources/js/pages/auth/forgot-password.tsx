@@ -28,7 +28,9 @@ export default function ForgotPassword({ status }: { status?: string }) {
                     {({ processing, errors }) => (
                         <>
                             <div className="grid gap-2">
-                                <Label htmlFor="email">{tr('auth.email')}</Label>
+                                <Label htmlFor="email">
+                                    {tr('auth.email')}
+                                </Label>
                                 <Input
                                     id="email"
                                     type="email"
@@ -59,7 +61,9 @@ export default function ForgotPassword({ status }: { status?: string }) {
 
                 <div className="space-x-1 text-center text-sm text-muted-foreground">
                     <span>{tr('auth.forgot.back')}</span>
-                    <TextLink href={login()}>{tr('auth.login.submit')}</TextLink>
+                    <TextLink href={login()}>
+                        {tr('auth.login.submit')}
+                    </TextLink>
                 </div>
             </div>
         </>

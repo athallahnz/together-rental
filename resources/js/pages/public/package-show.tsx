@@ -10,7 +10,10 @@ import AvailabilityPlanner from '@/components/public/availability-planner';
 import PublicShell from '@/components/public/public-shell';
 import { useAppLocale } from '@/lib/i18n';
 import { formatMoney } from '@/lib/locale-format';
-import { publicAvailabilityLabel, publicRateDurationLabel } from '@/lib/public-i18n';
+import {
+    publicAvailabilityLabel,
+    publicRateDurationLabel,
+} from '@/lib/public-i18n';
 import type { PublicBranch, PublicPackageDetail } from '@/types';
 
 type Props = {
@@ -89,7 +92,8 @@ export default function PublicPackageShow({
                             }
                             className="inline-flex items-center gap-2 text-sm font-medium text-neutral-500 transition hover:text-neutral-950"
                         >
-                            <ArrowLeft className="size-4" /> {tr('public.detail.back')}
+                            <ArrowLeft className="size-4" />{' '}
+                            {tr('public.detail.back')}
                         </Link>
                     </div>
                 </section>
@@ -124,7 +128,10 @@ export default function PublicPackageShow({
                                 }`}
                             >
                                 <CheckCircle2 className="size-3.5" />{' '}
-                                {publicAvailabilityLabel(rentalPackage.availability.status, locale)}
+                                {publicAvailabilityLabel(
+                                    rentalPackage.availability.status,
+                                    locale,
+                                )}
                             </span>
                         </div>
                         <h1 className="mt-6 text-4xl leading-tight font-semibold tracking-[-0.045em] sm:text-6xl">
@@ -145,7 +152,8 @@ export default function PublicPackageShow({
                                     <p className="mt-1 text-2xl font-semibold">
                                         {rentalPackage.starting_price !== null
                                             ? formatMoney(
-                                                  rentalPackage.starting_price, locale,
+                                                  rentalPackage.starting_price,
+                                                  locale,
                                               )
                                             : tr('public.common.contactAdmin')}
                                     </p>
@@ -155,7 +163,8 @@ export default function PublicPackageShow({
                                         {tr('public.detail.package.included')}
                                     </p>
                                     <p className="mt-1 font-semibold">
-                                        {rentalPackage.items_count} {tr('public.common.items')}
+                                        {rentalPackage.items_count}{' '}
+                                        {tr('public.common.items')}
                                     </p>
                                 </div>
                             </div>
@@ -168,10 +177,16 @@ export default function PublicPackageShow({
                                         >
                                             <p className="flex items-center gap-1 text-xs text-neutral-500">
                                                 <Clock3 className="size-3.5" />{' '}
-                                                {publicRateDurationLabel(rate.duration_label, locale)}
+                                                {publicRateDurationLabel(
+                                                    rate.duration_label,
+                                                    locale,
+                                                )}
                                             </p>
                                             <p className="mt-2 font-semibold">
-                                                {formatMoney(rate.amount, locale)}
+                                                {formatMoney(
+                                                    rate.amount,
+                                                    locale,
+                                                )}
                                             </p>
                                         </div>
                                     ))}
@@ -239,9 +254,17 @@ export default function PublicPackageShow({
                                         </Link>
                                         <p className="mt-1 text-xs text-neutral-500">
                                             {item.is_optional
-                                                ? tr('public.detail.package.optional')
-                                                : tr('public.detail.package.mandatory')}{' '}
-                                            · {publicAvailabilityLabel(item.availability.status, locale)}
+                                                ? tr(
+                                                      'public.detail.package.optional',
+                                                  )
+                                                : tr(
+                                                      'public.detail.package.mandatory',
+                                                  )}{' '}
+                                            ·{' '}
+                                            {publicAvailabilityLabel(
+                                                item.availability.status,
+                                                locale,
+                                            )}
                                         </p>
                                     </div>
                                     <span className="rounded-full bg-neutral-100 px-3 py-1.5 text-xs font-semibold">

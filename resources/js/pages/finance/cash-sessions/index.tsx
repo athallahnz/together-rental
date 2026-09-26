@@ -6,7 +6,13 @@ import {
     History,
     WalletCards,
 } from 'lucide-react';
-import { stage5Choice, stage5Display, Stage5Text, stage5Date, stage5Money } from '@/components/stage5-text';
+import {
+    stage5Choice,
+    stage5Display,
+    Stage5Text,
+    stage5Date,
+    stage5Money,
+} from '@/components/stage5-text';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -54,7 +60,6 @@ type Props = {
 
 const money = { format: stage5Money };
 
-
 function formatMoney(value: string | number | null): string {
     return money.format(Number(value ?? 0));
 }
@@ -68,7 +73,9 @@ export default function CashSessionHistory({ cashRegister, sessions }: Props) {
 
     return (
         <>
-            <Head title={`${stage5Display('Riwayat Sesi Kas', stage5Locale)} ${cashRegister.code}`} />
+            <Head
+                title={`${stage5Display('Riwayat Sesi Kas', stage5Locale)} ${cashRegister.code}`}
+            />
             <div className="space-y-6 p-4 md:p-6">
                 <header className="flex flex-wrap items-start justify-between gap-4">
                     <div>
@@ -94,10 +101,22 @@ export default function CashSessionHistory({ cashRegister, sessions }: Props) {
                             </div>
                         </div>
                     </div>
-                    <Badge variant={cashRegister.is_active ? 'secondary' : 'outline'}>
+                    <Badge
+                        variant={
+                            cashRegister.is_active ? 'secondary' : 'outline'
+                        }
+                    >
                         {cashRegister.is_active
-                            ? stage5Choice('Kasir aktif', 'Active cash register', stage5Locale)
-                            : stage5Choice('Kasir nonaktif', 'Inactive cash register', stage5Locale)}
+                            ? stage5Choice(
+                                  'Kasir aktif',
+                                  'Active cash register',
+                                  stage5Locale,
+                              )
+                            : stage5Choice(
+                                  'Kasir nonaktif',
+                                  'Inactive cash register',
+                                  stage5Locale,
+                              )}
                     </Badge>
                 </header>
 
@@ -118,76 +137,129 @@ export default function CashSessionHistory({ cashRegister, sessions }: Props) {
                                 <table className="w-full min-w-[1050px] text-sm">
                                     <thead className="bg-muted/50 text-left text-xs text-muted-foreground">
                                         <tr>
-                                            <th className="px-4 py-3 font-medium"><Stage5Text k="stage5.ui.51340c1d0c10" /></th>
-                                            <th className="px-4 py-3 font-medium"><Stage5Text k="stage5.ui.374027752cd7" /></th>
-                                            <th className="px-4 py-3 font-medium"><Stage5Text k="stage5.ui.738b0b8e6254" /></th>
-                                            <th className="px-4 py-3 font-medium"><Stage5Text k="stage5.ui.6bda2a3e6b9d" /></th>
-                                            <th className="px-4 py-3 font-medium"><Stage5Text k="stage5.ui.75fe2e7ee821" /></th>
-                                            <th className="px-4 py-3 font-medium"><Stage5Text k="stage5.ui.1f4e4ee3de7a" /></th>
-                                            <th className="px-4 py-3 font-medium"><Stage5Text k="stage5.ui.8c5da973dcdb" /></th>
-                                            <th className="px-4 py-3 font-medium"><Stage5Text k="stage5.ui.2a0ab753352f" /></th>
-                                            <th className="px-4 py-3 font-medium"><Stage5Text k="stage5.ui.60ad46d8cab9" /></th>
+                                            <th className="px-4 py-3 font-medium">
+                                                <Stage5Text k="stage5.ui.51340c1d0c10" />
+                                            </th>
+                                            <th className="px-4 py-3 font-medium">
+                                                <Stage5Text k="stage5.ui.374027752cd7" />
+                                            </th>
+                                            <th className="px-4 py-3 font-medium">
+                                                <Stage5Text k="stage5.ui.738b0b8e6254" />
+                                            </th>
+                                            <th className="px-4 py-3 font-medium">
+                                                <Stage5Text k="stage5.ui.6bda2a3e6b9d" />
+                                            </th>
+                                            <th className="px-4 py-3 font-medium">
+                                                <Stage5Text k="stage5.ui.75fe2e7ee821" />
+                                            </th>
+                                            <th className="px-4 py-3 font-medium">
+                                                <Stage5Text k="stage5.ui.1f4e4ee3de7a" />
+                                            </th>
+                                            <th className="px-4 py-3 font-medium">
+                                                <Stage5Text k="stage5.ui.8c5da973dcdb" />
+                                            </th>
+                                            <th className="px-4 py-3 font-medium">
+                                                <Stage5Text k="stage5.ui.2a0ab753352f" />
+                                            </th>
+                                            <th className="px-4 py-3 font-medium">
+                                                <Stage5Text k="stage5.ui.60ad46d8cab9" />
+                                            </th>
                                         </tr>
                                     </thead>
                                     <tbody className="divide-y">
                                         {sessions.data.map((session) => (
-                                            <tr key={session.id} className="align-top">
+                                            <tr
+                                                key={session.id}
+                                                className="align-top"
+                                            >
                                                 <td className="px-4 py-3">
                                                     <div className="space-y-1">
                                                         <div className="flex items-center gap-2">
-                                                            <span className="font-medium">#{session.id}</span>
+                                                            <span className="font-medium">
+                                                                #{session.id}
+                                                            </span>
                                                             <Badge
                                                                 variant={
-                                                                    session.status === 'closed'
+                                                                    session.status ===
+                                                                    'closed'
                                                                         ? 'outline'
                                                                         : 'secondary'
                                                                 }
                                                             >
-                                                                {session.status === 'closed'
+                                                                {session.status ===
+                                                                'closed'
                                                                     ? 'Closed'
                                                                     : 'Open'}
                                                             </Badge>
                                                         </div>
                                                         <p className="text-xs text-muted-foreground">
-                                                            <Stage5Text k="stage5.ui.aad1a980791c" /> {session.opener?.name ?? '—'}
+                                                            <Stage5Text k="stage5.ui.aad1a980791c" />{' '}
+                                                            {session.opener
+                                                                ?.name ?? '—'}
                                                         </p>
                                                     </div>
                                                 </td>
                                                 <td className="px-4 py-3">
                                                     <div className="space-y-1">
-                                                        <span>{formatDate(session.opened_at)}</span>
+                                                        <span>
+                                                            {formatDate(
+                                                                session.opened_at,
+                                                            )}
+                                                        </span>
                                                         {session.closed_at && (
                                                             <p className="text-xs text-muted-foreground">
-                                                                <Stage5Text k="stage5.ui.06cde76b08c5" /> {formatDate(session.closed_at)}
+                                                                <Stage5Text k="stage5.ui.06cde76b08c5" />{' '}
+                                                                {formatDate(
+                                                                    session.closed_at,
+                                                                )}
                                                             </p>
                                                         )}
                                                     </div>
                                                 </td>
                                                 <td className="px-4 py-3 tabular-nums">
-                                                    {formatMoney(session.opening_balance)}
+                                                    {formatMoney(
+                                                        session.opening_balance,
+                                                    )}
                                                 </td>
                                                 <td className="px-4 py-3 tabular-nums">
-                                                    {formatMoney(session.incoming_total)}
+                                                    {formatMoney(
+                                                        session.incoming_total,
+                                                    )}
                                                 </td>
                                                 <td className="px-4 py-3 tabular-nums">
-                                                    {formatMoney(session.outgoing_total)}
+                                                    {formatMoney(
+                                                        session.outgoing_total,
+                                                    )}
                                                 </td>
                                                 <td className="px-4 py-3 tabular-nums">
-                                                    {formatMoney(session.expected_closing_balance)}
+                                                    {formatMoney(
+                                                        session.expected_closing_balance,
+                                                    )}
                                                 </td>
                                                 <td className="px-4 py-3 tabular-nums">
-                                                    {session.actual_closing_balance === null
+                                                    {session.actual_closing_balance ===
+                                                    null
                                                         ? '—'
-                                                        : formatMoney(session.actual_closing_balance)}
+                                                        : formatMoney(
+                                                              session.actual_closing_balance,
+                                                          )}
                                                 </td>
                                                 <td className="px-4 py-3 tabular-nums">
                                                     {session.status === 'closed'
-                                                        ? formatMoney(session.difference_amount)
+                                                        ? formatMoney(
+                                                              session.difference_amount,
+                                                          )
                                                         : '—'}
                                                 </td>
                                                 <td className="px-4 py-3">
-                                                    <Button size="sm" variant="outline" asChild>
-                                                        <Link href={`/finance/cash-sessions/${session.id}`}>
+                                                    <Button
+                                                        size="sm"
+                                                        variant="outline"
+                                                        asChild
+                                                    >
+                                                        <Link
+                                                            href={`/finance/cash-sessions/${session.id}`}
+                                                        >
                                                             <Stage5Text k="stage5.ui.7c9a7c0610c1" />
                                                             <ArrowRight className="size-4" />
                                                         </Link>

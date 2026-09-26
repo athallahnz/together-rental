@@ -20,15 +20,15 @@ export default function TwoFactorChallenge() {
 
     const authConfigContent = showRecoveryInput
         ? {
-            title: tr('auth.twoFactor.recoveryTitle'),
-            description: tr('auth.twoFactor.recoveryDescription'),
-            toggleText: tr('auth.twoFactor.useCode'),
-        }
+              title: tr('auth.twoFactor.recoveryTitle'),
+              description: tr('auth.twoFactor.recoveryDescription'),
+              toggleText: tr('auth.twoFactor.useCode'),
+          }
         : {
-            title: tr('auth.twoFactor.codeTitle'),
-            description: tr('auth.twoFactor.codeDescription'),
-            toggleText: tr('auth.twoFactor.useRecovery'),
-        };
+              title: tr('auth.twoFactor.codeTitle'),
+              description: tr('auth.twoFactor.codeDescription'),
+              toggleText: tr('auth.twoFactor.useRecovery'),
+          };
 
     setLayoutProps({
         title: authConfigContent.title,
@@ -59,7 +59,9 @@ export default function TwoFactorChallenge() {
                                     <Input
                                         name="recovery_code"
                                         type="text"
-                                        placeholder={tr('auth.twoFactor.recoveryPlaceholder')}
+                                        placeholder={tr(
+                                            'auth.twoFactor.recoveryPlaceholder',
+                                        )}
                                         autoFocus={showRecoveryInput}
                                         required
                                     />

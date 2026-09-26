@@ -68,19 +68,27 @@ function createFormatters(locale: AppLocale) {
     return {
         numberFormatter: new Intl.NumberFormat(intl),
         currencyFormatter: new Intl.NumberFormat(intl, {
-            style: 'currency', currency: 'IDR', maximumFractionDigits: 0,
+            style: 'currency',
+            currency: 'IDR',
+            maximumFractionDigits: 0,
         }),
         compactCurrencyFormatter: new Intl.NumberFormat(intl, {
-            style: 'currency', currency: 'IDR', notation: 'compact', maximumFractionDigits: 1,
+            style: 'currency',
+            currency: 'IDR',
+            notation: 'compact',
+            maximumFractionDigits: 1,
         }),
         timeFormatter: new Intl.DateTimeFormat(intl, {
-            hour: '2-digit', minute: '2-digit',
+            hour: '2-digit',
+            minute: '2-digit',
         }),
         dateTimeFormatter: new Intl.DateTimeFormat(intl, {
-            dateStyle: 'medium', timeStyle: 'short',
+            dateStyle: 'medium',
+            timeStyle: 'short',
         }),
         shortDateFormatter: new Intl.DateTimeFormat(intl, {
-            day: 'numeric', month: 'short',
+            day: 'numeric',
+            month: 'short',
         }),
     };
 }
@@ -96,29 +104,92 @@ function useDashboardLocale() {
     return { locale, tr, tp, ...formattersByLocale[locale] };
 }
 
-const actionCopy: Record<DashboardQuickAction['key'], { title: MessageKey; description: MessageKey }> = {
-    booking: { title: 'dashboard.action.booking.title', description: 'dashboard.action.booking.description' },
-    'direct-rental': { title: 'dashboard.action.direct-rental.title', description: 'dashboard.action.direct-rental.description' },
-    return: { title: 'dashboard.action.return.title', description: 'dashboard.action.return.description' },
-    payment: { title: 'dashboard.action.payment.title', description: 'dashboard.action.payment.description' },
-    transfer: { title: 'dashboard.action.transfer.title', description: 'dashboard.action.transfer.description' },
-    'stock-opname': { title: 'dashboard.action.stock-opname.title', description: 'dashboard.action.stock-opname.description' },
-    maintenance: { title: 'dashboard.action.maintenance.title', description: 'dashboard.action.maintenance.description' },
-    notification: { title: 'dashboard.action.notification.title', description: 'dashboard.action.notification.description' },
+const actionCopy: Record<
+    DashboardQuickAction['key'],
+    { title: MessageKey; description: MessageKey }
+> = {
+    booking: {
+        title: 'dashboard.action.booking.title',
+        description: 'dashboard.action.booking.description',
+    },
+    'direct-rental': {
+        title: 'dashboard.action.direct-rental.title',
+        description: 'dashboard.action.direct-rental.description',
+    },
+    return: {
+        title: 'dashboard.action.return.title',
+        description: 'dashboard.action.return.description',
+    },
+    payment: {
+        title: 'dashboard.action.payment.title',
+        description: 'dashboard.action.payment.description',
+    },
+    transfer: {
+        title: 'dashboard.action.transfer.title',
+        description: 'dashboard.action.transfer.description',
+    },
+    'stock-opname': {
+        title: 'dashboard.action.stock-opname.title',
+        description: 'dashboard.action.stock-opname.description',
+    },
+    maintenance: {
+        title: 'dashboard.action.maintenance.title',
+        description: 'dashboard.action.maintenance.description',
+    },
+    notification: {
+        title: 'dashboard.action.notification.title',
+        description: 'dashboard.action.notification.description',
+    },
 };
 
-const attentionCopy: Record<string, { title: MessageKey; description: MessageKey }> = {
-    'rental-overdue': { title: 'dashboard.attention.rental-overdue.title', description: 'dashboard.attention.rental-overdue.description' },
-    'rental-due-today': { title: 'dashboard.attention.rental-due-today.title', description: 'dashboard.attention.rental-due-today.description' },
-    'booking-pickup': { title: 'dashboard.attention.booking-pickup.title', description: 'dashboard.attention.booking-pickup.description' },
-    receivable: { title: 'dashboard.attention.receivable.title', description: 'dashboard.attention.receivable.description' },
-    'refund-approval': { title: 'dashboard.attention.refund-approval.title', description: 'dashboard.attention.refund-approval.description' },
-    'refund-payment': { title: 'dashboard.attention.refund-payment.title', description: 'dashboard.attention.refund-payment.description' },
-    'transfer-approval': { title: 'dashboard.attention.transfer-approval.title', description: 'dashboard.attention.transfer-approval.description' },
-    'transfer-dispatch': { title: 'dashboard.attention.transfer-dispatch.title', description: 'dashboard.attention.transfer-dispatch.description' },
-    'maintenance-open': { title: 'dashboard.attention.maintenance-open.title', description: 'dashboard.attention.maintenance-open.description' },
-    'inventory-approval': { title: 'dashboard.attention.inventory-approval.title', description: 'dashboard.attention.inventory-approval.description' },
-    'critical-notification': { title: 'dashboard.attention.critical-notification.title', description: 'dashboard.attention.critical-notification.description' },
+const attentionCopy: Record<
+    string,
+    { title: MessageKey; description: MessageKey }
+> = {
+    'rental-overdue': {
+        title: 'dashboard.attention.rental-overdue.title',
+        description: 'dashboard.attention.rental-overdue.description',
+    },
+    'rental-due-today': {
+        title: 'dashboard.attention.rental-due-today.title',
+        description: 'dashboard.attention.rental-due-today.description',
+    },
+    'booking-pickup': {
+        title: 'dashboard.attention.booking-pickup.title',
+        description: 'dashboard.attention.booking-pickup.description',
+    },
+    receivable: {
+        title: 'dashboard.attention.receivable.title',
+        description: 'dashboard.attention.receivable.description',
+    },
+    'refund-approval': {
+        title: 'dashboard.attention.refund-approval.title',
+        description: 'dashboard.attention.refund-approval.description',
+    },
+    'refund-payment': {
+        title: 'dashboard.attention.refund-payment.title',
+        description: 'dashboard.attention.refund-payment.description',
+    },
+    'transfer-approval': {
+        title: 'dashboard.attention.transfer-approval.title',
+        description: 'dashboard.attention.transfer-approval.description',
+    },
+    'transfer-dispatch': {
+        title: 'dashboard.attention.transfer-dispatch.title',
+        description: 'dashboard.attention.transfer-dispatch.description',
+    },
+    'maintenance-open': {
+        title: 'dashboard.attention.maintenance-open.title',
+        description: 'dashboard.attention.maintenance-open.description',
+    },
+    'inventory-approval': {
+        title: 'dashboard.attention.inventory-approval.title',
+        description: 'dashboard.attention.inventory-approval.description',
+    },
+    'critical-notification': {
+        title: 'dashboard.attention.critical-notification.title',
+        description: 'dashboard.attention.critical-notification.description',
+    },
 };
 
 const assetStatusCopy: Record<string, MessageKey> = {
@@ -213,13 +284,14 @@ const statusLabels: Record<string, MessageKey> = {
 
 function greeting(locale: AppLocale): string {
     const hour = new Date().getHours();
-    const key: MessageKey = hour < 11
-        ? 'dashboard.greeting.morning'
-        : hour < 15
-          ? 'dashboard.greeting.noon'
-          : hour < 18
-            ? 'dashboard.greeting.afternoon'
-            : 'dashboard.greeting.evening';
+    const key: MessageKey =
+        hour < 11
+            ? 'dashboard.greeting.morning'
+            : hour < 15
+              ? 'dashboard.greeting.noon'
+              : hour < 18
+                ? 'dashboard.greeting.afternoon'
+                : 'dashboard.greeting.evening';
 
     return translateKey(key, locale);
 }
@@ -229,7 +301,10 @@ function statusLabel(status: string, locale: AppLocale): string {
 
     return key
         ? translateKey(key, locale)
-        : status.split('_').map((part) => part.charAt(0).toUpperCase() + part.slice(1)).join(' ');
+        : status
+              .split('_')
+              .map((part) => part.charAt(0).toUpperCase() + part.slice(1))
+              .join(' ');
 }
 
 function Delta({ value }: { value: number | null }) {
@@ -257,7 +332,9 @@ function Delta({ value }: { value: number | null }) {
             )}
         >
             <Icon className="size-3.5" />
-            {tr('dashboard.delta.compare', { percent: numberFormatter.format(Math.abs(value)) })}
+            {tr('dashboard.delta.compare', {
+                percent: numberFormatter.format(Math.abs(value)),
+            })}
         </span>
     );
 }
@@ -280,7 +357,8 @@ export default function Dashboard({
 }: OperationalDashboardPageProps) {
     const { auth } = usePage().props;
     const { locale, tr, dateTimeFormatter } = useDashboardLocale();
-    const firstName = auth.user?.name?.trim().split(/\s+/)[0] ?? tr('dashboard.team');
+    const firstName =
+        auth.user?.name?.trim().split(/\s+/)[0] ?? tr('dashboard.team');
     const hasOperationalAccess = Object.values(visibility).some(Boolean);
 
     const changeBranch = (value: string) => {
@@ -345,7 +423,11 @@ export default function Dashboard({
                                 >
                                     <SelectTrigger className="h-10 w-full border-white/15 bg-white/10 text-white shadow-none hover:bg-white/15 sm:w-64 [&_svg]:text-slate-300">
                                         <Building2 className="size-4 text-sky-300" />
-                                        <SelectValue placeholder={tr('dashboard.selectBranch')} />
+                                        <SelectValue
+                                            placeholder={tr(
+                                                'dashboard.selectBranch',
+                                            )}
+                                        />
                                     </SelectTrigger>
                                     <SelectContent align="end">
                                         {scope.allow_all_branches && (
@@ -378,12 +460,23 @@ export default function Dashboard({
                     <div className="relative mt-5 flex flex-wrap items-center gap-x-4 gap-y-2 border-t border-white/10 pt-4 text-xs text-slate-300">
                         <span className="inline-flex items-center gap-1.5">
                             <Building2 className="size-3.5 text-sky-300" />
-                            {scope.is_company_scope && filters.branch_id === null ? tr('dashboard.allAccessibleBranches') : scope.label}
+                            {scope.is_company_scope &&
+                            filters.branch_id === null
+                                ? tr('dashboard.allAccessibleBranches')
+                                : scope.label}
                         </span>
                         <span className="hidden size-1 rounded-full bg-slate-500 sm:block" />
-                        <span>{tr('dashboard.analytics', { period: period.label })}</span>
+                        <span>
+                            {tr('dashboard.analytics', {
+                                period: period.label,
+                            })}
+                        </span>
                         <span className="hidden size-1 rounded-full bg-slate-500 sm:block" />
-                        <span>{tr('dashboard.comparison', { period: period.comparison_label })}</span>
+                        <span>
+                            {tr('dashboard.comparison', {
+                                period: period.comparison_label,
+                            })}
+                        </span>
                     </div>
                 </section>
 
@@ -505,7 +598,8 @@ function OverviewGrid({
     overview: DashboardOverview;
     periodLabel: string;
 }) {
-    const { tr, numberFormatter, currencyFormatter, compactCurrencyFormatter } = useDashboardLocale();
+    const { tr, numberFormatter, currencyFormatter, compactCurrencyFormatter } =
+        useDashboardLocale();
 
     return (
         <section
@@ -518,7 +612,11 @@ function OverviewGrid({
                     value={numberFormatter.format(overview.bookings_month)}
                     icon={CalendarCheck2}
                     iconClass="bg-sky-50 text-sky-600 dark:bg-sky-950/60 dark:text-sky-300"
-                    detail={tr('dashboard.metrics.conversion', { percent: numberFormatter.format(overview.booking_conversion_percent) })}
+                    detail={tr('dashboard.metrics.conversion', {
+                        percent: numberFormatter.format(
+                            overview.booking_conversion_percent,
+                        ),
+                    })}
                     footer={<Delta value={overview.bookings_change_percent} />}
                 />
             )}
@@ -528,7 +626,11 @@ function OverviewGrid({
                     value={numberFormatter.format(overview.active_rentals)}
                     icon={ShoppingBag}
                     iconClass="bg-indigo-50 text-indigo-600 dark:bg-indigo-950/60 dark:text-indigo-300"
-                    detail={tr('dashboard.metrics.dueToday', { count: numberFormatter.format(overview.due_today_rentals) })}
+                    detail={tr('dashboard.metrics.dueToday', {
+                        count: numberFormatter.format(
+                            overview.due_today_rentals,
+                        ),
+                    })}
                     footer={
                         <span
                             className={cn(
@@ -539,7 +641,11 @@ function OverviewGrid({
                             )}
                         >
                             {overview.overdue_rentals > 0
-                                ? tr('dashboard.metrics.overdue', { count: numberFormatter.format(overview.overdue_rentals) })
+                                ? tr('dashboard.metrics.overdue', {
+                                      count: numberFormatter.format(
+                                          overview.overdue_rentals,
+                                      ),
+                                  })
                                 : tr('dashboard.metrics.noOverdue')}
                         </span>
                     }
@@ -547,13 +653,19 @@ function OverviewGrid({
             )}
             {visibility.finance && (
                 <MetricCard
-                    title={tr('dashboard.metrics.netCash', { period: periodLabel })}
+                    title={tr('dashboard.metrics.netCash', {
+                        period: periodLabel,
+                    })}
                     value={compactCurrencyFormatter.format(
                         overview.net_revenue_month,
                     )}
                     icon={WalletCards}
                     iconClass="bg-violet-50 text-violet-600 dark:bg-violet-950/60 dark:text-violet-300"
-                    detail={tr('dashboard.metrics.receivables', { amount: currencyFormatter.format(overview.receivable_amount) })}
+                    detail={tr('dashboard.metrics.receivables', {
+                        amount: currencyFormatter.format(
+                            overview.receivable_amount,
+                        ),
+                    })}
                     footer={<Delta value={overview.revenue_change_percent} />}
                 />
             )}
@@ -563,10 +675,19 @@ function OverviewGrid({
                     value={`${numberFormatter.format(overview.asset_utilization_percent)}%`}
                     icon={Boxes}
                     iconClass="bg-emerald-50 text-emerald-600 dark:bg-emerald-950/60 dark:text-emerald-300"
-                    detail={tr('dashboard.metrics.assetSplit', { rented: numberFormatter.format(overview.asset_rented), available: numberFormatter.format(overview.asset_available) })}
+                    detail={tr('dashboard.metrics.assetSplit', {
+                        rented: numberFormatter.format(overview.asset_rented),
+                        available: numberFormatter.format(
+                            overview.asset_available,
+                        ),
+                    })}
                     footer={
                         <span className="text-xs text-muted-foreground">
-                            {tr('dashboard.metrics.assetTotal', { count: numberFormatter.format(overview.asset_total) })}
+                            {tr('dashboard.metrics.assetTotal', {
+                                count: numberFormatter.format(
+                                    overview.asset_total,
+                                ),
+                            })}
                         </span>
                     }
                 />
@@ -577,7 +698,11 @@ function OverviewGrid({
                     value={numberFormatter.format(overview.customer_total)}
                     icon={UsersRound}
                     iconClass="bg-cyan-50 text-cyan-600 dark:bg-cyan-950/60 dark:text-cyan-300"
-                    detail={tr('dashboard.metrics.newCustomers', { count: numberFormatter.format(overview.customer_new_this_month) })}
+                    detail={tr('dashboard.metrics.newCustomers', {
+                        count: numberFormatter.format(
+                            overview.customer_new_this_month,
+                        ),
+                    })}
                     footer={
                         <Link
                             href="/customers"
@@ -689,7 +814,9 @@ function AttentionRow({ item }: { item: DashboardAttentionItem }) {
                 <span className={cn('size-2 rounded-full', style.dot)} />
             </span>
             <div className="min-w-0 flex-1">
-                <p className="truncate text-sm font-medium">{copy ? tr(copy.title) : item.title}</p>
+                <p className="truncate text-sm font-medium">
+                    {copy ? tr(copy.title) : item.title}
+                </p>
                 <p className="mt-0.5 line-clamp-1 text-xs text-muted-foreground">
                     {copy ? tr(copy.description) : item.description}
                 </p>
@@ -777,7 +904,10 @@ function ScheduleRow({ item }: { item: DashboardScheduleItem }) {
                     </Badge>
                 </div>
                 <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                    {pickup ? tr('dashboard.schedule.pickup') : tr('dashboard.schedule.return')} · {item.number}
+                    {pickup
+                        ? tr('dashboard.schedule.pickup')
+                        : tr('dashboard.schedule.return')}{' '}
+                    · {item.number}
                 </p>
             </div>
             <div className="text-right">
@@ -914,7 +1044,13 @@ function OperationalTrendChart({ data }: { data: DashboardTrendPoint[] }) {
                                     vectorEffect="non-scaling-stroke"
                                 >
                                     <title>
-                                        {shortDateFormatter.format(new Date(`${point.date}T12:00:00`))}: {tr('dashboard.chart.tooltipBooking', { count: point.bookings })}
+                                        {shortDateFormatter.format(
+                                            new Date(`${point.date}T12:00:00`),
+                                        )}
+                                        :{' '}
+                                        {tr('dashboard.chart.tooltipBooking', {
+                                            count: point.bookings,
+                                        })}
                                     </title>
                                 </circle>
                                 <circle
@@ -926,7 +1062,13 @@ function OperationalTrendChart({ data }: { data: DashboardTrendPoint[] }) {
                                     vectorEffect="non-scaling-stroke"
                                 >
                                     <title>
-                                        {shortDateFormatter.format(new Date(`${point.date}T12:00:00`))}: {tr('dashboard.chart.tooltipRental', { count: point.rentals })}
+                                        {shortDateFormatter.format(
+                                            new Date(`${point.date}T12:00:00`),
+                                        )}
+                                        :{' '}
+                                        {tr('dashboard.chart.tooltipRental', {
+                                            count: point.rentals,
+                                        })}
                                     </title>
                                 </circle>
                                 {(index === 0 ||
@@ -938,7 +1080,9 @@ function OperationalTrendChart({ data }: { data: DashboardTrendPoint[] }) {
                                         textAnchor="middle"
                                         className="fill-muted-foreground text-[9px]"
                                     >
-                                        {shortDateFormatter.format(new Date(`${point.date}T12:00:00`))}
+                                        {shortDateFormatter.format(
+                                            new Date(`${point.date}T12:00:00`),
+                                        )}
                                     </text>
                                 )}
                             </g>
@@ -1016,7 +1160,11 @@ function AssetHealthPanel({
                                         assetStyles[item.key] ?? 'bg-slate-400',
                                     )}
                                 />
-                                <span className="truncate">{assetStatusCopy[item.key] ? tr(assetStatusCopy[item.key]) : item.label}</span>
+                                <span className="truncate">
+                                    {assetStatusCopy[item.key]
+                                        ? tr(assetStatusCopy[item.key])
+                                        : item.label}
+                                </span>
                             </span>
                             <span className="text-xs font-semibold tabular-nums">
                                 {numberFormatter.format(item.count)}
@@ -1036,7 +1184,8 @@ function BranchPerformanceTable({
     rows: DashboardBranchPerformance[];
     visibility: DashboardVisibility;
 }) {
-    const { tr, tp, numberFormatter, compactCurrencyFormatter } = useDashboardLocale();
+    const { tr, tp, numberFormatter, compactCurrencyFormatter } =
+        useDashboardLocale();
 
     return (
         <Card className="gap-0 overflow-hidden py-0 shadow-sm">
@@ -1064,7 +1213,9 @@ function BranchPerformanceTable({
                         <table className="w-full min-w-[680px] text-sm">
                             <thead>
                                 <tr className="border-b bg-muted/15 text-left text-[11px] font-medium tracking-wide text-muted-foreground uppercase">
-                                    <th className="px-5 py-3">{tr('dashboard.branch.column')}</th>
+                                    <th className="px-5 py-3">
+                                        {tr('dashboard.branch.column')}
+                                    </th>
                                     {visibility.bookings && (
                                         <th className="px-4 py-3 text-right">
                                             {tr('dashboard.chart.booking')}
@@ -1073,7 +1224,9 @@ function BranchPerformanceTable({
                                     {visibility.rentals && (
                                         <>
                                             <th className="px-4 py-3 text-right">
-                                                {tr('dashboard.metrics.activeRentals')}
+                                                {tr(
+                                                    'dashboard.metrics.activeRentals',
+                                                )}
                                             </th>
                                             <th className="px-4 py-3 text-right">
                                                 {tr('dashboard.branch.overdue')}
@@ -1139,7 +1292,9 @@ function BranchPerformanceTable({
                                         {visibility.assets && (
                                             <td className="px-4 py-4 text-right">
                                                 <span className="inline-flex min-w-14 justify-center rounded-full bg-muted px-2 py-1 text-xs font-semibold tabular-nums">
-                                                    {numberFormatter.format(row.utilization_percent)}
+                                                    {numberFormatter.format(
+                                                        row.utilization_percent,
+                                                    )}
                                                     %
                                                 </span>
                                             </td>
@@ -1197,7 +1352,8 @@ function RecentActivityPanel({ items }: { items: DashboardRecentActivity[] }) {
 }
 
 function ActivityRow({ item }: { item: DashboardRecentActivity }) {
-    const { locale, tr, compactCurrencyFormatter, dateTimeFormatter } = useDashboardLocale();
+    const { locale, tr, compactCurrencyFormatter, dateTimeFormatter } =
+        useDashboardLocale();
     const config: Record<
         DashboardRecentActivity['kind'],
         { icon: LucideIcon; label: string; className: string }
@@ -1247,7 +1403,8 @@ function ActivityRow({ item }: { item: DashboardRecentActivity }) {
                     </span>
                 </div>
                 <p className="mt-0.5 truncate text-xs text-muted-foreground">
-                    {current.label} · {item.number} · {statusLabel(item.status, locale)}
+                    {current.label} · {item.number} ·{' '}
+                    {statusLabel(item.status, locale)}
                 </p>
             </div>
             <div className="text-right">

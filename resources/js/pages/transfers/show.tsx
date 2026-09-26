@@ -13,7 +13,12 @@ import {
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import type { FormEvent, ReactNode } from 'react';
-import { Stage4Text, stage4Translate, stage4TranslateDynamic, stage4FormatDateTime } from '@/components/stage4-text';
+import {
+    Stage4Text,
+    stage4Translate,
+    stage4TranslateDynamic,
+    stage4FormatDateTime,
+} from '@/components/stage4-text';
 import { useAppLocale } from '@/lib/i18n';
 import type { AppLocale } from '@/lib/i18n';
 import { TransferActionDialog } from '@/components/transfers/transfer-action-dialog';
@@ -143,7 +148,9 @@ export default function TransferShow({
     const { locale: stage4Locale } = useAppLocale();
 
     const [approvalNote, setApprovalNote] = useState('');
-    const [rejectionSide, setRejectionSide] = useState<'origin' | 'destination' | null>(null);
+    const [rejectionSide, setRejectionSide] = useState<
+        'origin' | 'destination' | null
+    >(null);
     const [cancelOpen, setCancelOpen] = useState(false);
     const [dispatchOpen, setDispatchOpen] = useState(false);
     const [receivingOpen, setReceivingOpen] = useState(false);
@@ -391,9 +398,14 @@ export default function TransferShow({
                                 {transfer.transfer_number}
                             </h1>
                             <Badge variant="secondary">
-                                {stage4TranslateDynamic(statusLabels[transfer.status], stage4Locale)}
+                                {stage4TranslateDynamic(
+                                    statusLabels[transfer.status],
+                                    stage4Locale,
+                                )}
                             </Badge>
-                            <Badge variant="outline"><Stage4Text k="stage4.ui.ede67d8c2d61" /> {transfer.revision_number}
+                            <Badge variant="outline">
+                                <Stage4Text k="stage4.ui.ede67d8c2d61" />{' '}
+                                {transfer.revision_number}
                             </Badge>
                         </div>
                         <p className="mt-1 text-sm text-muted-foreground">
@@ -405,7 +417,8 @@ export default function TransferShow({
                         {canEdit && (
                             <Button variant="outline" asChild>
                                 <Link href={`/transfers/${transfer.id}/edit`}>
-                                    <Pencil className="size-4" /><Stage4Text k="stage4.ui.5301648dcf6b" />
+                                    <Pencil className="size-4" />
+                                    <Stage4Text k="stage4.ui.5301648dcf6b" />
                                 </Link>
                             </Button>
                         )}
@@ -420,7 +433,8 @@ export default function TransferShow({
                                     )
                                 }
                             >
-                                <Send className="size-4" /><Stage4Text k="stage4.ui.04974abb0b2f" />
+                                <Send className="size-4" />
+                                <Stage4Text k="stage4.ui.04974abb0b2f" />
                             </Button>
                         )}
                         {permissions.cancel &&
@@ -434,7 +448,8 @@ export default function TransferShow({
                                     variant="destructive"
                                     onClick={() => setCancelOpen(true)}
                                 >
-                                    <XCircle className="size-4" /><Stage4Text k="stage4.ui.dbe47c83d4ca" />
+                                    <XCircle className="size-4" />
+                                    <Stage4Text k="stage4.ui.dbe47c83d4ca" />
                                 </Button>
                             )}
                     </div>
@@ -443,8 +458,11 @@ export default function TransferShow({
                 {transfer.status === 'approved' && (
                     <Alert>
                         <ShieldCheck className="size-4" />
-                        <AlertTitle><Stage4Text k="stage4.ui.6daa152bd749" /></AlertTitle>
-                        <AlertDescription><Stage4Text k="stage4.ui.cd700891a30e" />
+                        <AlertTitle>
+                            <Stage4Text k="stage4.ui.6daa152bd749" />
+                        </AlertTitle>
+                        <AlertDescription>
+                            <Stage4Text k="stage4.ui.cd700891a30e" />
                         </AlertDescription>
                     </Alert>
                 )}
@@ -452,36 +470,71 @@ export default function TransferShow({
                 <div className="grid gap-4 lg:grid-cols-3">
                     <Card className="lg:col-span-2">
                         <CardHeader>
-                            <CardTitle><Stage4Text k="stage4.ui.bd75cc75e3f5" /></CardTitle>
+                            <CardTitle>
+                                <Stage4Text k="stage4.ui.bd75cc75e3f5" />
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="grid gap-4 sm:grid-cols-2">
                             <Detail
-                                label={stage4Translate("stage4.ui.e964366f3e5e", stage4Locale)}
+                                label={stage4Translate(
+                                    'stage4.ui.e964366f3e5e',
+                                    stage4Locale,
+                                )}
                                 value={`${transfer.origin_branch.code} — ${transfer.origin_branch.name}`}
                             />
                             <Detail
-                                label={stage4Translate("stage4.ui.33344a5c5d9e", stage4Locale)}
+                                label={stage4Translate(
+                                    'stage4.ui.33344a5c5d9e',
+                                    stage4Locale,
+                                )}
                                 value={`${transfer.destination_branch.code} — ${transfer.destination_branch.name}`}
                             />
                             <Detail
-                                label={stage4Translate("stage4.ui.00db17937f85", stage4Locale)}
-                                value={formatDate(transfer.planned_dispatch_at, stage4Locale)}
+                                label={stage4Translate(
+                                    'stage4.ui.00db17937f85',
+                                    stage4Locale,
+                                )}
+                                value={formatDate(
+                                    transfer.planned_dispatch_at,
+                                    stage4Locale,
+                                )}
                             />
                             <Detail
-                                label={stage4Translate("stage4.ui.60f3f737fe53", stage4Locale)}
-                                value={formatDate(transfer.expected_arrival_at, stage4Locale)}
+                                label={stage4Translate(
+                                    'stage4.ui.60f3f737fe53',
+                                    stage4Locale,
+                                )}
+                                value={formatDate(
+                                    transfer.expected_arrival_at,
+                                    stage4Locale,
+                                )}
                             />
                             <Detail
-                                label={stage4Translate("stage4.ui.01b4025580ce", stage4Locale)}
-                                value={formatDate(transfer.shipped_at, stage4Locale)}
+                                label={stage4Translate(
+                                    'stage4.ui.01b4025580ce',
+                                    stage4Locale,
+                                )}
+                                value={formatDate(
+                                    transfer.shipped_at,
+                                    stage4Locale,
+                                )}
                             />
                             <Detail
-                                label={stage4Translate("stage4.ui.0f68117c281f", stage4Locale)}
-                                value={formatDate(transfer.received_at, stage4Locale)}
+                                label={stage4Translate(
+                                    'stage4.ui.0f68117c281f',
+                                    stage4Locale,
+                                )}
+                                value={formatDate(
+                                    transfer.received_at,
+                                    stage4Locale,
+                                )}
                             />
                             <div className="sm:col-span-2">
                                 <Detail
-                                    label={stage4Translate("stage4.ui.3faa833b08be", stage4Locale)}
+                                    label={stage4Translate(
+                                        'stage4.ui.3faa833b08be',
+                                        stage4Locale,
+                                    )}
                                     value={transfer.reason ?? '-'}
                                 />
                             </div>
@@ -489,27 +542,44 @@ export default function TransferShow({
                     </Card>
                     <Card>
                         <CardHeader>
-                            <CardTitle><Stage4Text k="stage4.ui.f5064fda288a" /></CardTitle>
+                            <CardTitle>
+                                <Stage4Text k="stage4.ui.f5064fda288a" />
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-3 text-sm">
                             <Detail
-                                label={stage4Translate("stage4.ui.5ac33f2c588b", stage4Locale)}
+                                label={stage4Translate(
+                                    'stage4.ui.5ac33f2c588b',
+                                    stage4Locale,
+                                )}
                                 value={transfer.shipping_method ?? '-'}
                             />
                             <Detail
-                                label={stage4Translate("stage4.ui.b94cd6b63fe5", stage4Locale)}
+                                label={stage4Translate(
+                                    'stage4.ui.b94cd6b63fe5',
+                                    stage4Locale,
+                                )}
                                 value={transfer.courier_name ?? '-'}
                             />
                             <Detail
-                                label={stage4Translate("stage4.ui.79e4ec31d635", stage4Locale)}
+                                label={stage4Translate(
+                                    'stage4.ui.79e4ec31d635',
+                                    stage4Locale,
+                                )}
                                 value={transfer.vehicle_number ?? '-'}
                             />
                             <Detail
-                                label={stage4Translate("stage4.ui.2e3e14d67952", stage4Locale)}
+                                label={stage4Translate(
+                                    'stage4.ui.2e3e14d67952',
+                                    stage4Locale,
+                                )}
                                 value={transfer.waybill_number ?? '-'}
                             />
                             <Detail
-                                label={stage4Translate("stage4.ui.a0ecf956094b", stage4Locale)}
+                                label={stage4Translate(
+                                    'stage4.ui.a0ecf956094b',
+                                    stage4Locale,
+                                )}
                                 value={transfer.tracking_number ?? '-'}
                             />
                         </CardContent>
@@ -518,7 +588,9 @@ export default function TransferShow({
 
                 <Card>
                     <CardHeader>
-                        <CardTitle><Stage4Text k="stage4.ui.20005780c762" /></CardTitle>
+                        <CardTitle>
+                            <Stage4Text k="stage4.ui.20005780c762" />
+                        </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <Input
@@ -526,11 +598,17 @@ export default function TransferShow({
                             onChange={(event) =>
                                 setApprovalNote(event.target.value)
                             }
-                            placeholder={stage4Translate("stage4.ui.81834ddf2bf5", stage4Locale)}
+                            placeholder={stage4Translate(
+                                'stage4.ui.81834ddf2bf5',
+                                stage4Locale,
+                            )}
                         />
                         <div className="grid gap-4 md:grid-cols-2">
                             <ApprovalCard
-                                title={stage4Translate("stage4.ui.2101513a76e8", stage4Locale)}
+                                title={stage4Translate(
+                                    'stage4.ui.2101513a76e8',
+                                    stage4Locale,
+                                )}
                                 branch={transfer.origin_branch.name}
                                 approval={approvalFor('origin')}
                                 canDecide={
@@ -544,7 +622,10 @@ export default function TransferShow({
                                 onReject={() => decide('origin', 'rejected')}
                             />
                             <ApprovalCard
-                                title={stage4Translate("stage4.ui.6b0778ffe369", stage4Locale)}
+                                title={stage4Translate(
+                                    'stage4.ui.6b0778ffe369',
+                                    stage4Locale,
+                                )}
                                 branch={transfer.destination_branch.name}
                                 approval={approvalFor('destination')}
                                 canDecide={
@@ -566,16 +647,20 @@ export default function TransferShow({
 
                 <Card>
                     <CardHeader className="flex-row items-center justify-between">
-                        <CardTitle><Stage4Text k="stage4.ui.95dd71796388" /></CardTitle>
+                        <CardTitle>
+                            <Stage4Text k="stage4.ui.95dd71796388" />
+                        </CardTitle>
                         <div className="flex gap-2">
                             {canDispatch && (
                                 <Button onClick={openDispatch}>
-                                    <Truck className="size-4" /><Stage4Text k="stage4.ui.94a982b0c024" />
+                                    <Truck className="size-4" />
+                                    <Stage4Text k="stage4.ui.94a982b0c024" />
                                 </Button>
                             )}
                             {canReceive && activeItems.length > 0 && (
                                 <Button onClick={openReceiving}>
-                                    <PackageCheck className="size-4" /><Stage4Text k="stage4.ui.8a85d3beb823" />
+                                    <PackageCheck className="size-4" />
+                                    <Stage4Text k="stage4.ui.8a85d3beb823" />
                                 </Button>
                             )}
                         </div>
@@ -595,13 +680,16 @@ export default function TransferShow({
 
                 <Card>
                     <CardHeader className="flex-row items-center justify-between">
-                        <CardTitle><Stage4Text k="stage4.ui.56391d3a1143" /></CardTitle>
+                        <CardTitle>
+                            <Stage4Text k="stage4.ui.56391d3a1143" />
+                        </CardTitle>
                         {permissions.expense && (
                             <Button
                                 variant="outline"
                                 onClick={() => setExpenseOpen(true)}
                             >
-                                <CircleDollarSign className="size-4" /><Stage4Text k="stage4.ui.67bc484f09f1" />
+                                <CircleDollarSign className="size-4" />
+                                <Stage4Text k="stage4.ui.67bc484f09f1" />
                             </Button>
                         )}
                     </CardHeader>
@@ -617,7 +705,8 @@ export default function TransferShow({
                             />
                         ))}
                         {transfer.expenses.length === 0 && (
-                            <p className="text-sm text-muted-foreground"><Stage4Text k="stage4.ui.8878876ad5cb" />
+                            <p className="text-sm text-muted-foreground">
+                                <Stage4Text k="stage4.ui.8878876ad5cb" />
                             </p>
                         )}
                     </CardContent>
@@ -626,7 +715,9 @@ export default function TransferShow({
                 <div className="grid gap-4 lg:grid-cols-2">
                     <Card>
                         <CardHeader>
-                            <CardTitle><Stage4Text k="stage4.ui.a809e9504f2d" /></CardTitle>
+                            <CardTitle>
+                                <Stage4Text k="stage4.ui.a809e9504f2d" />
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-2">
                             {transfer.documents.map((document) => (
@@ -646,14 +737,17 @@ export default function TransferShow({
                                 </Button>
                             ))}
                             {transfer.documents.length === 0 && (
-                                <p className="text-sm text-muted-foreground"><Stage4Text k="stage4.ui.f0248b8272d2" />
+                                <p className="text-sm text-muted-foreground">
+                                    <Stage4Text k="stage4.ui.f0248b8272d2" />
                                 </p>
                             )}
                         </CardContent>
                     </Card>
                     <Card>
                         <CardHeader>
-                            <CardTitle><Stage4Text k="stage4.ui.a852bc8f3db3" /></CardTitle>
+                            <CardTitle>
+                                <Stage4Text k="stage4.ui.a852bc8f3db3" />
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-3">
                             {transfer.status_histories?.map((history) => (
@@ -662,15 +756,27 @@ export default function TransferShow({
                                     className="border-l-2 pl-3 text-sm"
                                 >
                                     <p className="font-medium">
-                                        {history.from_status ?? stage4Translate("stage4.ui.99bc6e24bcd6", stage4Locale)} →{' '}
-                                        {history.to_status}
+                                        {history.from_status ??
+                                            stage4Translate(
+                                                'stage4.ui.99bc6e24bcd6',
+                                                stage4Locale,
+                                            )}{' '}
+                                        → {history.to_status}
                                     </p>
                                     <p className="text-muted-foreground">
                                         {history.reason ?? '-'}
                                     </p>
                                     <p className="text-xs text-muted-foreground">
-                                        {history.changer?.name ?? stage4Translate("stage4.ui.991f31a64b52", stage4Locale)} •{' '}
-                                        {formatDate(history.changed_at, stage4Locale)}
+                                        {history.changer?.name ??
+                                            stage4Translate(
+                                                'stage4.ui.991f31a64b52',
+                                                stage4Locale,
+                                            )}{' '}
+                                        •{' '}
+                                        {formatDate(
+                                            history.changed_at,
+                                            stage4Locale,
+                                        )}
                                     </p>
                                 </div>
                             ))}
@@ -729,10 +835,19 @@ export default function TransferShow({
                             setRejectionSide(null);
                         }
                     }}
-                    title={stage4Translate("stage4.ui.a6e5bd9dbda3", stage4Locale)}
+                    title={stage4Translate(
+                        'stage4.ui.a6e5bd9dbda3',
+                        stage4Locale,
+                    )}
                     description={`Konfirmasi penolakan dari ${rejectionSide === 'origin' ? 'cabang asal' : 'cabang tujuan'} untuk ${transfer.transfer_number}.`}
-                    submitLabel={stage4Translate("stage4.ui.842e3687d067", stage4Locale)}
-                    noteLabel={stage4Translate("stage4.ui.1a3a88c34341", stage4Locale)}
+                    submitLabel={stage4Translate(
+                        'stage4.ui.842e3687d067',
+                        stage4Locale,
+                    )}
+                    noteLabel={stage4Translate(
+                        'stage4.ui.1a3a88c34341',
+                        stage4Locale,
+                    )}
                     url={`/transfers/${transfer.id}/approvals`}
                     noteField="notes"
                     initialNotes={approvalNote}
@@ -748,10 +863,19 @@ export default function TransferShow({
                 <TransferActionDialog
                     open
                     onOpenChange={setCancelOpen}
-                    title={stage4Translate("stage4.ui.a74064db766f", stage4Locale)}
+                    title={stage4Translate(
+                        'stage4.ui.a74064db766f',
+                        stage4Locale,
+                    )}
                     description={`Konfirmasi pembatalan transfer ${transfer.transfer_number}.`}
-                    submitLabel={stage4Translate("stage4.ui.0fdaf5c3c1ed", stage4Locale)}
-                    noteLabel={stage4Translate("stage4.ui.b759c899d5b0", stage4Locale)}
+                    submitLabel={stage4Translate(
+                        'stage4.ui.0fdaf5c3c1ed',
+                        stage4Locale,
+                    )}
+                    noteLabel={stage4Translate(
+                        'stage4.ui.b759c899d5b0',
+                        stage4Locale,
+                    )}
                     url={`/transfers/${transfer.id}/cancel`}
                     noteField="reason"
                     payload={{}}
@@ -797,25 +921,40 @@ function ApprovalCard({
                     <p className="text-sm text-muted-foreground">{branch}</p>
                 </div>
                 <Badge variant={approval ? 'secondary' : 'outline'}>
-                    {approval ? approval.decision : stage4Translate("stage4.ui.bcc4a60693b2", stage4Locale)}
+                    {approval
+                        ? approval.decision
+                        : stage4Translate(
+                              'stage4.ui.bcc4a60693b2',
+                              stage4Locale,
+                          )}
                 </Badge>
             </div>
             {approval && (
                 <div className="mt-3 text-sm">
-                    <p>{approval.decider?.name ?? stage4Translate("stage4.ui.991f31a64b52", stage4Locale)}</p>
+                    <p>
+                        {approval.decider?.name ??
+                            stage4Translate(
+                                'stage4.ui.991f31a64b52',
+                                stage4Locale,
+                            )}
+                    </p>
                     <p className="text-muted-foreground">
                         {formatDate(approval.decided_at, stage4Locale)}
                     </p>
-                    <p className="mt-2 text-xs text-muted-foreground"><Stage4Text k="stage4.ui.e5a2ade457c0" /> {approval.snapshot_hash.slice(0, 16)}…
+                    <p className="mt-2 text-xs text-muted-foreground">
+                        <Stage4Text k="stage4.ui.e5a2ade457c0" />{' '}
+                        {approval.snapshot_hash.slice(0, 16)}…
                     </p>
                 </div>
             )}
             {canDecide && (
                 <div className="mt-4 flex gap-2">
                     <Button size="sm" onClick={onApprove}>
-                        <CheckCircle2 className="size-4" /><Stage4Text k="stage4.ui.1f9ce43818de" />
+                        <CheckCircle2 className="size-4" />
+                        <Stage4Text k="stage4.ui.1f9ce43818de" />
                     </Button>
-                    <Button size="sm" variant="destructive" onClick={onReject}><Stage4Text k="stage4.ui.e2f73daf8ad0" />
+                    <Button size="sm" variant="destructive" onClick={onReject}>
+                        <Stage4Text k="stage4.ui.e2f73daf8ad0" />
                     </Button>
                 </div>
             )}
@@ -862,18 +1001,32 @@ function ItemCard({
                             : `${item.received_quantity}/${item.quantity} unit diterima`}
                     </p>
                 </div>
-                <Badge variant="outline">{stage4TranslateDynamic(item.status, stage4Locale)}</Badge>
+                <Badge variant="outline">
+                    {stage4TranslateDynamic(item.status, stage4Locale)}
+                </Badge>
             </div>
             <div className="mt-3 grid gap-3 text-sm sm:grid-cols-3">
                 <Detail
-                    label={stage4Translate("stage4.ui.a90de612e4a6", stage4Locale)}
+                    label={stage4Translate(
+                        'stage4.ui.a90de612e4a6',
+                        stage4Locale,
+                    )}
                     value={item.condition_before ?? '-'}
                 />
                 <Detail
-                    label={stage4Translate("stage4.ui.db02fa0d8893", stage4Locale)}
+                    label={stage4Translate(
+                        'stage4.ui.db02fa0d8893',
+                        stage4Locale,
+                    )}
                     value={item.condition_after ?? '-'}
                 />
-                <Detail label={stage4Translate("stage4.ui.c123e27ceef7", stage4Locale)} value={item.receiving_result ?? '-'} />
+                <Detail
+                    label={stage4Translate(
+                        'stage4.ui.c123e27ceef7',
+                        stage4Locale,
+                    )}
+                    value={item.receiving_result ?? '-'}
+                />
             </div>
             {item.inspections.length > 0 && (
                 <div className="mt-3 flex flex-wrap gap-2">
@@ -897,10 +1050,16 @@ function ItemCard({
 
             {item.status === 'discrepancy' && (
                 <Alert variant="destructive" className="mt-4">
-                    <AlertTitle><Stage4Text k="stage4.ui.43e4c2068c37" /> {item.discrepancy_type}
+                    <AlertTitle>
+                        <Stage4Text k="stage4.ui.43e4c2068c37" />{' '}
+                        {item.discrepancy_type}
                     </AlertTitle>
                     <AlertDescription>
-                        {item.discrepancy_notes ?? stage4Translate("stage4.ui.802cfc4696a7", stage4Locale)}
+                        {item.discrepancy_notes ??
+                            stage4Translate(
+                                'stage4.ui.802cfc4696a7',
+                                stage4Locale,
+                            )}
                     </AlertDescription>
                 </Alert>
             )}
@@ -911,20 +1070,27 @@ function ItemCard({
                     <div className="mt-3 flex flex-wrap gap-2">
                         <Button
                             size="sm"
-                            onClick={() => setResolutionAction('accept_at_destination')}
-                        ><Stage4Text k="stage4.ui.a6493af243f8" />
+                            onClick={() =>
+                                setResolutionAction('accept_at_destination')
+                            }
+                        >
+                            <Stage4Text k="stage4.ui.a6493af243f8" />
                         </Button>
                         <Button
                             size="sm"
                             variant="secondary"
-                            onClick={() => setResolutionAction('return_to_origin')}
-                        ><Stage4Text k="stage4.ui.bd0b5c1091ed" />
+                            onClick={() =>
+                                setResolutionAction('return_to_origin')
+                            }
+                        >
+                            <Stage4Text k="stage4.ui.bd0b5c1091ed" />
                         </Button>
                         <Button
                             size="sm"
                             variant="destructive"
                             onClick={() => setResolutionAction('mark_lost')}
-                        ><Stage4Text k="stage4.ui.01e683797022" />
+                        >
+                            <Stage4Text k="stage4.ui.01e683797022" />
                         </Button>
                     </div>
                 )}
@@ -939,7 +1105,10 @@ function ItemCard({
                     title={resolutionLabel}
                     description={`Konfirmasi penyelesaian discrepancy ${itemIdentity} pada transfer ${transfer.transfer_number}.`}
                     submitLabel={resolutionLabel}
-                    noteLabel={stage4Translate("stage4.ui.fcf84c3f50c0", stage4Locale)}
+                    noteLabel={stage4Translate(
+                        'stage4.ui.fcf84c3f50c0',
+                        stage4Locale,
+                    )}
                     url={`/transfers/${transfer.id}/items/${item.id}/resolve`}
                     noteField="notes"
                     payload={{ resolution_action: resolutionAction }}
@@ -1010,11 +1179,18 @@ function DispatchDialog({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-h-[90vh] max-w-5xl overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle><Stage4Text k="stage4.ui.bcb7cdca0031" /></DialogTitle>
+                    <DialogTitle>
+                        <Stage4Text k="stage4.ui.bcb7cdca0031" />
+                    </DialogTitle>
                 </DialogHeader>
                 <form className="space-y-5" onSubmit={onSubmit}>
                     <div className="grid gap-4 md:grid-cols-2">
-                        <Field label={stage4Translate("stage4.ui.b80fd3a082dd", stage4Locale)}>
+                        <Field
+                            label={stage4Translate(
+                                'stage4.ui.b80fd3a082dd',
+                                stage4Locale,
+                            )}
+                        >
                             <Select
                                 value={form.data.shipping_method}
                                 onValueChange={(value) =>
@@ -1025,18 +1201,27 @@ function DispatchDialog({
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="internal"><Stage4Text k="stage4.ui.fc9225a1693f" />
+                                    <SelectItem value="internal">
+                                        <Stage4Text k="stage4.ui.fc9225a1693f" />
                                     </SelectItem>
-                                    <SelectItem value="courier"><Stage4Text k="stage4.ui.b94cd6b63fe5" />
+                                    <SelectItem value="courier">
+                                        <Stage4Text k="stage4.ui.b94cd6b63fe5" />
                                     </SelectItem>
-                                    <SelectItem value="expedition"><Stage4Text k="stage4.ui.3c0a9d366735" />
+                                    <SelectItem value="expedition">
+                                        <Stage4Text k="stage4.ui.3c0a9d366735" />
                                     </SelectItem>
-                                    <SelectItem value="other"><Stage4Text k="stage4.ui.844f8a723473" />
+                                    <SelectItem value="other">
+                                        <Stage4Text k="stage4.ui.844f8a723473" />
                                     </SelectItem>
                                 </SelectContent>
                             </Select>
                         </Field>
-                        <Field label={stage4Translate("stage4.ui.c8c803dd19f0", stage4Locale)}>
+                        <Field
+                            label={stage4Translate(
+                                'stage4.ui.c8c803dd19f0',
+                                stage4Locale,
+                            )}
+                        >
                             <Input
                                 value={form.data.courier_name}
                                 onChange={(event) =>
@@ -1047,7 +1232,12 @@ function DispatchDialog({
                                 }
                             />
                         </Field>
-                        <Field label={stage4Translate("stage4.ui.1f2abaea82e9", stage4Locale)}>
+                        <Field
+                            label={stage4Translate(
+                                'stage4.ui.1f2abaea82e9',
+                                stage4Locale,
+                            )}
+                        >
                             <Input
                                 value={form.data.vehicle_number}
                                 onChange={(event) =>
@@ -1058,7 +1248,12 @@ function DispatchDialog({
                                 }
                             />
                         </Field>
-                        <Field label={stage4Translate("stage4.ui.2ea71bb99448", stage4Locale)}>
+                        <Field
+                            label={stage4Translate(
+                                'stage4.ui.2ea71bb99448',
+                                stage4Locale,
+                            )}
+                        >
                             <Input
                                 value={form.data.waybill_number}
                                 onChange={(event) =>
@@ -1069,7 +1264,12 @@ function DispatchDialog({
                                 }
                             />
                         </Field>
-                        <Field label={stage4Translate("stage4.ui.bf2481f9eb0f", stage4Locale)}>
+                        <Field
+                            label={stage4Translate(
+                                'stage4.ui.bf2481f9eb0f',
+                                stage4Locale,
+                            )}
+                        >
                             <Input
                                 value={form.data.tracking_number}
                                 onChange={(event) =>
@@ -1080,7 +1280,12 @@ function DispatchDialog({
                                 }
                             />
                         </Field>
-                        <Field label={stage4Translate("stage4.ui.6e3922b8f989", stage4Locale)}>
+                        <Field
+                            label={stage4Translate(
+                                'stage4.ui.6e3922b8f989',
+                                stage4Locale,
+                            )}
+                        >
                             <Input
                                 type="file"
                                 accept=".pdf,image/*"
@@ -1101,7 +1306,12 @@ function DispatchDialog({
                         onOpenCamera={onOpenCamera}
                     />
                     {policy.allow_gallery_override && (
-                        <Field label={stage4Translate("stage4.ui.ec744673fc00", stage4Locale)}>
+                        <Field
+                            label={stage4Translate(
+                                'stage4.ui.ec744673fc00',
+                                stage4Locale,
+                            )}
+                        >
                             <Input
                                 value={form.data.override_reason}
                                 onChange={(event) =>
@@ -1115,7 +1325,8 @@ function DispatchDialog({
                     )}
                     {errorMessages.length > 0 && (
                         <Alert variant="destructive">
-                            <AlertTitle><Stage4Text k="stage4.ui.39e461a90624" />
+                            <AlertTitle>
+                                <Stage4Text k="stage4.ui.39e461a90624" />
                             </AlertTitle>
                             <AlertDescription>
                                 <ul className="list-disc space-y-1 pl-5">
@@ -1127,11 +1338,15 @@ function DispatchDialog({
                         </Alert>
                     )}
                     {incompleteEvidenceCount > 0 && (
-                        <p className="text-sm text-destructive"><Stage4Text k="stage4.ui.c6ba5bcdf8ce" /> {policy.min_photos}<Stage4Text k="stage4.ui.1922edfb37d7" />
+                        <p className="text-sm text-destructive">
+                            <Stage4Text k="stage4.ui.c6ba5bcdf8ce" />{' '}
+                            {policy.min_photos}
+                            <Stage4Text k="stage4.ui.1922edfb37d7" />
                         </p>
                     )}
                     {waybillMissing && (
-                        <p className="text-sm text-destructive"><Stage4Text k="stage4.ui.74aeb313d11f" />
+                        <p className="text-sm text-destructive">
+                            <Stage4Text k="stage4.ui.74aeb313d11f" />
                         </p>
                     )}
                     <DialogFooter>
@@ -1139,9 +1354,11 @@ function DispatchDialog({
                             type="button"
                             variant="outline"
                             onClick={() => onOpenChange(false)}
-                        ><Stage4Text k="stage4.ui.1433539c3b8f" />
+                        >
+                            <Stage4Text k="stage4.ui.1433539c3b8f" />
                         </Button>
-                        <Button type="submit" disabled={confirmDisabled}><Stage4Text k="stage4.ui.05405e0b2de3" />
+                        <Button type="submit" disabled={confirmDisabled}>
+                            <Stage4Text k="stage4.ui.05405e0b2de3" />
                         </Button>
                     </DialogFooter>
                 </form>
@@ -1185,7 +1402,9 @@ function ReceivingDialog({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-h-[90vh] max-w-5xl overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle><Stage4Text k="stage4.ui.c6285bb7dd5d" /></DialogTitle>
+                    <DialogTitle>
+                        <Stage4Text k="stage4.ui.c6285bb7dd5d" />
+                    </DialogTitle>
                 </DialogHeader>
                 <form className="space-y-5" onSubmit={onSubmit}>
                     {items.map((item, index) => {
@@ -1206,7 +1425,12 @@ function ReceivingDialog({
                                     </p>
                                 </div>
                                 <div className="grid gap-3 md:grid-cols-3">
-                                    <Field label={stage4Translate("stage4.ui.0cf94b379e86", stage4Locale)}>
+                                    <Field
+                                        label={stage4Translate(
+                                            'stage4.ui.0cf94b379e86',
+                                            stage4Locale,
+                                        )}
+                                    >
                                         <Select
                                             value={row.receiving_result}
                                             onValueChange={(value) =>
@@ -1221,20 +1445,30 @@ function ReceivingDialog({
                                                 <SelectValue />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="accepted_good"><Stage4Text k="stage4.ui.c75b0646ba89" />
+                                                <SelectItem value="accepted_good">
+                                                    <Stage4Text k="stage4.ui.c75b0646ba89" />
                                                 </SelectItem>
-                                                <SelectItem value="accepted_damaged"><Stage4Text k="stage4.ui.ac65b71bb88c" />
+                                                <SelectItem value="accepted_damaged">
+                                                    <Stage4Text k="stage4.ui.ac65b71bb88c" />
                                                 </SelectItem>
-                                                <SelectItem value="incomplete"><Stage4Text k="stage4.ui.2debe19f76fb" />
+                                                <SelectItem value="incomplete">
+                                                    <Stage4Text k="stage4.ui.2debe19f76fb" />
                                                 </SelectItem>
-                                                <SelectItem value="missing"><Stage4Text k="stage4.ui.bd59b4ab1031" />
+                                                <SelectItem value="missing">
+                                                    <Stage4Text k="stage4.ui.bd59b4ab1031" />
                                                 </SelectItem>
-                                                <SelectItem value="rejected"><Stage4Text k="stage4.ui.c4397f065ad2" />
+                                                <SelectItem value="rejected">
+                                                    <Stage4Text k="stage4.ui.c4397f065ad2" />
                                                 </SelectItem>
                                             </SelectContent>
                                         </Select>
                                     </Field>
-                                    <Field label={stage4Translate("stage4.ui.b723bb628009", stage4Locale)}>
+                                    <Field
+                                        label={stage4Translate(
+                                            'stage4.ui.b723bb628009',
+                                            stage4Locale,
+                                        )}
+                                    >
                                         <Select
                                             value={row.condition}
                                             onValueChange={(value) =>
@@ -1249,17 +1483,25 @@ function ReceivingDialog({
                                                 <SelectValue />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="good"><Stage4Text k="stage4.ui.04f5b5ce0518" />
+                                                <SelectItem value="good">
+                                                    <Stage4Text k="stage4.ui.04f5b5ce0518" />
                                                 </SelectItem>
-                                                <SelectItem value="fair"><Stage4Text k="stage4.ui.e776a0660b3d" />
+                                                <SelectItem value="fair">
+                                                    <Stage4Text k="stage4.ui.e776a0660b3d" />
                                                 </SelectItem>
-                                                <SelectItem value="damaged"><Stage4Text k="stage4.ui.f1238819f6ca" />
+                                                <SelectItem value="damaged">
+                                                    <Stage4Text k="stage4.ui.f1238819f6ca" />
                                                 </SelectItem>
                                             </SelectContent>
                                         </Select>
                                     </Field>
                                     {!item.asset && (
-                                        <Field label={stage4Translate("stage4.ui.a3a7b9fed220", stage4Locale)}>
+                                        <Field
+                                            label={stage4Translate(
+                                                'stage4.ui.a3a7b9fed220',
+                                                stage4Locale,
+                                            )}
+                                        >
                                             <Input
                                                 type="number"
                                                 min={1}
@@ -1296,7 +1538,12 @@ function ReceivingDialog({
                             </div>
                         );
                     })}
-                    <Field label={stage4Translate("stage4.ui.dbe1f3a1ac37", stage4Locale)}>
+                    <Field
+                        label={stage4Translate(
+                            'stage4.ui.dbe1f3a1ac37',
+                            stage4Locale,
+                        )}
+                    >
                         <textarea
                             className="min-h-20 w-full rounded-md border bg-background px-3 py-2 text-sm"
                             value={form.data.receiving_notes}
@@ -1309,7 +1556,12 @@ function ReceivingDialog({
                         />
                     </Field>
                     {policy.allow_gallery_override && (
-                        <Field label={stage4Translate("stage4.ui.ec744673fc00", stage4Locale)}>
+                        <Field
+                            label={stage4Translate(
+                                'stage4.ui.ec744673fc00',
+                                stage4Locale,
+                            )}
+                        >
                             <Input
                                 value={form.data.override_reason}
                                 onChange={(event) =>
@@ -1326,9 +1578,11 @@ function ReceivingDialog({
                             type="button"
                             variant="outline"
                             onClick={() => onOpenChange(false)}
-                        ><Stage4Text k="stage4.ui.1433539c3b8f" />
+                        >
+                            <Stage4Text k="stage4.ui.1433539c3b8f" />
                         </Button>
-                        <Button disabled={form.processing}><Stage4Text k="stage4.ui.aa4787b441e0" />
+                        <Button disabled={form.processing}>
+                            <Stage4Text k="stage4.ui.aa4787b441e0" />
                         </Button>
                     </DialogFooter>
                 </form>
@@ -1358,7 +1612,9 @@ function EvidenceList({
 
     return (
         <div className="space-y-3">
-            <h3 className="font-medium"><Stage4Text k="stage4.ui.016051568571" /></h3>
+            <h3 className="font-medium">
+                <Stage4Text k="stage4.ui.016051568571" />
+            </h3>
             {items.map((item, index) => (
                 <div key={item.id} className="space-y-3 rounded-lg border p-4">
                     <div>
@@ -1367,7 +1623,12 @@ function EvidenceList({
                             {item.asset?.asset_code ?? `${item.quantity} unit`}
                         </p>
                     </div>
-                    <Field label={stage4Translate("stage4.ui.b723bb628009", stage4Locale)}>
+                    <Field
+                        label={stage4Translate(
+                            'stage4.ui.b723bb628009',
+                            stage4Locale,
+                        )}
+                    >
                         <Select
                             value={rows[index].condition}
                             onValueChange={(value) =>
@@ -1378,9 +1639,15 @@ function EvidenceList({
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="good"><Stage4Text k="stage4.ui.04f5b5ce0518" /></SelectItem>
-                                <SelectItem value="fair"><Stage4Text k="stage4.ui.e776a0660b3d" /></SelectItem>
-                                <SelectItem value="damaged"><Stage4Text k="stage4.ui.f1238819f6ca" /></SelectItem>
+                                <SelectItem value="good">
+                                    <Stage4Text k="stage4.ui.04f5b5ce0518" />
+                                </SelectItem>
+                                <SelectItem value="fair">
+                                    <Stage4Text k="stage4.ui.e776a0660b3d" />
+                                </SelectItem>
+                                <SelectItem value="damaged">
+                                    <Stage4Text k="stage4.ui.f1238819f6ca" />
+                                </SelectItem>
                             </SelectContent>
                         </Select>
                     </Field>
@@ -1424,10 +1691,12 @@ function EvidenceControls({
                     variant="secondary"
                     onClick={onOpenCamera}
                 >
-                    <Camera className="size-4" /><Stage4Text k="stage4.ui.974e97129233" />
+                    <Camera className="size-4" />
+                    <Stage4Text k="stage4.ui.974e97129233" />
                 </Button>
                 {galleryAllowed && (
-                    <Label className="inline-flex cursor-pointer items-center rounded-md border px-3 py-2 text-sm"><Stage4Text k="stage4.ui.63e85916b4ac" />
+                    <Label className="inline-flex cursor-pointer items-center rounded-md border px-3 py-2 text-sm">
+                        <Stage4Text k="stage4.ui.63e85916b4ac" />
                         <input
                             className="sr-only"
                             type="file"
@@ -1450,11 +1719,16 @@ function EvidenceControls({
                     </Label>
                 )}
                 <Badge variant="outline">
-                    {row.photos.length}<Stage4Text k="stage4.ui.c67d7603154a" /> {policy.min_photos}
+                    {row.photos.length}
+                    <Stage4Text k="stage4.ui.c67d7603154a" />{' '}
+                    {policy.min_photos}
                 </Badge>
             </div>
             <Input
-                placeholder={stage4Translate("stage4.ui.eb5f10d7dafe", stage4Locale)}
+                placeholder={stage4Translate(
+                    'stage4.ui.eb5f10d7dafe',
+                    stage4Locale,
+                )}
                 value={row.notes}
                 onChange={(event) => onUpdate('notes', event.target.value)}
             />
@@ -1495,10 +1769,17 @@ function ExpenseDialog({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle><Stage4Text k="stage4.ui.922e13964e36" /></DialogTitle>
+                    <DialogTitle>
+                        <Stage4Text k="stage4.ui.922e13964e36" />
+                    </DialogTitle>
                 </DialogHeader>
                 <form className="space-y-4" onSubmit={onSubmit}>
-                    <Field label={stage4Translate("stage4.ui.997328acf0a0", stage4Locale)}>
+                    <Field
+                        label={stage4Translate(
+                            'stage4.ui.997328acf0a0',
+                            stage4Locale,
+                        )}
+                    >
                         <Select
                             value={String(form.data.expense_branch_id)}
                             onValueChange={(value) =>
@@ -1522,7 +1803,12 @@ function ExpenseDialog({
                             </SelectContent>
                         </Select>
                     </Field>
-                    <Field label={stage4Translate("stage4.ui.7fa537fc5d9b", stage4Locale)}>
+                    <Field
+                        label={stage4Translate(
+                            'stage4.ui.7fa537fc5d9b',
+                            stage4Locale,
+                        )}
+                    >
                         <Select
                             value={String(form.data.financial_category_id)}
                             onValueChange={(value) =>
@@ -1547,7 +1833,12 @@ function ExpenseDialog({
                             </SelectContent>
                         </Select>
                     </Field>
-                    <Field label={stage4Translate("stage4.ui.cbcb5c510e6b", stage4Locale)}>
+                    <Field
+                        label={stage4Translate(
+                            'stage4.ui.cbcb5c510e6b',
+                            stage4Locale,
+                        )}
+                    >
                         <Select
                             value={form.data.expense_type}
                             onValueChange={(value) =>
@@ -1574,7 +1865,12 @@ function ExpenseDialog({
                             </SelectContent>
                         </Select>
                     </Field>
-                    <Field label={stage4Translate("stage4.ui.1c95cd2048d5", stage4Locale)}>
+                    <Field
+                        label={stage4Translate(
+                            'stage4.ui.1c95cd2048d5',
+                            stage4Locale,
+                        )}
+                    >
                         <RupiahInput
                             value={form.data.estimated_amount}
                             onValueChange={(value) =>
@@ -1582,7 +1878,12 @@ function ExpenseDialog({
                             }
                         />
                     </Field>
-                    <Field label={stage4Translate("stage4.ui.8c5da973dcdb", stage4Locale)}>
+                    <Field
+                        label={stage4Translate(
+                            'stage4.ui.8c5da973dcdb',
+                            stage4Locale,
+                        )}
+                    >
                         <RupiahInput
                             value={form.data.actual_amount}
                             onValueChange={(value) =>
@@ -1590,7 +1891,12 @@ function ExpenseDialog({
                             }
                         />
                     </Field>
-                    <Field label={stage4Translate("stage4.ui.e3f18544463f", stage4Locale)}>
+                    <Field
+                        label={stage4Translate(
+                            'stage4.ui.e3f18544463f',
+                            stage4Locale,
+                        )}
+                    >
                         <Input
                             value={form.data.vendor_name}
                             onChange={(event) =>
@@ -1598,7 +1904,12 @@ function ExpenseDialog({
                             }
                         />
                     </Field>
-                    <Field label={stage4Translate("stage4.ui.58c836282e26", stage4Locale)}>
+                    <Field
+                        label={stage4Translate(
+                            'stage4.ui.58c836282e26',
+                            stage4Locale,
+                        )}
+                    >
                         <Input
                             type="file"
                             accept=".pdf,image/*"
@@ -1615,9 +1926,12 @@ function ExpenseDialog({
                             type="button"
                             variant="outline"
                             onClick={() => onOpenChange(false)}
-                        ><Stage4Text k="stage4.ui.1433539c3b8f" />
+                        >
+                            <Stage4Text k="stage4.ui.1433539c3b8f" />
                         </Button>
-                        <Button disabled={form.processing}><Stage4Text k="stage4.ui.7b1cfaf39151" /></Button>
+                        <Button disabled={form.processing}>
+                            <Stage4Text k="stage4.ui.7b1cfaf39151" />
+                        </Button>
                     </DialogFooter>
                 </form>
             </DialogContent>
@@ -1657,7 +1971,11 @@ function ExpenseRow({
                     <p className="font-medium">{expense.expense_type}</p>
                     <p className="text-sm text-muted-foreground">
                         {expense.expense_branch.name} •{' '}
-                        {expense.vendor_name ?? stage4Translate("stage4.ui.af0fb81397cd", stage4Locale)}
+                        {expense.vendor_name ??
+                            stage4Translate(
+                                'stage4.ui.af0fb81397cd',
+                                stage4Locale,
+                            )}
                     </p>
                 </div>
                 <div className="text-right">
@@ -1669,7 +1987,9 @@ function ExpenseRow({
                             ),
                         )}
                     </p>
-                    <Badge variant="outline">{stage4TranslateDynamic(expense.status, stage4Locale)}</Badge>
+                    <Badge variant="outline">
+                        {stage4TranslateDynamic(expense.status, stage4Locale)}
+                    </Badge>
                 </div>
             </div>
             {canManage &&
@@ -1677,12 +1997,15 @@ function ExpenseRow({
                 expense.status !== 'void' && (
                     <Dialog>
                         <DialogTrigger asChild>
-                            <Button className="mt-3" size="sm"><Stage4Text k="stage4.ui.6290c54f33d8" />
+                            <Button className="mt-3" size="sm">
+                                <Stage4Text k="stage4.ui.6290c54f33d8" />
                             </Button>
                         </DialogTrigger>
                         <DialogContent>
                             <DialogHeader>
-                                <DialogTitle><Stage4Text k="stage4.ui.fc0dfb81eee4" /></DialogTitle>
+                                <DialogTitle>
+                                    <Stage4Text k="stage4.ui.fc0dfb81eee4" />
+                                </DialogTitle>
                             </DialogHeader>
                             <form
                                 className="space-y-4"
@@ -1697,7 +2020,12 @@ function ExpenseRow({
                                     );
                                 }}
                             >
-                                <Field label={stage4Translate("stage4.ui.25dcdce8623e", stage4Locale)}>
+                                <Field
+                                    label={stage4Translate(
+                                        'stage4.ui.25dcdce8623e',
+                                        stage4Locale,
+                                    )}
+                                >
                                     <RupiahInput
                                         value={pay.data.actual_amount}
                                         onValueChange={(value) =>
@@ -1705,7 +2033,12 @@ function ExpenseRow({
                                         }
                                     />
                                 </Field>
-                                <Field label={stage4Translate("stage4.ui.53eb1a623ade", stage4Locale)}>
+                                <Field
+                                    label={stage4Translate(
+                                        'stage4.ui.53eb1a623ade',
+                                        stage4Locale,
+                                    )}
+                                >
                                     <Select
                                         value={String(
                                             pay.data.payment_method_id,
@@ -1733,7 +2066,12 @@ function ExpenseRow({
                                     </Select>
                                 </Field>
                                 {cashSessions.length > 0 && (
-                                    <Field label={stage4Translate("stage4.ui.4aff09aaf36e", stage4Locale)}>
+                                    <Field
+                                        label={stage4Translate(
+                                            'stage4.ui.4aff09aaf36e',
+                                            stage4Locale,
+                                        )}
+                                    >
                                         <Select
                                             value={
                                                 pay.data.cash_session_id ===
@@ -1757,7 +2095,8 @@ function ExpenseRow({
                                                 <SelectValue />
                                             </SelectTrigger>
                                             <SelectContent>
-                                                <SelectItem value="none"><Stage4Text k="stage4.ui.ef8d47c8f015" />
+                                                <SelectItem value="none">
+                                                    <Stage4Text k="stage4.ui.ef8d47c8f015" />
                                                 </SelectItem>
                                                 {cashSessions.map((session) => (
                                                     <SelectItem
@@ -1773,7 +2112,12 @@ function ExpenseRow({
                                         </Select>
                                     </Field>
                                 )}
-                                <Field label={stage4Translate("stage4.ui.9a6129bc4015", stage4Locale)}>
+                                <Field
+                                    label={stage4Translate(
+                                        'stage4.ui.9a6129bc4015',
+                                        stage4Locale,
+                                    )}
+                                >
                                     <Input
                                         type="datetime-local"
                                         value={pay.data.paid_at}
@@ -1785,7 +2129,12 @@ function ExpenseRow({
                                         }
                                     />
                                 </Field>
-                                <Field label={stage4Translate("stage4.ui.d22761a05c30", stage4Locale)}>
+                                <Field
+                                    label={stage4Translate(
+                                        'stage4.ui.d22761a05c30',
+                                        stage4Locale,
+                                    )}
+                                >
                                     <Input
                                         type="file"
                                         accept=".pdf,image/*"
@@ -1798,7 +2147,8 @@ function ExpenseRow({
                                     />
                                 </Field>
                                 <DialogFooter>
-                                    <Button disabled={pay.processing}><Stage4Text k="stage4.ui.ca352c0db7a4" />
+                                    <Button disabled={pay.processing}>
+                                        <Stage4Text k="stage4.ui.ca352c0db7a4" />
                                     </Button>
                                 </DialogFooter>
                             </form>

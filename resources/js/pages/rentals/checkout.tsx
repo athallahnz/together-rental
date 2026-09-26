@@ -1,6 +1,10 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import { AlertTriangle, ArrowLeft, LogOut } from 'lucide-react';
-import { Stage4Text, stage4Translate, stage4FormatDateTime } from '@/components/stage4-text';
+import {
+    Stage4Text,
+    stage4Translate,
+    stage4FormatDateTime,
+} from '@/components/stage4-text';
 import { useAppLocale } from '@/lib/i18n';
 import { CashSessionSelect } from '@/components/finance/cash-session-select';
 import {
@@ -129,10 +133,12 @@ export default function RentalCheckout({
                     <div>
                         <Button variant="ghost" size="sm" asChild>
                             <Link href={`/bookings/${booking.id}`}>
-                                <ArrowLeft /><Stage4Text k="stage4.ui.679ff8e9555a" />
+                                <ArrowLeft />
+                                <Stage4Text k="stage4.ui.679ff8e9555a" />
                             </Link>
                         </Button>
-                        <h1 className="mt-3 text-2xl font-semibold"><Stage4Text k="stage4.ui.e52caf59c035" />
+                        <h1 className="mt-3 text-2xl font-semibold">
+                            <Stage4Text k="stage4.ui.e52caf59c035" />
                         </h1>
                         <p className="mt-1 text-sm text-muted-foreground">
                             {booking.booking_number} · {booking.customer?.name}{' '}
@@ -140,17 +146,22 @@ export default function RentalCheckout({
                         </p>
                     </div>
                     <Button type="submit" disabled={form.processing}>
-                        <LogOut /><Stage4Text k="stage4.ui.b659cd7bfebf" />
+                        <LogOut />
+                        <Stage4Text k="stage4.ui.b659cd7bfebf" />
                     </Button>
                 </header>
 
                 <section className="grid gap-4 lg:grid-cols-3">
                     <Card>
                         <CardHeader>
-                            <CardTitle><Stage4Text k="stage4.ui.40f9759982fe" /></CardTitle>
+                            <CardTitle>
+                                <Stage4Text k="stage4.ui.40f9759982fe" />
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-3">
-                            <Label><Stage4Text k="stage4.ui.e46ab2d83de2" /></Label>
+                            <Label>
+                                <Stage4Text k="stage4.ui.e46ab2d83de2" />
+                            </Label>
                             <Input
                                 type="datetime-local"
                                 value={form.data.checked_out_at}
@@ -166,24 +177,34 @@ export default function RentalCheckout({
                                     {form.errors.checked_out_at}
                                 </p>
                             )}
-                            <p className="text-sm text-muted-foreground"><Stage4Text k="stage4.ui.e9854f380b7f" />{' '}
-                                {stage4FormatDateTime(booking.ends_at, stage4Locale)}
+                            <p className="text-sm text-muted-foreground">
+                                <Stage4Text k="stage4.ui.e9854f380b7f" />{' '}
+                                {stage4FormatDateTime(
+                                    booking.ends_at,
+                                    stage4Locale,
+                                )}
                             </p>
                         </CardContent>
                     </Card>
                     <Card>
                         <CardHeader>
-                            <CardTitle><Stage4Text k="stage4.ui.ef458a133154" /></CardTitle>
+                            <CardTitle>
+                                <Stage4Text k="stage4.ui.ef458a133154" />
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-2 text-sm">
                             <p className="flex justify-between">
-                                <span><Stage4Text k="stage4.ui.b25928c69902" /></span>
+                                <span>
+                                    <Stage4Text k="stage4.ui.b25928c69902" />
+                                </span>
                                 <b>
                                     {money.format(Number(booking.total_amount))}
                                 </b>
                             </p>
                             <p className="flex justify-between">
-                                <span><Stage4Text k="stage4.ui.4d3eb469ae4a" /></span>
+                                <span>
+                                    <Stage4Text k="stage4.ui.4d3eb469ae4a" />
+                                </span>
                                 <b>
                                     {money.format(
                                         Number(booking.deposit_required),
@@ -191,19 +212,25 @@ export default function RentalCheckout({
                                 </b>
                             </p>
                             <p className="flex justify-between text-emerald-600">
-                                <span><Stage4Text k="stage4.ui.8b1cf6e31c9f" /></span>
+                                <span>
+                                    <Stage4Text k="stage4.ui.8b1cf6e31c9f" />
+                                </span>
                                 <b>
                                     {money.format(financialSummary.rental_paid)}
                                 </b>
                             </p>
                             <p className="flex justify-between font-semibold">
-                                <span><Stage4Text k="stage4.ui.c0fd40e41b59" /></span>
+                                <span>
+                                    <Stage4Text k="stage4.ui.c0fd40e41b59" />
+                                </span>
                                 <b>
                                     {money.format(financialSummary.balance_due)}
                                 </b>
                             </p>
                             <p className="flex justify-between text-muted-foreground">
-                                <span><Stage4Text k="stage4.ui.0c875d087fb6" /></span>
+                                <span>
+                                    <Stage4Text k="stage4.ui.0c875d087fb6" />
+                                </span>
                                 <b>
                                     {money.format(
                                         financialSummary.deposit_paid,
@@ -214,7 +241,9 @@ export default function RentalCheckout({
                     </Card>
                     <Card>
                         <CardHeader>
-                            <CardTitle><Stage4Text k="stage4.ui.eacbf2923e7f" /></CardTitle>
+                            <CardTitle>
+                                <Stage4Text k="stage4.ui.eacbf2923e7f" />
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-3">
                             <RupiahInput
@@ -254,7 +283,12 @@ export default function RentalCheckout({
                                 }}
                             >
                                 <SelectTrigger>
-                                    <SelectValue placeholder={stage4Translate("stage4.ui.53eb1a623ade", stage4Locale)} />
+                                    <SelectValue
+                                        placeholder={stage4Translate(
+                                            'stage4.ui.53eb1a623ade',
+                                            stage4Locale,
+                                        )}
+                                    />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {paymentMethods.map((method) => (
@@ -279,7 +313,10 @@ export default function RentalCheckout({
                                 error={form.errors.cash_session_id}
                             />
                             <Input
-                                placeholder={stage4Translate("stage4.ui.e657fd4a7334", stage4Locale)}
+                                placeholder={stage4Translate(
+                                    'stage4.ui.e657fd4a7334',
+                                    stage4Locale,
+                                )}
                                 value={form.data.payment_reference}
                                 onChange={(event) =>
                                     form.setData(
@@ -300,14 +337,17 @@ export default function RentalCheckout({
                             )}
                             {hasNewPayment &&
                                 form.data.payment_method_id === 0 && (
-                                    <p className="text-sm text-amber-700"><Stage4Text k="stage4.ui.d73620845bab" />
+                                    <p className="text-sm text-amber-700">
+                                        <Stage4Text k="stage4.ui.d73620845bab" />
                                     </p>
                                 )}
                             {remainingBalance > 0 && (
                                 <div className="flex gap-2 rounded-md border border-amber-300 bg-amber-50 p-3 text-sm text-amber-900">
                                     <AlertTriangle className="mt-0.5 size-4 shrink-0" />
-                                    <p><Stage4Text k="stage4.ui.c012c9af8b8f" />{' '}
-                                        <b>{money.format(remainingBalance)}</b><Stage4Text k="stage4.ui.64f2789c8682" />
+                                    <p>
+                                        <Stage4Text k="stage4.ui.c012c9af8b8f" />{' '}
+                                        <b>{money.format(remainingBalance)}</b>
+                                        <Stage4Text k="stage4.ui.64f2789c8682" />
                                     </p>
                                 </div>
                             )}
@@ -317,16 +357,31 @@ export default function RentalCheckout({
 
                 <Card>
                     <CardHeader>
-                        <CardTitle><Stage4Text k="stage4.ui.c9635da859ac" /></CardTitle>
+                        <CardTitle>
+                            <Stage4Text k="stage4.ui.c9635da859ac" />
+                        </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         {booking.items.flatMap((item) =>
-                            (item.bulk_reservations ?? []).map((reservation) => (
-                                <div key={`bulk-${reservation.id}`} className="rounded-lg border p-4">
-                                    <p className="font-medium">{reservation.product.name}<Stage4Text k="stage4.ui.7ed3a04cc02c" /> {reservation.quantity}<Stage4Text k="stage4.ui.0df9eea0bad5" /></p>
-                                    <p className="text-sm text-muted-foreground">{item.description}<Stage4Text k="stage4.ui.86562b32c51f" /></p>
-                                </div>
-                            )),
+                            (item.bulk_reservations ?? []).map(
+                                (reservation) => (
+                                    <div
+                                        key={`bulk-${reservation.id}`}
+                                        className="rounded-lg border p-4"
+                                    >
+                                        <p className="font-medium">
+                                            {reservation.product.name}
+                                            <Stage4Text k="stage4.ui.7ed3a04cc02c" />{' '}
+                                            {reservation.quantity}
+                                            <Stage4Text k="stage4.ui.0df9eea0bad5" />
+                                        </p>
+                                        <p className="text-sm text-muted-foreground">
+                                            {item.description}
+                                            <Stage4Text k="stage4.ui.86562b32c51f" />
+                                        </p>
+                                    </div>
+                                ),
+                            ),
                         )}
                         {reservedAssets.map(({ reservation, item }, index) => (
                             <div
@@ -356,16 +411,22 @@ export default function RentalCheckout({
                                         <SelectValue />
                                     </SelectTrigger>
                                     <SelectContent>
-                                        <SelectItem value="excellent"><Stage4Text k="stage4.ui.e90dcd5d96b8" />
+                                        <SelectItem value="excellent">
+                                            <Stage4Text k="stage4.ui.e90dcd5d96b8" />
                                         </SelectItem>
-                                        <SelectItem value="good"><Stage4Text k="stage4.ui.04f5b5ce0518" />
+                                        <SelectItem value="good">
+                                            <Stage4Text k="stage4.ui.04f5b5ce0518" />
                                         </SelectItem>
-                                        <SelectItem value="fair"><Stage4Text k="stage4.ui.e776a0660b3d" />
+                                        <SelectItem value="fair">
+                                            <Stage4Text k="stage4.ui.e776a0660b3d" />
                                         </SelectItem>
                                     </SelectContent>
                                 </Select>
                                 <Input
-                                    placeholder={stage4Translate("stage4.ui.79886597b7e9", stage4Locale)}
+                                    placeholder={stage4Translate(
+                                        'stage4.ui.79886597b7e9',
+                                        stage4Locale,
+                                    )}
                                     value={form.data.assets[index]?.notes ?? ''}
                                     onChange={(event) =>
                                         updateAsset(index, {
@@ -380,7 +441,9 @@ export default function RentalCheckout({
 
                 <Card>
                     <CardHeader>
-                        <CardTitle><Stage4Text k="stage4.ui.bc6bef81de10" /></CardTitle>
+                        <CardTitle>
+                            <Stage4Text k="stage4.ui.bc6bef81de10" />
+                        </CardTitle>
                     </CardHeader>
                     <CardContent>
                         <CollateralFields
@@ -401,7 +464,9 @@ export default function RentalCheckout({
 
                 <Card>
                     <CardHeader>
-                        <CardTitle><Stage4Text k="stage4.ui.85b064124057" /></CardTitle>
+                        <CardTitle>
+                            <Stage4Text k="stage4.ui.85b064124057" />
+                        </CardTitle>
                     </CardHeader>
                     <CardContent>
                         <textarea
@@ -413,7 +478,10 @@ export default function RentalCheckout({
                                     event.target.value,
                                 )
                             }
-                            placeholder={stage4Translate("stage4.ui.3932e431286b", stage4Locale)}
+                            placeholder={stage4Translate(
+                                'stage4.ui.3932e431286b',
+                                stage4Locale,
+                            )}
                         />
                     </CardContent>
                 </Card>

@@ -136,7 +136,9 @@ export default function BranchPublicProfile({
                 {!branch.is_active && (
                     <Alert variant="destructive">
                         <Building2 />
-                        <AlertTitle><Stage3Text k="stage3.ui.cabang.sedang.nonaktif.3abdc" /></AlertTitle>
+                        <AlertTitle>
+                            <Stage3Text k="stage3.ui.cabang.sedang.nonaktif.3abdc" />
+                        </AlertTitle>
                         <AlertDescription>
                             Aktifkan kembali cabang melalui halaman Manajemen
                             Cabang sebelum menayangkannya pada katalog publik.
@@ -148,7 +150,9 @@ export default function BranchPublicProfile({
                     <form onSubmit={submit} className="space-y-6">
                         <Card>
                             <CardHeader>
-                                <CardTitle><Stage3Text k="stage3.ui.status.publik.51214" /></CardTitle>
+                                <CardTitle>
+                                    <Stage3Text k="stage3.ui.status.publik.51214" />
+                                </CardTitle>
                                 <CardDescription>
                                     Kontrol apakah cabang ditampilkan sebagai
                                     pilihan aktif pada landing page dan katalog.
@@ -193,7 +197,9 @@ export default function BranchPublicProfile({
 
                         <Card>
                             <CardHeader>
-                                <CardTitle><Stage3Text k="stage3.ui.kontak.dan.lokasi.1945b" /></CardTitle>
+                                <CardTitle>
+                                    <Stage3Text k="stage3.ui.kontak.dan.lokasi.1945b" />
+                                </CardTitle>
                                 <CardDescription>
                                     Informasi ini ditampilkan pada CTA, navbar,
                                     footer, dan kartu lokasi cabang.
@@ -201,10 +207,16 @@ export default function BranchPublicProfile({
                             </CardHeader>
                             <CardContent className="grid gap-5 md:grid-cols-2">
                                 <FormField
-                                    label={stage3Translate('stage3.ui.nomor.whatsapp.9aea5', stage3Locale)}
+                                    label={stage3Translate(
+                                        'stage3.ui.nomor.whatsapp.9aea5',
+                                        stage3Locale,
+                                    )}
                                     name="public_whatsapp"
                                     error={form.errors.public_whatsapp}
-                                    description={stage3Translate('stage3.ui.gunakan.kode.negara.tanpa.tanda.contoh.62857847.622ee', stage3Locale)}
+                                    description={stage3Translate(
+                                        'stage3.ui.gunakan.kode.negara.tanpa.tanda.contoh.62857847.622ee',
+                                        stage3Locale,
+                                    )}
                                 >
                                     <Input
                                         id="public_whatsapp"
@@ -227,7 +239,10 @@ export default function BranchPublicProfile({
                                     label="Instagram"
                                     name="public_instagram"
                                     error={form.errors.public_instagram}
-                                    description={stage3Translate('stage3.ui.masukkan.username.tanpa.tanda.c1656', stage3Locale)}
+                                    description={stage3Translate(
+                                        'stage3.ui.masukkan.username.tanpa.tanda.c1656',
+                                        stage3Locale,
+                                    )}
                                 >
                                     <Input
                                         id="public_instagram"
@@ -246,7 +261,10 @@ export default function BranchPublicProfile({
                                 </FormField>
 
                                 <FormField
-                                    label={stage3Translate('stage3.ui.jam.operasional.4f501', stage3Locale)}
+                                    label={stage3Translate(
+                                        'stage3.ui.jam.operasional.4f501',
+                                        stage3Locale,
+                                    )}
                                     name="public_opening_hours"
                                     error={form.errors.public_opening_hours}
                                 >
@@ -284,7 +302,10 @@ export default function BranchPublicProfile({
 
                                 <div className="md:col-span-2">
                                     <FormField
-                                        label={stage3Translate('stage3.ui.alamat.singkat.publik.f8e74', stage3Locale)}
+                                        label={stage3Translate(
+                                            'stage3.ui.alamat.singkat.publik.f8e74',
+                                            stage3Locale,
+                                        )}
                                         name="public_short_address"
                                         error={form.errors.public_short_address}
                                     >
@@ -301,7 +322,10 @@ export default function BranchPublicProfile({
                                             }
                                             rows={3}
                                             className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                                            placeholder={stage3Translate('stage3.ui.alamat.yang.mudah.dibaca.pelanggan.9a108', stage3Locale)}
+                                            placeholder={stage3Translate(
+                                                'stage3.ui.alamat.yang.mudah.dibaca.pelanggan.9a108',
+                                                stage3Locale,
+                                            )}
                                         />
                                     </FormField>
                                 </div>
@@ -310,7 +334,9 @@ export default function BranchPublicProfile({
 
                         <Card>
                             <CardHeader>
-                                <CardTitle><Stage3Text k="stage3.ui.identitas.landing.page.99550" /></CardTitle>
+                                <CardTitle>
+                                    <Stage3Text k="stage3.ui.identitas.landing.page.99550" />
+                                </CardTitle>
                                 <CardDescription>
                                     Konten singkat yang berubah mengikuti cabang
                                     terpilih.
@@ -318,10 +344,16 @@ export default function BranchPublicProfile({
                             </CardHeader>
                             <CardContent className="grid gap-5">
                                 <FormField
-                                    label={stage3Translate('stage3.ui.path.logo.publik.51e8e', stage3Locale)}
+                                    label={stage3Translate(
+                                        'stage3.ui.path.logo.publik.51e8e',
+                                        stage3Locale,
+                                    )}
                                     name="public_logo_path"
                                     error={form.errors.public_logo_path}
-                                    description={stage3Translate('stage3.ui.dapat.memakai.file.public.url.penuh.atau.path.s.60726', stage3Locale)}
+                                    description={stage3Translate(
+                                        'stage3.ui.dapat.memakai.file.public.url.penuh.atau.path.s.60726',
+                                        stage3Locale,
+                                    )}
                                 >
                                     <Input
                                         id="public_logo_path"
@@ -337,7 +369,10 @@ export default function BranchPublicProfile({
                                 </FormField>
 
                                 <FormField
-                                    label={stage3Translate('stage3.ui.judul.hero.3f494', stage3Locale)}
+                                    label={stage3Translate(
+                                        'stage3.ui.judul.hero.3f494',
+                                        stage3Locale,
+                                    )}
                                     name="public_hero_title"
                                     error={form.errors.public_hero_title}
                                 >
@@ -355,7 +390,10 @@ export default function BranchPublicProfile({
                                 </FormField>
 
                                 <FormField
-                                    label={stage3Translate('stage3.ui.deskripsi.hero.d5f9f', stage3Locale)}
+                                    label={stage3Translate(
+                                        'stage3.ui.deskripsi.hero.d5f9f',
+                                        stage3Locale,
+                                    )}
                                     name="public_hero_description"
                                     error={form.errors.public_hero_description}
                                 >
@@ -373,7 +411,10 @@ export default function BranchPublicProfile({
                                         rows={4}
                                         maxLength={500}
                                         className="w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs outline-none placeholder:text-muted-foreground focus-visible:border-ring focus-visible:ring-[3px] focus-visible:ring-ring/50"
-                                        placeholder={stage3Translate('stage3.ui.deskripsi.singkat.layanan.cabang.ini.f9ad8', stage3Locale)}
+                                        placeholder={stage3Translate(
+                                            'stage3.ui.deskripsi.singkat.layanan.cabang.ini.f9ad8',
+                                            stage3Locale,
+                                        )}
                                     />
                                 </FormField>
                             </CardContent>
@@ -381,11 +422,16 @@ export default function BranchPublicProfile({
 
                         <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
                             <Button asChild type="button" variant="outline">
-                                <Link href="/branches"><Stage3Text k="stage3.ui.batal.14335" /></Link>
+                                <Link href="/branches">
+                                    <Stage3Text k="stage3.ui.batal.14335" />
+                                </Link>
                             </Button>
                             <Button type="submit" disabled={form.processing}>
                                 {form.processing
-                                    ? stage3Translate('stage3.ui.correction.menyimpan.92e24', stage3Locale)
+                                    ? stage3Translate(
+                                          'stage3.ui.correction.menyimpan.92e24',
+                                          stage3Locale,
+                                      )
                                     : 'Simpan profil publik'}
                             </Button>
                         </div>
@@ -420,7 +466,10 @@ export default function BranchPublicProfile({
                                                 src={publicMediaUrl(
                                                     form.data.public_logo_path,
                                                 )}
-                                                alt={stage3Translate('stage3.ui.preview.logo.7cdc9', stage3Locale)}
+                                                alt={stage3Translate(
+                                                    'stage3.ui.preview.logo.7cdc9',
+                                                    stage3Locale,
+                                                )}
                                                 className="size-full object-contain p-2"
                                             />
                                         ) : (
@@ -502,7 +551,9 @@ export default function BranchPublicProfile({
 
                         <Alert>
                             <Globe2 />
-                            <AlertTitle><Stage3Text k="stage3.ui.otomatis.multi.cabang.ad49a" /></AlertTitle>
+                            <AlertTitle>
+                                <Stage3Text k="stage3.ui.otomatis.multi.cabang.ad49a" />
+                            </AlertTitle>
                             <AlertDescription>
                                 Setelah disimpan dan diaktifkan, cabang ini
                                 otomatis masuk ke pilihan cabang publik tanpa

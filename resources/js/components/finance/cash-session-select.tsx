@@ -55,7 +55,9 @@ export function CashSessionSelect({
 
     return (
         <div className="space-y-2">
-            <Label><Stage5Text k="stage5.ui.bdf75fb65c7f" /></Label>
+            <Label>
+                <Stage5Text k="stage5.ui.bdf75fb65c7f" />
+            </Label>
             <Select
                 value={value === null ? '' : String(value)}
                 onValueChange={(nextValue) =>
@@ -63,12 +65,15 @@ export function CashSessionSelect({
                 }
             >
                 <SelectTrigger>
-                    <SelectValue placeholder={stage5Translate("stage5.ui.cfde4a0267a8")} />
+                    <SelectValue
+                        placeholder={stage5Translate('stage5.ui.cfde4a0267a8')}
+                    />
                 </SelectTrigger>
                 <SelectContent>
                     {availableSessions.map((session) => (
                         <SelectItem key={session.id} value={String(session.id)}>
-                            {session.register_name} <Stage5Text k="stage5.ui.020948e75705" />{' '}
+                            {session.register_name}{' '}
+                            <Stage5Text k="stage5.ui.020948e75705" />{' '}
                             {new Date(session.opened_at).toLocaleString(
                                 'id-ID',
                             )}

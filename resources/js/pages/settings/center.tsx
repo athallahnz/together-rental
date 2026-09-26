@@ -174,7 +174,9 @@ export default function SettingsCenter({
                                 selectedBranchId !== null && (
                                     <div className="w-full space-y-2 xl:max-w-sm">
                                         <Label htmlFor="settings-branch">
-                                            {tr('settings.center.branchContext')}
+                                            {tr(
+                                                'settings.center.branchContext',
+                                            )}
                                         </Label>
                                         <Select
                                             value={String(selectedBranchId)}
@@ -245,7 +247,13 @@ export default function SettingsCenter({
                                         {tr('settings.center.identity')}
                                     </CardTitle>
                                     <CardDescription className="mt-2">
-                                        {tr('settings.center.companyDescription', { code: company.code, currency: company.currency })}
+                                        {tr(
+                                            'settings.center.companyDescription',
+                                            {
+                                                code: company.code,
+                                                currency: company.currency,
+                                            },
+                                        )}
                                     </CardDescription>
                                 </div>
                                 <Badge variant="outline">
@@ -262,7 +270,9 @@ export default function SettingsCenter({
                             >
                                 <div className="grid gap-4 md:grid-cols-2">
                                     <Field
-                                        label={tr('settings.center.companyName')}
+                                        label={tr(
+                                            'settings.center.companyName',
+                                        )}
                                         name="name"
                                         value={companyForm.data.name}
                                         disabled={!permissions.company_manage}
@@ -386,11 +396,15 @@ export default function SettingsCenter({
                         </CardHeader>
                         <CardContent className="space-y-4">
                             {selectedBranch === null ? (
-                                <EmptyState text={tr('settings.center.branchEmpty')} />
+                                <EmptyState
+                                    text={tr('settings.center.branchEmpty')}
+                                />
                             ) : (
                                 <>
                                     <SettingStatus
-                                        label={tr('settings.center.branchActive')}
+                                        label={tr(
+                                            'settings.center.branchActive',
+                                        )}
                                         value={
                                             selectedBranch.is_active
                                                 ? tr('settings.center.active')
@@ -399,11 +413,17 @@ export default function SettingsCenter({
                                         positive={selectedBranch.is_active}
                                     />
                                     <SettingStatus
-                                        label={tr('settings.center.publicCatalog')}
+                                        label={tr(
+                                            'settings.center.publicCatalog',
+                                        )}
                                         value={
                                             publicProfile?.catalog_enabled
-                                                ? tr('settings.center.published')
-                                                : tr('settings.center.notPublished')
+                                                ? tr(
+                                                      'settings.center.published',
+                                                  )
+                                                : tr(
+                                                      'settings.center.notPublished',
+                                                  )
                                         }
                                         positive={
                                             publicProfile?.catalog_enabled ===
@@ -411,7 +431,9 @@ export default function SettingsCenter({
                                         }
                                     />
                                     <SettingStatus
-                                        label={tr('settings.center.profileCompleteness')}
+                                        label={tr(
+                                            'settings.center.profileCompleteness',
+                                        )}
                                         value={`${publicProfile?.configured_fields ?? 0}/${publicProfile?.total_fields ?? 0} ${tr('settings.center.fields')}`}
                                     />
 
@@ -429,7 +451,9 @@ export default function SettingsCenter({
                                                 <Link
                                                     href={`/branches/${selectedBranch.id}/public-profile`}
                                                 >
-                                                    {tr('settings.center.publicProfile')}
+                                                    {tr(
+                                                        'settings.center.publicProfile',
+                                                    )}
                                                     <ArrowUpRight className="size-4" />
                                                 </Link>
                                             </Button>
@@ -452,9 +476,15 @@ export default function SettingsCenter({
                         </CardHeader>
                         <CardContent className="space-y-4">
                             {selectedBranch === null ? (
-                                <EmptyState text={tr('settings.center.chooseBranch')} />
+                                <EmptyState
+                                    text={tr('settings.center.chooseBranch')}
+                                />
                             ) : transferPolicy === null ? (
-                                <EmptyState text={tr('settings.center.noTransferPermission')} />
+                                <EmptyState
+                                    text={tr(
+                                        'settings.center.noTransferPermission',
+                                    )}
+                                />
                             ) : (
                                 <>
                                     <SettingStatus
@@ -480,7 +510,9 @@ export default function SettingsCenter({
                                         label={tr('settings.center.gallery')}
                                         value={
                                             transferPolicy.allow_gallery_override
-                                                ? tr('settings.center.permitted')
+                                                ? tr(
+                                                      'settings.center.permitted',
+                                                  )
                                                 : tr('settings.center.disabled')
                                         }
                                     />
@@ -489,7 +521,9 @@ export default function SettingsCenter({
                                         <Link
                                             href={`/transfers/settings?branch_id=${selectedBranch.id}`}
                                         >
-                                            {tr('settings.center.configureTransfer')}
+                                            {tr(
+                                                'settings.center.configureTransfer',
+                                            )}
                                             <ArrowUpRight className="size-4" />
                                         </Link>
                                     </Button>
@@ -510,18 +544,26 @@ export default function SettingsCenter({
                         </CardHeader>
                         <CardContent className="space-y-4">
                             {notifications === null ? (
-                                <EmptyState text={tr('settings.center.noNotificationAccess')} />
+                                <EmptyState
+                                    text={tr(
+                                        'settings.center.noNotificationAccess',
+                                    )}
+                                />
                             ) : (
                                 <>
                                     <SettingStatus
-                                        label={tr('settings.center.activeRules')}
+                                        label={tr(
+                                            'settings.center.activeRules',
+                                        )}
                                         value={`${notifications.enabled_rules}/${notifications.total_rules}`}
                                         positive={
                                             notifications.enabled_rules > 0
                                         }
                                     />
                                     <SettingStatus
-                                        label={tr('settings.center.criticalRules')}
+                                        label={tr(
+                                            'settings.center.criticalRules',
+                                        )}
                                         value={String(
                                             notifications.critical_rules,
                                         )}
@@ -536,8 +578,12 @@ export default function SettingsCenter({
                                     >
                                         <Link href="/notifications">
                                             {permissions.notifications_manage
-                                                ? tr('settings.center.manageNotifications')
-                                                : tr('settings.center.openNotifications')}
+                                                ? tr(
+                                                      'settings.center.manageNotifications',
+                                                  )
+                                                : tr(
+                                                      'settings.center.openNotifications',
+                                                  )}
                                             <ArrowUpRight className="size-4" />
                                         </Link>
                                     </Button>
@@ -573,7 +619,11 @@ export default function SettingsCenter({
                             )}
                             {!permissions.roles_view &&
                                 !permissions.audit_view && (
-                                    <EmptyState text={tr('settings.center.governanceEmpty')} />
+                                    <EmptyState
+                                        text={tr(
+                                            'settings.center.governanceEmpty',
+                                        )}
+                                    />
                                 )}
                         </CardContent>
                     </Card>

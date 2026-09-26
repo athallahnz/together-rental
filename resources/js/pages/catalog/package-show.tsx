@@ -73,7 +73,8 @@ export default function PackageShow({
                     <Button asChild variant="ghost" className="w-fit">
                         <Link href="/catalog?section=packages">
                             <ArrowLeft />
-                            <Stage3Text k="stage3.ui.semua.paket.a1b91" /></Link>
+                            <Stage3Text k="stage3.ui.semua.paket.a1b91" />
+                        </Link>
                     </Button>
                     <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                         <div>
@@ -89,13 +90,22 @@ export default function PackageShow({
                                     }
                                 >
                                     {rentalPackage.is_active
-                                        ? stage3Translate('stage3.ui.correction.aktif.89f29', stage3Locale)
-                                        : stage3Translate('stage3.ui.correction.nonaktif.60944', stage3Locale)}
+                                        ? stage3Translate(
+                                              'stage3.ui.correction.aktif.89f29',
+                                              stage3Locale,
+                                          )
+                                        : stage3Translate(
+                                              'stage3.ui.correction.nonaktif.60944',
+                                              stage3Locale,
+                                          )}
                                 </Badge>
                                 <Badge variant="secondary">
                                     {rentalPackage.branch
                                         ? rentalPackage.branch.code
-                                        : stage3Translate('stage3.ui.correction.global.5f118', stage3Locale)}
+                                        : stage3Translate(
+                                              'stage3.ui.correction.global.5f118',
+                                              stage3Locale,
+                                          )}
                                 </Badge>
                             </div>
                             <h1 className="mt-3 text-2xl font-semibold tracking-tight">
@@ -113,10 +123,12 @@ export default function PackageShow({
                                     onClick={() => setPackageDialog(true)}
                                 >
                                     <Pencil />
-                                    <Stage3Text k="stage3.ui.edit.paket.2354f" /></Button>
+                                    <Stage3Text k="stage3.ui.edit.paket.2354f" />
+                                </Button>
                                 <Button onClick={() => setItemDialog(true)}>
                                     <Plus />
-                                    <Stage3Text k="stage3.ui.tambah.item.9a69c" /></Button>
+                                    <Stage3Text k="stage3.ui.tambah.item.9a69c" />
+                                </Button>
                             </div>
                         )}
                     </div>
@@ -126,19 +138,28 @@ export default function PackageShow({
 
                 <section className="grid gap-4 sm:grid-cols-3">
                     <Metric
-                        label={stage3Translate('stage3.ui.produk.dalam.paket.9827c', stage3Locale)}
+                        label={stage3Translate(
+                            'stage3.ui.produk.dalam.paket.9827c',
+                            stage3Locale,
+                        )}
                         value={(rentalPackage.items ?? []).length.toString()}
                         icon={Layers3}
                     />
                     <Metric
-                        label={stage3Translate('stage3.ui.total.unit.8fce6', stage3Locale)}
+                        label={stage3Translate(
+                            'stage3.ui.total.unit.8fce6',
+                            stage3Locale,
+                        )}
                         value={(rentalPackage.items ?? [])
                             .reduce((sum, item) => sum + item.quantity, 0)
                             .toString()}
                         icon={Layers3}
                     />
                     <Metric
-                        label={stage3Translate('stage3.ui.harga.aktif.8a98d', stage3Locale)}
+                        label={stage3Translate(
+                            'stage3.ui.harga.aktif.8a98d',
+                            stage3Locale,
+                        )}
                         value={(rentalPackage.rates ?? [])
                             .filter((rate) => rate.is_active)
                             .length.toString()}
@@ -150,9 +171,12 @@ export default function PackageShow({
                     <Card>
                         <CardHeader className="flex-row items-start justify-between gap-4">
                             <div>
-                                <CardTitle><Stage3Text k="stage3.ui.isi.paket.cc244" /></CardTitle>
+                                <CardTitle>
+                                    <Stage3Text k="stage3.ui.isi.paket.cc244" />
+                                </CardTitle>
                                 <CardDescription>
-                                    <Stage3Text k="stage3.ui.produk.wajib.dan.opsional.yang.disertakan.a450e" /></CardDescription>
+                                    <Stage3Text k="stage3.ui.produk.wajib.dan.opsional.yang.disertakan.a450e" />
+                                </CardDescription>
                             </div>
                             {permissions.manageResource && (
                                 <Button
@@ -160,15 +184,22 @@ export default function PackageShow({
                                     onClick={() => setItemDialog(true)}
                                 >
                                     <Plus />
-                                    <Stage3Text k="stage3.ui.item.ecdda" /></Button>
+                                    <Stage3Text k="stage3.ui.item.ecdda" />
+                                </Button>
                             )}
                         </CardHeader>
                         <CardContent className="grid gap-3">
                             {(rentalPackage.items ?? []).length === 0 ? (
                                 <Empty
                                     icon={Layers3}
-                                    title={stage3Translate('stage3.ui.paket.belum.memiliki.item.5ff10', stage3Locale)}
-                                    description={stage3Translate('stage3.ui.tambahkan.produk.yang.akan.disertakan.dalam.pak.e26f3', stage3Locale)}
+                                    title={stage3Translate(
+                                        'stage3.ui.paket.belum.memiliki.item.5ff10',
+                                        stage3Locale,
+                                    )}
+                                    description={stage3Translate(
+                                        'stage3.ui.tambahkan.produk.yang.akan.disertakan.dalam.pak.e26f3',
+                                        stage3Locale,
+                                    )}
                                 />
                             ) : (
                                 rentalPackage.items?.map((item) => (
@@ -187,22 +218,29 @@ export default function PackageShow({
                                                 </Link>
                                                 {item.is_optional && (
                                                     <Badge variant="secondary">
-                                                        <Stage3Text k="stage3.ui.opsional.cf048" /></Badge>
+                                                        <Stage3Text k="stage3.ui.opsional.cf048" />
+                                                    </Badge>
                                                 )}
                                                 {!item.product?.is_active && (
                                                     <Badge variant="destructive">
-                                                        <Stage3Text k="stage3.ui.produk.nonaktif.15a44" /></Badge>
+                                                        <Stage3Text k="stage3.ui.produk.nonaktif.15a44" />
+                                                    </Badge>
                                                 )}
                                             </div>
                                             <p className="mt-1 font-mono text-xs text-muted-foreground">
                                                 {item.product?.sku} ·{' '}
-                                                {item.quantity} <Stage3Text k="stage3.ui.unit.0df9e" /></p>
+                                                {item.quantity}{' '}
+                                                <Stage3Text k="stage3.ui.unit.0df9e" />
+                                            </p>
                                         </div>
                                         {permissions.manageResource && (
                                             <Button
                                                 size="icon"
                                                 variant="ghost"
-                                                aria-label={stage3Translate('stage3.ui.hapus.item.paket.dda4a', stage3Locale)}
+                                                aria-label={stage3Translate(
+                                                    'stage3.ui.hapus.item.paket.dda4a',
+                                                    stage3Locale,
+                                                )}
                                                 onClick={async () => {
                                                     const confirmed =
                                                         await confirm({
@@ -238,9 +276,12 @@ export default function PackageShow({
                     <Card>
                         <CardHeader className="flex-row items-start justify-between gap-4">
                             <div>
-                                <CardTitle><Stage3Text k="stage3.ui.harga.paket.12c54" /></CardTitle>
+                                <CardTitle>
+                                    <Stage3Text k="stage3.ui.harga.paket.12c54" />
+                                </CardTitle>
                                 <CardDescription>
-                                    <Stage3Text k="stage3.ui.harga.berdasarkan.rate.plan.dan.cabang.c3d8d" /></CardDescription>
+                                    <Stage3Text k="stage3.ui.harga.berdasarkan.rate.plan.dan.cabang.c3d8d" />
+                                </CardDescription>
                             </div>
                             {permissions.manageResource && (
                                 <Button
@@ -248,15 +289,22 @@ export default function PackageShow({
                                     onClick={() => openRate(null)}
                                 >
                                     <Plus />
-                                    <Stage3Text k="stage3.ui.harga.059e7" /></Button>
+                                    <Stage3Text k="stage3.ui.harga.059e7" />
+                                </Button>
                             )}
                         </CardHeader>
                         <CardContent className="grid gap-3">
                             {(rentalPackage.rates ?? []).length === 0 ? (
                                 <Empty
                                     icon={CircleDollarSign}
-                                    title={stage3Translate('stage3.ui.paket.belum.memiliki.harga.72c29', stage3Locale)}
-                                    description={stage3Translate('stage3.ui.tambahkan.harga.paket.berdasarkan.rate.plan.4a6bd', stage3Locale)}
+                                    title={stage3Translate(
+                                        'stage3.ui.paket.belum.memiliki.harga.72c29',
+                                        stage3Locale,
+                                    )}
+                                    description={stage3Translate(
+                                        'stage3.ui.tambahkan.harga.paket.berdasarkan.rate.plan.4a6bd',
+                                        stage3Locale,
+                                    )}
                                 />
                             ) : (
                                 rentalPackage.rates?.map((rate) => {
@@ -279,11 +327,15 @@ export default function PackageShow({
                                                     <Badge variant="outline">
                                                         {rate.branch
                                                             ? rate.branch.code
-                                                            : stage3Translate('stage3.ui.correction.global.5f118', stage3Locale)}
+                                                            : stage3Translate(
+                                                                  'stage3.ui.correction.global.5f118',
+                                                                  stage3Locale,
+                                                              )}
                                                     </Badge>
                                                     {!rate.is_active && (
                                                         <Badge variant="secondary">
-                                                            <Stage3Text k="stage3.ui.nonaktif.60944" /></Badge>
+                                                            <Stage3Text k="stage3.ui.nonaktif.60944" />
+                                                        </Badge>
                                                     )}
                                                 </div>
                                                 <p className="mt-2 text-lg font-semibold">
@@ -303,7 +355,10 @@ export default function PackageShow({
                                                     <Button
                                                         size="icon"
                                                         variant="outline"
-                                                        aria-label={stage3Translate('stage3.ui.edit.harga.9cb6d', stage3Locale)}
+                                                        aria-label={stage3Translate(
+                                                            'stage3.ui.edit.harga.9cb6d',
+                                                            stage3Locale,
+                                                        )}
                                                         onClick={() =>
                                                             openRate(rate)
                                                         }
@@ -313,7 +368,10 @@ export default function PackageShow({
                                                     <Button
                                                         size="icon"
                                                         variant="ghost"
-                                                        aria-label={stage3Translate('stage3.ui.hapus.harga.be63c', stage3Locale)}
+                                                        aria-label={stage3Translate(
+                                                            'stage3.ui.hapus.harga.be63c',
+                                                            stage3Locale,
+                                                        )}
                                                         onClick={async () => {
                                                             const confirmed =
                                                                 await confirm({
@@ -352,19 +410,30 @@ export default function PackageShow({
 
                 <Card>
                     <CardHeader>
-                        <CardTitle><Stage3Text k="stage3.ui.periode.dan.scope.1fc55" /></CardTitle>
+                        <CardTitle>
+                            <Stage3Text k="stage3.ui.periode.dan.scope.1fc55" />
+                        </CardTitle>
                     </CardHeader>
                     <CardContent className="grid gap-5 text-sm sm:grid-cols-3">
                         <Info
-                            label={stage3Translate('stage3.ui.scope.4651a', stage3Locale)}
+                            label={stage3Translate(
+                                'stage3.ui.scope.4651a',
+                                stage3Locale,
+                            )}
                             value={
                                 rentalPackage.branch
                                     ? `${rentalPackage.branch.code} · ${rentalPackage.branch.name}`
-                                    : stage3Translate('stage3.ui.correction.global.seluruh.cabang.b98dd', stage3Locale)
+                                    : stage3Translate(
+                                          'stage3.ui.correction.global.seluruh.cabang.b98dd',
+                                          stage3Locale,
+                                      )
                             }
                         />
                         <Info
-                            label={stage3Translate('stage3.ui.berlaku.mulai.41c81', stage3Locale)}
+                            label={stage3Translate(
+                                'stage3.ui.berlaku.mulai.41c81',
+                                stage3Locale,
+                            )}
                             value={
                                 rentalPackage.valid_from
                                     ? formatDate(rentalPackage.valid_from)
@@ -372,7 +441,10 @@ export default function PackageShow({
                             }
                         />
                         <Info
-                            label={stage3Translate('stage3.ui.berlaku.sampai.8b9f4', stage3Locale)}
+                            label={stage3Translate(
+                                'stage3.ui.berlaku.sampai.8b9f4',
+                                stage3Locale,
+                            )}
                             value={
                                 rentalPackage.valid_until
                                     ? formatDate(rentalPackage.valid_until)
@@ -386,9 +458,11 @@ export default function PackageShow({
                     <Card className="border-destructive/30">
                         <CardHeader>
                             <CardTitle className="text-base">
-                                <Stage3Text k="stage3.ui.arsipkan.paket.aca0f" /></CardTitle>
+                                <Stage3Text k="stage3.ui.arsipkan.paket.aca0f" />
+                            </CardTitle>
                             <CardDescription>
-                                <Stage3Text k="stage3.ui.paket.yang.masih.digunakan.booking.aktif.akan.d.bc987" /></CardDescription>
+                                <Stage3Text k="stage3.ui.paket.yang.masih.digunakan.booking.aktif.akan.d.bc987" />
+                            </CardDescription>
                         </CardHeader>
                         <CardContent>
                             <Button
@@ -411,7 +485,8 @@ export default function PackageShow({
                                 }}
                             >
                                 <Trash2 />
-                                <Stage3Text k="stage3.ui.arsipkan.paket.aca0f" /></Button>
+                                <Stage3Text k="stage3.ui.arsipkan.paket.aca0f" />
+                            </Button>
                         </CardContent>
                     </Card>
                 )}
@@ -498,7 +573,9 @@ function PackageErrors({ errors }: { errors: Record<string, string> }) {
     return (
         <Alert variant="destructive">
             <CircleOff />
-            <AlertTitle><Stage3Text k="stage3.ui.perubahan.paket.ditolak.95495" /></AlertTitle>
+            <AlertTitle>
+                <Stage3Text k="stage3.ui.perubahan.paket.ditolak.95495" />
+            </AlertTitle>
             <AlertDescription>{message}</AlertDescription>
         </Alert>
     );

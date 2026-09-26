@@ -1,7 +1,11 @@
 import { Head, Link, useForm } from '@inertiajs/react';
 import { ArrowLeft, CalendarPlus, CircleAlert } from 'lucide-react';
 import type { FormEvent } from 'react';
-import { Stage4Text, stage4Translate, stage4FormatDateTime } from '@/components/stage4-text';
+import {
+    Stage4Text,
+    stage4Translate,
+    stage4FormatDateTime,
+} from '@/components/stage4-text';
 import { useAppLocale } from '@/lib/i18n';
 import { CashSessionSelect } from '@/components/finance/cash-session-select';
 import type {
@@ -133,10 +137,12 @@ export default function RentalExtensionCreate({
                     <div>
                         <Button variant="ghost" size="sm" asChild>
                             <Link href={`/rentals/${rental.id}`}>
-                                <ArrowLeft /><Stage4Text k="stage4.ui.36122848fcbc" />
+                                <ArrowLeft />
+                                <Stage4Text k="stage4.ui.36122848fcbc" />
                             </Link>
                         </Button>
-                        <h1 className="mt-3 text-2xl font-semibold"><Stage4Text k="stage4.ui.6a4041adb947" />
+                        <h1 className="mt-3 text-2xl font-semibold">
+                            <Stage4Text k="stage4.ui.6a4041adb947" />
                         </h1>
                         <p className="mt-1 text-sm text-muted-foreground">
                             {rental.rental_number} · {rental.customer.name} ·{' '}
@@ -149,25 +155,32 @@ export default function RentalExtensionCreate({
                             form.processing || form.data.item_ids.length === 0
                         }
                     >
-                        <CalendarPlus /><Stage4Text k="stage4.ui.97c81c9521bb" />
+                        <CalendarPlus />
+                        <Stage4Text k="stage4.ui.97c81c9521bb" />
                     </Button>
                 </header>
 
                 <Alert>
                     <CircleAlert className="size-4" />
-                    <AlertTitle><Stage4Text k="stage4.ui.c9fd95d8744a" /></AlertTitle>
-                    <AlertDescription><Stage4Text k="stage4.ui.7b1e6de1b36a" />
+                    <AlertTitle>
+                        <Stage4Text k="stage4.ui.c9fd95d8744a" />
+                    </AlertTitle>
+                    <AlertDescription>
+                        <Stage4Text k="stage4.ui.7b1e6de1b36a" />
                     </AlertDescription>
                 </Alert>
 
                 <section className="grid gap-4 lg:grid-cols-3">
                     <Card>
                         <CardHeader>
-                            <CardTitle><Stage4Text k="stage4.ui.0df3f0faab87" /></CardTitle>
+                            <CardTitle>
+                                <Stage4Text k="stage4.ui.0df3f0faab87" />
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-3">
                             <div className="space-y-2">
-                                <Label htmlFor="duration_units"><Stage4Text k="stage4.ui.1b2c982b0c67" />
+                                <Label htmlFor="duration_units">
+                                    <Stage4Text k="stage4.ui.1b2c982b0c67" />
                                 </Label>
                                 <Input
                                     id="duration_units"
@@ -189,50 +202,72 @@ export default function RentalExtensionCreate({
                                     message={form.errors.duration_units}
                                 />
                             </div>
-                            <p className="text-sm text-muted-foreground"><Stage4Text k="stage4.ui.a21e441e929d" /> <b>{rental.rate_plan.name}</b><Stage4Text k="stage4.ui.23d76e36f4cd" /> {rental.rate_plan.duration_value}{' '}
+                            <p className="text-sm text-muted-foreground">
+                                <Stage4Text k="stage4.ui.a21e441e929d" />{' '}
+                                <b>{rental.rate_plan.name}</b>
+                                <Stage4Text k="stage4.ui.23d76e36f4cd" />{' '}
+                                {rental.rate_plan.duration_value}{' '}
                                 {rental.rate_plan.duration_unit}
                             </p>
-                            <p className="text-sm text-muted-foreground"><Stage4Text k="stage4.ui.942e7e98d962" />{' '}
-                                {stage4FormatDateTime(new Date(rental.due_at), stage4Locale)}
+                            <p className="text-sm text-muted-foreground">
+                                <Stage4Text k="stage4.ui.942e7e98d962" />{' '}
+                                {stage4FormatDateTime(
+                                    new Date(rental.due_at),
+                                    stage4Locale,
+                                )}
                             </p>
                         </CardContent>
                     </Card>
 
                     <Card>
                         <CardHeader>
-                            <CardTitle><Stage4Text k="stage4.ui.b6c2a17bc667" /></CardTitle>
+                            <CardTitle>
+                                <Stage4Text k="stage4.ui.b6c2a17bc667" />
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-2 text-sm">
                             <p className="flex justify-between">
-                                <span><Stage4Text k="stage4.ui.1b8821ea5067" /></span>
+                                <span>
+                                    <Stage4Text k="stage4.ui.1b8821ea5067" />
+                                </span>
                                 <b>{money.format(estimatedTotal)}</b>
                             </p>
                             <p className="flex justify-between">
-                                <span><Stage4Text k="stage4.ui.9f46961351fe" /></span>
+                                <span>
+                                    <Stage4Text k="stage4.ui.9f46961351fe" />
+                                </span>
                                 <b>
                                     {money.format(Number(rental.balance_due))}
                                 </b>
                             </p>
                             <p className="flex justify-between">
-                                <span><Stage4Text k="stage4.ui.83cbb8e4e23f" /></span>
+                                <span>
+                                    <Stage4Text k="stage4.ui.83cbb8e4e23f" />
+                                </span>
                                 <b>{money.format(form.data.payment_amount)}</b>
                             </p>
                             <p className="flex justify-between border-t pt-2 font-semibold">
-                                <span><Stage4Text k="stage4.ui.2c2ba8388f81" /></span>
+                                <span>
+                                    <Stage4Text k="stage4.ui.2c2ba8388f81" />
+                                </span>
                                 <b>{money.format(estimatedBalance)}</b>
                             </p>
-                            <p className="text-xs text-muted-foreground"><Stage4Text k="stage4.ui.7c2b93e25007" />
+                            <p className="text-xs text-muted-foreground">
+                                <Stage4Text k="stage4.ui.7c2b93e25007" />
                             </p>
                         </CardContent>
                     </Card>
 
                     <Card>
                         <CardHeader>
-                            <CardTitle><Stage4Text k="stage4.ui.a5e08f29197c" /></CardTitle>
+                            <CardTitle>
+                                <Stage4Text k="stage4.ui.a5e08f29197c" />
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-3">
                             <div className="space-y-2">
-                                <Label htmlFor="promotion_code"><Stage4Text k="stage4.ui.3d00cf0d363b" />
+                                <Label htmlFor="promotion_code">
+                                    <Stage4Text k="stage4.ui.3d00cf0d363b" />
                                 </Label>
                                 <Input
                                     id="promotion_code"
@@ -243,15 +278,24 @@ export default function RentalExtensionCreate({
                                             event.target.value.toUpperCase(),
                                         )
                                     }
-                                    placeholder={stage4Translate("stage4.ui.cf048762964b", stage4Locale)}
+                                    placeholder={stage4Translate(
+                                        'stage4.ui.cf048762964b',
+                                        stage4Locale,
+                                    )}
                                 />
                                 <InputError
                                     message={form.errors.promotion_code}
                                 />
                                 <p className="text-xs text-muted-foreground">
                                     {rental.customer.is_member
-                                        ? stage4Translate("stage4.ui.67cbf4ab084b", stage4Locale)
-                                        : stage4Translate("stage4.ui.d827f4c16648", stage4Locale)}
+                                        ? stage4Translate(
+                                              'stage4.ui.67cbf4ab084b',
+                                              stage4Locale,
+                                          )
+                                        : stage4Translate(
+                                              'stage4.ui.d827f4c16648',
+                                              stage4Locale,
+                                          )}
                                 </p>
                             </div>
                             <RupiahInput
@@ -259,7 +303,10 @@ export default function RentalExtensionCreate({
                                 onValueChange={(value) =>
                                     form.setData('payment_amount', value)
                                 }
-                                placeholder={stage4Translate("stage4.ui.ac55071ae988", stage4Locale)}
+                                placeholder={stage4Translate(
+                                    'stage4.ui.ac55071ae988',
+                                    stage4Locale,
+                                )}
                             />
                             <InputError message={form.errors.payment_amount} />
                             <Select
@@ -275,7 +322,12 @@ export default function RentalExtensionCreate({
                                 }}
                             >
                                 <SelectTrigger>
-                                    <SelectValue placeholder={stage4Translate("stage4.ui.e2ae48d60181", stage4Locale)} />
+                                    <SelectValue
+                                        placeholder={stage4Translate(
+                                            'stage4.ui.e2ae48d60181',
+                                            stage4Locale,
+                                        )}
+                                    />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {paymentMethods.map((method) => (
@@ -304,7 +356,8 @@ export default function RentalExtensionCreate({
                             />
                             {selectedMethod?.requires_reference && (
                                 <div className="space-y-2">
-                                    <Label htmlFor="payment_reference"><Stage4Text k="stage4.ui.7f2cc58cb31e" />
+                                    <Label htmlFor="payment_reference">
+                                        <Stage4Text k="stage4.ui.7f2cc58cb31e" />
                                     </Label>
                                     <Input
                                         id="payment_reference"
@@ -327,7 +380,9 @@ export default function RentalExtensionCreate({
 
                 <Card>
                     <CardHeader>
-                        <CardTitle><Stage4Text k="stage4.ui.5265a07710c5" /></CardTitle>
+                        <CardTitle>
+                            <Stage4Text k="stage4.ui.5265a07710c5" />
+                        </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-3">
                         {items.map((item) => {
@@ -360,10 +415,14 @@ export default function RentalExtensionCreate({
                                                     {item.description}
                                                 </p>
                                                 <p className="text-sm text-muted-foreground">
-                                                    {item.out_quantity}<Stage4Text k="stage4.ui.62a3f1130644" />{' '}
-                                                    {stage4FormatDateTime(new Date(
+                                                    {item.out_quantity}
+                                                    <Stage4Text k="stage4.ui.62a3f1130644" />{' '}
+                                                    {stage4FormatDateTime(
+                                                        new Date(
                                                             item.current_due_at,
-                                                        ), stage4Locale)}
+                                                        ),
+                                                        stage4Locale,
+                                                    )}
                                                 </p>
                                             </div>
                                             <div className="text-right text-sm">
@@ -373,7 +432,8 @@ export default function RentalExtensionCreate({
                                                 <p className="text-muted-foreground">
                                                     {money.format(
                                                         item.unit_rate,
-                                                    )}{' '}<Stage4Text k="stage4.ui.2babba410b2d" />
+                                                    )}{' '}
+                                                    <Stage4Text k="stage4.ui.2babba410b2d" />
                                                 </p>
                                             </div>
                                         </div>
@@ -400,11 +460,15 @@ export default function RentalExtensionCreate({
 
                 <Card>
                     <CardHeader>
-                        <CardTitle><Stage4Text k="stage4.ui.9f09aefd0dd4" /></CardTitle>
+                        <CardTitle>
+                            <Stage4Text k="stage4.ui.9f09aefd0dd4" />
+                        </CardTitle>
                     </CardHeader>
                     <CardContent className="grid gap-4 md:grid-cols-2">
                         <div className="space-y-2">
-                            <Label htmlFor="notes"><Stage4Text k="stage4.ui.c1f3e562e10c" /></Label>
+                            <Label htmlFor="notes">
+                                <Stage4Text k="stage4.ui.c1f3e562e10c" />
+                            </Label>
                             <textarea
                                 id="notes"
                                 className="flex min-h-28 w-full rounded-md border border-input bg-transparent px-3 py-2 text-sm shadow-xs"
@@ -416,7 +480,8 @@ export default function RentalExtensionCreate({
                             <InputError message={form.errors.notes} />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="payment_notes"><Stage4Text k="stage4.ui.55245e22b5d4" />
+                            <Label htmlFor="payment_notes">
+                                <Stage4Text k="stage4.ui.55245e22b5d4" />
                             </Label>
                             <textarea
                                 id="payment_notes"

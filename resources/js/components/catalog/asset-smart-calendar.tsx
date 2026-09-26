@@ -82,7 +82,10 @@ const priority: AssetCalendarStatus[] = [
 ];
 
 /** Public calendar labels come from stable status codes; internal asset screens remain unchanged. */
-function publicEventLabel(status: AssetCalendarStatus, locale: AppLocale): string {
+function publicEventLabel(
+    status: AssetCalendarStatus,
+    locale: AppLocale,
+): string {
     const keys = {
         booked: 'public.detail.calendar.event.booked',
         rented: 'public.detail.calendar.event.rented',
@@ -244,7 +247,9 @@ export function CalendarMonth({
                         <span
                             className={`size-2 rounded-full ${statusMeta[status].dot}`}
                         />
-                        {isPublic ? publicEventLabel(status, locale) : statusMeta[status].label}
+                        {isPublic
+                            ? publicEventLabel(status, locale)
+                            : statusMeta[status].label}
                     </Badge>
                 ))}
                 <Badge
@@ -256,7 +261,12 @@ export function CalendarMonth({
                     }
                 >
                     <span className="size-2 rounded-full bg-emerald-500" />
-                    {isPublic ? translateKey('public.detail.calendar.available', locale) : 'Tersedia'}
+                    {isPublic
+                        ? translateKey(
+                              'public.detail.calendar.available',
+                              locale,
+                          )
+                        : 'Tersedia'}
                 </Badge>
             </div>
 
@@ -270,13 +280,11 @@ export function CalendarMonth({
                 {(isPublic && locale === 'en'
                     ? ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']
                     : ['Sen', 'Sel', 'Rab', 'Kam', 'Jum', 'Sab', 'Min']
-                ).map(
-                    (day) => (
-                        <div key={day} className="py-2">
-                            {day}
-                        </div>
-                    ),
-                )}
+                ).map((day) => (
+                    <div key={day} className="py-2">
+                        {day}
+                    </div>
+                ))}
             </div>
 
             <div className="grid grid-cols-7 gap-1">
@@ -331,7 +339,12 @@ export function CalendarMonth({
                                                 className={`size-1.5 shrink-0 rounded-full ${statusMeta[event.status].dot}`}
                                             />
                                             <span className="truncate">
-                                                {isPublic ? publicEventLabel(event.status, locale) : event.label}
+                                                {isPublic
+                                                    ? publicEventLabel(
+                                                          event.status,
+                                                          locale,
+                                                      )
+                                                    : event.label}
                                             </span>
                                         </div>
                                     ))}
@@ -343,7 +356,12 @@ export function CalendarMonth({
                                                     : 'text-[10px] text-emerald-700 dark:text-emerald-400'
                                             }
                                         >
-                                            {isPublic ? translateKey('public.detail.calendar.available', locale) : 'Tersedia'}
+                                            {isPublic
+                                                ? translateKey(
+                                                      'public.detail.calendar.available',
+                                                      locale,
+                                                  )
+                                                : 'Tersedia'}
                                         </span>
                                     )}
                                 </div>
@@ -389,11 +407,20 @@ export function CalendarToolbar({
                         : undefined
                 }
                 onClick={onPrevious}
-                aria-label={isPublic ? translateKey('public.detail.calendar.previous', locale) : 'Bulan sebelumnya'}
+                aria-label={
+                    isPublic
+                        ? translateKey(
+                              'public.detail.calendar.previous',
+                              locale,
+                          )
+                        : 'Bulan sebelumnya'
+                }
             >
                 <ChevronLeft />
             </Button>
-            <p className="font-semibold">{monthLabel(month, isPublic ? locale : 'id')}</p>
+            <p className="font-semibold">
+                {monthLabel(month, isPublic ? locale : 'id')}
+            </p>
             <Button
                 type="button"
                 variant="ghost"
@@ -404,7 +431,11 @@ export function CalendarToolbar({
                         : undefined
                 }
                 onClick={onNext}
-                aria-label={isPublic ? translateKey('public.detail.calendar.next', locale) : 'Bulan berikutnya'}
+                aria-label={
+                    isPublic
+                        ? translateKey('public.detail.calendar.next', locale)
+                        : 'Bulan berikutnya'
+                }
             >
                 <ChevronRight />
             </Button>

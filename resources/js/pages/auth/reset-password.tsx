@@ -46,7 +46,9 @@ export default function ResetPassword({ token, email, passwordRules }: Props) {
                         </div>
 
                         <div className="grid gap-2">
-                            <Label htmlFor="password">{tr('auth.password')}</Label>
+                            <Label htmlFor="password">
+                                {tr('auth.password')}
+                            </Label>
                             <PasswordInput
                                 id="password"
                                 name="password"

@@ -41,7 +41,11 @@ export function BranchSwitcher() {
                         <SidebarMenuButton
                             size="lg"
                             className="rounded-xl border border-sidebar-border/70 bg-sidebar-accent/35 shadow-xs data-[state=open]:bg-sidebar-accent"
-                            tooltip={{ children: tr('common.currentBranchTooltip', { name: current.name }) }}
+                            tooltip={{
+                                children: tr('common.currentBranchTooltip', {
+                                    name: current.name,
+                                }),
+                            }}
                         >
                             <div className="flex aspect-square size-8 shrink-0 items-center justify-center rounded-lg border border-sidebar-border bg-sidebar text-sidebar-foreground">
                                 <Building2 className="size-4" />

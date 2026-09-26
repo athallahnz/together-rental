@@ -16,7 +16,8 @@ export function stage3Translate(
 
 export function Stage3Text({ k }: { k: Stage3Key }) {
     const { props } = usePage();
-    const locale: AppLocale = (props as { locale?: string }).locale === 'en' ? 'en' : 'id';
+    const locale: AppLocale =
+        (props as { locale?: string }).locale === 'en' ? 'en' : 'id';
 
     return translateKey(k, locale);
 }

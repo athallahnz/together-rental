@@ -120,29 +120,40 @@ export default function CustomerIndex({
 
     return (
         <>
-            <Head title={stage3Translate('stage3.ui.pelanggan.af0ab', stage3Locale)} />
+            <Head
+                title={stage3Translate(
+                    'stage3.ui.pelanggan.af0ab',
+                    stage3Locale,
+                )}
+            />
 
             <div className="flex h-full flex-1 flex-col gap-6 overflow-x-auto rounded-xl p-4 md:p-6">
                 <header className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                     <div>
                         <p className="text-sm font-medium text-primary">
-                            <Stage3Text k="stage3.ui.customer.relationship.management.7f42d" /></p>
+                            <Stage3Text k="stage3.ui.customer.relationship.management.7f42d" />
+                        </p>
                         <h1 className="mt-1 text-2xl font-semibold tracking-tight">
-                            <Stage3Text k="stage3.ui.pelanggan.af0ab" /></h1>
+                            <Stage3Text k="stage3.ui.pelanggan.af0ab" />
+                        </h1>
                         <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-                            <Stage3Text k="stage3.ui.satu.database.pelanggan.lintas.cabang.dengan.id.033ce" /></p>
+                            <Stage3Text k="stage3.ui.satu.database.pelanggan.lintas.cabang.dengan.id.033ce" />
+                        </p>
                     </div>
                     {permissions.create && (
                         <Button onClick={openCreate}>
                             <Plus />
-                            <Stage3Text k="stage3.ui.tambah.pelanggan.bc83e" /></Button>
+                            <Stage3Text k="stage3.ui.tambah.pelanggan.bc83e" />
+                        </Button>
                     )}
                 </header>
 
                 {typeof pageErrors.customer === 'string' && (
                     <Alert variant="destructive">
                         <CircleOff />
-                        <AlertTitle><Stage3Text k="stage3.ui.perubahan.pelanggan.ditolak.f95ec" /></AlertTitle>
+                        <AlertTitle>
+                            <Stage3Text k="stage3.ui.perubahan.pelanggan.ditolak.f95ec" />
+                        </AlertTitle>
                         <AlertDescription>
                             {pageErrors.customer}
                         </AlertDescription>
@@ -152,27 +163,42 @@ export default function CustomerIndex({
                 <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-5">
                     {[
                         {
-                            label: stage3Translate('stage3.ui.correction.total.pelanggan.7797c', stage3Locale),
+                            label: stage3Translate(
+                                'stage3.ui.correction.total.pelanggan.7797c',
+                                stage3Locale,
+                            ),
                             value: summary.total,
                             icon: ContactRound,
                         },
                         {
-                            label: stage3Translate('stage3.ui.correction.pelanggan.aktif.a9b25', stage3Locale),
+                            label: stage3Translate(
+                                'stage3.ui.correction.pelanggan.aktif.a9b25',
+                                stage3Locale,
+                            ),
                             value: summary.active,
                             icon: CheckCircle2,
                         },
                         {
-                            label: stage3Translate('stage3.ui.correction.member.6853c', stage3Locale),
+                            label: stage3Translate(
+                                'stage3.ui.correction.member.6853c',
+                                stage3Locale,
+                            ),
                             value: summary.members,
                             icon: Gem,
                         },
                         {
-                            label: stage3Translate('stage3.ui.correction.risiko.tinggi.035bf', stage3Locale),
+                            label: stage3Translate(
+                                'stage3.ui.correction.risiko.tinggi.035bf',
+                                stage3Locale,
+                            ),
                             value: summary.highRisk,
                             icon: AlertTriangle,
                         },
                         {
-                            label: stage3Translate('stage3.ui.correction.identitas.belum.valid.43262', stage3Locale),
+                            label: stage3Translate(
+                                'stage3.ui.correction.identitas.belum.valid.43262',
+                                stage3Locale,
+                            ),
                             value: summary.unverified,
                             icon: IdCard,
                         },
@@ -194,9 +220,12 @@ export default function CustomerIndex({
                 <Card>
                     <CardHeader className="gap-4">
                         <div>
-                            <CardTitle><Stage3Text k="stage3.ui.database.pelanggan.5adf4" /></CardTitle>
+                            <CardTitle>
+                                <Stage3Text k="stage3.ui.database.pelanggan.5adf4" />
+                            </CardTitle>
                             <CardDescription>
-                                <Stage3Text k="stage3.ui.pencarian.mencakup.nama.telepon.nomor.pelanggan.faab5" /></CardDescription>
+                                <Stage3Text k="stage3.ui.pencarian.mencakup.nama.telepon.nomor.pelanggan.faab5" />
+                            </CardDescription>
                         </div>
                         <div
                             data-slot="filter-grid"
@@ -217,14 +246,20 @@ export default function CustomerIndex({
                                             setSearch(event.target.value)
                                         }
                                         className="pl-9"
-                                        placeholder={stage3Translate('stage3.ui.cari.pelanggan.0e369', stage3Locale)}
+                                        placeholder={stage3Translate(
+                                            'stage3.ui.cari.pelanggan.0e369',
+                                            stage3Locale,
+                                        )}
                                     />
                                 </div>
                                 <Button
                                     type="submit"
                                     size="icon"
                                     variant="outline"
-                                    aria-label={stage3Translate('stage3.ui.cari.pelanggan.0e369', stage3Locale)}
+                                    aria-label={stage3Translate(
+                                        'stage3.ui.cari.pelanggan.0e369',
+                                        stage3Locale,
+                                    )}
                                 >
                                     <Search />
                                 </Button>
@@ -239,7 +274,10 @@ export default function CustomerIndex({
                                                 : Number(value),
                                     })
                                 }
-                                placeholder={stage3Translate('stage3.ui.semua.cabang.27d30', stage3Locale)}
+                                placeholder={stage3Translate(
+                                    'stage3.ui.semua.cabang.27d30',
+                                    stage3Locale,
+                                )}
                                 options={branches.map((branch) => ({
                                     value: branch.id.toString(),
                                     label: `${branch.code} · ${branch.name}`,
@@ -250,11 +288,32 @@ export default function CustomerIndex({
                                 onValueChange={(status) =>
                                     applyFilters({ status })
                                 }
-                                placeholder={stage3Translate('stage3.ui.semua.status.baa2a', stage3Locale)}
+                                placeholder={stage3Translate(
+                                    'stage3.ui.semua.status.baa2a',
+                                    stage3Locale,
+                                )}
                                 options={[
-                                    { value: 'active', label: stage3Translate('stage3.ui.correction.aktif.89f29', stage3Locale) },
-                                    { value: 'inactive', label: stage3Translate('stage3.ui.correction.nonaktif.60944', stage3Locale) },
-                                    { value: 'blocked', label: stage3Translate('stage3.ui.correction.diblokir.ae752', stage3Locale) },
+                                    {
+                                        value: 'active',
+                                        label: stage3Translate(
+                                            'stage3.ui.correction.aktif.89f29',
+                                            stage3Locale,
+                                        ),
+                                    },
+                                    {
+                                        value: 'inactive',
+                                        label: stage3Translate(
+                                            'stage3.ui.correction.nonaktif.60944',
+                                            stage3Locale,
+                                        ),
+                                    },
+                                    {
+                                        value: 'blocked',
+                                        label: stage3Translate(
+                                            'stage3.ui.correction.diblokir.ae752',
+                                            stage3Locale,
+                                        ),
+                                    },
                                 ]}
                             />
                             <FilterSelect
@@ -262,21 +321,63 @@ export default function CustomerIndex({
                                 onValueChange={(membership) =>
                                     applyFilters({ membership })
                                 }
-                                placeholder={stage3Translate('stage3.ui.semua.pelanggan.50b93', stage3Locale)}
+                                placeholder={stage3Translate(
+                                    'stage3.ui.semua.pelanggan.50b93',
+                                    stage3Locale,
+                                )}
                                 options={[
-                                    { value: 'member', label: stage3Translate('stage3.ui.correction.member.6853c', stage3Locale) },
-                                    { value: 'regular', label: stage3Translate('stage3.ui.correction.non.member.b65c4', stage3Locale) },
+                                    {
+                                        value: 'member',
+                                        label: stage3Translate(
+                                            'stage3.ui.correction.member.6853c',
+                                            stage3Locale,
+                                        ),
+                                    },
+                                    {
+                                        value: 'regular',
+                                        label: stage3Translate(
+                                            'stage3.ui.correction.non.member.b65c4',
+                                            stage3Locale,
+                                        ),
+                                    },
                                 ]}
                             />
                             <FilterSelect
                                 value={filters.risk || 'all'}
                                 onValueChange={(risk) => applyFilters({ risk })}
-                                placeholder={stage3Translate('stage3.ui.semua.risiko.d8f13', stage3Locale)}
+                                placeholder={stage3Translate(
+                                    'stage3.ui.semua.risiko.d8f13',
+                                    stage3Locale,
+                                )}
                                 options={[
-                                    { value: 'low', label: stage3Translate('stage3.ui.correction.rendah.afc56', stage3Locale) },
-                                    { value: 'normal', label: stage3Translate('stage3.ui.correction.normal.45e11', stage3Locale) },
-                                    { value: 'high', label: stage3Translate('stage3.ui.correction.tinggi.dc1b9', stage3Locale) },
-                                    { value: 'critical', label: stage3Translate('stage3.ui.correction.kritis.f690d', stage3Locale) },
+                                    {
+                                        value: 'low',
+                                        label: stage3Translate(
+                                            'stage3.ui.correction.rendah.afc56',
+                                            stage3Locale,
+                                        ),
+                                    },
+                                    {
+                                        value: 'normal',
+                                        label: stage3Translate(
+                                            'stage3.ui.correction.normal.45e11',
+                                            stage3Locale,
+                                        ),
+                                    },
+                                    {
+                                        value: 'high',
+                                        label: stage3Translate(
+                                            'stage3.ui.correction.tinggi.dc1b9',
+                                            stage3Locale,
+                                        ),
+                                    },
+                                    {
+                                        value: 'critical',
+                                        label: stage3Translate(
+                                            'stage3.ui.correction.kritis.f690d',
+                                            stage3Locale,
+                                        ),
+                                    },
                                 ]}
                             />
                         </div>
@@ -286,9 +387,11 @@ export default function CustomerIndex({
                             <div className="py-16 text-center">
                                 <ContactRound className="mx-auto size-9 text-muted-foreground" />
                                 <p className="mt-4 font-medium">
-                                    <Stage3Text k="stage3.ui.pelanggan.tidak.ditemukan.b95f6" /></p>
+                                    <Stage3Text k="stage3.ui.pelanggan.tidak.ditemukan.b95f6" />
+                                </p>
                                 <p className="mt-1 text-sm text-muted-foreground">
-                                    <Stage3Text k="stage3.ui.ubah.filter.atau.tambahkan.pelanggan.baru.e58c5" /></p>
+                                    <Stage3Text k="stage3.ui.ubah.filter.atau.tambahkan.pelanggan.baru.e58c5" />
+                                </p>
                             </div>
                         ) : (
                             <div className="grid gap-3">
@@ -314,7 +417,8 @@ export default function CustomerIndex({
                                                 {customer.is_member && (
                                                     <Badge>
                                                         <Gem />
-                                                        <Stage3Text k="stage3.ui.member.6853c" /></Badge>
+                                                        <Stage3Text k="stage3.ui.member.6853c" />
+                                                    </Badge>
                                                 )}
                                             </div>
                                             <p className="mt-1 font-mono text-xs text-muted-foreground">
@@ -325,7 +429,10 @@ export default function CustomerIndex({
                                             <p className="mt-2 truncate text-sm text-muted-foreground">
                                                 {customer.phone ||
                                                     customer.email ||
-                                                    stage3Translate('stage3.ui.correction.kontak.belum.diisi.c944e', stage3Locale)}
+                                                    stage3Translate(
+                                                        'stage3.ui.correction.kontak.belum.diisi.c944e',
+                                                        stage3Locale,
+                                                    )}
                                             </p>
                                         </div>
 
@@ -333,13 +440,19 @@ export default function CustomerIndex({
                                             <p>
                                                 {customer.registered_branch
                                                     ? `${customer.registered_branch.code} · ${customer.registered_branch.name}`
-                                                    : stage3Translate('stage3.ui.correction.cabang.pendaftaran.tidak.tersedia.ab83f', stage3Locale)}
+                                                    : stage3Translate(
+                                                          'stage3.ui.correction.cabang.pendaftaran.tidak.tersedia.ab83f',
+                                                          stage3Locale,
+                                                      )}
                                             </p>
                                             <p className="flex items-center gap-2 text-muted-foreground">
                                                 <IdCard className="size-4" />
                                                 {customer.primary_identity
                                                     ? `${customer.primary_identity.type.toUpperCase()} · ${customer.primary_identity.number}`
-                                                    : stage3Translate('stage3.ui.correction.identitas.belum.ditambahkan.85c89', stage3Locale)}
+                                                    : stage3Translate(
+                                                          'stage3.ui.correction.identitas.belum.ditambahkan.85c89',
+                                                          stage3Locale,
+                                                      )}
                                                 {customer.primary_identity
                                                     ?.verified_at && (
                                                     <BadgeCheck className="size-4 text-emerald-600" />
@@ -350,7 +463,8 @@ export default function CustomerIndex({
                                                 <Stage3Text k="stage3.ui.rental.1442b" />{' '}
                                                 {customer.loyalty_account
                                                     ?.points_balance ?? 0}{' '}
-                                                <Stage3Text k="stage3.ui.poin.07d36" /></p>
+                                                <Stage3Text k="stage3.ui.poin.07d36" />
+                                            </p>
                                         </div>
 
                                         <div className="flex flex-wrap gap-2 lg:justify-end">
@@ -363,7 +477,8 @@ export default function CustomerIndex({
                                                     href={`/customers/${customer.id}`}
                                                 >
                                                     <Eye />
-                                                    <Stage3Text k="stage3.ui.customer.360.c4f8b" /></Link>
+                                                    <Stage3Text k="stage3.ui.customer.360.c4f8b" />
+                                                </Link>
                                             </Button>
                                             {permissions.update && (
                                                 <Button
@@ -374,7 +489,8 @@ export default function CustomerIndex({
                                                     }
                                                 >
                                                     <Pencil />
-                                                    <Stage3Text k="stage3.ui.edit.53016" /></Button>
+                                                    <Stage3Text k="stage3.ui.edit.53016" />
+                                                </Button>
                                             )}
                                         </div>
                                     </article>
@@ -437,10 +553,19 @@ function CustomerStatusBadge({ status }: { status: Customer['status'] }) {
     return (
         <Badge variant={status === 'active' ? 'outline' : 'secondary'}>
             {status === 'active'
-                ? stage3Translate('stage3.ui.correction.aktif.89f29', stage3Locale)
+                ? stage3Translate(
+                      'stage3.ui.correction.aktif.89f29',
+                      stage3Locale,
+                  )
                 : status === 'blocked'
-                  ? stage3Translate('stage3.ui.correction.diblokir.ae752', stage3Locale)
-                  : stage3Translate('stage3.ui.correction.nonaktif.60944', stage3Locale)}
+                  ? stage3Translate(
+                        'stage3.ui.correction.diblokir.ae752',
+                        stage3Locale,
+                    )
+                  : stage3Translate(
+                        'stage3.ui.correction.nonaktif.60944',
+                        stage3Locale,
+                    )}
         </Badge>
     );
 }

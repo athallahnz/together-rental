@@ -1,7 +1,11 @@
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { Head, Link, useForm } from '@inertiajs/react';
 import { ArrowLeft, Plus, RefreshCw, Save, Trash2 } from 'lucide-react';
-import { Stage4Text, stage4Translate, stage4TranslateDynamic } from '@/components/stage4-text';
+import {
+    Stage4Text,
+    stage4Translate,
+    stage4TranslateDynamic,
+} from '@/components/stage4-text';
 import { useAppLocale } from '@/lib/i18n';
 import { SearchPickerDialog } from '@/components/bookings/search-picker-dialog';
 import type { BookingSearchOption } from '@/components/bookings/search-picker-dialog';
@@ -110,14 +114,15 @@ const initialDurationUnits = (
     return Math.max(1, Math.round(bookingMinutes / unitMinutes));
 };
 
-const durationLabel = (plan?: BookingRatePlan, locale: "id" | "en" = "id") => {
+const durationLabel = (plan?: BookingRatePlan, locale: 'id' | 'en' = 'id') => {
     if (!plan) {
         return 'unit';
     }
 
-    const labels = locale === 'en'
-        ? { hour: 'hour', day: 'day', week: 'week', month: 'month' }
-        : { hour: 'jam', day: 'hari', week: 'minggu', month: 'bulan' };
+    const labels =
+        locale === 'en'
+            ? { hour: 'hour', day: 'day', week: 'week', month: 'month' }
+            : { hour: 'jam', day: 'hari', week: 'minggu', month: 'bulan' };
 
     return plan.duration_value === 1
         ? labels[plan.duration_unit]
@@ -138,8 +143,9 @@ export default function BookingForm({
     const { locale: stage4Locale } = useAppLocale();
 
     const direct = mode === 'direct';
-    const [identityOptions, setIdentityOptions] =
-        useState<CollateralIdentityOption[]>([]);
+    const [identityOptions, setIdentityOptions] = useState<
+        CollateralIdentityOption[]
+    >([]);
     const [identityLookup, setIdentityLookup] = useState<
         'idle' | 'loading' | 'ready' | 'error'
     >('idle');
@@ -229,7 +235,10 @@ export default function BookingForm({
                 data: CollateralIdentityOption[];
             };
 
-            if (controller.signal.aborted || activeIdentityRequest.current !== controller) {
+            if (
+                controller.signal.aborted ||
+                activeIdentityRequest.current !== controller
+            ) {
                 return;
             }
 
@@ -247,7 +256,10 @@ export default function BookingForm({
             }));
             setIdentityLookup('ready');
         } catch {
-            if (controller.signal.aborted || activeIdentityRequest.current !== controller) {
+            if (
+                controller.signal.aborted ||
+                activeIdentityRequest.current !== controller
+            ) {
                 return;
             }
 
@@ -293,11 +305,19 @@ export default function BookingForm({
 
         endsAt.setMinutes(endsAt.getMinutes() + minutes);
 
-        return endsAt.toLocaleString(stage4Locale === 'en' ? 'en-GB' : 'id-ID', {
-            dateStyle: 'long',
-            timeStyle: 'short',
-        });
-    }, [form.data.duration_units, form.data.starts_at, selectedPlan, stage4Locale]);
+        return endsAt.toLocaleString(
+            stage4Locale === 'en' ? 'en-GB' : 'id-ID',
+            {
+                dateStyle: 'long',
+                timeStyle: 'short',
+            },
+        );
+    }, [
+        form.data.duration_units,
+        form.data.starts_at,
+        selectedPlan,
+        stage4Locale,
+    ]);
 
     const selectItem = (index: number, option: Option) => {
         const line = form.data.items[index];
@@ -322,13 +342,18 @@ export default function BookingForm({
 
         if (direct) {
             if (identityLookup === 'loading') {
-                form.setError('collaterals', 'Tunggu hingga identitas Customer360 selesai dimuat.');
+                form.setError(
+                    'collaterals',
+                    'Tunggu hingga identitas Customer360 selesai dimuat.',
+                );
 
                 return;
             }
 
             if (
-                form.data.collaterals.some((item) => item.customer_identity_id !== null) &&
+                form.data.collaterals.some(
+                    (item) => item.customer_identity_id !== null,
+                ) &&
                 !form.data.customer360_received_confirmed
             ) {
                 form.setError(
@@ -362,10 +387,16 @@ export default function BookingForm({
             <Head
                 title={
                     direct
-                        ? stage4Translate("stage4.ui.fd25629b8a39", stage4Locale)
+                        ? stage4Translate(
+                              'stage4.ui.fd25629b8a39',
+                              stage4Locale,
+                          )
                         : booking
                           ? `Edit ${booking.booking_number}`
-                          : stage4Translate("stage4.ui.eae4f64d5567", stage4Locale)
+                          : stage4Translate(
+                                'stage4.ui.eae4f64d5567',
+                                stage4Locale,
+                            )
                 }
             />
             <form
@@ -384,35 +415,68 @@ export default function BookingForm({
                                           : '/bookings'
                                 }
                             >
-                                <ArrowLeft /><Stage4Text k="stage4.ui.c43a6e25b712" />
+                                <ArrowLeft />
+                                <Stage4Text k="stage4.ui.c43a6e25b712" />
                             </Link>
                         </Button>
                         <h1 className="mt-3 text-2xl font-semibold">
                             {direct
-                                ? stage4Translate("stage4.ui.fd25629b8a39", stage4Locale)
+                                ? stage4Translate(
+                                      'stage4.ui.fd25629b8a39',
+                                      stage4Locale,
+                                  )
                                 : booking
-                                  ? stage4Translate("stage4.ui.2e3b81a60136", stage4Locale)
-                                  : stage4Translate("stage4.ui.eae4f64d5567", stage4Locale)}
+                                  ? stage4Translate(
+                                        'stage4.ui.2e3b81a60136',
+                                        stage4Locale,
+                                    )
+                                  : stage4Translate(
+                                        'stage4.ui.eae4f64d5567',
+                                        stage4Locale,
+                                    )}
                         </h1>
                     </div>
                     <Button
                         type="submit"
-                        disabled={form.processing || (direct && identityLookup === 'loading')}
+                        disabled={
+                            form.processing ||
+                            (direct && identityLookup === 'loading')
+                        }
                     >
                         <Save />
-                        {direct ? stage4Translate("stage4.ui.b9339faf8954", stage4Locale) : stage4Translate("stage4.ui.bdc335b94616", stage4Locale)}
+                        {direct
+                            ? stage4Translate(
+                                  'stage4.ui.b9339faf8954',
+                                  stage4Locale,
+                              )
+                            : stage4Translate(
+                                  'stage4.ui.bdc335b94616',
+                                  stage4Locale,
+                              )}
                     </Button>
                 </header>
                 <Card>
                     <CardHeader>
                         <CardTitle>
                             {direct
-                                ? stage4Translate("stage4.ui.820f5c238143", stage4Locale)
-                                : stage4Translate("stage4.ui.5bd6fca1a763", stage4Locale)}
+                                ? stage4Translate(
+                                      'stage4.ui.820f5c238143',
+                                      stage4Locale,
+                                  )
+                                : stage4Translate(
+                                      'stage4.ui.5bd6fca1a763',
+                                      stage4Locale,
+                                  )}
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                        <Field label={stage4Translate("stage4.ui.1387475bd674", stage4Locale)} error={form.errors.branch_id}>
+                        <Field
+                            label={stage4Translate(
+                                'stage4.ui.1387475bd674',
+                                stage4Locale,
+                            )}
+                            error={form.errors.branch_id}
+                        >
                             <Select
                                 value={String(form.data.branch_id || '')}
                                 disabled={Boolean(booking)}
@@ -420,14 +484,22 @@ export default function BookingForm({
                                     form.setData('branch_id', Number(value));
 
                                     if (direct) {
-                                        void loadCustomer360(form.data.customer_id, Number(value));
+                                        void loadCustomer360(
+                                            form.data.customer_id,
+                                            Number(value),
+                                        );
                                     }
 
                                     resetItemSelections();
                                 }}
                             >
                                 <SelectTrigger>
-                                    <SelectValue placeholder={stage4Translate("stage4.ui.f53404d2ddcf", stage4Locale)} />
+                                    <SelectValue
+                                        placeholder={stage4Translate(
+                                            'stage4.ui.f53404d2ddcf',
+                                            stage4Locale,
+                                        )}
+                                    />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {branches.map((item) => (
@@ -442,15 +514,24 @@ export default function BookingForm({
                             </Select>
                         </Field>
                         <Field
-                            label={stage4Translate("stage4.ui.af0ab4433946", stage4Locale)}
+                            label={stage4Translate(
+                                'stage4.ui.af0ab4433946',
+                                stage4Locale,
+                            )}
                             error={form.errors.customer_id}
                         >
                             <SearchPickerDialog
                                 type="customer"
                                 value={selectedCustomer}
                                 onSelect={(option) => {
-                                    if (direct && option.id !== form.data.customer_id) {
-                                        void loadCustomer360(option.id, form.data.branch_id);
+                                    if (
+                                        direct &&
+                                        option.id !== form.data.customer_id
+                                    ) {
+                                        void loadCustomer360(
+                                            option.id,
+                                            form.data.branch_id,
+                                        );
                                     }
 
                                     setSelectedCustomer(option);
@@ -459,7 +540,10 @@ export default function BookingForm({
                             />
                         </Field>
                         <Field
-                            label={stage4Translate("stage4.ui.3d00cf0d363b", stage4Locale)}
+                            label={stage4Translate(
+                                'stage4.ui.3d00cf0d363b',
+                                stage4Locale,
+                            )}
                             error={form.errors.promotion_code}
                         >
                             <Input
@@ -470,16 +554,28 @@ export default function BookingForm({
                                         event.target.value.toUpperCase(),
                                     )
                                 }
-                                placeholder={stage4Translate("stage4.ui.092902ea5dff", stage4Locale)}
+                                placeholder={stage4Translate(
+                                    'stage4.ui.092902ea5dff',
+                                    stage4Locale,
+                                )}
                             />
                             <p className="text-xs text-muted-foreground">
                                 {selectedCustomer?.is_member
-                                    ? stage4Translate("stage4.ui.575164e1b40d", stage4Locale)
-                                    : stage4Translate("stage4.ui.d61a19094b66", stage4Locale)}
+                                    ? stage4Translate(
+                                          'stage4.ui.575164e1b40d',
+                                          stage4Locale,
+                                      )
+                                    : stage4Translate(
+                                          'stage4.ui.d61a19094b66',
+                                          stage4Locale,
+                                      )}
                             </p>
                         </Field>
                         <Field
-                            label={stage4Translate("stage4.ui.31b1ce48655c", stage4Locale)}
+                            label={stage4Translate(
+                                'stage4.ui.31b1ce48655c',
+                                stage4Locale,
+                            )}
                             error={form.errors.rate_plan_id}
                         >
                             <Select
@@ -491,7 +587,12 @@ export default function BookingForm({
                                 }}
                             >
                                 <SelectTrigger>
-                                    <SelectValue placeholder={stage4Translate("stage4.ui.cc50ae030139", stage4Locale)} />
+                                    <SelectValue
+                                        placeholder={stage4Translate(
+                                            'stage4.ui.cc50ae030139',
+                                            stage4Locale,
+                                        )}
+                                    />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {ratePlans.map((item) => (
@@ -500,10 +601,13 @@ export default function BookingForm({
                                             value={String(item.id)}
                                         >
                                             {item.name} ({item.duration_value}{' '}
-                                            {durationLabel({
-                                                ...item,
-                                                duration_value: 1,
-                                            }, stage4Locale)}
+                                            {durationLabel(
+                                                {
+                                                    ...item,
+                                                    duration_value: 1,
+                                                },
+                                                stage4Locale,
+                                            )}
                                             )
                                         </SelectItem>
                                     ))}
@@ -511,7 +615,10 @@ export default function BookingForm({
                             </Select>
                         </Field>
                         <Field
-                            label={stage4Translate("stage4.ui.fceb2d8f5369", stage4Locale)}
+                            label={stage4Translate(
+                                'stage4.ui.fceb2d8f5369',
+                                stage4Locale,
+                            )}
                             error={form.errors.starts_at}
                         >
                             <Input
@@ -526,7 +633,7 @@ export default function BookingForm({
                             />
                         </Field>
                         <Field
-                            label={`${stage4Translate("stage4.ui.0a31c6125219", stage4Locale)} (${durationLabel(selectedPlan, stage4Locale)})`}
+                            label={`${stage4Translate('stage4.ui.0a31c6125219', stage4Locale)} (${durationLabel(selectedPlan, stage4Locale)})`}
                             error={form.errors.duration_units}
                         >
                             <Input
@@ -542,17 +649,32 @@ export default function BookingForm({
                                 }
                             />
                         </Field>
-                        <Field label={stage4Translate("stage4.ui.2a6388bc0137", stage4Locale)}>
+                        <Field
+                            label={stage4Translate(
+                                'stage4.ui.2a6388bc0137',
+                                stage4Locale,
+                            )}
+                        >
                             <Input
                                 readOnly
                                 value={calculatedEndsAt}
-                                placeholder={stage4Translate("stage4.ui.ee29932c3e6c", stage4Locale)}
+                                placeholder={stage4Translate(
+                                    'stage4.ui.ee29932c3e6c',
+                                    stage4Locale,
+                                )}
                                 className="bg-muted"
                             />
-                            <p className="text-xs text-muted-foreground"><Stage4Text k="stage4.ui.fa1324477477" />
+                            <p className="text-xs text-muted-foreground">
+                                <Stage4Text k="stage4.ui.fa1324477477" />
                             </p>
                         </Field>
-                        <Field label={stage4Translate("stage4.ui.ff648afc53ef", stage4Locale)} error={form.errors.source}>
+                        <Field
+                            label={stage4Translate(
+                                'stage4.ui.ff648afc53ef',
+                                stage4Locale,
+                            )}
+                            error={form.errors.source}
+                        >
                             <Select
                                 value={form.data.source}
                                 onValueChange={(value) =>
@@ -571,7 +693,10 @@ export default function BookingForm({
                                         'other',
                                     ].map((item) => (
                                         <SelectItem key={item} value={item}>
-                                            {stage4TranslateDynamic(item, stage4Locale)}
+                                            {stage4TranslateDynamic(
+                                                item,
+                                                stage4Locale,
+                                            )}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
@@ -581,7 +706,9 @@ export default function BookingForm({
                 </Card>
                 <Card>
                     <CardHeader className="flex-row items-center justify-between">
-                        <CardTitle><Stage4Text k="stage4.ui.db7bf83172f0" /></CardTitle>
+                        <CardTitle>
+                            <Stage4Text k="stage4.ui.db7bf83172f0" />
+                        </CardTitle>
                         <Button
                             type="button"
                             variant="outline"
@@ -592,7 +719,8 @@ export default function BookingForm({
                                 ])
                             }
                         >
-                            <Plus /><Stage4Text k="stage4.ui.9a69cafa8d15" />
+                            <Plus />
+                            <Stage4Text k="stage4.ui.9a69cafa8d15" />
                         </Button>
                     </CardHeader>
                     <CardContent className="space-y-3">
@@ -617,9 +745,11 @@ export default function BookingForm({
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="product"><Stage4Text k="stage4.ui.869eb84eb3dc" />
+                                            <SelectItem value="product">
+                                                <Stage4Text k="stage4.ui.869eb84eb3dc" />
                                             </SelectItem>
-                                            <SelectItem value="package"><Stage4Text k="stage4.ui.3c97ce060ce2" />
+                                            <SelectItem value="package">
+                                                <Stage4Text k="stage4.ui.3c97ce060ce2" />
                                             </SelectItem>
                                         </SelectContent>
                                     </Select>
@@ -701,15 +831,24 @@ export default function BookingForm({
                     <CardHeader>
                         <CardTitle>
                             {direct
-                                ? stage4Translate("stage4.ui.bf47c3bc9bf5", stage4Locale)
-                                : stage4Translate("stage4.ui.c474ac0f2d71", stage4Locale)}
+                                ? stage4Translate(
+                                      'stage4.ui.bf47c3bc9bf5',
+                                      stage4Locale,
+                                  )
+                                : stage4Translate(
+                                      'stage4.ui.c474ac0f2d71',
+                                      stage4Locale,
+                                  )}
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
                         {direct && (
                             <>
                                 <Field
-                                    label={stage4Translate("stage4.ui.c7d851c67548", stage4Locale)}
+                                    label={stage4Translate(
+                                        'stage4.ui.c7d851c67548',
+                                        stage4Locale,
+                                    )}
                                     error={form.errors.checked_out_at}
                                 >
                                     <Input
@@ -724,7 +863,10 @@ export default function BookingForm({
                                     />
                                 </Field>
                                 <Field
-                                    label={stage4Translate("stage4.ui.93621ca8fc63", stage4Locale)}
+                                    label={stage4Translate(
+                                        'stage4.ui.93621ca8fc63',
+                                        stage4Locale,
+                                    )}
                                     error={form.errors.checkout_condition}
                                 >
                                     <Select
@@ -743,11 +885,14 @@ export default function BookingForm({
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="excellent"><Stage4Text k="stage4.ui.e90dcd5d96b8" />
+                                            <SelectItem value="excellent">
+                                                <Stage4Text k="stage4.ui.e90dcd5d96b8" />
                                             </SelectItem>
-                                            <SelectItem value="good"><Stage4Text k="stage4.ui.04f5b5ce0518" />
+                                            <SelectItem value="good">
+                                                <Stage4Text k="stage4.ui.04f5b5ce0518" />
                                             </SelectItem>
-                                            <SelectItem value="fair"><Stage4Text k="stage4.ui.e776a0660b3d" />
+                                            <SelectItem value="fair">
+                                                <Stage4Text k="stage4.ui.e776a0660b3d" />
                                             </SelectItem>
                                         </SelectContent>
                                     </Select>
@@ -755,7 +900,10 @@ export default function BookingForm({
                             </>
                         )}
                         <Field
-                            label={stage4Translate("stage4.ui.53eb1a623ade", stage4Locale)}
+                            label={stage4Translate(
+                                'stage4.ui.53eb1a623ade',
+                                stage4Locale,
+                            )}
                             error={form.errors.payment_method_id}
                         >
                             <Select
@@ -771,7 +919,12 @@ export default function BookingForm({
                                 }}
                             >
                                 <SelectTrigger>
-                                    <SelectValue placeholder={stage4Translate("stage4.ui.22cd7e4b4a0a", stage4Locale)} />
+                                    <SelectValue
+                                        placeholder={stage4Translate(
+                                            'stage4.ui.22cd7e4b4a0a',
+                                            stage4Locale,
+                                        )}
+                                    />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {paymentMethods.map((method) => (
@@ -797,7 +950,10 @@ export default function BookingForm({
                             error={form.errors.cash_session_id}
                         />
                         <Field
-                            label={stage4Translate("stage4.ui.7afede4d7a6c", stage4Locale)}
+                            label={stage4Translate(
+                                'stage4.ui.7afede4d7a6c',
+                                stage4Locale,
+                            )}
                             error={form.errors.payment_amount}
                         >
                             <RupiahInput
@@ -808,7 +964,10 @@ export default function BookingForm({
                             />
                         </Field>
                         <Field
-                            label={stage4Translate("stage4.ui.6a6462650207", stage4Locale)}
+                            label={stage4Translate(
+                                'stage4.ui.6a6462650207',
+                                stage4Locale,
+                            )}
                             error={form.errors.deposit_paid}
                         >
                             <RupiahInput
@@ -819,7 +978,10 @@ export default function BookingForm({
                             />
                         </Field>
                         <Field
-                            label={stage4Translate("stage4.ui.7f2cc58cb31e", stage4Locale)}
+                            label={stage4Translate(
+                                'stage4.ui.7f2cc58cb31e',
+                                stage4Locale,
+                            )}
                             error={form.errors.payment_reference}
                         >
                             <Input
@@ -830,12 +992,17 @@ export default function BookingForm({
                                         event.target.value,
                                     )
                                 }
-                                placeholder={stage4Translate("stage4.ui.942ab3e55971", stage4Locale)}
+                                placeholder={stage4Translate(
+                                    'stage4.ui.942ab3e55971',
+                                    stage4Locale,
+                                )}
                             />
                         </Field>
                         {direct && (
                             <div className="md:col-span-2 xl:col-span-3">
-                                <Label><Stage4Text k="stage4.ui.28d33595e915" /></Label>
+                                <Label>
+                                    <Stage4Text k="stage4.ui.28d33595e915" />
+                                </Label>
                                 <textarea
                                     className="mt-2 min-h-24 w-full rounded-md border bg-transparent p-3 text-sm"
                                     value={form.data.checkout_notes}
@@ -845,7 +1012,10 @@ export default function BookingForm({
                                             event.target.value,
                                         )
                                     }
-                                    placeholder={stage4Translate("stage4.ui.5664a2e9edee", stage4Locale)}
+                                    placeholder={stage4Translate(
+                                        'stage4.ui.5664a2e9edee',
+                                        stage4Locale,
+                                    )}
                                 />
                             </div>
                         )}
@@ -854,8 +1024,11 @@ export default function BookingForm({
                 {direct && (
                     <Card>
                         <CardHeader>
-                            <CardTitle><Stage4Text k="stage4.ui.404889fd0b06" /></CardTitle>
-                            <p className="text-sm text-muted-foreground"><Stage4Text k="stage4.ui.62becb5ce129" />
+                            <CardTitle>
+                                <Stage4Text k="stage4.ui.404889fd0b06" />
+                            </CardTitle>
+                            <p className="text-sm text-muted-foreground">
+                                <Stage4Text k="stage4.ui.62becb5ce129" />
                             </p>
                             {form.data.customer_id > 0 && (
                                 <Button
@@ -864,36 +1037,58 @@ export default function BookingForm({
                                     size="sm"
                                     className="w-fit"
                                     disabled={identityLookup === 'loading'}
-                                    onClick={() => void loadCustomer360(form.data.customer_id, form.data.branch_id)}
+                                    onClick={() =>
+                                        void loadCustomer360(
+                                            form.data.customer_id,
+                                            form.data.branch_id,
+                                        )
+                                    }
                                 >
-                                    <RefreshCw /><Stage4Text k="stage4.ui.dd4425e113b9" />
+                                    <RefreshCw />
+                                    <Stage4Text k="stage4.ui.dd4425e113b9" />
                                 </Button>
                             )}
                         </CardHeader>
                         <CardContent>
                             {identityLookup === 'loading' && (
-                                <p role="status" className="mb-3 text-sm text-muted-foreground"><Stage4Text k="stage4.ui.889ec8f312f4" />
+                                <p
+                                    role="status"
+                                    className="mb-3 text-sm text-muted-foreground"
+                                >
+                                    <Stage4Text k="stage4.ui.889ec8f312f4" />
                                 </p>
                             )}
                             {identityLookup === 'error' && (
-                                <div className="mb-3 flex flex-wrap items-center gap-2 rounded-md border border-amber-400/50 bg-amber-50 p-3 text-sm text-amber-950 dark:bg-amber-950/20 dark:text-amber-100"><Stage4Text k="stage4.ui.190425aa06f4" />
+                                <div className="mb-3 flex flex-wrap items-center gap-2 rounded-md border border-amber-400/50 bg-amber-50 p-3 text-sm text-amber-950 dark:bg-amber-950/20 dark:text-amber-100">
+                                    <Stage4Text k="stage4.ui.190425aa06f4" />
                                     <Button
                                         type="button"
                                         variant="outline"
                                         size="sm"
-                                        onClick={() => void loadCustomer360(form.data.customer_id, form.data.branch_id)}
-                                    ><Stage4Text k="stage4.ui.2b8b41244705" />
+                                        onClick={() =>
+                                            void loadCustomer360(
+                                                form.data.customer_id,
+                                                form.data.branch_id,
+                                            )
+                                        }
+                                    >
+                                        <Stage4Text k="stage4.ui.2b8b41244705" />
                                     </Button>
                                 </div>
                             )}
-                            {identityLookup === 'ready' && identityOptions.length === 0 && (
-                                <p className="mb-3 text-sm text-muted-foreground"><Stage4Text k="stage4.ui.2a7195d234b9" />
-                                </p>
-                            )}
+                            {identityLookup === 'ready' &&
+                                identityOptions.length === 0 && (
+                                    <p className="mb-3 text-sm text-muted-foreground">
+                                        <Stage4Text k="stage4.ui.2a7195d234b9" />
+                                    </p>
+                                )}
                             {identityLookup === 'ready' &&
                                 identityOptions.length > 0 &&
-                                !identityOptions.some((item) => !item.is_expired) && (
-                                    <p className="mb-3 text-sm text-amber-700 dark:text-amber-300"><Stage4Text k="stage4.ui.650fac4c51cc" />
+                                !identityOptions.some(
+                                    (item) => !item.is_expired,
+                                ) && (
+                                    <p className="mb-3 text-sm text-amber-700 dark:text-amber-300">
+                                        <Stage4Text k="stage4.ui.650fac4c51cc" />
                                     </p>
                                 )}
                             {identityLookup !== 'loading' && (
@@ -901,18 +1096,32 @@ export default function BookingForm({
                                     value={form.data.collaterals}
                                     onChange={(collaterals) => {
                                         const before = form.data.collaterals
-                                            .map((item) => item.customer_identity_id)
+                                            .map(
+                                                (item) =>
+                                                    item.customer_identity_id,
+                                            )
                                             .join(',');
                                         const after = collaterals
-                                            .map((item) => item.customer_identity_id)
+                                            .map(
+                                                (item) =>
+                                                    item.customer_identity_id,
+                                            )
                                             .join(',');
-                                        form.setData('collaterals', collaterals);
+                                        form.setData(
+                                            'collaterals',
+                                            collaterals,
+                                        );
 
                                         if (before !== after) {
-                                            form.setData('customer360_received_confirmed', false);
+                                            form.setData(
+                                                'customer360_received_confirmed',
+                                                false,
+                                            );
                                         }
                                     }}
-                                    errors={form.errors as Record<string, string>}
+                                    errors={
+                                        form.errors as Record<string, string>
+                                    }
                                     identityOptions={identityOptions}
                                 />
                             )}
@@ -922,20 +1131,34 @@ export default function BookingForm({
                                 <div className="mt-4 flex items-start gap-3 rounded-md border p-3">
                                     <Checkbox
                                         id="direct-customer360-received"
-                                        checked={form.data.customer360_received_confirmed}
+                                        checked={
+                                            form.data
+                                                .customer360_received_confirmed
+                                        }
                                         onCheckedChange={(checked) => {
-                                            form.setData('customer360_received_confirmed', checked === true);
-                                            form.clearErrors('customer360_received_confirmed');
+                                            form.setData(
+                                                'customer360_received_confirmed',
+                                                checked === true,
+                                            );
+                                            form.clearErrors(
+                                                'customer360_received_confirmed',
+                                            );
                                         }}
                                     />
                                     <div className="space-y-1">
-                                        <Label htmlFor="direct-customer360-received"><Stage4Text k="stage4.ui.e275e2573e3c" />
+                                        <Label htmlFor="direct-customer360-received">
+                                            <Stage4Text k="stage4.ui.e275e2573e3c" />
                                         </Label>
-                                        <p className="text-xs text-muted-foreground"><Stage4Text k="stage4.ui.e71bf64ea2f3" />
+                                        <p className="text-xs text-muted-foreground">
+                                            <Stage4Text k="stage4.ui.e71bf64ea2f3" />
                                         </p>
-                                        {form.errors.customer360_received_confirmed && (
+                                        {form.errors
+                                            .customer360_received_confirmed && (
                                             <p className="text-sm text-destructive">
-                                                {form.errors.customer360_received_confirmed}
+                                                {
+                                                    form.errors
+                                                        .customer360_received_confirmed
+                                                }
                                             </p>
                                         )}
                                     </div>
@@ -951,7 +1174,9 @@ export default function BookingForm({
                 )}
                 <Card>
                     <CardHeader>
-                        <CardTitle><Stage4Text k="stage4.ui.9f09aefd0dd4" /></CardTitle>
+                        <CardTitle>
+                            <Stage4Text k="stage4.ui.9f09aefd0dd4" />
+                        </CardTitle>
                     </CardHeader>
                     <CardContent>
                         <textarea

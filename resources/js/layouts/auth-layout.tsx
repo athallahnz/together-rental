@@ -15,9 +15,8 @@ export default function AuthLayout({
 }) {
     const { tr } = useAppLocale();
     const { auth } = usePage().props;
-    const label = (value: string) => value.startsWith('auth.')
-        ? tr(value as MessageKey)
-        : value;
+    const label = (value: string) =>
+        value.startsWith('auth.') ? tr(value as MessageKey) : value;
 
     return (
         <div className="relative min-h-svh">
@@ -26,7 +25,10 @@ export default function AuthLayout({
                     <GuestLanguageSwitcher />
                 </div>
             )}
-            <AuthLayoutTemplate title={label(title)} description={label(description)}>
+            <AuthLayoutTemplate
+                title={label(title)}
+                description={label(description)}
+            >
                 {children}
             </AuthLayoutTemplate>
         </div>

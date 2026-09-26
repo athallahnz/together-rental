@@ -56,7 +56,10 @@ export function NotificationBell() {
                     className="relative"
                     aria-label={
                         notificationCenter.unread_count > 0
-                            ? tp('notifications.unread', notificationCenter.unread_count)
+                            ? tp(
+                                  'notifications.unread',
+                                  notificationCenter.unread_count,
+                              )
                             : tr('nav.notifications')
                     }
                 >
@@ -144,7 +147,10 @@ export function NotificationBell() {
                                     {item.body}
                                 </p>
                                 <p className="mt-2 text-[11px] text-muted-foreground">
-                                    {formatDateTime(item.last_triggered_at, locale)}
+                                    {formatDateTime(
+                                        item.last_triggered_at,
+                                        locale,
+                                    )}
                                     {item.branch
                                         ? ' · ' + item.branch.code
                                         : ''}
@@ -159,7 +165,9 @@ export function NotificationBell() {
                     className="w-full justify-center"
                     asChild
                 >
-                    <Link href="/notifications">{tr('notifications.viewAll')}</Link>
+                    <Link href="/notifications">
+                        {tr('notifications.viewAll')}
+                    </Link>
                 </Button>
             </DropdownMenuContent>
         </DropdownMenu>

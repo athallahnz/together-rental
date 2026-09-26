@@ -64,7 +64,8 @@ const english: Record<string, string> = {
     'Simpan bahasa': 'Save Language',
     'Menyimpan...': 'Saving...',
     'Bahasa tersimpan': 'Language saved',
-    'Bahasa aplikasi tidak berubah.': 'The application language has not changed.',
+    'Bahasa aplikasi tidak berubah.':
+        'The application language has not changed.',
     'Cakupan terjemahan saat ini': 'Current translation coverage',
     'Sidebar dan halaman pengaturan bahasa tersedia dalam Indonesia dan Inggris. Halaman operasional, validasi khusus modul, serta PDF akan diterjemahkan bertahap.':
         'The sidebar and language settings are available in Indonesian and English. Operational pages, module-specific validation, and PDFs will be translated in later phases.',
@@ -83,13 +84,16 @@ export function translate(key: string, locale: AppLocale): string {
 type InterpolationValues = Record<string, string | number>;
 
 function interpolate(message: string, values: InterpolationValues): string {
-    return message.replace(/\{([a-zA-Z][a-zA-Z0-9_]*)\}/g, (_match, name: string) => {
-        if (!Object.prototype.hasOwnProperty.call(values, name)) {
-            throw new Error(`Missing i18n placeholder: ${name}`);
-        }
+    return message.replace(
+        /\{([a-zA-Z][a-zA-Z0-9_]*)\}/g,
+        (_match, name: string) => {
+            if (!Object.prototype.hasOwnProperty.call(values, name)) {
+                throw new Error(`Missing i18n placeholder: ${name}`);
+            }
 
-        return String(values[name]);
-    });
+            return String(values[name]);
+        },
+    );
 }
 
 /** Unknown semantic keys fail loudly rather than silently displaying the key. */
@@ -120,8 +124,12 @@ export function translatePlural(
         throw new Error(`Missing plural i18n key: ${key}`);
     }
 
-    const category = new Intl.PluralRules(locale === 'en' ? 'en-US' : 'id-ID')
-        .select(count) === 'one' ? 'one' : 'other';
+    const category =
+        new Intl.PluralRules(locale === 'en' ? 'en-US' : 'id-ID').select(
+            count,
+        ) === 'one'
+            ? 'one'
+            : 'other';
     const forms = locale === 'en' ? enPlural[key] : idPlural[key];
 
     return interpolate(forms[category], { count });

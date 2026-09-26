@@ -9,7 +9,12 @@ import {
     ShieldCheck,
 } from 'lucide-react';
 import type { FormEvent } from 'react';
-import { Stage4Text, stage4Translate, stage4TranslateDynamic, stage4FormatDateTime } from '@/components/stage4-text';
+import {
+    Stage4Text,
+    stage4Translate,
+    stage4TranslateDynamic,
+    stage4FormatDateTime,
+} from '@/components/stage4-text';
 import { useAppLocale } from '@/lib/i18n';
 import { TransactionDocumentActions } from '@/components/documents/transaction-document-actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -304,7 +309,8 @@ export default function RentalShow({
                 <header>
                     <Button variant="ghost" size="sm" asChild>
                         <Link href="/rentals">
-                            <ArrowLeft /><Stage4Text k="stage4.ui.e40979f5591c" />
+                            <ArrowLeft />
+                            <Stage4Text k="stage4.ui.e40979f5591c" />
                         </Link>
                     </Button>
                     <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
@@ -312,7 +318,12 @@ export default function RentalShow({
                             <h1 className="text-2xl font-semibold">
                                 {rental.rental_number}
                             </h1>
-                            <Badge>{stage4TranslateDynamic(rental.status, stage4Locale)}</Badge>
+                            <Badge>
+                                {stage4TranslateDynamic(
+                                    rental.status,
+                                    stage4Locale,
+                                )}
+                            </Badge>
                         </div>
                         <div className="flex flex-wrap gap-2">
                             {permissions.extend &&
@@ -323,7 +334,8 @@ export default function RentalShow({
                                         <Link
                                             href={`/rentals/${rental.id}/extend`}
                                         >
-                                            <CalendarPlus /><Stage4Text k="stage4.ui.cd1752d1c785" />
+                                            <CalendarPlus />
+                                            <Stage4Text k="stage4.ui.cd1752d1c785" />
                                         </Link>
                                     </Button>
                                 )}
@@ -337,23 +349,32 @@ export default function RentalShow({
                                         <Link
                                             href={`/rentals/${rental.id}/return`}
                                         >
-                                            <PackageCheck /><Stage4Text k="stage4.ui.f59b32920284" />
+                                            <PackageCheck />
+                                            <Stage4Text k="stage4.ui.f59b32920284" />
                                         </Link>
                                     </Button>
                                 )}
                         </div>
                     </div>
                     <p className="mt-1 text-sm text-muted-foreground">
-                        {rental.customer.name}<Stage4Text k="stage4.ui.e21a079b3a50" /> {rental.branch.name}
+                        {rental.customer.name}
+                        <Stage4Text k="stage4.ui.e21a079b3a50" />{' '}
+                        {rental.branch.name}
                     </p>
                 </header>
 
-                <TransactionDocumentActions sourceType="rental" sourceReference={rental.rental_number} />
+                <TransactionDocumentActions
+                    sourceType="rental"
+                    sourceReference={rental.rental_number}
+                />
                 {overdue && (
                     <Alert variant="destructive">
                         <AlertTriangle className="size-4" />
-                        <AlertTitle><Stage4Text k="stage4.ui.2bef74ec5e5c" /></AlertTitle>
-                        <AlertDescription><Stage4Text k="stage4.ui.ab3a886750dd" />
+                        <AlertTitle>
+                            <Stage4Text k="stage4.ui.2bef74ec5e5c" />
+                        </AlertTitle>
+                        <AlertDescription>
+                            <Stage4Text k="stage4.ui.ab3a886750dd" />
                         </AlertDescription>
                     </Alert>
                 )}
@@ -361,53 +382,83 @@ export default function RentalShow({
                 <section className="grid gap-4 lg:grid-cols-3">
                     <Card>
                         <CardHeader>
-                            <CardTitle><Stage4Text k="stage4.ui.92d937165b09" /></CardTitle>
+                            <CardTitle>
+                                <Stage4Text k="stage4.ui.92d937165b09" />
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-2 text-sm">
                             <p>
-                                <b><Stage4Text k="stage4.ui.1d7cb6dac73c" /></b>{' '}
-                                {stage4FormatDateTime(rental.checked_out_at, stage4Locale)}
+                                <b>
+                                    <Stage4Text k="stage4.ui.1d7cb6dac73c" />
+                                </b>{' '}
+                                {stage4FormatDateTime(
+                                    rental.checked_out_at,
+                                    stage4Locale,
+                                )}
                             </p>
                             <p>
-                                <b><Stage4Text k="stage4.ui.e9854f380b7f" /></b>{' '}
-                                {stage4FormatDateTime(rental.due_at, stage4Locale)}
+                                <b>
+                                    <Stage4Text k="stage4.ui.e9854f380b7f" />
+                                </b>{' '}
+                                {stage4FormatDateTime(
+                                    rental.due_at,
+                                    stage4Locale,
+                                )}
                             </p>
                             <p>
-                                <b><Stage4Text k="stage4.ui.cf6b5fa84600" /></b> {rental.rate_plan?.name ?? '-'}
+                                <b>
+                                    <Stage4Text k="stage4.ui.cf6b5fa84600" />
+                                </b>{' '}
+                                {rental.rate_plan?.name ?? '-'}
                             </p>
                         </CardContent>
                     </Card>
                     <Card>
                         <CardHeader>
-                            <CardTitle><Stage4Text k="stage4.ui.dccc0aa1d2b6" /></CardTitle>
+                            <CardTitle>
+                                <Stage4Text k="stage4.ui.dccc0aa1d2b6" />
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-2 text-sm">
                             <p>
                                 {rental.booking?.source === 'direct'
-                                    ? stage4Translate("stage4.ui.fd25629b8a39", stage4Locale)
-                                    : stage4Translate("stage4.ui.e52caf59c035", stage4Locale)}
+                                    ? stage4Translate(
+                                          'stage4.ui.fd25629b8a39',
+                                          stage4Locale,
+                                      )
+                                    : stage4Translate(
+                                          'stage4.ui.e52caf59c035',
+                                          stage4Locale,
+                                      )}
                             </p>
                             <p>{rental.booking?.booking_number}</p>
                             <p>
-                                {rental.customer.customer_number}<Stage4Text k="stage4.ui.e21a079b3a50" />{' '}
+                                {rental.customer.customer_number}
+                                <Stage4Text k="stage4.ui.e21a079b3a50" />{' '}
                                 {rental.customer.phone ?? '-'}
                             </p>
                         </CardContent>
                     </Card>
                     <Card>
                         <CardHeader>
-                            <CardTitle><Stage4Text k="stage4.ui.f0874594eb78" /></CardTitle>
+                            <CardTitle>
+                                <Stage4Text k="stage4.ui.f0874594eb78" />
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-2 text-sm">
                             <p className="flex justify-between">
-                                <span><Stage4Text k="stage4.ui.b25928c69902" /></span>
+                                <span>
+                                    <Stage4Text k="stage4.ui.b25928c69902" />
+                                </span>
                                 <b>
                                     {money.format(Number(rental.total_amount))}
                                 </b>
                             </p>
                             {Number(rental.discount_amount) > 0 && (
                                 <p className="flex justify-between text-emerald-600">
-                                    <span><Stage4Text k="stage4.ui.cc2aac6758fd" /></span>
+                                    <span>
+                                        <Stage4Text k="stage4.ui.cc2aac6758fd" />
+                                    </span>
                                     <b>
                                         -
                                         {money.format(
@@ -418,18 +469,24 @@ export default function RentalShow({
                             )}
                             {rental.promotion && (
                                 <p className="flex justify-between text-muted-foreground">
-                                    <span><Stage4Text k="stage4.ui.618ff494a852" /></span>
+                                    <span>
+                                        <Stage4Text k="stage4.ui.618ff494a852" />
+                                    </span>
                                     <b>{rental.promotion.code}</b>
                                 </p>
                             )}
                             <p className="flex justify-between">
-                                <span><Stage4Text k="stage4.ui.42b86f7c1b0f" /></span>
+                                <span>
+                                    <Stage4Text k="stage4.ui.42b86f7c1b0f" />
+                                </span>
                                 <b>
                                     {money.format(Number(rental.paid_amount))}
                                 </b>
                             </p>
                             <p className="flex justify-between">
-                                <span><Stage4Text k="stage4.ui.e7b0b317a6e8" /></span>
+                                <span>
+                                    <Stage4Text k="stage4.ui.e7b0b317a6e8" />
+                                </span>
                                 <b>
                                     {money.format(
                                         Number(rental.deposit_amount),
@@ -439,8 +496,14 @@ export default function RentalShow({
                             <p className="flex justify-between border-t pt-2">
                                 <span>
                                     {refundDue
-                                        ? stage4Translate("stage4.ui.d9e768aee9fe", stage4Locale)
-                                        : stage4Translate("stage4.ui.861b9e39506d", stage4Locale)}
+                                        ? stage4Translate(
+                                              'stage4.ui.d9e768aee9fe',
+                                              stage4Locale,
+                                          )
+                                        : stage4Translate(
+                                              'stage4.ui.861b9e39506d',
+                                              stage4Locale,
+                                          )}
                                 </span>
                                 <b>
                                     {money.format(
@@ -453,7 +516,9 @@ export default function RentalShow({
                 </section>
                 <Card>
                     <CardHeader>
-                        <CardTitle><Stage4Text k="stage4.ui.7550abf6fc2d" /></CardTitle>
+                        <CardTitle>
+                            <Stage4Text k="stage4.ui.7550abf6fc2d" />
+                        </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         {rental.items.map((item) => (
@@ -473,7 +538,14 @@ export default function RentalShow({
                                 </div>
                                 <div className="mt-3 grid gap-2 md:grid-cols-2">
                                     {item.is_bulk && (
-                                        <p><Stage4Text k="stage4.ui.9a9df57c80e0" /> {item.quantity - item.returned_quantity}<Stage4Text k="stage4.ui.40fb092e21fb" /> {item.returned_quantity}<Stage4Text k="stage4.ui.0df9eea0bad5" /></p>
+                                        <p>
+                                            <Stage4Text k="stage4.ui.9a9df57c80e0" />{' '}
+                                            {item.quantity -
+                                                item.returned_quantity}
+                                            <Stage4Text k="stage4.ui.40fb092e21fb" />{' '}
+                                            {item.returned_quantity}
+                                            <Stage4Text k="stage4.ui.0df9eea0bad5" />
+                                        </p>
                                     )}
                                     {item.assets.map((line) => (
                                         <div
@@ -483,8 +555,12 @@ export default function RentalShow({
                                             <p className="font-medium">
                                                 {line.asset.asset_code}
                                             </p>
-                                            <p className="text-muted-foreground"><Stage4Text k="stage4.ui.b723bb628009" />{' '}
-                                                {stage4TranslateDynamic(line.checkout_condition, stage4Locale)}
+                                            <p className="text-muted-foreground">
+                                                <Stage4Text k="stage4.ui.b723bb628009" />{' '}
+                                                {stage4TranslateDynamic(
+                                                    line.checkout_condition,
+                                                    stage4Locale,
+                                                )}
                                                 {line.asset.serial_number
                                                     ? ` · SN ${line.asset.serial_number}`
                                                     : ''}
@@ -499,11 +575,14 @@ export default function RentalShow({
                 </Card>
                 <Card>
                     <CardHeader>
-                        <CardTitle><Stage4Text k="stage4.ui.bc6bef81de10" /></CardTitle>
+                        <CardTitle>
+                            <Stage4Text k="stage4.ui.bc6bef81de10" />
+                        </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         {rental.collaterals.length === 0 ? (
-                            <p className="text-sm text-muted-foreground"><Stage4Text k="stage4.ui.7c12a821f792" />
+                            <p className="text-sm text-muted-foreground">
+                                <Stage4Text k="stage4.ui.7c12a821f792" />
                             </p>
                         ) : (
                             <div className="space-y-3">
@@ -515,7 +594,9 @@ export default function RentalShow({
                                         <div>
                                             <div className="flex flex-wrap items-center gap-2">
                                                 <p className="font-medium">
-                                                    {item.type}<Stage4Text k="stage4.ui.e21a079b3a50" /> {item.number}
+                                                    {item.type}
+                                                    <Stage4Text k="stage4.ui.e21a079b3a50" />{' '}
+                                                    {item.number}
                                                 </p>
                                                 <Badge
                                                     variant={
@@ -525,24 +606,37 @@ export default function RentalShow({
                                                     }
                                                 >
                                                     {item.status === 'held'
-                                                        ? stage4Translate("stage4.ui.6178dcdddcd7", stage4Locale)
-                                                        : stage4Translate("stage4.ui.573315eb2d15", stage4Locale)}
+                                                        ? stage4Translate(
+                                                              'stage4.ui.6178dcdddcd7',
+                                                              stage4Locale,
+                                                          )
+                                                        : stage4Translate(
+                                                              'stage4.ui.573315eb2d15',
+                                                              stage4Locale,
+                                                          )}
                                                 </Badge>
                                                 {item.source_type ===
                                                     'customer_identity' && (
-                                                    <Badge variant="outline"><Stage4Text k="stage4.ui.ef653211a5b4" />
+                                                    <Badge variant="outline">
+                                                        <Stage4Text k="stage4.ui.ef653211a5b4" />
                                                     </Badge>
                                                 )}
                                             </div>
-                                            <p className="mt-1 text-sm text-muted-foreground"><Stage4Text k="stage4.ui.b9f45b6b55d5" />{' '}
+                                            <p className="mt-1 text-sm text-muted-foreground">
+                                                <Stage4Text k="stage4.ui.b9f45b6b55d5" />{' '}
                                                 {item.holder_name ??
                                                     rental.customer.name}
                                             </p>
-                                            <p className="mt-1 text-xs text-muted-foreground"><Stage4Text k="stage4.ui.64643bb547ae" />{' '}
+                                            <p className="mt-1 text-xs text-muted-foreground">
+                                                <Stage4Text k="stage4.ui.64643bb547ae" />{' '}
                                                 {item.received_at
                                                     ? new Date(
                                                           item.received_at,
-                                                      ).toLocaleString(stage4Locale === 'en' ? 'en-GB' : 'id-ID')
+                                                      ).toLocaleString(
+                                                          stage4Locale === 'en'
+                                                              ? 'en-GB'
+                                                              : 'id-ID',
+                                                      )
                                                     : '-'}
                                                 {item.receiver?.name
                                                     ? ` · ${item.receiver.name}`
@@ -574,7 +668,8 @@ export default function RentalShow({
                                                     <a
                                                         href={`/rentals/${rental.id}/collaterals/${item.id}/document`}
                                                     >
-                                                        <FileText /><Stage4Text k="stage4.ui.a809e9504f2d" />
+                                                        <FileText />
+                                                        <Stage4Text k="stage4.ui.a809e9504f2d" />
                                                     </a>
                                                 </Button>
                                             )}
@@ -592,7 +687,8 @@ export default function RentalShow({
                                                             collateralReturn.processing
                                                         }
                                                     >
-                                                        <ShieldCheck /><Stage4Text k="stage4.ui.0b189c8327e9" />
+                                                        <ShieldCheck />
+                                                        <Stage4Text k="stage4.ui.0b189c8327e9" />
                                                     </Button>
                                                 )}
                                         </div>
@@ -610,7 +706,9 @@ export default function RentalShow({
                                     onSubmit={submitCollateral}
                                 >
                                     <div className="md:col-span-2 xl:col-span-4">
-                                        <Label><Stage4Text k="stage4.ui.ac060d458d63" /></Label>
+                                        <Label>
+                                            <Stage4Text k="stage4.ui.ac060d458d63" />
+                                        </Label>
                                         <Select
                                             value={collateral.data.source_mode}
                                             onValueChange={(value) => {
@@ -646,16 +744,20 @@ export default function RentalShow({
                                             <SelectContent>
                                                 {eligibleIdentities.length >
                                                     0 && (
-                                                    <SelectItem value="existing"><Stage4Text k="stage4.ui.a63a2b27dffa" />
+                                                    <SelectItem value="existing">
+                                                        <Stage4Text k="stage4.ui.a63a2b27dffa" />
                                                     </SelectItem>
                                                 )}
-                                                <SelectItem value="new"><Stage4Text k="stage4.ui.8575a7da4327" />
+                                                <SelectItem value="new">
+                                                    <Stage4Text k="stage4.ui.8575a7da4327" />
                                                 </SelectItem>
-                                                <SelectItem value="manual"><Stage4Text k="stage4.ui.1d561d36b3f6" />
+                                                <SelectItem value="manual">
+                                                    <Stage4Text k="stage4.ui.1d561d36b3f6" />
                                                 </SelectItem>
                                             </SelectContent>
                                         </Select>
-                                        <p className="mt-2 text-xs text-muted-foreground"><Stage4Text k="stage4.ui.ee4fb51bc3a6" />
+                                        <p className="mt-2 text-xs text-muted-foreground">
+                                            <Stage4Text k="stage4.ui.ee4fb51bc3a6" />
                                         </p>
                                     </div>
 
@@ -663,14 +765,16 @@ export default function RentalShow({
                                         'existing' && (
                                         <>
                                             <div className="md:col-span-2 xl:col-span-4">
-                                                <Label><Stage4Text k="stage4.ui.b5a3c6e91461" />
+                                                <Label>
+                                                    <Stage4Text k="stage4.ui.b5a3c6e91461" />
                                                 </Label>
                                                 <Select
                                                     value={
                                                         collateral.data
                                                             .customer_identity_id
                                                             ? String(
-                                                                  collateral.data
+                                                                  collateral
+                                                                      .data
                                                                       .customer_identity_id,
                                                               )
                                                             : ''
@@ -683,7 +787,12 @@ export default function RentalShow({
                                                     }
                                                 >
                                                     <SelectTrigger className="mt-2">
-                                                        <SelectValue placeholder={stage4Translate("stage4.ui.5a32acf1b0ad", stage4Locale)} />
+                                                        <SelectValue
+                                                            placeholder={stage4Translate(
+                                                                'stage4.ui.5a32acf1b0ad',
+                                                                stage4Locale,
+                                                            )}
+                                                        />
                                                     </SelectTrigger>
                                                     <SelectContent>
                                                         {customerIdentities.map(
@@ -707,13 +816,25 @@ export default function RentalShow({
                                                                         identity.number
                                                                     }
                                                                     {identity.is_primary
-                                                                        ? stage4Translate("stage4.ui.c73f51f254b4", stage4Locale)
+                                                                        ? stage4Translate(
+                                                                              'stage4.ui.c73f51f254b4',
+                                                                              stage4Locale,
+                                                                          )
                                                                         : ''}
                                                                     {identity.verified_at
-                                                                        ? stage4Translate("stage4.ui.973da3a900f7", stage4Locale)
-                                                                        : stage4Translate("stage4.ui.d948d2d59c8e", stage4Locale)}
+                                                                        ? stage4Translate(
+                                                                              'stage4.ui.973da3a900f7',
+                                                                              stage4Locale,
+                                                                          )
+                                                                        : stage4Translate(
+                                                                              'stage4.ui.d948d2d59c8e',
+                                                                              stage4Locale,
+                                                                          )}
                                                                     {identity.is_expired
-                                                                        ? stage4Translate("stage4.ui.2bb8fb66b3ac", stage4Locale)
+                                                                        ? stage4Translate(
+                                                                              'stage4.ui.2bb8fb66b3ac',
+                                                                              stage4Locale,
+                                                                          )
                                                                         : ''}
                                                                 </SelectItem>
                                                             ),
@@ -732,7 +853,8 @@ export default function RentalShow({
                                             </div>
                                             {customerIdentities.length ===
                                                 0 && (
-                                                <p className="text-sm text-muted-foreground md:col-span-2 xl:col-span-4"><Stage4Text k="stage4.ui.81de49daef26" />
+                                                <p className="text-sm text-muted-foreground md:col-span-2 xl:col-span-4">
+                                                    <Stage4Text k="stage4.ui.81de49daef26" />
                                                 </p>
                                             )}
                                         </>
@@ -741,7 +863,9 @@ export default function RentalShow({
                                     {collateral.data.source_mode === 'new' && (
                                         <>
                                             <div>
-                                                <Label><Stage4Text k="stage4.ui.f891f72ff159" /></Label>
+                                                <Label>
+                                                    <Stage4Text k="stage4.ui.f891f72ff159" />
+                                                </Label>
                                                 <Select
                                                     value={
                                                         collateral.data
@@ -758,17 +882,23 @@ export default function RentalShow({
                                                         <SelectValue />
                                                     </SelectTrigger>
                                                     <SelectContent>
-                                                        <SelectItem value="ktp"><Stage4Text k="stage4.ui.101c22b89e15" />
+                                                        <SelectItem value="ktp">
+                                                            <Stage4Text k="stage4.ui.101c22b89e15" />
                                                         </SelectItem>
-                                                        <SelectItem value="sim"><Stage4Text k="stage4.ui.9563e7496df3" />
+                                                        <SelectItem value="sim">
+                                                            <Stage4Text k="stage4.ui.9563e7496df3" />
                                                         </SelectItem>
-                                                        <SelectItem value="passport"><Stage4Text k="stage4.ui.319536cdb788" />
+                                                        <SelectItem value="passport">
+                                                            <Stage4Text k="stage4.ui.319536cdb788" />
                                                         </SelectItem>
-                                                        <SelectItem value="student_card"><Stage4Text k="stage4.ui.16d3bb60398b" />
+                                                        <SelectItem value="student_card">
+                                                            <Stage4Text k="stage4.ui.16d3bb60398b" />
                                                         </SelectItem>
-                                                        <SelectItem value="employee_card"><Stage4Text k="stage4.ui.1ef7d61f48d1" />
+                                                        <SelectItem value="employee_card">
+                                                            <Stage4Text k="stage4.ui.1ef7d61f48d1" />
                                                         </SelectItem>
-                                                        <SelectItem value="other"><Stage4Text k="stage4.ui.844f8a723473" />
+                                                        <SelectItem value="other">
+                                                            <Stage4Text k="stage4.ui.844f8a723473" />
                                                         </SelectItem>
                                                     </SelectContent>
                                                 </Select>
@@ -783,7 +913,9 @@ export default function RentalShow({
                                                 )}
                                             </div>
                                             <div>
-                                                <Label><Stage4Text k="stage4.ui.54fdf9054ea7" /></Label>
+                                                <Label>
+                                                    <Stage4Text k="stage4.ui.54fdf9054ea7" />
+                                                </Label>
                                                 <Input
                                                     value={
                                                         collateral.data
@@ -795,7 +927,10 @@ export default function RentalShow({
                                                             event.target.value,
                                                         )
                                                     }
-                                                    placeholder={stage4Translate("stage4.ui.54fdf9054ea7", stage4Locale)}
+                                                    placeholder={stage4Translate(
+                                                        'stage4.ui.54fdf9054ea7',
+                                                        stage4Locale,
+                                                    )}
                                                 />
                                                 {collateral.errors
                                                     .identity_number && (
@@ -808,7 +943,9 @@ export default function RentalShow({
                                                 )}
                                             </div>
                                             <div>
-                                                <Label><Stage4Text k="stage4.ui.a8a50b3df19b" /></Label>
+                                                <Label>
+                                                    <Stage4Text k="stage4.ui.a8a50b3df19b" />
+                                                </Label>
                                                 <Input
                                                     value={
                                                         collateral.data
@@ -823,8 +960,10 @@ export default function RentalShow({
                                                 />
                                             </div>
                                             <div>
-                                                <Label><Stage4Text k="stage4.ui.8b9f470f992b" />
-                                                    <span className="ml-1 text-xs text-muted-foreground"><Stage4Text k="stage4.ui.95099252d186" />
+                                                <Label>
+                                                    <Stage4Text k="stage4.ui.8b9f470f992b" />
+                                                    <span className="ml-1 text-xs text-muted-foreground">
+                                                        <Stage4Text k="stage4.ui.95099252d186" />
                                                     </span>
                                                 </Label>
                                                 <Input
@@ -860,7 +999,9 @@ export default function RentalShow({
                                                     disabled={
                                                         !permissions.updateCustomer
                                                     }
-                                                    onCheckedChange={(checked) =>
+                                                    onCheckedChange={(
+                                                        checked,
+                                                    ) =>
                                                         collateral.setData(
                                                             'save_to_customer360',
                                                             checked === true,
@@ -868,12 +1009,15 @@ export default function RentalShow({
                                                     }
                                                 />
                                                 <div>
-                                                    <Label htmlFor="save_to_customer360"><Stage4Text k="stage4.ui.190f73e6be77" />
+                                                    <Label htmlFor="save_to_customer360">
+                                                        <Stage4Text k="stage4.ui.190f73e6be77" />
                                                     </Label>
-                                                    <p className="text-xs text-muted-foreground"><Stage4Text k="stage4.ui.c0988ac9eb98" />
+                                                    <p className="text-xs text-muted-foreground">
+                                                        <Stage4Text k="stage4.ui.c0988ac9eb98" />
                                                     </p>
                                                     {!permissions.updateCustomer && (
-                                                        <p className="mt-1 text-xs text-amber-600"><Stage4Text k="stage4.ui.10fff5ae16a7" />
+                                                        <p className="mt-1 text-xs text-amber-600">
+                                                            <Stage4Text k="stage4.ui.10fff5ae16a7" />
                                                         </p>
                                                     )}
                                                     {collateral.errors
@@ -891,26 +1035,28 @@ export default function RentalShow({
                                             {collateral.data
                                                 .save_to_customer360 &&
                                                 permissions.updateCustomer && (
-                                                <div className="flex items-center gap-3 md:col-span-2 xl:col-span-4">
-                                                    <Checkbox
-                                                        id="identity_is_primary"
-                                                        checked={
-                                                            collateral.data
-                                                                .identity_is_primary
-                                                        }
-                                                        onCheckedChange={(
-                                                            checked,
-                                                        ) =>
-                                                            collateral.setData(
-                                                                'identity_is_primary',
-                                                                checked === true,
-                                                            )
-                                                        }
-                                                    />
-                                                    <Label htmlFor="identity_is_primary"><Stage4Text k="stage4.ui.10074363ced4" />
-                                                    </Label>
-                                                </div>
-                                            )}
+                                                    <div className="flex items-center gap-3 md:col-span-2 xl:col-span-4">
+                                                        <Checkbox
+                                                            id="identity_is_primary"
+                                                            checked={
+                                                                collateral.data
+                                                                    .identity_is_primary
+                                                            }
+                                                            onCheckedChange={(
+                                                                checked,
+                                                            ) =>
+                                                                collateral.setData(
+                                                                    'identity_is_primary',
+                                                                    checked ===
+                                                                        true,
+                                                                )
+                                                            }
+                                                        />
+                                                        <Label htmlFor="identity_is_primary">
+                                                            <Stage4Text k="stage4.ui.10074363ced4" />
+                                                        </Label>
+                                                    </div>
+                                                )}
                                         </>
                                     )}
 
@@ -918,30 +1064,31 @@ export default function RentalShow({
                                         'manual' && (
                                         <>
                                             <div>
-                                                <Label><Stage4Text k="stage4.ui.fabb2b5c779a" /></Label>
+                                                <Label>
+                                                    <Stage4Text k="stage4.ui.fabb2b5c779a" />
+                                                </Label>
                                                 <Input
-                                                    value={
-                                                        collateral.data.type
-                                                    }
+                                                    value={collateral.data.type}
                                                     onChange={(event) =>
                                                         collateral.setData(
                                                             'type',
                                                             event.target.value,
                                                         )
                                                     }
-                                                    placeholder={stage4Translate("stage4.ui.5ddd4a1ac042", stage4Locale)}
+                                                    placeholder={stage4Translate(
+                                                        'stage4.ui.5ddd4a1ac042',
+                                                        stage4Locale,
+                                                    )}
                                                 />
                                                 {collateral.errors.type && (
                                                     <p className="mt-1 text-sm text-destructive">
-                                                        {
-                                                            collateral.errors
-                                                                .type
-                                                        }
+                                                        {collateral.errors.type}
                                                     </p>
                                                 )}
                                             </div>
                                             <div>
-                                                <Label><Stage4Text k="stage4.ui.eddbb21dd281" />
+                                                <Label>
+                                                    <Stage4Text k="stage4.ui.eddbb21dd281" />
                                                 </Label>
                                                 <Input
                                                     value={
@@ -953,7 +1100,10 @@ export default function RentalShow({
                                                             event.target.value,
                                                         )
                                                     }
-                                                    placeholder={stage4Translate("stage4.ui.cefdf68cccee", stage4Locale)}
+                                                    placeholder={stage4Translate(
+                                                        'stage4.ui.cefdf68cccee',
+                                                        stage4Locale,
+                                                    )}
                                                 />
                                                 {collateral.errors.number && (
                                                     <p className="mt-1 text-sm text-destructive">
@@ -965,7 +1115,9 @@ export default function RentalShow({
                                                 )}
                                             </div>
                                             <div className="md:col-span-2">
-                                                <Label><Stage4Text k="stage4.ui.b9f45b6b55d5" /></Label>
+                                                <Label>
+                                                    <Stage4Text k="stage4.ui.b9f45b6b55d5" />
+                                                </Label>
                                                 <Input
                                                     value={
                                                         collateral.data
@@ -983,7 +1135,9 @@ export default function RentalShow({
                                     )}
 
                                     <div className="md:col-span-2">
-                                        <Label><Stage4Text k="stage4.ui.5b17c14f39b6" /></Label>
+                                        <Label>
+                                            <Stage4Text k="stage4.ui.5b17c14f39b6" />
+                                        </Label>
                                         <Input
                                             type="file"
                                             accept="image/jpeg,image/png,image/webp,application/pdf"
@@ -997,7 +1151,9 @@ export default function RentalShow({
                                         />
                                     </div>
                                     <div className="md:col-span-2">
-                                        <Label><Stage4Text k="stage4.ui.9f09aefd0dd4" /></Label>
+                                        <Label>
+                                            <Stage4Text k="stage4.ui.9f09aefd0dd4" />
+                                        </Label>
                                         <Input
                                             value={collateral.data.notes}
                                             onChange={(event) =>
@@ -1006,7 +1162,10 @@ export default function RentalShow({
                                                     event.target.value,
                                                 )
                                             }
-                                            placeholder={stage4Translate("stage4.ui.33401e0a5903", stage4Locale)}
+                                            placeholder={stage4Translate(
+                                                'stage4.ui.33401e0a5903',
+                                                stage4Locale,
+                                            )}
                                         />
                                     </div>
 
@@ -1014,7 +1173,8 @@ export default function RentalShow({
                                         <Checkbox
                                             id="physical_received"
                                             checked={
-                                                collateral.data.physical_received
+                                                collateral.data
+                                                    .physical_received
                                             }
                                             onCheckedChange={(checked) =>
                                                 collateral.setData(
@@ -1024,9 +1184,11 @@ export default function RentalShow({
                                             }
                                         />
                                         <div>
-                                            <Label htmlFor="physical_received"><Stage4Text k="stage4.ui.611656185a41" />
+                                            <Label htmlFor="physical_received">
+                                                <Stage4Text k="stage4.ui.611656185a41" />
                                             </Label>
-                                            <p className="text-xs text-muted-foreground"><Stage4Text k="stage4.ui.51a1a65ee7cb" />
+                                            <p className="text-xs text-muted-foreground">
+                                                <Stage4Text k="stage4.ui.51a1a65ee7cb" />
                                             </p>
                                             {collateral.errors
                                                 .physical_received && (
@@ -1063,7 +1225,8 @@ export default function RentalShow({
                                             type="submit"
                                             disabled={collateral.processing}
                                         >
-                                            <ShieldCheck /><Stage4Text k="stage4.ui.00aeed7b2308" />
+                                            <ShieldCheck />
+                                            <Stage4Text k="stage4.ui.00aeed7b2308" />
                                         </Button>
                                     </div>
                                 </form>
@@ -1073,7 +1236,9 @@ export default function RentalShow({
                 {rental.extensions.length > 0 && (
                     <Card>
                         <CardHeader>
-                            <CardTitle><Stage4Text k="stage4.ui.995f0683f4d8" /></CardTitle>
+                            <CardTitle>
+                                <Stage4Text k="stage4.ui.995f0683f4d8" />
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-3">
                             {rental.extensions.map((extension) => (
@@ -1089,11 +1254,22 @@ export default function RentalShow({
                                             <p className="text-sm text-muted-foreground">
                                                 {new Date(
                                                     extension.previous_due_at,
-                                                ).toLocaleString(stage4Locale === 'en' ? 'en-GB' : 'id-ID')}
-                                                {stage4Translate("stage4.ui.84fb07a3c1c3", stage4Locale)}
+                                                ).toLocaleString(
+                                                    stage4Locale === 'en'
+                                                        ? 'en-GB'
+                                                        : 'id-ID',
+                                                )}
+                                                {stage4Translate(
+                                                    'stage4.ui.84fb07a3c1c3',
+                                                    stage4Locale,
+                                                )}
                                                 {new Date(
                                                     extension.extended_due_at,
-                                                ).toLocaleString(stage4Locale === 'en' ? 'en-GB' : 'id-ID')}
+                                                ).toLocaleString(
+                                                    stage4Locale === 'en'
+                                                        ? 'en-GB'
+                                                        : 'id-ID',
+                                                )}
                                             </p>
                                         </div>
                                         <div className="text-right">
@@ -1106,7 +1282,8 @@ export default function RentalShow({
                                             </b>
                                             {Number(extension.discount_amount) >
                                                 0 && (
-                                                <p className="text-xs text-emerald-600"><Stage4Text k="stage4.ui.6cc10ed56760" />{' '}
+                                                <p className="text-xs text-emerald-600">
+                                                    <Stage4Text k="stage4.ui.6cc10ed56760" />{' '}
                                                     {money.format(
                                                         Number(
                                                             extension.discount_amount,
@@ -1117,7 +1294,8 @@ export default function RentalShow({
                                                         : ''}
                                                 </p>
                                             )}
-                                            <p className="text-xs text-muted-foreground"><Stage4Text k="stage4.ui.42b86f7c1b0f" />{' '}
+                                            <p className="text-xs text-muted-foreground">
+                                                <Stage4Text k="stage4.ui.42b86f7c1b0f" />{' '}
                                                 {money.format(
                                                     Number(
                                                         extension.paid_amount,
@@ -1136,17 +1314,25 @@ export default function RentalShow({
                                                     {
                                                         item.rental_item
                                                             .description
-                                                    }{' '}<Stage4Text k="stage4.ui.e21a079b3a50" /> {item.quantity}<Stage4Text k="stage4.ui.0df9eea0bad5" />
+                                                    }{' '}
+                                                    <Stage4Text k="stage4.ui.e21a079b3a50" />{' '}
+                                                    {item.quantity}
+                                                    <Stage4Text k="stage4.ui.0df9eea0bad5" />
                                                 </span>
                                                 <span>
                                                     {new Date(
                                                         item.extended_due_at,
-                                                    ).toLocaleString(stage4Locale === 'en' ? 'en-GB' : 'id-ID')}
+                                                    ).toLocaleString(
+                                                        stage4Locale === 'en'
+                                                            ? 'en-GB'
+                                                            : 'id-ID',
+                                                    )}
                                                 </span>
                                             </div>
                                         ))}
                                     </div>
-                                    <p className="mt-3 text-xs text-muted-foreground"><Stage4Text k="stage4.ui.59d6b5d8e131" />{' '}
+                                    <p className="mt-3 text-xs text-muted-foreground">
+                                        <Stage4Text k="stage4.ui.59d6b5d8e131" />{' '}
                                         {extension.approver?.name ?? '-'}
                                         {extension.notes
                                             ? ` · ${extension.notes}`
@@ -1160,7 +1346,9 @@ export default function RentalShow({
                 {rental.returns.length > 0 && (
                     <Card>
                         <CardHeader>
-                            <CardTitle><Stage4Text k="stage4.ui.86fb4e3d48c3" /></CardTitle>
+                            <CardTitle>
+                                <Stage4Text k="stage4.ui.86fb4e3d48c3" />
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-3">
                             {rental.returns.map((item) => (
@@ -1173,7 +1361,19 @@ export default function RentalShow({
                                             {item.return_number}
                                         </p>
                                         <p className="text-sm text-muted-foreground">
-                                            {stage4TranslateDynamic(item.type === "partial" ? "partial_return" : item.type === "full" ? "full_return" : item.type, stage4Locale)} {" · "} {stage4FormatDateTime(item.returned_at, stage4Locale)}
+                                            {stage4TranslateDynamic(
+                                                item.type === 'partial'
+                                                    ? 'partial_return'
+                                                    : item.type === 'full'
+                                                      ? 'full_return'
+                                                      : item.type,
+                                                stage4Locale,
+                                            )}{' '}
+                                            {' · '}{' '}
+                                            {stage4FormatDateTime(
+                                                item.returned_at,
+                                                stage4Locale,
+                                            )}
                                         </p>
                                     </div>
                                     <div className="flex items-center gap-3">
@@ -1185,7 +1385,10 @@ export default function RentalShow({
                                             )}
                                         </b>
                                         <Badge variant="outline">
-                                            {stage4TranslateDynamic(item.status, stage4Locale)}
+                                            {stage4TranslateDynamic(
+                                                item.status,
+                                                stage4Locale,
+                                            )}
                                         </Badge>
                                     </div>
                                 </div>
@@ -1196,7 +1399,9 @@ export default function RentalShow({
                 {rental.operational_corrections.length > 0 && (
                     <Card>
                         <CardHeader>
-                            <CardTitle><Stage4Text k="stage4.ui.c1ddf40384e3" /></CardTitle>
+                            <CardTitle>
+                                <Stage4Text k="stage4.ui.c1ddf40384e3" />
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-3">
                             {rental.operational_corrections.map((item) => (
@@ -1216,17 +1421,27 @@ export default function RentalShow({
                                                 }
                                                 {item.replacement_return
                                                     ? ` → ${item.replacement_return.return_number}`
-                                                    : stage4Translate("stage4.ui.c5979fb31b35", stage4Locale)}
+                                                    : stage4Translate(
+                                                          'stage4.ui.c5979fb31b35',
+                                                          stage4Locale,
+                                                      )}
                                             </p>
                                         </div>
-                                        <Badge>{stage4TranslateDynamic(item.status, stage4Locale)}</Badge>
+                                        <Badge>
+                                            {stage4TranslateDynamic(
+                                                item.status,
+                                                stage4Locale,
+                                            )}
+                                        </Badge>
                                     </div>
                                     <p className="mt-3 text-sm">
                                         {item.reason}
                                     </p>
-                                    <p className="mt-2 text-xs text-muted-foreground"><Stage4Text k="stage4.ui.31e0a5724f12" /> {item.opener.name}
+                                    <p className="mt-2 text-xs text-muted-foreground">
+                                        <Stage4Text k="stage4.ui.31e0a5724f12" />{' '}
+                                        {item.opener.name}
                                         {item.finalizer
-                                            ? ` · ${stage4Translate("stage4.ui.5b4f6e96b640", stage4Locale)} ${item.finalizer.name}`
+                                            ? ` · ${stage4Translate('stage4.ui.5b4f6e96b640', stage4Locale)} ${item.finalizer.name}`
                                             : ''}
                                     </p>
                                 </div>
@@ -1240,15 +1455,18 @@ export default function RentalShow({
                         <Card>
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
-                                    <RotateCcw className="size-5" /><Stage4Text k="stage4.ui.e426bee464e1" />
+                                    <RotateCcw className="size-5" />
+                                    <Stage4Text k="stage4.ui.e426bee464e1" />
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <Alert className="mb-5">
                                     <AlertTriangle />
-                                    <AlertTitle><Stage4Text k="stage4.ui.24f2edd041bb" />
+                                    <AlertTitle>
+                                        <Stage4Text k="stage4.ui.24f2edd041bb" />
                                     </AlertTitle>
-                                    <AlertDescription><Stage4Text k="stage4.ui.47a91fa95bf8" />
+                                    <AlertDescription>
+                                        <Stage4Text k="stage4.ui.47a91fa95bf8" />
                                     </AlertDescription>
                                 </Alert>
                                 <form
@@ -1256,7 +1474,8 @@ export default function RentalShow({
                                     onSubmit={submitOperationalCorrection}
                                 >
                                     <div className="space-y-2">
-                                        <Label htmlFor="rental_return_id"><Stage4Text k="stage4.ui.2486202a6a02" />
+                                        <Label htmlFor="rental_return_id">
+                                            <Stage4Text k="stage4.ui.2486202a6a02" />
                                         </Label>
                                         <select
                                             id="rental_return_id"
@@ -1298,7 +1517,8 @@ export default function RentalShow({
                                         )}
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="operational_reason"><Stage4Text k="stage4.ui.520de3bd0bd8" />
+                                        <Label htmlFor="operational_reason">
+                                            <Stage4Text k="stage4.ui.520de3bd0bd8" />
                                         </Label>
                                         <textarea
                                             id="operational_reason"
@@ -1310,7 +1530,10 @@ export default function RentalShow({
                                                     event.target.value,
                                                 )
                                             }
-                                            placeholder={stage4Translate("stage4.ui.84d5bd4e5ee6", stage4Locale)}
+                                            placeholder={stage4Translate(
+                                                'stage4.ui.84d5bd4e5ee6',
+                                                stage4Locale,
+                                            )}
                                         />
                                         {operational.errors.reason && (
                                             <p className="text-sm text-destructive">
@@ -1330,7 +1553,8 @@ export default function RentalShow({
                                                     .length < 10
                                             }
                                         >
-                                            <RotateCcw /><Stage4Text k="stage4.ui.b93aba98f10e" />
+                                            <RotateCcw />
+                                            <Stage4Text k="stage4.ui.b93aba98f10e" />
                                         </Button>
                                     </div>
                                 </form>
@@ -1340,7 +1564,9 @@ export default function RentalShow({
                 {rental.financial_adjustments.length > 0 && (
                     <Card>
                         <CardHeader>
-                            <CardTitle><Stage4Text k="stage4.ui.f02ebef19432" /></CardTitle>
+                            <CardTitle>
+                                <Stage4Text k="stage4.ui.f02ebef19432" />
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-3">
                             {rental.financial_adjustments.map((item) => (
@@ -1354,8 +1580,10 @@ export default function RentalShow({
                                                 {item.adjustment_number}
                                             </p>
                                             <p className="text-sm text-muted-foreground">
-                                                {item.component}<Stage4Text k="stage4.ui.e21a079b3a50" />{' '}
-                                                {item.direction}<Stage4Text k="stage4.ui.e21a079b3a50" />{' '}
+                                                {item.component}
+                                                <Stage4Text k="stage4.ui.e21a079b3a50" />{' '}
+                                                {item.direction}
+                                                <Stage4Text k="stage4.ui.e21a079b3a50" />{' '}
                                                 {item.creator.name}
                                             </p>
                                         </div>
@@ -1366,11 +1594,15 @@ export default function RentalShow({
                                     <p className="mt-3 text-sm">
                                         {item.reason}
                                     </p>
-                                    <p className="mt-2 text-xs text-muted-foreground"><Stage4Text k="stage4.ui.8b0fcd0c1f89" />{' '}
+                                    <p className="mt-2 text-xs text-muted-foreground">
+                                        <Stage4Text k="stage4.ui.8b0fcd0c1f89" />{' '}
                                         {money.format(
                                             Number(item.balance_before),
                                         )}
-                                        {stage4Translate("stage4.ui.84fb07a3c1c3", stage4Locale)}
+                                        {stage4Translate(
+                                            'stage4.ui.84fb07a3c1c3',
+                                            stage4Locale,
+                                        )}
                                         {money.format(
                                             Number(item.balance_after),
                                         )}
@@ -1385,13 +1617,17 @@ export default function RentalShow({
                         <Card>
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
-                                    <ShieldCheck className="size-5" /><Stage4Text k="stage4.ui.b88f17cd7aea" />
+                                    <ShieldCheck className="size-5" />
+                                    <Stage4Text k="stage4.ui.b88f17cd7aea" />
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <Alert className="mb-5">
-                                    <AlertTitle><Stage4Text k="stage4.ui.b23942884e46" /></AlertTitle>
-                                    <AlertDescription><Stage4Text k="stage4.ui.0516d0a6c25f" />
+                                    <AlertTitle>
+                                        <Stage4Text k="stage4.ui.b23942884e46" />
+                                    </AlertTitle>
+                                    <AlertDescription>
+                                        <Stage4Text k="stage4.ui.0516d0a6c25f" />
                                     </AlertDescription>
                                 </Alert>
                                 <form
@@ -1399,7 +1635,8 @@ export default function RentalShow({
                                     onSubmit={submitCorrection}
                                 >
                                     <div className="space-y-2">
-                                        <Label htmlFor="component"><Stage4Text k="stage4.ui.0750e291bd60" />
+                                        <Label htmlFor="component">
+                                            <Stage4Text k="stage4.ui.0750e291bd60" />
                                         </Label>
                                         <select
                                             id="component"
@@ -1412,11 +1649,14 @@ export default function RentalShow({
                                                 )
                                             }
                                         >
-                                            <option value="charge"><Stage4Text k="stage4.ui.0129b86a0496" />
+                                            <option value="charge">
+                                                <Stage4Text k="stage4.ui.0129b86a0496" />
                                             </option>
-                                            <option value="payment"><Stage4Text k="stage4.ui.f0874594eb78" />
+                                            <option value="payment">
+                                                <Stage4Text k="stage4.ui.f0874594eb78" />
                                             </option>
-                                            <option value="deposit"><Stage4Text k="stage4.ui.e7b0b317a6e8" />
+                                            <option value="deposit">
+                                                <Stage4Text k="stage4.ui.e7b0b317a6e8" />
                                             </option>
                                         </select>
                                         {correction.errors.component && (
@@ -1426,7 +1666,8 @@ export default function RentalShow({
                                         )}
                                     </div>
                                     <div className="space-y-2">
-                                        <Label htmlFor="direction"><Stage4Text k="stage4.ui.9083748eb607" />
+                                        <Label htmlFor="direction">
+                                            <Stage4Text k="stage4.ui.9083748eb607" />
                                         </Label>
                                         <select
                                             id="direction"
@@ -1439,9 +1680,11 @@ export default function RentalShow({
                                                 )
                                             }
                                         >
-                                            <option value="increase"><Stage4Text k="stage4.ui.a44eb3d1808f" />
+                                            <option value="increase">
+                                                <Stage4Text k="stage4.ui.a44eb3d1808f" />
                                             </option>
-                                            <option value="decrease"><Stage4Text k="stage4.ui.5589ac4ca19e" />
+                                            <option value="decrease">
+                                                <Stage4Text k="stage4.ui.5589ac4ca19e" />
                                             </option>
                                         </select>
                                         {correction.errors.direction && (
@@ -1451,7 +1694,8 @@ export default function RentalShow({
                                         )}
                                     </div>
                                     <div className="space-y-2 md:col-span-2">
-                                        <Label htmlFor="amount"><Stage4Text k="stage4.ui.013340da8633" />
+                                        <Label htmlFor="amount">
+                                            <Stage4Text k="stage4.ui.013340da8633" />
                                         </Label>
                                         <RupiahInput
                                             id="amount"
@@ -1471,7 +1715,8 @@ export default function RentalShow({
                                         )}
                                     </div>
                                     <div className="space-y-2 md:col-span-2">
-                                        <Label htmlFor="reason"><Stage4Text k="stage4.ui.0fd21bfb8d44" />
+                                        <Label htmlFor="reason">
+                                            <Stage4Text k="stage4.ui.0fd21bfb8d44" />
                                         </Label>
                                         <textarea
                                             id="reason"
@@ -1483,7 +1728,10 @@ export default function RentalShow({
                                                     event.target.value,
                                                 )
                                             }
-                                            placeholder={stage4Translate("stage4.ui.84d5bd4e5ee6", stage4Locale)}
+                                            placeholder={stage4Translate(
+                                                'stage4.ui.84d5bd4e5ee6',
+                                                stage4Locale,
+                                            )}
                                         />
                                         {correction.errors.reason && (
                                             <p className="text-sm text-destructive">
@@ -1492,7 +1740,8 @@ export default function RentalShow({
                                         )}
                                     </div>
                                     <div className="space-y-2 md:col-span-2">
-                                        <Label htmlFor="notes"><Stage4Text k="stage4.ui.6ea7f8153fe1" />
+                                        <Label htmlFor="notes">
+                                            <Stage4Text k="stage4.ui.6ea7f8153fe1" />
                                         </Label>
                                         <Input
                                             id="notes"
@@ -1514,7 +1763,8 @@ export default function RentalShow({
                                                 correction.data.reason.trim()
                                                     .length < 10
                                             }
-                                        ><Stage4Text k="stage4.ui.d4ead4b78da1" />
+                                        >
+                                            <Stage4Text k="stage4.ui.d4ead4b78da1" />
                                         </Button>
                                     </div>
                                 </form>

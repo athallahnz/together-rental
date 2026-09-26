@@ -92,10 +92,14 @@ export default function PublicShell({ branch, branches, children }: Props) {
                     </nav>
 
                     <div className="hidden items-center gap-2 xl:flex">
-                        {!auth.user && <GuestLanguageSwitcher variant="public" />}
+                        {!auth.user && (
+                            <GuestLanguageSwitcher variant="public" />
+                        )}
                         {branches.length > 1 && branch && (
                             <label className="relative">
-                                <span className="sr-only">{tr('public.nav.selectBranch')}</span>
+                                <span className="sr-only">
+                                    {tr('public.nav.selectBranch')}
+                                </span>
                                 <select
                                     value={branch.code}
                                     onChange={(event) =>
@@ -127,7 +131,9 @@ export default function PublicShell({ branch, branches, children }: Props) {
                             href={auth.user ? '/dashboard' : '/login'}
                             className="inline-flex h-10 items-center rounded-full border border-black/10 bg-white px-4 text-sm font-medium transition hover:border-black/25"
                         >
-                            {auth.user ? tr('public.nav.dashboard') : tr('public.nav.login')}
+                            {auth.user
+                                ? tr('public.nav.dashboard')
+                                : tr('public.nav.login')}
                         </Link>
                     </div>
 
@@ -148,7 +154,9 @@ export default function PublicShell({ branch, branches, children }: Props) {
                 {mobileOpen && (
                     <div className="border-t border-black/5 bg-[#f7f7f3] px-5 py-5 xl:hidden">
                         <div className="grid gap-2 text-sm font-medium">
-                            {!auth.user && <GuestLanguageSwitcher variant="public" />}
+                            {!auth.user && (
+                                <GuestLanguageSwitcher variant="public" />
+                            )}
                             <Link
                                 href={branch ? `/?branch=${branch.code}` : '/'}
                                 className="rounded-xl px-3 py-3 hover:bg-black/5"
@@ -200,7 +208,8 @@ export default function PublicShell({ branch, branches, children }: Props) {
                                     rel="noreferrer"
                                     className="mt-2 inline-flex h-11 items-center justify-center gap-2 rounded-xl bg-neutral-950 text-white"
                                 >
-                                    <MessageCircle className="size-4" /> {tr('public.nav.ask')}
+                                    <MessageCircle className="size-4" />{' '}
+                                    {tr('public.nav.ask')}
                                 </a>
                             )}
                         </div>
@@ -235,12 +244,13 @@ export default function PublicShell({ branch, branches, children }: Props) {
                     </div>
 
                     <div>
-                        <p className="text-sm font-semibold">{tr('public.footer.branch')}</p>
+                        <p className="text-sm font-semibold">
+                            {tr('public.footer.branch')}
+                        </p>
                         <div className="mt-4 grid gap-3 text-sm text-neutral-400">
                             <p className="flex gap-3">
                                 <MapPin className="mt-0.5 size-4 shrink-0" />{' '}
-                                {branch?.address ||
-                                    tr('public.footer.address')}
+                                {branch?.address || tr('public.footer.address')}
                             </p>
                             <p className="flex gap-3">
                                 <Clock3 className="size-4 shrink-0" />{' '}
@@ -292,13 +302,15 @@ export default function PublicShell({ branch, branches, children }: Props) {
                                 href="/login"
                                 className="flex items-center gap-3 hover:text-white"
                             >
-                                <Camera className="size-4" /> {tr('public.footer.internal')}
+                                <Camera className="size-4" />{' '}
+                                {tr('public.footer.internal')}
                             </Link>
                         </div>
                     </div>
                 </div>
                 <div className="border-t border-white/10 px-5 py-5 text-center text-xs text-neutral-500">
-                    © {new Date().getFullYear()} Together Kamera · {tr('public.footer.credit')}
+                    © {new Date().getFullYear()} Together Kamera ·{' '}
+                    {tr('public.footer.credit')}
                 </div>
             </footer>
         </div>

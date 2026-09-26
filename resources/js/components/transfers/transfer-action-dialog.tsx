@@ -78,7 +78,9 @@ export function TransferActionDialog({
         }
 
         if (!valid) {
-            setError('Catatan wajib berisi 5–3.000 karakter setelah spasi dihapus.');
+            setError(
+                'Catatan wajib berisi 5–3.000 karakter setelah spasi dihapus.',
+            );
 
             return;
         }
@@ -120,7 +122,9 @@ export function TransferActionDialog({
                 {warning && (
                     <Alert variant="destructive">
                         <AlertTriangle className="size-4" />
-                        <AlertTitle><Stage4Text k="stage4.ui.80b41ba77977" /></AlertTitle>
+                        <AlertTitle>
+                            <Stage4Text k="stage4.ui.80b41ba77977" />
+                        </AlertTitle>
                         <AlertDescription>{warning}</AlertDescription>
                     </Alert>
                 )}
@@ -144,16 +148,30 @@ export function TransferActionDialog({
                                     setError('');
                                 }
                             }}
-                            className="min-h-28 w-full resize-y rounded-md border bg-background px-3 py-2 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
-                            placeholder={stage4Translate("stage4.ui.b14019ed164c", stage4Locale)}
+                            className="min-h-28 w-full resize-y rounded-md border bg-background px-3 py-2 text-sm focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
+                            placeholder={stage4Translate(
+                                'stage4.ui.b14019ed164c',
+                                stage4Locale,
+                            )}
                             disabled={processing}
                         />
-                        <div id={helpId} className="flex justify-between gap-2 text-xs text-muted-foreground">
-                            <span><Stage4Text k="stage4.ui.6cedc1c67dd8" /></span>
-                            <span className="tabular-nums">{noteLength}/3000</span>
+                        <div
+                            id={helpId}
+                            className="flex justify-between gap-2 text-xs text-muted-foreground"
+                        >
+                            <span>
+                                <Stage4Text k="stage4.ui.6cedc1c67dd8" />
+                            </span>
+                            <span className="tabular-nums">
+                                {noteLength}/3000
+                            </span>
                         </div>
                         {error && (
-                            <p id={errorId} role="alert" className="text-sm text-destructive">
+                            <p
+                                id={errorId}
+                                role="alert"
+                                className="text-sm text-destructive"
+                            >
                                 {error}
                             </p>
                         )}
@@ -165,14 +183,20 @@ export function TransferActionDialog({
                             variant="outline"
                             disabled={processing}
                             onClick={() => handleOpenChange(false)}
-                        ><Stage4Text k="stage4.ui.1433539c3b8f" />
+                        >
+                            <Stage4Text k="stage4.ui.1433539c3b8f" />
                         </Button>
                         <Button
                             type="submit"
                             variant={destructive ? 'destructive' : 'default'}
                             disabled={!valid || processing}
                         >
-                            {processing ? stage4Translate("stage4.ui.3da705bdb58e", stage4Locale) : submitLabel}
+                            {processing
+                                ? stage4Translate(
+                                      'stage4.ui.3da705bdb58e',
+                                      stage4Locale,
+                                  )
+                                : submitLabel}
                         </Button>
                     </DialogFooter>
                 </form>

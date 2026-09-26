@@ -12,7 +12,13 @@ import {
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import type { ReactNode } from 'react';
-import { stage5AuditLabel, Stage5Text, stage5Translate, stage5Date, stage5IntlLocale } from '@/components/stage5-text';
+import {
+    stage5AuditLabel,
+    Stage5Text,
+    stage5Translate,
+    stage5Date,
+    stage5IntlLocale,
+} from '@/components/stage5-text';
 import { PaginationLinks } from '@/components/pagination-links';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -87,8 +93,6 @@ type Props = {
     filters: Filters;
 };
 
-
-
 export default function AuditTrailIndex({
     activities,
     summary,
@@ -142,7 +146,9 @@ export default function AuditTrailIndex({
 
     return (
         <>
-            <Head title={stage5Translate("stage5.ui.e01eacc119b7", stage5Locale)} />
+            <Head
+                title={stage5Translate('stage5.ui.e01eacc119b7', stage5Locale)}
+            />
             <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
                 <header>
                     <p className="text-sm font-medium text-primary">
@@ -159,22 +165,34 @@ export default function AuditTrailIndex({
 
                 <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                     <SummaryCard
-                        label={stage5Translate("stage5.ui.08901d88457c", stage5Locale)}
+                        label={stage5Translate(
+                            'stage5.ui.08901d88457c',
+                            stage5Locale,
+                        )}
                         value={summary.total}
                         icon={History}
                     />
                     <SummaryCard
-                        label={stage5Translate("stage5.ui.2c6ad1441fa8", stage5Locale)}
+                        label={stage5Translate(
+                            'stage5.ui.2c6ad1441fa8',
+                            stage5Locale,
+                        )}
                         value={summary.today}
                         icon={Clock3}
                     />
                     <SummaryCard
-                        label={stage5Translate("stage5.ui.3edd93bea8ae", stage5Locale)}
+                        label={stage5Translate(
+                            'stage5.ui.3edd93bea8ae',
+                            stage5Locale,
+                        )}
                         value={summary.actors}
                         icon={UserRound}
                     />
                     <SummaryCard
-                        label={stage5Translate("stage5.ui.28aa101f736a", stage5Locale)}
+                        label={stage5Translate(
+                            'stage5.ui.28aa101f736a',
+                            stage5Locale,
+                        )}
                         value={summary.with_changes}
                         icon={ShieldCheck}
                     />
@@ -182,7 +200,9 @@ export default function AuditTrailIndex({
 
                 <Card>
                     <CardHeader>
-                        <CardTitle><Stage5Text k="stage5.ui.4b6b57782762" /></CardTitle>
+                        <CardTitle>
+                            <Stage5Text k="stage5.ui.4b6b57782762" />
+                        </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <form
@@ -192,7 +212,12 @@ export default function AuditTrailIndex({
                             }}
                             className="grid gap-4 md:grid-cols-2 xl:grid-cols-4"
                         >
-                            <Field label={stage5Translate("stage5.ui.3f2275d79afb", stage5Locale)}>
+                            <Field
+                                label={stage5Translate(
+                                    'stage5.ui.3f2275d79afb',
+                                    stage5Locale,
+                                )}
+                            >
                                 <div className="relative">
                                     <Search className="absolute top-2.5 left-3 size-4 text-muted-foreground" />
                                     <Input
@@ -201,11 +226,19 @@ export default function AuditTrailIndex({
                                             setSearch(event.target.value)
                                         }
                                         className="pl-9"
-                                        placeholder={stage5Translate("stage5.ui.9c1514400aab", stage5Locale)}
+                                        placeholder={stage5Translate(
+                                            'stage5.ui.9c1514400aab',
+                                            stage5Locale,
+                                        )}
                                     />
                                 </div>
                             </Field>
-                            <Field label={stage5Translate("stage5.ui.1387475bd674", stage5Locale)}>
+                            <Field
+                                label={stage5Translate(
+                                    'stage5.ui.1387475bd674',
+                                    stage5Locale,
+                                )}
+                            >
                                 <Select
                                     value={
                                         filters.branch_id?.toString() ?? 'all'
@@ -240,7 +273,12 @@ export default function AuditTrailIndex({
                                     </SelectContent>
                                 </Select>
                             </Field>
-                            <Field label={stage5Translate("stage5.ui.3edd93bea8ae", stage5Locale)}>
+                            <Field
+                                label={stage5Translate(
+                                    'stage5.ui.3edd93bea8ae',
+                                    stage5Locale,
+                                )}
+                            >
                                 <Select
                                     value={
                                         filters.actor_id?.toString() ?? 'all'
@@ -272,7 +310,12 @@ export default function AuditTrailIndex({
                                     </SelectContent>
                                 </Select>
                             </Field>
-                            <Field label={stage5Translate("stage5.ui.7182982745ee", stage5Locale)}>
+                            <Field
+                                label={stage5Translate(
+                                    'stage5.ui.7182982745ee',
+                                    stage5Locale,
+                                )}
+                            >
                                 <Select
                                     value={filters.module || 'all'}
                                     onValueChange={(value) =>
@@ -295,13 +338,21 @@ export default function AuditTrailIndex({
                                                 key={module.value}
                                                 value={module.value}
                                             >
-                                                {stage5AuditLabel(module.value, module.label)}
+                                                {stage5AuditLabel(
+                                                    module.value,
+                                                    module.label,
+                                                )}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
                             </Field>
-                            <Field label={stage5Translate("stage5.ui.ad8919ace091", stage5Locale)}>
+                            <Field
+                                label={stage5Translate(
+                                    'stage5.ui.ad8919ace091',
+                                    stage5Locale,
+                                )}
+                            >
                                 <Select
                                     value={filters.event || 'all'}
                                     onValueChange={(value) =>
@@ -322,13 +373,21 @@ export default function AuditTrailIndex({
                                                 key={event.value}
                                                 value={event.value}
                                             >
-                                                {stage5AuditLabel(event.value, event.label)}
+                                                {stage5AuditLabel(
+                                                    event.value,
+                                                    event.label,
+                                                )}
                                             </SelectItem>
                                         ))}
                                     </SelectContent>
                                 </Select>
                             </Field>
-                            <Field label={stage5Translate("stage5.ui.63aa59d5d8b6", stage5Locale)}>
+                            <Field
+                                label={stage5Translate(
+                                    'stage5.ui.63aa59d5d8b6',
+                                    stage5Locale,
+                                )}
+                            >
                                 <Input
                                     value={requestId}
                                     onChange={(event) =>
@@ -337,7 +396,12 @@ export default function AuditTrailIndex({
                                     placeholder="X-Request-Id"
                                 />
                             </Field>
-                            <Field label={stage5Translate("stage5.ui.30b35bf928d5", stage5Locale)}>
+                            <Field
+                                label={stage5Translate(
+                                    'stage5.ui.30b35bf928d5',
+                                    stage5Locale,
+                                )}
+                            >
                                 <Input
                                     type="date"
                                     value={dateFrom}
@@ -346,7 +410,12 @@ export default function AuditTrailIndex({
                                     }
                                 />
                             </Field>
-                            <Field label={stage5Translate("stage5.ui.95b58818f0a3", stage5Locale)}>
+                            <Field
+                                label={stage5Translate(
+                                    'stage5.ui.95b58818f0a3',
+                                    stage5Locale,
+                                )}
+                            >
                                 <Input
                                     type="date"
                                     value={dateTo}
@@ -357,7 +426,8 @@ export default function AuditTrailIndex({
                             </Field>
                             <div className="flex gap-2 md:col-span-2 xl:col-span-4">
                                 <Button type="submit">
-                                    <Search /> <Stage5Text k="stage5.ui.9ff8760b6d49" />
+                                    <Search />{' '}
+                                    <Stage5Text k="stage5.ui.9ff8760b6d49" />
                                 </Button>
                                 <Button
                                     type="button"
@@ -373,19 +443,33 @@ export default function AuditTrailIndex({
 
                 <Card>
                     <CardHeader>
-                        <CardTitle><Stage5Text k="stage5.ui.28c8a80889cf" /></CardTitle>
+                        <CardTitle>
+                            <Stage5Text k="stage5.ui.28c8a80889cf" />
+                        </CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="overflow-x-auto">
                             <table className="w-full min-w-[1050px] text-sm">
                                 <thead className="border-b bg-muted/40 text-left text-muted-foreground">
                                     <tr>
-                                        <th className="px-3 py-3"><Stage5Text k="stage5.ui.d546c40c22ca" /></th>
-                                        <th className="px-3 py-3"><Stage5Text k="stage5.ui.3edd93bea8ae" /></th>
-                                        <th className="px-3 py-3"><Stage5Text k="stage5.ui.1387475bd674" /></th>
-                                        <th className="px-3 py-3"><Stage5Text k="stage5.ui.ad8919ace091" /></th>
-                                        <th className="px-3 py-3"><Stage5Text k="stage5.ui.f5f7e53dcab1" /></th>
-                                        <th className="px-3 py-3"><Stage5Text k="stage5.ui.4aed03cac49d" /></th>
+                                        <th className="px-3 py-3">
+                                            <Stage5Text k="stage5.ui.d546c40c22ca" />
+                                        </th>
+                                        <th className="px-3 py-3">
+                                            <Stage5Text k="stage5.ui.3edd93bea8ae" />
+                                        </th>
+                                        <th className="px-3 py-3">
+                                            <Stage5Text k="stage5.ui.1387475bd674" />
+                                        </th>
+                                        <th className="px-3 py-3">
+                                            <Stage5Text k="stage5.ui.ad8919ace091" />
+                                        </th>
+                                        <th className="px-3 py-3">
+                                            <Stage5Text k="stage5.ui.f5f7e53dcab1" />
+                                        </th>
+                                        <th className="px-3 py-3">
+                                            <Stage5Text k="stage5.ui.4aed03cac49d" />
+                                        </th>
                                         <th className="px-3 py-3 text-right">
                                             <Stage5Text k="stage5.ui.7c9a7c0610c1" />
                                         </th>
@@ -467,7 +551,12 @@ function AuditRows({
                         : 'Company/System'}
                 </td>
                 <td className="px-3 py-3">
-                    <Badge variant="secondary">{stage5AuditLabel(activity.module, activity.module_label)}</Badge>
+                    <Badge variant="secondary">
+                        {stage5AuditLabel(
+                            activity.module,
+                            activity.module_label,
+                        )}
+                    </Badge>
                     <div className="mt-1 font-medium">
                         {stage5AuditLabel(activity.event, activity.event_label)}
                     </div>
@@ -488,7 +577,8 @@ function AuditRows({
                             href={activity.subject.url}
                             className="mt-1 inline-flex items-center gap-1 text-xs text-primary hover:underline"
                         >
-                            <Stage5Text k="stage5.ui.d33a5b9e6895" /> <ArrowUpRight className="size-3" />
+                            <Stage5Text k="stage5.ui.d33a5b9e6895" />{' '}
+                            <ArrowUpRight className="size-3" />
                         </Link>
                     )}
                 </td>
@@ -530,12 +620,18 @@ function AuditDetail({ activity }: { activity: Activity }) {
         <div className="space-y-4">
             <div className="grid gap-3 md:grid-cols-3">
                 <Meta
-                    label={stage5Translate("stage5.ui.63aa59d5d8b6", stage5Locale)}
+                    label={stage5Translate(
+                        'stage5.ui.63aa59d5d8b6',
+                        stage5Locale,
+                    )}
                     value={activity.request_id ?? '—'}
                     icon={Fingerprint}
                 />
                 <Meta
-                    label={stage5Translate("stage5.ui.11f51070cecf", stage5Locale)}
+                    label={stage5Translate(
+                        'stage5.ui.11f51070cecf',
+                        stage5Locale,
+                    )}
                     value={activity.ip_address ?? '—'}
                     icon={ShieldCheck}
                 />
@@ -550,9 +646,15 @@ function AuditDetail({ activity }: { activity: Activity }) {
                     <table className="w-full text-sm">
                         <thead className="bg-muted/50 text-left">
                             <tr>
-                                <th className="px-3 py-2"><Stage5Text k="stage5.ui.c326a4660b67" /></th>
-                                <th className="px-3 py-2"><Stage5Text k="stage5.ui.9a8474d94f35" /></th>
-                                <th className="px-3 py-2"><Stage5Text k="stage5.ui.79b83a829990" /></th>
+                                <th className="px-3 py-2">
+                                    <Stage5Text k="stage5.ui.c326a4660b67" />
+                                </th>
+                                <th className="px-3 py-2">
+                                    <Stage5Text k="stage5.ui.9a8474d94f35" />
+                                </th>
+                                <th className="px-3 py-2">
+                                    <Stage5Text k="stage5.ui.79b83a829990" />
+                                </th>
                             </tr>
                         </thead>
                         <tbody className="divide-y">

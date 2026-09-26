@@ -10,7 +10,15 @@ import {
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import type { FormEvent, ReactNode } from 'react';
-import { stage5Choice, stage5Display, Stage5Text, stage5Translate, stage5Date, stage5Money, stage5IntlLocale } from '@/components/stage5-text';
+import {
+    stage5Choice,
+    stage5Display,
+    Stage5Text,
+    stage5Translate,
+    stage5Date,
+    stage5Money,
+    stage5IntlLocale,
+} from '@/components/stage5-text';
 import InputError from '@/components/input-error';
 import { PaginationLinks } from '@/components/pagination-links';
 import { Badge } from '@/components/ui/badge';
@@ -92,7 +100,6 @@ type ExpenseForm = {
 
 const money = { format: stage5Money };
 
-
 function localDateTime(value = new Date()): string {
     const offset = value.getTimezoneOffset() * 60_000;
 
@@ -171,7 +178,9 @@ export default function OperationalExpenseIndex({
 
     return (
         <>
-            <Head title={stage5Translate("stage5.ui.18927b067117", stage5Locale)} />
+            <Head
+                title={stage5Translate('stage5.ui.18927b067117', stage5Locale)}
+            />
             <div className="space-y-6 p-4 md:p-6">
                 <header className="flex flex-col gap-3 xl:flex-row xl:items-end xl:justify-between">
                     <div>
@@ -189,44 +198,74 @@ export default function OperationalExpenseIndex({
                             variant={tab === 'expenses' ? 'default' : 'outline'}
                             onClick={() => setTab('expenses')}
                         >
-                            <BookOpenCheck /> <Stage5Text k="stage5.ui.a0db8e68b834" />
+                            <BookOpenCheck />{' '}
+                            <Stage5Text k="stage5.ui.a0db8e68b834" />
                         </Button>
                         <Button
                             type="button"
                             variant={tab === 'cash' ? 'default' : 'outline'}
                             onClick={() => setTab('cash')}
                         >
-                            <WalletCards /> <Stage5Text k="stage5.ui.c9d440879f01" />
+                            <WalletCards />{' '}
+                            <Stage5Text k="stage5.ui.c9d440879f01" />
                         </Button>
                     </div>
                 </header>
 
                 <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                     <MetricCard
-                        label={stage5Translate("stage5.ui.f22109b83333", stage5Locale)}
+                        label={stage5Translate(
+                            'stage5.ui.f22109b83333',
+                            stage5Locale,
+                        )}
                         value={money.format(summary.recorded_amount)}
-                        detail={stage5Choice(`${summary.recorded_count.toLocaleString(stage5IntlLocale(stage5Locale))} pengeluaran tercatat`, `${summary.recorded_count.toLocaleString(stage5IntlLocale(stage5Locale))} recorded expenses`, stage5Locale)}
+                        detail={stage5Choice(
+                            `${summary.recorded_count.toLocaleString(stage5IntlLocale(stage5Locale))} pengeluaran tercatat`,
+                            `${summary.recorded_count.toLocaleString(stage5IntlLocale(stage5Locale))} recorded expenses`,
+                            stage5Locale,
+                        )}
                         icon={BookOpenCheck}
                         tone="warning"
                     />
                     <MetricCard
-                        label={stage5Translate("stage5.ui.9059094e4350", stage5Locale)}
+                        label={stage5Translate(
+                            'stage5.ui.9059094e4350',
+                            stage5Locale,
+                        )}
                         value={money.format(summary.paid_amount)}
-                        detail={stage5Choice(`${summary.paid_count.toLocaleString(stage5IntlLocale(stage5Locale))} pengeluaran dibayar`, `${summary.paid_count.toLocaleString(stage5IntlLocale(stage5Locale))} paid expenses`, stage5Locale)}
+                        detail={stage5Choice(
+                            `${summary.paid_count.toLocaleString(stage5IntlLocale(stage5Locale))} pengeluaran dibayar`,
+                            `${summary.paid_count.toLocaleString(stage5IntlLocale(stage5Locale))} paid expenses`,
+                            stage5Locale,
+                        )}
                         icon={CircleDollarSign}
                         tone="danger"
                     />
                     <MetricCard
-                        label={stage5Translate("stage5.ui.cf5d476cb93c", stage5Locale)}
+                        label={stage5Translate(
+                            'stage5.ui.cf5d476cb93c',
+                            stage5Locale,
+                        )}
                         value={money.format(summary.cash_in)}
-                        detail={stage5Choice('Arus masuk pada buku kas terfilter', 'Cash inflow in the filtered ledger', stage5Locale)}
+                        detail={stage5Choice(
+                            'Arus masuk pada buku kas terfilter',
+                            'Cash inflow in the filtered ledger',
+                            stage5Locale,
+                        )}
                         icon={WalletCards}
                         tone="success"
                     />
                     <MetricCard
-                        label={stage5Translate("stage5.ui.e6b54fb57f0f", stage5Locale)}
+                        label={stage5Translate(
+                            'stage5.ui.e6b54fb57f0f',
+                            stage5Locale,
+                        )}
                         value={money.format(summary.cash_out)}
-                        detail={stage5Choice(`${summary.void_count.toLocaleString(stage5IntlLocale(stage5Locale))} pengeluaran dibatalkan sesuai filter`, `${summary.void_count.toLocaleString(stage5IntlLocale(stage5Locale))} voided expenses in the filtered scope`, stage5Locale)}
+                        detail={stage5Choice(
+                            `${summary.void_count.toLocaleString(stage5IntlLocale(stage5Locale))} pengeluaran dibatalkan sesuai filter`,
+                            `${summary.void_count.toLocaleString(stage5IntlLocale(stage5Locale))} voided expenses in the filtered scope`,
+                            stage5Locale,
+                        )}
                         icon={Banknote}
                         tone="danger"
                     />
@@ -235,7 +274,9 @@ export default function OperationalExpenseIndex({
                 {tab === 'expenses' && permissions.manage && (
                     <Card>
                         <CardHeader>
-                            <CardTitle><Stage5Text k="stage5.ui.dc3c634b9e74" /></CardTitle>
+                            <CardTitle>
+                                <Stage5Text k="stage5.ui.dc3c634b9e74" />
+                            </CardTitle>
                         </CardHeader>
                         <CardContent>
                             <form
@@ -243,7 +284,10 @@ export default function OperationalExpenseIndex({
                                 onSubmit={submitExpense}
                             >
                                 <Field
-                                    label={stage5Translate("stage5.ui.1387475bd674", stage5Locale)}
+                                    label={stage5Translate(
+                                        'stage5.ui.1387475bd674',
+                                        stage5Locale,
+                                    )}
                                     error={form.errors.branch_id}
                                 >
                                     <Select
@@ -258,7 +302,12 @@ export default function OperationalExpenseIndex({
                                         }
                                     >
                                         <SelectTrigger>
-                                            <SelectValue placeholder={stage5Translate("stage5.ui.f53404d2ddcf", stage5Locale)} />
+                                            <SelectValue
+                                                placeholder={stage5Translate(
+                                                    'stage5.ui.f53404d2ddcf',
+                                                    stage5Locale,
+                                                )}
+                                            />
                                         </SelectTrigger>
                                         <SelectContent>
                                             {branches.map((branch) => (
@@ -274,7 +323,10 @@ export default function OperationalExpenseIndex({
                                     </Select>
                                 </Field>
                                 <Field
-                                    label={stage5Translate("stage5.ui.f2b93c76303e", stage5Locale)}
+                                    label={stage5Translate(
+                                        'stage5.ui.f2b93c76303e',
+                                        stage5Locale,
+                                    )}
                                     error={form.errors.financial_category_id}
                                 >
                                     <Select
@@ -290,7 +342,12 @@ export default function OperationalExpenseIndex({
                                         }
                                     >
                                         <SelectTrigger>
-                                            <SelectValue placeholder={stage5Translate("stage5.ui.5322c62fbfeb", stage5Locale)} />
+                                            <SelectValue
+                                                placeholder={stage5Translate(
+                                                    'stage5.ui.5322c62fbfeb',
+                                                    stage5Locale,
+                                                )}
+                                            />
                                         </SelectTrigger>
                                         <SelectContent>
                                             {activeCategories.map(
@@ -310,7 +367,10 @@ export default function OperationalExpenseIndex({
                                     </Select>
                                 </Field>
                                 <Field
-                                    label={stage5Translate("stage5.ui.1795d163388f", stage5Locale)}
+                                    label={stage5Translate(
+                                        'stage5.ui.1795d163388f',
+                                        stage5Locale,
+                                    )}
                                     error={form.errors.amount}
                                 >
                                     <RupiahInput
@@ -321,7 +381,10 @@ export default function OperationalExpenseIndex({
                                     />
                                 </Field>
                                 <Field
-                                    label={stage5Translate("stage5.ui.08206fcf8a87", stage5Locale)}
+                                    label={stage5Translate(
+                                        'stage5.ui.08206fcf8a87',
+                                        stage5Locale,
+                                    )}
                                     error={form.errors.incurred_at}
                                 >
                                     <Input
@@ -336,12 +399,18 @@ export default function OperationalExpenseIndex({
                                     />
                                 </Field>
                                 <Field
-                                    label={stage5Translate("stage5.ui.e3f18544463f", stage5Locale)}
+                                    label={stage5Translate(
+                                        'stage5.ui.e3f18544463f',
+                                        stage5Locale,
+                                    )}
                                     error={form.errors.vendor_name}
                                 >
                                     <Input
                                         value={form.data.vendor_name}
-                                        placeholder={stage5Translate("stage5.ui.cf048762964b", stage5Locale)}
+                                        placeholder={stage5Translate(
+                                            'stage5.ui.cf048762964b',
+                                            stage5Locale,
+                                        )}
                                         onChange={(event) =>
                                             form.setData(
                                                 'vendor_name',
@@ -351,12 +420,18 @@ export default function OperationalExpenseIndex({
                                     />
                                 </Field>
                                 <Field
-                                    label={stage5Translate("stage5.ui.e2579d653a27", stage5Locale)}
+                                    label={stage5Translate(
+                                        'stage5.ui.e2579d653a27',
+                                        stage5Locale,
+                                    )}
                                     error={form.errors.external_reference}
                                 >
                                     <Input
                                         value={form.data.external_reference}
-                                        placeholder={stage5Translate("stage5.ui.4dc91241f058", stage5Locale)}
+                                        placeholder={stage5Translate(
+                                            'stage5.ui.4dc91241f058',
+                                            stage5Locale,
+                                        )}
                                         onChange={(event) =>
                                             form.setData(
                                                 'external_reference',
@@ -366,7 +441,10 @@ export default function OperationalExpenseIndex({
                                     />
                                 </Field>
                                 <Field
-                                    label={stage5Translate("stage5.ui.e254e37b8d68", stage5Locale)}
+                                    label={stage5Translate(
+                                        'stage5.ui.e254e37b8d68',
+                                        stage5Locale,
+                                    )}
                                     error={form.errors.proof}
                                 >
                                     <Input
@@ -381,12 +459,18 @@ export default function OperationalExpenseIndex({
                                     />
                                 </Field>
                                 <Field
-                                    label={stage5Translate("stage5.ui.9f09aefd0dd4", stage5Locale)}
+                                    label={stage5Translate(
+                                        'stage5.ui.9f09aefd0dd4',
+                                        stage5Locale,
+                                    )}
                                     error={form.errors.notes}
                                 >
                                     <Input
                                         value={form.data.notes}
-                                        placeholder={stage5Translate("stage5.ui.a20b32e340ed", stage5Locale)}
+                                        placeholder={stage5Translate(
+                                            'stage5.ui.a20b32e340ed',
+                                            stage5Locale,
+                                        )}
                                         onChange={(event) =>
                                             form.setData(
                                                 'notes',
@@ -400,7 +484,8 @@ export default function OperationalExpenseIndex({
                                         type="submit"
                                         disabled={form.processing}
                                     >
-                                        <Plus /> <Stage5Text k="stage5.ui.895e0ebb1197" />
+                                        <Plus />{' '}
+                                        <Stage5Text k="stage5.ui.895e0ebb1197" />
                                     </Button>
                                     <p className="mt-2 text-xs text-muted-foreground">
                                         <Stage5Text k="stage5.ui.cc40daa8dbc7" />
@@ -412,18 +497,31 @@ export default function OperationalExpenseIndex({
                 )}
 
                 <FilterBar
-                    title={stage5Choice('Filter & pencarian', 'Filters & search', stage5Locale)}
-                    description={stage5Choice('Persempit data untuk menemukan pekerjaan yang perlu ditindak.', 'Narrow results to find expenses and ledger entries requiring action.', stage5Locale)}
+                    title={stage5Choice(
+                        'Filter & pencarian',
+                        'Filters & search',
+                        stage5Locale,
+                    )}
+                    description={stage5Choice(
+                        'Persempit data untuk menemukan pekerjaan yang perlu ditindak.',
+                        'Narrow results to find expenses and ledger entries requiring action.',
+                        stage5Locale,
+                    )}
                 >
                     <div className="space-y-1.5 md:col-span-2">
-                        <Label htmlFor="expense-search"><Stage5Text k="stage5.ui.3f2275d79afb" /></Label>
+                        <Label htmlFor="expense-search">
+                            <Stage5Text k="stage5.ui.3f2275d79afb" />
+                        </Label>
                         <div className="relative">
                             <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
                             <Input
                                 id="expense-search"
                                 className="pl-9"
                                 value={search}
-                                placeholder={stage5Translate("stage5.ui.672052db0c40", stage5Locale)}
+                                placeholder={stage5Translate(
+                                    'stage5.ui.672052db0c40',
+                                    stage5Locale,
+                                )}
                                 onChange={(event) =>
                                     setSearch(event.target.value)
                                 }
@@ -438,7 +536,9 @@ export default function OperationalExpenseIndex({
                         </div>
                     </div>
                     <div className="space-y-1.5">
-                        <Label><Stage5Text k="stage5.ui.bae7d5be7082" /></Label>
+                        <Label>
+                            <Stage5Text k="stage5.ui.bae7d5be7082" />
+                        </Label>
                         <Select
                             value={filters.status || 'all'}
                             onValueChange={(value) =>
@@ -457,13 +557,19 @@ export default function OperationalExpenseIndex({
                                 <SelectItem value="recorded">
                                     <Stage5Text k="stage5.ui.d5383ea7af4c" />
                                 </SelectItem>
-                                <SelectItem value="paid"><Stage5Text k="stage5.ui.dc9d4584a554" /></SelectItem>
-                                <SelectItem value="void"><Stage5Text k="stage5.ui.207c7c00630b" /></SelectItem>
+                                <SelectItem value="paid">
+                                    <Stage5Text k="stage5.ui.dc9d4584a554" />
+                                </SelectItem>
+                                <SelectItem value="void">
+                                    <Stage5Text k="stage5.ui.207c7c00630b" />
+                                </SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
                     <div className="space-y-1.5">
-                        <Label><Stage5Text k="stage5.ui.1387475bd674" /></Label>
+                        <Label>
+                            <Stage5Text k="stage5.ui.1387475bd674" />
+                        </Label>
                         <Select
                             value={
                                 filters.branch_id
@@ -496,7 +602,9 @@ export default function OperationalExpenseIndex({
                         </Select>
                     </div>
                     <div className="space-y-1.5">
-                        <Label><Stage5Text k="stage5.ui.b7964404a785" /></Label>
+                        <Label>
+                            <Stage5Text k="stage5.ui.b7964404a785" />
+                        </Label>
                         <Select
                             value={
                                 filters.financial_category_id
@@ -529,7 +637,9 @@ export default function OperationalExpenseIndex({
                         </Select>
                     </div>
                     <div className="space-y-1.5">
-                        <Label><Stage5Text k="stage5.ui.30b35bf928d5" /></Label>
+                        <Label>
+                            <Stage5Text k="stage5.ui.30b35bf928d5" />
+                        </Label>
                         <Input
                             type="date"
                             value={filters.date_from}
@@ -539,7 +649,9 @@ export default function OperationalExpenseIndex({
                         />
                     </div>
                     <div className="space-y-1.5">
-                        <Label><Stage5Text k="stage5.ui.95b58818f0a3" /></Label>
+                        <Label>
+                            <Stage5Text k="stage5.ui.95b58818f0a3" />
+                        </Label>
                         <Input
                             type="date"
                             value={filters.date_to}
@@ -560,7 +672,9 @@ export default function OperationalExpenseIndex({
                 {tab === 'expenses' ? (
                     <Card>
                         <CardHeader>
-                            <CardTitle><Stage5Text k="stage5.ui.f3bcb8ba671d" /></CardTitle>
+                            <CardTitle>
+                                <Stage5Text k="stage5.ui.f3bcb8ba671d" />
+                            </CardTitle>
                         </CardHeader>
                         <CardContent>
                             <div className="overflow-x-auto">
@@ -658,7 +772,9 @@ export default function OperationalExpenseIndex({
                 ) : (
                     <Card>
                         <CardHeader>
-                            <CardTitle><Stage5Text k="stage5.ui.44faccfc5cb6" /></CardTitle>
+                            <CardTitle>
+                                <Stage5Text k="stage5.ui.44faccfc5cb6" />
+                            </CardTitle>
                         </CardHeader>
                         <CardContent>
                             <p className="mb-4 text-sm text-muted-foreground">
@@ -677,7 +793,9 @@ export default function OperationalExpenseIndex({
                                             <th className="px-3 py-3">
                                                 <Stage5Text k="stage5.ui.ff648afc53ef" />
                                             </th>
-                                            <th className="px-3 py-3"><Stage5Text k="stage5.ui.c86c93709b3d" /></th>
+                                            <th className="px-3 py-3">
+                                                <Stage5Text k="stage5.ui.c86c93709b3d" />
+                                            </th>
                                             <th className="px-3 py-3 text-right">
                                                 <Stage5Text k="stage5.ui.1795d163388f" />
                                             </th>
@@ -826,7 +944,9 @@ function StatusBadge({ status }: { status: OperationalExpenseStatus }) {
               ? 'secondary'
               : 'outline';
 
-    return <Badge variant={variant}>{stage5Display(status, stage5Locale)}</Badge>;
+    return (
+        <Badge variant={variant}>{stage5Display(status, stage5Locale)}</Badge>
+    );
 }
 
 function Field({

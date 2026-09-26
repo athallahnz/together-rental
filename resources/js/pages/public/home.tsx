@@ -50,20 +50,17 @@ const benefits = [
     {
         icon: ShieldCheck,
         titleKey: 'public.home.benefit.maintained.title',
-        descriptionKey:
-            'public.home.benefit.maintained.description',
+        descriptionKey: 'public.home.benefit.maintained.description',
     },
     {
         icon: BadgeCheck,
         titleKey: 'public.home.benefit.transparent.title',
-        descriptionKey:
-            'public.home.benefit.transparent.description',
+        descriptionKey: 'public.home.benefit.transparent.description',
     },
     {
         icon: Clock3,
         titleKey: 'public.home.benefit.responsive.title',
-        descriptionKey:
-            'public.home.benefit.responsive.description',
+        descriptionKey: 'public.home.benefit.responsive.description',
     },
 ] as const;
 
@@ -71,20 +68,17 @@ const steps = [
     {
         icon: Search,
         titleKey: 'public.home.step.choose.title',
-        descriptionKey:
-            'public.home.step.choose.description',
+        descriptionKey: 'public.home.step.choose.description',
     },
     {
         icon: MessageCircle,
         titleKey: 'public.home.step.confirm.title',
-        descriptionKey:
-            'public.home.step.confirm.description',
+        descriptionKey: 'public.home.step.confirm.description',
     },
     {
         icon: CalendarCheck2,
         titleKey: 'public.home.step.create.title',
-        descriptionKey:
-            'public.home.step.create.description',
+        descriptionKey: 'public.home.step.create.description',
     },
 ] as const;
 
@@ -116,10 +110,7 @@ export default function PublicHome({
         <PublicShell branch={branch} branches={branches}>
             <Head title={tr('public.home.head')}>
                 <meta name="description" content={description} />
-                <meta
-                    property="og:title"
-                    content={tr('public.home.ogTitle')}
-                />
+                <meta property="og:title" content={tr('public.home.ogTitle')} />
                 <meta property="og:description" content={description} />
                 <meta
                     property="og:image"
@@ -176,7 +167,9 @@ export default function PublicHome({
                                         rel="noreferrer"
                                         className="inline-flex h-12 items-center justify-center gap-2 rounded-full border border-white/15 bg-white/5 px-6 text-sm font-semibold text-white transition hover:bg-white/10"
                                     >
-                                        <MessageCircle className="size-4" />{' '}{tr('public.home.consult')}</a>
+                                        <MessageCircle className="size-4" />{' '}
+                                        {tr('public.home.consult')}
+                                    </a>
                                 )}
                             </div>
 
@@ -186,21 +179,24 @@ export default function PublicHome({
                                         {stats.products}+
                                     </p>
                                     <p className="mt-1 text-xs text-white/45 sm:text-sm">
-                                    {tr('public.home.productChoices')}</p>
+                                        {tr('public.home.productChoices')}
+                                    </p>
                                 </div>
                                 <div>
                                     <p className="text-2xl font-semibold sm:text-3xl">
                                         {stats.availableUnits}+
                                     </p>
                                     <p className="mt-1 text-xs text-white/45 sm:text-sm">
-                                    {tr('public.home.unitsReady')}</p>
+                                        {tr('public.home.unitsReady')}
+                                    </p>
                                 </div>
                                 <div>
                                     <p className="text-2xl font-semibold sm:text-3xl">
                                         09–21
                                     </p>
                                     <p className="mt-1 text-xs text-white/45 sm:text-sm">
-                                    {tr('public.home.hours')}</p>
+                                        {tr('public.home.hours')}
+                                    </p>
                                 </div>
                             </div>
                         </div>
@@ -210,9 +206,11 @@ export default function PublicHome({
                             <div className="relative overflow-hidden rounded-[2.5rem] border border-white/10 bg-white/[0.06] p-6 shadow-2xl backdrop-blur-xl sm:p-9">
                                 <div className="flex items-center justify-between">
                                     <p className="text-sm font-medium text-white/70">
-                                    {tr('public.home.equipment')}</p>
+                                        {tr('public.home.equipment')}
+                                    </p>
                                     <span className="rounded-full bg-emerald-400/15 px-3 py-1 text-xs font-medium text-emerald-300">
-                                    {tr('public.home.ready')}</span>
+                                        {tr('public.home.ready')}
+                                    </span>
                                 </div>
                                 <div className="mt-12 flex min-h-72 items-center justify-center">
                                     <img
@@ -249,7 +247,8 @@ export default function PublicHome({
                 <section className="border-b border-black/5 bg-white">
                     <div className="mx-auto flex max-w-7xl flex-wrap items-center justify-center gap-x-10 gap-y-5 px-5 py-7 lg:px-8">
                         <p className="text-xs font-semibold tracking-[0.18em] text-neutral-400 uppercase">
-                                    {tr('public.home.featuredBrands')}</p>
+                            {tr('public.home.featuredBrands')}
+                        </p>
                         {brands.length > 0 ? (
                             brands.slice(0, 8).map((brand) => (
                                 <Link
@@ -279,15 +278,18 @@ export default function PublicHome({
                     <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
                         <div>
                             <p className="text-xs font-semibold tracking-[0.18em] text-neutral-400 uppercase">
-                                    {tr('public.home.explore')}</p>
+                                {tr('public.home.explore')}
+                            </p>
                             <h2 className="mt-3 text-3xl font-semibold tracking-[-0.035em] sm:text-5xl">
-                                    {tr('public.home.popularCategories')}</h2>
+                                {tr('public.home.popularCategories')}
+                            </h2>
                         </div>
                         <Link
                             href={catalogHref}
                             className="inline-flex items-center gap-2 text-sm font-semibold hover:text-neutral-500"
                         >
-                                    {tr('public.home.viewAll')}{' '}<ArrowRight className="size-4" />
+                            {tr('public.home.viewAll')}{' '}
+                            <ArrowRight className="size-4" />
                         </Link>
                     </div>
 
@@ -318,14 +320,17 @@ export default function PublicHome({
                                                 {category.name}
                                             </h3>
                                             <p className="mt-1 text-sm text-white/50">
-                                                {category.products_count}{' '}{tr('public.home.products')}</p>
+                                                {category.products_count}{' '}
+                                                {tr('public.home.products')}
+                                            </p>
                                         </div>
                                     </div>
                                 </Link>
                             ))
                         ) : (
                             <div className="col-span-full rounded-3xl border border-dashed border-black/10 bg-white p-10 text-center text-sm text-neutral-500">
-                                    {tr('public.home.noCategories')}</div>
+                                {tr('public.home.noCategories')}
+                            </div>
                         )}
                     </div>
                 </section>
@@ -335,15 +340,18 @@ export default function PublicHome({
                         <div className="flex flex-col gap-5 sm:flex-row sm:items-end sm:justify-between">
                             <div>
                                 <p className="text-xs font-semibold tracking-[0.18em] text-neutral-400 uppercase">
-                                    {tr('public.home.featured')}</p>
+                                    {tr('public.home.featured')}
+                                </p>
                                 <h2 className="mt-3 text-3xl font-semibold tracking-[-0.035em] sm:text-5xl">
-                                    {tr('public.home.popularGear')}</h2>
+                                    {tr('public.home.popularGear')}
+                                </h2>
                             </div>
                             <Link
                                 href={catalogHref}
                                 className="inline-flex items-center gap-2 text-sm font-semibold hover:text-neutral-500"
                             >
-                                    {tr('public.home.openCatalog')}{' '}<ArrowRight className="size-4" />
+                                {tr('public.home.openCatalog')}{' '}
+                                <ArrowRight className="size-4" />
                             </Link>
                         </div>
 
@@ -364,11 +372,14 @@ export default function PublicHome({
                     <section className="mx-auto max-w-7xl px-5 py-20 lg:px-8 lg:py-28">
                         <div className="max-w-2xl">
                             <p className="text-xs font-semibold tracking-[0.18em] text-neutral-400 uppercase">
-                                    {tr('public.home.practical')}</p>
+                                {tr('public.home.practical')}
+                            </p>
                             <h2 className="mt-3 text-3xl font-semibold tracking-[-0.035em] sm:text-5xl">
-                                    {tr('public.home.readyPackages')}</h2>
+                                {tr('public.home.readyPackages')}
+                            </h2>
                             <p className="mt-4 text-base leading-7 text-neutral-500">
-                                    {tr('public.home.packagesDescription')}</p>
+                                {tr('public.home.packagesDescription')}
+                            </p>
                         </div>
                         <div className="mt-10 grid gap-5 lg:grid-cols-2">
                             {featuredPackages.map((rentalPackage) => (
@@ -390,11 +401,14 @@ export default function PublicHome({
                         <div className="grid gap-12 lg:grid-cols-[0.8fr_1.2fr]">
                             <div>
                                 <p className="text-xs font-semibold tracking-[0.18em] text-white/40 uppercase">
-                                    {tr('public.home.simpleProcess')}</p>
+                                    {tr('public.home.simpleProcess')}
+                                </p>
                                 <h2 className="mt-3 text-3xl font-semibold tracking-[-0.035em] sm:text-5xl">
-                                    {tr('public.home.fromPlanToCreation')}</h2>
+                                    {tr('public.home.fromPlanToCreation')}
+                                </h2>
                                 <p className="mt-5 max-w-md leading-7 text-white/50">
-                                    {tr('public.home.processDescription')}</p>
+                                    {tr('public.home.processDescription')}
+                                </p>
                             </div>
                             <div className="grid gap-4 md:grid-cols-3">
                                 {steps.map((step, index) => {
@@ -454,11 +468,15 @@ export default function PublicHome({
                     <div className="mx-auto max-w-7xl overflow-hidden rounded-[2rem] bg-gradient-to-br from-cyan-400 via-sky-500 to-blue-700 px-6 py-12 text-white sm:px-10 lg:flex lg:items-center lg:justify-between lg:px-14 lg:py-14">
                         <div className="max-w-2xl">
                             <div className="inline-flex items-center gap-2 rounded-full bg-white/15 px-3 py-1.5 text-xs font-medium backdrop-blur">
-                                <CheckCircle2 className="size-3.5" />{' '}{tr('public.home.readyToStart')}</div>
+                                <CheckCircle2 className="size-3.5" />{' '}
+                                {tr('public.home.readyToStart')}
+                            </div>
                             <h2 className="mt-5 text-3xl font-semibold tracking-[-0.035em] sm:text-5xl">
-                                    {tr('public.home.tellUs')}</h2>
+                                {tr('public.home.tellUs')}
+                            </h2>
                             <p className="mt-4 leading-7 text-white/75">
-                                    {tr('public.home.helpChoose')}</p>
+                                {tr('public.home.helpChoose')}
+                            </p>
                         </div>
                         {branch?.whatsapp_url && (
                             <a
@@ -467,7 +485,7 @@ export default function PublicHome({
                                 rel="noreferrer"
                                 className="mt-8 inline-flex h-12 items-center gap-2 rounded-full bg-white px-6 text-sm font-semibold text-neutral-950 transition hover:bg-neutral-100 lg:mt-0"
                             >
-                                    {tr('public.home.whatsapp')}{' '}
+                                {tr('public.home.whatsapp')}{' '}
                                 <ArrowRight className="size-4" />
                             </a>
                         )}

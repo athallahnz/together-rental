@@ -25,7 +25,10 @@ export function Breadcrumbs({
                     <BreadcrumbList>
                         {breadcrumbs.map((item, index) => {
                             const isLast = index === breadcrumbs.length - 1;
-                            const label = item.title === 'Dashboard' ? tr('nav.dashboard') : t(item.title);
+                            const label =
+                                item.title === 'Dashboard'
+                                    ? tr('nav.dashboard')
+                                    : t(item.title);
 
                             return (
                                 <Fragment key={index}>

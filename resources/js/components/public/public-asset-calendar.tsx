@@ -61,7 +61,9 @@ export default function PublicAssetCalendar({
         )
             .then(async (response) => {
                 if (!response.ok) {
-                    throw new Error(translateKey('public.detail.calendar.failure', locale));
+                    throw new Error(
+                        translateKey('public.detail.calendar.failure', locale),
+                    );
                 }
 
                 const payload = (await response.json()) as {
@@ -89,7 +91,10 @@ export default function PublicAssetCalendar({
                 setError(
                     reason instanceof Error
                         ? reason.message
-                        : translateKey('public.detail.calendar.failure', locale),
+                        : translateKey(
+                              'public.detail.calendar.failure',
+                              locale,
+                          ),
                 );
             })
             .finally(() => {
@@ -111,10 +116,13 @@ export default function PublicAssetCalendar({
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                 <div>
                     <div className="flex items-center gap-2 text-xs font-semibold tracking-[0.14em] text-neutral-400 uppercase">
-                        <CalendarDays className="size-4" /> {tr('public.detail.calendar.eyebrow')}
+                        <CalendarDays className="size-4" />{' '}
+                        {tr('public.detail.calendar.eyebrow')}
                     </div>
                     <h2 className="mt-2 text-2xl font-semibold tracking-tight">
-                        {tr('public.detail.calendar.title', { name: productName })}
+                        {tr('public.detail.calendar.title', {
+                            name: productName,
+                        })}
                     </h2>
                     <p className="mt-2 max-w-2xl text-sm leading-6 text-neutral-500">
                         {tr('public.detail.calendar.description')}
@@ -130,7 +138,11 @@ export default function PublicAssetCalendar({
                         }}
                     >
                         <SelectTrigger className="border-neutral-300 bg-white text-neutral-900">
-                            <SelectValue placeholder={tr('public.detail.calendar.choose')} />
+                            <SelectValue
+                                placeholder={tr(
+                                    'public.detail.calendar.choose',
+                                )}
+                            />
                         </SelectTrigger>
                         <SelectContent>
                             {data?.units.map((unit) => (
@@ -171,7 +183,9 @@ export default function PublicAssetCalendar({
 
             {!loading && error && (
                 <Alert className="mt-5">
-                    <AlertTitle>{tr('public.detail.calendar.error')}</AlertTitle>
+                    <AlertTitle>
+                        {tr('public.detail.calendar.error')}
+                    </AlertTitle>
                     <AlertDescription>{error}</AlertDescription>
                 </Alert>
             )}
@@ -202,7 +216,8 @@ export default function PublicAssetCalendar({
                             variant="outline"
                             className="border-neutral-300 bg-neutral-50 text-neutral-700"
                         >
-                            {tr('public.detail.calendar.condition')} {conditionLabel(selectedUnit.condition, locale)}
+                            {tr('public.detail.calendar.condition')}{' '}
+                            {conditionLabel(selectedUnit.condition, locale)}
                         </Badge>
                     </div>
                     <CalendarMonth
@@ -217,7 +232,9 @@ export default function PublicAssetCalendar({
             {data?.privacy_note && (
                 <div className="mt-5 flex items-start gap-3 rounded-2xl bg-neutral-50 p-4 text-sm text-neutral-600">
                     <ShieldCheck className="mt-0.5 size-5 shrink-0" />
-                    <p className="leading-6">{tr('public.detail.calendar.privacy')}</p>
+                    <p className="leading-6">
+                        {tr('public.detail.calendar.privacy')}
+                    </p>
                 </div>
             )}
         </section>
@@ -232,7 +249,12 @@ function statusLabel(status: string, locale: 'id' | 'en') {
         lost: 'public.detail.calendar.lost',
     } as const;
 
-    if (status === 'available' || status === 'limited' || status === 'unavailable' || status === 'in_transit') {
+    if (
+        status === 'available' ||
+        status === 'limited' ||
+        status === 'unavailable' ||
+        status === 'in_transit'
+    ) {
         return publicAvailabilityLabel(status, locale);
     }
 

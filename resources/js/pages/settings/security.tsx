@@ -59,7 +59,11 @@ export default function Security(props: Props) {
                     <SecuritySummary
                         icon={<ShieldCheck className="size-4" />}
                         label={tr('settings.security.twoFactorLabel')}
-                        value={props.twoFactorEnabled ? tr('settings.security.active') : tr('settings.security.inactive')}
+                        value={
+                            props.twoFactorEnabled
+                                ? tr('settings.security.active')
+                                : tr('settings.security.inactive')
+                        }
                         muted={!props.twoFactorEnabled}
                     />
                     {/* @end-chisel-2fa */}
@@ -111,7 +115,9 @@ export default function Security(props: Props) {
                                     <div className="grid gap-5 xl:grid-cols-3">
                                         <div className="grid gap-2">
                                             <Label htmlFor="current_password">
-                                                {tr('settings.security.current')}
+                                                {tr(
+                                                    'settings.security.current',
+                                                )}
                                             </Label>
 
                                             <PasswordInput
@@ -119,7 +125,9 @@ export default function Security(props: Props) {
                                                 ref={currentPasswordInput}
                                                 name="current_password"
                                                 autoComplete="current-password"
-                                                placeholder={tr('settings.security.current')}
+                                                placeholder={tr(
+                                                    'settings.security.current',
+                                                )}
                                             />
 
                                             <InputError
@@ -139,7 +147,9 @@ export default function Security(props: Props) {
                                                 ref={passwordInput}
                                                 name="password"
                                                 autoComplete="new-password"
-                                                placeholder={tr('settings.security.new')}
+                                                placeholder={tr(
+                                                    'settings.security.new',
+                                                )}
                                                 passwordrules={
                                                     props.passwordRules
                                                 }
@@ -152,14 +162,18 @@ export default function Security(props: Props) {
 
                                         <div className="grid gap-2">
                                             <Label htmlFor="password_confirmation">
-                                                {tr('settings.security.confirm')}
+                                                {tr(
+                                                    'settings.security.confirm',
+                                                )}
                                             </Label>
 
                                             <PasswordInput
                                                 id="password_confirmation"
                                                 name="password_confirmation"
                                                 autoComplete="new-password"
-                                                placeholder={tr('settings.security.repeat')}
+                                                placeholder={tr(
+                                                    'settings.security.repeat',
+                                                )}
                                                 passwordrules={
                                                     props.passwordRules
                                                 }

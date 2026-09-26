@@ -1,7 +1,14 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { RefreshCcw, RotateCcw, Search } from 'lucide-react';
 import { useState } from 'react';
-import { stage5Choice, stage5Display, Stage5Text, stage5Translate, stage5Date, stage5Money } from '@/components/stage5-text';
+import {
+    stage5Choice,
+    stage5Display,
+    Stage5Text,
+    stage5Translate,
+    stage5Date,
+    stage5Money,
+} from '@/components/stage5-text';
 import { PaginationLinks } from '@/components/pagination-links';
 import { MetricCard } from '@/components/ui/metric-card';
 import { Badge } from '@/components/ui/badge';
@@ -73,7 +80,9 @@ export default function RefundCenterIndex({
 
     return (
         <>
-            <Head title={stage5Translate("stage5.ui.81bd652019ba", stage5Locale)} />
+            <Head
+                title={stage5Translate('stage5.ui.81bd652019ba', stage5Locale)}
+            />
             <div className="space-y-6 p-4 md:p-6">
                 <header>
                     <h1 className="flex items-center gap-2 text-2xl font-semibold">
@@ -87,39 +96,76 @@ export default function RefundCenterIndex({
 
                 <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
                     <SummaryCard
-                        title={stage5Translate("stage5.ui.e2c758898156", stage5Locale)}
+                        title={stage5Translate(
+                            'stage5.ui.e2c758898156',
+                            stage5Locale,
+                        )}
                         value={String(summary.total_count)}
-                        description={stage5Translate("stage5.ui.f817d256981e", stage5Locale)}
+                        description={stage5Translate(
+                            'stage5.ui.f817d256981e',
+                            stage5Locale,
+                        )}
                     />
                     <SummaryCard
-                        title={stage5Translate("stage5.ui.6618acf15388", stage5Locale)}
+                        title={stage5Translate(
+                            'stage5.ui.6618acf15388',
+                            stage5Locale,
+                        )}
                         value={String(summary.requested_count)}
-                        description={stage5Translate("stage5.ui.1c9437f1f921", stage5Locale)}
+                        description={stage5Translate(
+                            'stage5.ui.1c9437f1f921',
+                            stage5Locale,
+                        )}
                         tone="warning"
                     />
                     <SummaryCard
-                        title={stage5Translate("stage5.ui.cfdc44a6e5cf", stage5Locale)}
+                        title={stage5Translate(
+                            'stage5.ui.cfdc44a6e5cf',
+                            stage5Locale,
+                        )}
                         value={String(summary.approved_count)}
-                        description={stage5Translate("stage5.ui.af7171f8a532", stage5Locale)}
+                        description={stage5Translate(
+                            'stage5.ui.af7171f8a532',
+                            stage5Locale,
+                        )}
                         tone="primary"
                     />
                     <SummaryCard
-                        title={stage5Translate("stage5.ui.f8ee57ec8645", stage5Locale)}
+                        title={stage5Translate(
+                            'stage5.ui.f8ee57ec8645',
+                            stage5Locale,
+                        )}
                         value={money.format(summary.outstanding_amount)}
-                        description={stage5Translate("stage5.ui.1a9b03355bdc", stage5Locale)}
+                        description={stage5Translate(
+                            'stage5.ui.1a9b03355bdc',
+                            stage5Locale,
+                        )}
                         tone="warning"
                     />
                     <SummaryCard
-                        title={stage5Translate("stage5.ui.3c78f49c2760", stage5Locale)}
+                        title={stage5Translate(
+                            'stage5.ui.3c78f49c2760',
+                            stage5Locale,
+                        )}
                         value={money.format(summary.paid_amount)}
-                        description={stage5Choice(`${summary.paid_count} refund dibayar`, `${summary.paid_count} refunds paid`, stage5Locale)}
+                        description={stage5Choice(
+                            `${summary.paid_count} refund dibayar`,
+                            `${summary.paid_count} refunds paid`,
+                            stage5Locale,
+                        )}
                         tone="success"
                     />
                 </section>
 
                 <FilterBar
-                    title={stage5Translate("stage5.ui.49ca00bd551e", stage5Locale)}
-                    description={stage5Translate("stage5.ui.561abf2da7e3", stage5Locale)}
+                    title={stage5Translate(
+                        'stage5.ui.49ca00bd551e',
+                        stage5Locale,
+                    )}
+                    description={stage5Translate(
+                        'stage5.ui.561abf2da7e3',
+                        stage5Locale,
+                    )}
                     contentClassName="md:grid-cols-2 xl:grid-cols-4"
                 >
                     <div className="flex gap-2 md:col-span-2">
@@ -131,7 +177,10 @@ export default function RefundCenterIndex({
                                     applyFilters();
                                 }
                             }}
-                            placeholder={stage5Translate("stage5.ui.e3a505e8f23b", stage5Locale)}
+                            placeholder={stage5Translate(
+                                'stage5.ui.e3a505e8f23b',
+                                stage5Locale,
+                            )}
                         />
                         <Button
                             type="button"
@@ -151,10 +200,17 @@ export default function RefundCenterIndex({
                         }
                     >
                         <SelectTrigger>
-                            <SelectValue placeholder={stage5Translate("stage5.ui.baa2adda4148", stage5Locale)} />
+                            <SelectValue
+                                placeholder={stage5Translate(
+                                    'stage5.ui.baa2adda4148',
+                                    stage5Locale,
+                                )}
+                            />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="all"><Stage5Text k="stage5.ui.baa2adda4148" /></SelectItem>
+                            <SelectItem value="all">
+                                <Stage5Text k="stage5.ui.baa2adda4148" />
+                            </SelectItem>
                             {Object.entries(statusLabels).map(
                                 ([value, label]) => (
                                     <SelectItem key={value} value={value}>
@@ -178,10 +234,17 @@ export default function RefundCenterIndex({
                         }
                     >
                         <SelectTrigger>
-                            <SelectValue placeholder={stage5Translate("stage5.ui.27d30aba48a4", stage5Locale)} />
+                            <SelectValue
+                                placeholder={stage5Translate(
+                                    'stage5.ui.27d30aba48a4',
+                                    stage5Locale,
+                                )}
+                            />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="all"><Stage5Text k="stage5.ui.27d30aba48a4" /></SelectItem>
+                            <SelectItem value="all">
+                                <Stage5Text k="stage5.ui.27d30aba48a4" />
+                            </SelectItem>
                             {branches.map((branch) => (
                                 <SelectItem
                                     key={branch.id}
@@ -206,10 +269,17 @@ export default function RefundCenterIndex({
                         }
                     >
                         <SelectTrigger>
-                            <SelectValue placeholder={stage5Translate("stage5.ui.816684ab79ec", stage5Locale)} />
+                            <SelectValue
+                                placeholder={stage5Translate(
+                                    'stage5.ui.816684ab79ec',
+                                    stage5Locale,
+                                )}
+                            />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="all"><Stage5Text k="stage5.ui.816684ab79ec" /></SelectItem>
+                            <SelectItem value="all">
+                                <Stage5Text k="stage5.ui.816684ab79ec" />
+                            </SelectItem>
                             {paymentMethods.map((method) => (
                                 <SelectItem
                                     key={method.id}
@@ -221,7 +291,9 @@ export default function RefundCenterIndex({
                         </SelectContent>
                     </Select>
                     <div className="space-y-1.5">
-                        <Label htmlFor="refund-date-from"><Stage5Text k="stage5.ui.30b35bf928d5" /></Label>
+                        <Label htmlFor="refund-date-from">
+                            <Stage5Text k="stage5.ui.30b35bf928d5" />
+                        </Label>
                         <Input
                             id="refund-date-from"
                             type="date"
@@ -234,7 +306,9 @@ export default function RefundCenterIndex({
                         />
                     </div>
                     <div className="space-y-1.5">
-                        <Label htmlFor="refund-date-to"><Stage5Text k="stage5.ui.95b58818f0a3" /></Label>
+                        <Label htmlFor="refund-date-to">
+                            <Stage5Text k="stage5.ui.95b58818f0a3" />
+                        </Label>
                         <Input
                             id="refund-date-to"
                             type="date"
@@ -266,19 +340,33 @@ export default function RefundCenterIndex({
 
                 <Card>
                     <CardHeader>
-                        <CardTitle><Stage5Text k="stage5.ui.f3d663d22d8f" /></CardTitle>
+                        <CardTitle>
+                            <Stage5Text k="stage5.ui.f3d663d22d8f" />
+                        </CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="overflow-x-auto">
                             <table className="w-full min-w-[980px] text-sm">
                                 <thead className="border-b bg-muted/40 text-left text-muted-foreground">
                                     <tr>
-                                        <th className="px-3 py-3"><Stage5Text k="stage5.ui.e17c8ad0dc2e" /></th>
-                                        <th className="px-3 py-3"><Stage5Text k="stage5.ui.b41a92bed032" /></th>
-                                        <th className="px-3 py-3"><Stage5Text k="stage5.ui.af0ab4433946" /></th>
-                                        <th className="px-3 py-3"><Stage5Text k="stage5.ui.5ac33f2c588b" /></th>
-                                        <th className="px-3 py-3"><Stage5Text k="stage5.ui.1387475bd674" /></th>
-                                        <th className="px-3 py-3"><Stage5Text k="stage5.ui.bae7d5be7082" /></th>
+                                        <th className="px-3 py-3">
+                                            <Stage5Text k="stage5.ui.e17c8ad0dc2e" />
+                                        </th>
+                                        <th className="px-3 py-3">
+                                            <Stage5Text k="stage5.ui.b41a92bed032" />
+                                        </th>
+                                        <th className="px-3 py-3">
+                                            <Stage5Text k="stage5.ui.af0ab4433946" />
+                                        </th>
+                                        <th className="px-3 py-3">
+                                            <Stage5Text k="stage5.ui.5ac33f2c588b" />
+                                        </th>
+                                        <th className="px-3 py-3">
+                                            <Stage5Text k="stage5.ui.1387475bd674" />
+                                        </th>
+                                        <th className="px-3 py-3">
+                                            <Stage5Text k="stage5.ui.bae7d5be7082" />
+                                        </th>
                                         <th className="px-3 py-3 text-right">
                                             <Stage5Text k="stage5.ui.1795d163388f" />
                                         </th>
@@ -401,5 +489,7 @@ function StatusBadge({ status }: { status: RefundStatus }) {
                 ? 'secondary'
                 : 'default';
 
-    return <Badge variant={variant}>{stage5Display(status, stage5Locale)}</Badge>;
+    return (
+        <Badge variant={variant}>{stage5Display(status, stage5Locale)}</Badge>
+    );
 }

@@ -709,9 +709,16 @@ function ProductContentDialog({
                             className={textareaClass}
                             value={form.data.short_description_en}
                             maxLength={320}
-                            onChange={(e) => form.setData('short_description_en', e.target.value)}
+                            onChange={(e) =>
+                                form.setData(
+                                    'short_description_en',
+                                    e.target.value,
+                                )
+                            }
                         />
-                        <InputError message={form.errors.short_description_en} />
+                        <InputError
+                            message={form.errors.short_description_en}
+                        />
                     </div>
                     <div className="grid gap-2">
                         <Label>Deskripsi lengkap (Indonesia)</Label>
@@ -719,7 +726,9 @@ function ProductContentDialog({
                             className={textareaClass}
                             value={form.data.description}
                             maxLength={3000}
-                            onChange={(e) => form.setData('description', e.target.value)}
+                            onChange={(e) =>
+                                form.setData('description', e.target.value)
+                            }
                         />
                         <InputError message={form.errors.description} />
                     </div>
@@ -729,7 +738,9 @@ function ProductContentDialog({
                             className={textareaClass}
                             value={form.data.description_en}
                             maxLength={3000}
-                            onChange={(e) => form.setData('description_en', e.target.value)}
+                            onChange={(e) =>
+                                form.setData('description_en', e.target.value)
+                            }
                         />
                         <InputError message={form.errors.description_en} />
                     </div>
@@ -789,7 +800,9 @@ function ProductContentDialog({
                         <Input
                             value={form.data.seo_title_en}
                             maxLength={180}
-                            onChange={(e) => form.setData('seo_title_en', e.target.value)}
+                            onChange={(e) =>
+                                form.setData('seo_title_en', e.target.value)
+                            }
                         />
                         <InputError message={form.errors.seo_title_en} />
                     </div>
@@ -799,7 +812,12 @@ function ProductContentDialog({
                             className={textareaClass}
                             value={form.data.seo_description_en}
                             maxLength={320}
-                            onChange={(e) => form.setData('seo_description_en', e.target.value)}
+                            onChange={(e) =>
+                                form.setData(
+                                    'seo_description_en',
+                                    e.target.value,
+                                )
+                            }
                         />
                         <InputError message={form.errors.seo_description_en} />
                     </div>
@@ -928,7 +946,9 @@ function PackageContentDialog({
                             className={textareaClass}
                             value={form.data.description}
                             maxLength={3000}
-                            onChange={(e) => form.setData('description', e.target.value)}
+                            onChange={(e) =>
+                                form.setData('description', e.target.value)
+                            }
                         />
                         <InputError message={form.errors.description} />
                     </div>
@@ -938,7 +958,9 @@ function PackageContentDialog({
                             className={textareaClass}
                             value={form.data.description_en}
                             maxLength={3000}
-                            onChange={(e) => form.setData('description_en', e.target.value)}
+                            onChange={(e) =>
+                                form.setData('description_en', e.target.value)
+                            }
                         />
                         <InputError message={form.errors.description_en} />
                     </div>
@@ -966,7 +988,9 @@ function PackageContentDialog({
                         <Input
                             value={form.data.seo_title_en}
                             maxLength={180}
-                            onChange={(e) => form.setData('seo_title_en', e.target.value)}
+                            onChange={(e) =>
+                                form.setData('seo_title_en', e.target.value)
+                            }
                         />
                         <InputError message={form.errors.seo_title_en} />
                     </div>
@@ -976,7 +1000,12 @@ function PackageContentDialog({
                             className={textareaClass}
                             value={form.data.seo_description_en}
                             maxLength={320}
-                            onChange={(e) => form.setData('seo_description_en', e.target.value)}
+                            onChange={(e) =>
+                                form.setData(
+                                    'seo_description_en',
+                                    e.target.value,
+                                )
+                            }
                         />
                         <InputError message={form.errors.seo_description_en} />
                     </div>

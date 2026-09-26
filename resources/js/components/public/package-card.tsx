@@ -34,7 +34,9 @@ export default function PackageCard({
             </div>
             <div className="flex flex-col justify-between p-6">
                 <div>
-                    <p className="text-xs font-semibold tracking-[0.18em] text-neutral-400 uppercase">{tr('public.common.rentalPackage')}</p>
+                    <p className="text-xs font-semibold tracking-[0.18em] text-neutral-400 uppercase">
+                        {tr('public.common.rentalPackage')}
+                    </p>
                     <div className="mt-2 flex items-start justify-between gap-4">
                         <h3 className="text-xl font-semibold tracking-tight">
                             {rentalPackage.name}
@@ -49,15 +51,21 @@ export default function PackageCard({
                 </div>
                 <div className="mt-8 flex items-end justify-between border-t border-black/5 pt-4">
                     <div>
-                        <p className="text-xs text-neutral-500">{tr('public.common.from')}</p>
+                        <p className="text-xs text-neutral-500">
+                            {tr('public.common.from')}
+                        </p>
                         <p className="mt-1 font-semibold">
                             {rentalPackage.starting_price !== null
-                                ? formatMoney(rentalPackage.starting_price, locale)
+                                ? formatMoney(
+                                      rentalPackage.starting_price,
+                                      locale,
+                                  )
                                 : tr('public.common.contactAdmin')}
                         </p>
                     </div>
                     <p className="text-xs text-neutral-500">
-                        {rentalPackage.items_count}{' '}{tr('public.common.items')}</p>
+                        {rentalPackage.items_count} {tr('public.common.items')}
+                    </p>
                 </div>
             </div>
         </Link>

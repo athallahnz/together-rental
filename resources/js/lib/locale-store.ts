@@ -28,7 +28,11 @@ function subscribe(subscriber: () => void): () => void {
 
 /** For global portals (Toaster/ConfirmDialog) outside Inertia usePage context. */
 export function useGlobalLocale(): AppLocale {
-    const locale = useSyncExternalStore(subscribe, getEffectiveLocale, () => 'id' as const);
+    const locale = useSyncExternalStore(
+        subscribe,
+        getEffectiveLocale,
+        () => 'id' as const,
+    );
 
     useEffect(() => {
         const remove = router.on('navigate', (event) => {

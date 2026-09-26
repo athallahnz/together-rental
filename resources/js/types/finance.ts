@@ -6,9 +6,7 @@ export type RefundStatus =
     'requested' | 'approved' | 'rejected' | 'paid' | 'cancelled';
 
 export type RefundPurpose =
-    | 'booking_cancellation'
-    | 'payment_correction'
-    | null;
+    'booking_cancellation' | 'payment_correction' | null;
 
 export type PaymentSourceContext =
     | 'booking'

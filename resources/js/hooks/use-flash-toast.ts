@@ -93,8 +93,7 @@ export function useFlashToast(): void {
         const unregisterHttpException = router.on('httpException', () => {
             toast.error(translateKey('errors.httpTitle', locale), {
                 id: httpExceptionToastId,
-                description:
-                    translateKey('errors.httpDescription', locale),
+                description: translateKey('errors.httpDescription', locale),
                 duration: 7000,
             });
         });
@@ -102,8 +101,7 @@ export function useFlashToast(): void {
         const unregisterNetworkError = router.on('networkError', () => {
             toast.error(translateKey('errors.networkTitle', locale), {
                 id: networkErrorToastId,
-                description:
-                    translateKey('errors.networkDescription', locale),
+                description: translateKey('errors.networkDescription', locale),
                 duration: 7000,
             });
         });

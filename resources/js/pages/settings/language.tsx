@@ -64,7 +64,10 @@ export default function Language() {
                                 <Select
                                     value={form.data.locale}
                                     onValueChange={(value) =>
-                                        form.setData('locale', value as AppLocale)
+                                        form.setData(
+                                            'locale',
+                                            value as AppLocale,
+                                        )
                                     }
                                 >
                                     <SelectTrigger id="app-locale">
@@ -85,7 +88,8 @@ export default function Language() {
                             <Button
                                 type="submit"
                                 disabled={
-                                    form.processing || form.data.locale === locale
+                                    form.processing ||
+                                    form.data.locale === locale
                                 }
                             >
                                 {form.processing
@@ -112,7 +116,5 @@ export default function Language() {
 }
 
 Language.layout = {
-    breadcrumbs: [
-        { title: 'Bahasa & Regional', href: '/settings/language' },
-    ],
+    breadcrumbs: [{ title: 'Bahasa & Regional', href: '/settings/language' }],
 };

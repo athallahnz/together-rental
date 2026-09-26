@@ -9,9 +9,10 @@ export default function GuestLanguageSwitcher({ variant = 'default' }: Props) {
     const { locale, tr } = useAppLocale();
     const [saving, setSaving] = useState(false);
 
-    const container = variant === 'public'
-        ? 'border-black/10 bg-white text-neutral-950'
-        : 'border-border bg-background text-foreground';
+    const container =
+        variant === 'public'
+            ? 'border-black/10 bg-white text-neutral-950'
+            : 'border-border bg-background text-foreground';
 
     const change = (next: AppLocale) => {
         if (saving || next === locale) {
@@ -19,10 +20,14 @@ export default function GuestLanguageSwitcher({ variant = 'default' }: Props) {
         }
 
         setSaving(true);
-        router.post('/language/guest', { locale: next }, {
-            preserveScroll: true,
-            onFinish: () => setSaving(false),
-        });
+        router.post(
+            '/language/guest',
+            { locale: next },
+            {
+                preserveScroll: true,
+                onFinish: () => setSaving(false),
+            },
+        );
     };
 
     return (

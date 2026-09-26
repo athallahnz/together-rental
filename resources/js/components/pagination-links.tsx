@@ -16,7 +16,11 @@ export function PaginationLinks({
 }) {
     const { locale } = useAppLocale();
     const localizeNavigation = (label: string): string =>
-        label.replace(/\bPrevious\b/g, locale === 'en' ? 'Previous' : 'Sebelumnya')
+        label
+            .replace(
+                /\bPrevious\b/g,
+                locale === 'en' ? 'Previous' : 'Sebelumnya',
+            )
             .replace(/\bNext\b/g, locale === 'en' ? 'Next' : 'Berikutnya');
 
     if (total === 0) {
@@ -26,7 +30,9 @@ export function PaginationLinks({
     return (
         <div className="flex flex-col gap-3 border-t pt-4 sm:flex-row sm:items-center sm:justify-between">
             <p className="text-xs text-muted-foreground">
-                {locale === 'en' ? 'Showing' : 'Menampilkan'} {from ?? 0}–{to ?? 0} {locale === 'en' ? 'of' : 'dari'} {total} {locale === 'en' ? 'records' : 'data'}
+                {locale === 'en' ? 'Showing' : 'Menampilkan'} {from ?? 0}–
+                {to ?? 0} {locale === 'en' ? 'of' : 'dari'} {total}{' '}
+                {locale === 'en' ? 'records' : 'data'}
             </p>
             <div className="flex flex-wrap gap-1">
                 {links.map((link, index) =>
@@ -40,13 +46,17 @@ export function PaginationLinks({
                                 link.active &&
                                     'border-primary bg-primary text-primary-foreground hover:bg-primary',
                             )}
-                            dangerouslySetInnerHTML={{ __html: localizeNavigation(link.label) }}
+                            dangerouslySetInnerHTML={{
+                                __html: localizeNavigation(link.label),
+                            }}
                         />
                     ) : (
                         <span
                             key={`${link.label}-${index}`}
                             className="inline-flex min-w-9 items-center justify-center rounded-md border px-3 py-1.5 text-xs text-muted-foreground opacity-50"
-                            dangerouslySetInnerHTML={{ __html: localizeNavigation(link.label) }}
+                            dangerouslySetInnerHTML={{
+                                __html: localizeNavigation(link.label),
+                            }}
                         />
                     ),
                 )}

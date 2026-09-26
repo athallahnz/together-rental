@@ -11,7 +11,11 @@ import { useMemo, useState } from 'react';
 import type { ChangeEvent } from 'react';
 import { useAppLocale } from '@/lib/i18n';
 import { formatDateTime, formatMoney } from '@/lib/locale-format';
-import { publicAvailabilityLabel, publicDurationMinutesLabel, publicRateDurationLabel } from '@/lib/public-i18n';
+import {
+    publicAvailabilityLabel,
+    publicDurationMinutesLabel,
+    publicRateDurationLabel,
+} from '@/lib/public-i18n';
 import type {
     PublicAvailability,
     PublicAvailabilityResult,
@@ -160,7 +164,9 @@ export default function AvailabilityPlanner({
                             {tr('public.detail.planner.title')}
                         </p>
                         <p className="mt-1 text-sm leading-6 text-neutral-500">
-                            {tr('public.detail.planner.description', { branch: branch.name })}
+                            {tr('public.detail.planner.description', {
+                                branch: branch.name,
+                            })}
                         </p>
                     </div>
                 </div>
@@ -204,8 +210,12 @@ export default function AvailabilityPlanner({
                         ).map((value) => (
                             <option key={value} value={value}>
                                 {itemType === 'package'
-                                    ? tr('public.detail.planner.packages', { count: value })
-                                    : tr('public.detail.planner.units', { count: value })}
+                                    ? tr('public.detail.planner.packages', {
+                                          count: value,
+                                      })
+                                    : tr('public.detail.planner.units', {
+                                          count: value,
+                                      })}
                             </option>
                         ))}
                     </select>
@@ -224,12 +234,17 @@ export default function AvailabilityPlanner({
                         className="h-11 rounded-xl border border-black/10 bg-[#fafaf8] px-3 text-sm transition outline-none focus:border-black/30"
                     >
                         {rates.length === 0 && (
-                            <option value="">{tr('public.common.contactAdmin')}</option>
+                            <option value="">
+                                {tr('public.common.contactAdmin')}
+                            </option>
                         )}
                         {rates.map((rate) => (
                             <option key={rate.id} value={rate.id}>
-                                {publicRateDurationLabel(rate.duration_label, locale)} ·{' '}
-                                {formatMoney(rate.amount, locale)}
+                                {publicRateDurationLabel(
+                                    rate.duration_label,
+                                    locale,
+                                )}{' '}
+                                · {formatMoney(rate.amount, locale)}
                             </option>
                         ))}
                     </select>
@@ -246,7 +261,9 @@ export default function AvailabilityPlanner({
                     ) : (
                         <PackageSearch className="size-4" />
                     )}
-                    {loading ? tr('public.detail.planner.loading') : tr('public.detail.planner.check', { name: itemName })}
+                    {loading
+                        ? tr('public.detail.planner.loading')
+                        : tr('public.detail.planner.check', { name: itemName })}
                 </button>
             </div>
 
@@ -272,13 +289,27 @@ export default function AvailabilityPlanner({
                                 )}
                                 <div>
                                     <p className="font-semibold">
-                                        {publicAvailabilityLabel(result.availability.status, locale)}
+                                        {publicAvailabilityLabel(
+                                            result.availability.status,
+                                            locale,
+                                        )}
                                     </p>
                                     <p className="mt-1 text-sm opacity-75">
-                                        {formatDateTime(new Date(result.period.starts_at), locale)} –{' '}
-                                        {formatDateTime(new Date(result.period.ends_at), locale)} ·{' '}
-                                        {publicDurationMinutesLabel(result.period.duration_minutes, locale)} ·{' '}
-                                        {result.period.timezone_label}
+                                        {formatDateTime(
+                                            new Date(result.period.starts_at),
+                                            locale,
+                                        )}{' '}
+                                        –{' '}
+                                        {formatDateTime(
+                                            new Date(result.period.ends_at),
+                                            locale,
+                                        )}{' '}
+                                        ·{' '}
+                                        {publicDurationMinutesLabel(
+                                            result.period.duration_minutes,
+                                            locale,
+                                        )}{' '}
+                                        · {result.period.timezone_label}
                                     </p>
                                 </div>
                             </div>
@@ -287,7 +318,11 @@ export default function AvailabilityPlanner({
                                     {tr('public.detail.planner.periodCapacity')}
                                 </p>
                                 <p className="mt-1 font-semibold">
-                                    {tr('public.detail.planner.capacity', { available: result.availability.available_units, total: result.availability.total_units })}
+                                    {tr('public.detail.planner.capacity', {
+                                        available:
+                                            result.availability.available_units,
+                                        total: result.availability.total_units,
+                                    })}
                                 </p>
                             </div>
                         </div>
@@ -296,21 +331,27 @@ export default function AvailabilityPlanner({
                             <div className="mt-4 grid gap-3 border-t border-current/10 pt-4 sm:grid-cols-3">
                                 <div>
                                     <p className="text-xs opacity-65">
-                                        {tr('public.detail.planner.rentalEstimate')}
+                                        {tr(
+                                            'public.detail.planner.rentalEstimate',
+                                        )}
                                     </p>
                                     <p className="mt-1 font-semibold">
                                         {formatMoney(
-                                            result.estimate.rental_amount, locale,
+                                            result.estimate.rental_amount,
+                                            locale,
                                         )}
                                     </p>
                                 </div>
                                 <div>
                                     <p className="text-xs opacity-65">
-                                        {tr('public.detail.planner.depositEstimate')}
+                                        {tr(
+                                            'public.detail.planner.depositEstimate',
+                                        )}
                                     </p>
                                     <p className="mt-1 font-semibold">
                                         {formatMoney(
-                                            result.estimate.deposit_amount, locale,
+                                            result.estimate.deposit_amount,
+                                            locale,
                                         )}
                                     </p>
                                 </div>
@@ -320,7 +361,14 @@ export default function AvailabilityPlanner({
                                     </p>
                                     <p className="mt-1 font-semibold">
                                         {result.estimate.billing_units} ×{' '}
-                                        {result.rate ? publicRateDurationLabel(result.rate.duration_label, locale) : tr('public.detail.planner.rateFallback')}
+                                        {result.rate
+                                            ? publicRateDurationLabel(
+                                                  result.rate.duration_label,
+                                                  locale,
+                                              )
+                                            : tr(
+                                                  'public.detail.planner.rateFallback',
+                                              )}
                                     </p>
                                 </div>
                             </div>
@@ -345,7 +393,12 @@ export default function AvailabilityPlanner({
                                                     : ''}
                                             </span>
                                             <span className="shrink-0 font-semibold">
-                                                {tr('public.detail.planner.available', { count: item.available_units })}
+                                                {tr(
+                                                    'public.detail.planner.available',
+                                                    {
+                                                        count: item.available_units,
+                                                    },
+                                                )}
                                             </span>
                                         </div>
                                     ))}
@@ -365,7 +418,8 @@ export default function AvailabilityPlanner({
                                     rel="noreferrer"
                                     className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-full bg-neutral-950 px-5 text-sm font-semibold text-white transition hover:bg-neutral-800"
                                 >
-                                    <MessageCircle className="size-4" /> {tr('public.detail.planner.inquiry')}
+                                    <MessageCircle className="size-4" />{' '}
+                                    {tr('public.detail.planner.inquiry')}
                                 </a>
                             )}
                         </div>
@@ -375,7 +429,12 @@ export default function AvailabilityPlanner({
                         <Clock3 className="mt-0.5 size-5 shrink-0" />
                         <div>
                             <p className="font-semibold">
-                                {tr('public.detail.planner.current', { status: publicAvailabilityLabel(currentAvailability.status, locale) })}
+                                {tr('public.detail.planner.current', {
+                                    status: publicAvailabilityLabel(
+                                        currentAvailability.status,
+                                        locale,
+                                    ),
+                                })}
                             </p>
                             <p className="mt-1 text-sm opacity-70">
                                 {tr('public.detail.planner.choose')}
@@ -387,7 +446,8 @@ export default function AvailabilityPlanner({
                                     rel="noreferrer"
                                     className="mt-3 inline-flex items-center gap-2 text-sm font-semibold underline underline-offset-4"
                                 >
-                                    <MessageCircle className="size-4" /> {tr('public.detail.planner.ask')}
+                                    <MessageCircle className="size-4" />{' '}
+                                    {tr('public.detail.planner.ask')}
                                 </a>
                             )}
                         </div>

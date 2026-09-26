@@ -80,7 +80,9 @@ export default function PasskeyRegistration({ onSuccess }: Props) {
             className="space-y-4 rounded-lg border border-border bg-muted/50 p-4"
         >
             <div className="grid gap-2">
-                <Label htmlFor="passkey-name">{tr('settings.passkeys.name')}</Label>
+                <Label htmlFor="passkey-name">
+                    {tr('settings.passkeys.name')}
+                </Label>
                 <Input
                     id="passkey-name"
                     type="text"
@@ -99,7 +101,9 @@ export default function PasskeyRegistration({ onSuccess }: Props) {
 
             <div className="flex gap-2">
                 <Button type="submit" disabled={isLoading || !name.trim()}>
-                    {isLoading ? tr('settings.passkeys.registering') : tr('settings.passkeys.register')}
+                    {isLoading
+                        ? tr('settings.passkeys.registering')
+                        : tr('settings.passkeys.register')}
                 </Button>
                 <Button type="button" variant="ghost" onClick={handleCancel}>
                     {tr('settings.passkeys.cancel')}

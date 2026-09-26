@@ -9,7 +9,10 @@ import {
 } from 'lucide-react';
 import { useAppLocale } from '@/lib/i18n';
 import { formatMoney } from '@/lib/locale-format';
-import { publicAvailabilityLabel, publicRateDurationLabel } from '@/lib/public-i18n';
+import {
+    publicAvailabilityLabel,
+    publicRateDurationLabel,
+} from '@/lib/public-i18n';
 import type { PublicBranch, PublicProduct } from '@/types';
 
 export default function ProductCard({
@@ -44,7 +47,9 @@ export default function ProductCard({
                     )}
                     <div className="absolute top-4 left-4 flex gap-2">
                         {product.is_featured && (
-                            <span className="rounded-full bg-neutral-950 px-3 py-1.5 text-[11px] font-semibold text-white">{tr('public.common.featured')}</span>
+                            <span className="rounded-full bg-neutral-950 px-3 py-1.5 text-[11px] font-semibold text-white">
+                                {tr('public.common.featured')}
+                            </span>
                         )}
                         <span
                             className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-[11px] font-semibold ${
@@ -61,7 +66,10 @@ export default function ProductCard({
                             ) : (
                                 <CheckCircle2 className="size-3" />
                             )}{' '}
-                            {publicAvailabilityLabel(product.availability.status, locale)}
+                            {publicAvailabilityLabel(
+                                product.availability.status,
+                                locale,
+                            )}
                         </span>
                     </div>
                 </div>
@@ -86,21 +94,31 @@ export default function ProductCard({
                     )}
                     {product.tracking_type === 'serialized' && (
                         <div className="mt-4 flex items-center gap-2 rounded-xl bg-neutral-50 px-3 py-2 text-xs font-medium text-neutral-600">
-                            <CalendarDays className="size-3.5" />{tr('public.common.unitCalendar')}</div>
+                            <CalendarDays className="size-3.5" />
+                            {tr('public.common.unitCalendar')}
+                        </div>
                     )}
                     <div className="mt-5 flex items-end justify-between border-t border-black/5 pt-4">
                         <div>
-                            <p className="text-xs text-neutral-500">{tr('public.common.from')}</p>
+                            <p className="text-xs text-neutral-500">
+                                {tr('public.common.from')}
+                            </p>
                             <p className="mt-1 font-semibold">
                                 {product.starting_price !== null
-                                    ? formatMoney(product.starting_price, locale)
+                                    ? formatMoney(
+                                          product.starting_price,
+                                          locale,
+                                      )
                                     : tr('public.common.contactAdmin')}
                             </p>
                         </div>
                         {product.rates[0] && (
                             <p className="flex items-center gap-1 text-xs text-neutral-500">
                                 <Clock3 className="size-3.5" />{' '}
-                                {publicRateDurationLabel(product.rates[0].duration_label, locale)}
+                                {publicRateDurationLabel(
+                                    product.rates[0].duration_label,
+                                    locale,
+                                )}
                             </p>
                         )}
                     </div>

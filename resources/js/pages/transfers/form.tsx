@@ -2,7 +2,11 @@ import { Head, Link, useForm } from '@inertiajs/react';
 import { AlertTriangle, Plus, Search, Trash2 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import type { FormEvent, ReactNode } from 'react';
-import { Stage4Text, stage4Translate, stage4TranslateDynamic } from '@/components/stage4-text';
+import {
+    Stage4Text,
+    stage4Translate,
+    stage4TranslateDynamic,
+} from '@/components/stage4-text';
 import { useAppLocale } from '@/lib/i18n';
 import InputError from '@/components/input-error';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -287,17 +291,34 @@ export default function TransferForm({
     return (
         <>
             <Head
-                title={editing ? stage4Translate("stage4.ui.269ad002de85", stage4Locale) : stage4Translate("stage4.ui.ed6335dd7674", stage4Locale)}
+                title={
+                    editing
+                        ? stage4Translate(
+                              'stage4.ui.269ad002de85',
+                              stage4Locale,
+                          )
+                        : stage4Translate(
+                              'stage4.ui.ed6335dd7674',
+                              stage4Locale,
+                          )
+                }
             />
             <form className="space-y-6 p-4 md:p-6">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
                         <h1 className="text-2xl font-semibold">
                             {editing
-                                ? stage4Translate("stage4.ui.269ad002de85", stage4Locale)
-                                : stage4Translate("stage4.ui.ed6335dd7674", stage4Locale)}
+                                ? stage4Translate(
+                                      'stage4.ui.269ad002de85',
+                                      stage4Locale,
+                                  )
+                                : stage4Translate(
+                                      'stage4.ui.ed6335dd7674',
+                                      stage4Locale,
+                                  )}
                         </h1>
-                        <p className="text-sm text-muted-foreground"><Stage4Text k="stage4.ui.4015fd0eb2cc" />
+                        <p className="text-sm text-muted-foreground">
+                            <Stage4Text k="stage4.ui.4015fd0eb2cc" />
                         </p>
                     </div>
                     <Button variant="outline" asChild>
@@ -307,18 +328,24 @@ export default function TransferForm({
                                     ? `/transfers/${transfer.id}`
                                     : '/transfers'
                             }
-                        ><Stage4Text k="stage4.ui.c43a6e25b712" />
+                        >
+                            <Stage4Text k="stage4.ui.c43a6e25b712" />
                         </Link>
                     </Button>
                 </div>
 
                 <Card>
                     <CardHeader>
-                        <CardTitle><Stage4Text k="stage4.ui.fdc6f773ee92" /></CardTitle>
+                        <CardTitle>
+                            <Stage4Text k="stage4.ui.fdc6f773ee92" />
+                        </CardTitle>
                     </CardHeader>
                     <CardContent className="grid gap-4 md:grid-cols-2">
                         <Field
-                            label={stage4Translate("stage4.ui.e964366f3e5e", stage4Locale)}
+                            label={stage4Translate(
+                                'stage4.ui.e964366f3e5e',
+                                stage4Locale,
+                            )}
                             error={form.errors.from_branch_id}
                         >
                             <Select
@@ -349,7 +376,10 @@ export default function TransferForm({
                             </Select>
                         </Field>
                         <Field
-                            label={stage4Translate("stage4.ui.33344a5c5d9e", stage4Locale)}
+                            label={stage4Translate(
+                                'stage4.ui.33344a5c5d9e',
+                                stage4Locale,
+                            )}
                             error={form.errors.to_branch_id}
                         >
                             <Select
@@ -381,7 +411,10 @@ export default function TransferForm({
                             </Select>
                         </Field>
                         <Field
-                            label={stage4Translate("stage4.ui.d8780dff23b7", stage4Locale)}
+                            label={stage4Translate(
+                                'stage4.ui.d8780dff23b7',
+                                stage4Locale,
+                            )}
                             error={form.errors.planned_dispatch_at}
                         >
                             <Input
@@ -397,7 +430,10 @@ export default function TransferForm({
                             />
                         </Field>
                         <Field
-                            label={stage4Translate("stage4.ui.60f3f737fe53", stage4Locale)}
+                            label={stage4Translate(
+                                'stage4.ui.60f3f737fe53',
+                                stage4Locale,
+                            )}
                             error={form.errors.expected_arrival_at}
                         >
                             <Input
@@ -413,7 +449,10 @@ export default function TransferForm({
                         </Field>
                         <div className="md:col-span-2">
                             <Field
-                                label={stage4Translate("stage4.ui.9b4ff1a5d22a", stage4Locale)}
+                                label={stage4Translate(
+                                    'stage4.ui.9b4ff1a5d22a',
+                                    stage4Locale,
+                                )}
                                 error={form.errors.reason}
                             >
                                 <textarea
@@ -433,7 +472,9 @@ export default function TransferForm({
 
                 <Card>
                     <CardHeader>
-                        <CardTitle><Stage4Text k="stage4.ui.700069a38682" /></CardTitle>
+                        <CardTitle>
+                            <Stage4Text k="stage4.ui.700069a38682" />
+                        </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="flex gap-2">
@@ -448,7 +489,10 @@ export default function TransferForm({
                                         void searchOptions();
                                     }
                                 }}
-                                placeholder={stage4Translate("stage4.ui.5dd5ca53bb71", stage4Locale)}
+                                placeholder={stage4Translate(
+                                    'stage4.ui.5dd5ca53bb71',
+                                    stage4Locale,
+                                )}
                             />
                             <Button
                                 type="button"
@@ -456,7 +500,8 @@ export default function TransferForm({
                                 onClick={() => void searchOptions()}
                                 disabled={loadingOptions}
                             >
-                                <Search className="size-4" /><Stage4Text k="stage4.ui.3f2275d79afb" />
+                                <Search className="size-4" />
+                                <Stage4Text k="stage4.ui.3f2275d79afb" />
                             </Button>
                         </div>
                         <div className="grid gap-3 lg:grid-cols-2">
@@ -484,7 +529,8 @@ export default function TransferForm({
                                                     addQuantity(product)
                                                 }
                                             >
-                                                <Plus className="size-4" /><Stage4Text k="stage4.ui.a44eb3d1808f" />
+                                                <Plus className="size-4" />
+                                                <Stage4Text k="stage4.ui.a44eb3d1808f" />
                                             </Button>
                                         )}
                                     </div>
@@ -501,9 +547,20 @@ export default function TransferForm({
                                                         </p>
                                                         <p className="text-xs text-muted-foreground">
                                                             {asset.serial_number ??
-                                                                stage4Translate("stage4.ui.6a596a22a716", stage4Locale)}{' '}
-                                                            • {stage4TranslateDynamic(asset.status, stage4Locale)} •{' '}
-                                                            {stage4TranslateDynamic(asset.condition, stage4Locale)}
+                                                                stage4Translate(
+                                                                    'stage4.ui.6a596a22a716',
+                                                                    stage4Locale,
+                                                                )}{' '}
+                                                            •{' '}
+                                                            {stage4TranslateDynamic(
+                                                                asset.status,
+                                                                stage4Locale,
+                                                            )}{' '}
+                                                            •{' '}
+                                                            {stage4TranslateDynamic(
+                                                                asset.condition,
+                                                                stage4Locale,
+                                                            )}
                                                         </p>
                                                     </div>
                                                     <Button
@@ -519,7 +576,8 @@ export default function TransferForm({
                                                                 asset,
                                                             )
                                                         }
-                                                    ><Stage4Text k="stage4.ui.a44eb3d1808f" />
+                                                    >
+                                                        <Stage4Text k="stage4.ui.a44eb3d1808f" />
                                                     </Button>
                                                 </div>
                                             ))}
@@ -533,7 +591,9 @@ export default function TransferForm({
 
                 <Card>
                     <CardHeader>
-                        <CardTitle><Stage4Text k="stage4.ui.2004f0edd7fc" /></CardTitle>
+                        <CardTitle>
+                            <Stage4Text k="stage4.ui.2004f0edd7fc" />
+                        </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-3">
                         {form.data.items.map((item, index) => (
@@ -548,11 +608,16 @@ export default function TransferForm({
                                     <p className="text-xs text-muted-foreground">
                                         {item.asset
                                             ? `${item.asset.asset_code} • ${item.asset.serial_number ?? 'Tanpa serial'}`
-                                            : stage4Translate("stage4.ui.2047ad7f2175", stage4Locale)}
+                                            : stage4Translate(
+                                                  'stage4.ui.2047ad7f2175',
+                                                  stage4Locale,
+                                              )}
                                     </p>
                                 </div>
                                 <div>
-                                    <Label><Stage4Text k="stage4.ui.755c97873b6a" /></Label>
+                                    <Label>
+                                        <Stage4Text k="stage4.ui.755c97873b6a" />
+                                    </Label>
                                     <Input
                                         className="mt-1"
                                         type="number"
@@ -569,7 +634,9 @@ export default function TransferForm({
                                     />
                                 </div>
                                 <div>
-                                    <Label><Stage4Text k="stage4.ui.2045e4eb3d41" /></Label>
+                                    <Label>
+                                        <Stage4Text k="stage4.ui.2045e4eb3d41" />
+                                    </Label>
                                     <Select
                                         value={item.condition_before}
                                         onValueChange={(value) =>
@@ -584,11 +651,14 @@ export default function TransferForm({
                                             <SelectValue />
                                         </SelectTrigger>
                                         <SelectContent>
-                                            <SelectItem value="good"><Stage4Text k="stage4.ui.04f5b5ce0518" />
+                                            <SelectItem value="good">
+                                                <Stage4Text k="stage4.ui.04f5b5ce0518" />
                                             </SelectItem>
-                                            <SelectItem value="fair"><Stage4Text k="stage4.ui.e776a0660b3d" />
+                                            <SelectItem value="fair">
+                                                <Stage4Text k="stage4.ui.e776a0660b3d" />
                                             </SelectItem>
-                                            <SelectItem value="damaged"><Stage4Text k="stage4.ui.f1238819f6ca" />
+                                            <SelectItem value="damaged">
+                                                <Stage4Text k="stage4.ui.f1238819f6ca" />
                                             </SelectItem>
                                         </SelectContent>
                                     </Select>
@@ -604,7 +674,8 @@ export default function TransferForm({
                             </div>
                         ))}
                         {form.data.items.length === 0 && (
-                            <p className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground"><Stage4Text k="stage4.ui.830960e318c5" />
+                            <p className="rounded-lg border border-dashed p-8 text-center text-sm text-muted-foreground">
+                                <Stage4Text k="stage4.ui.830960e318c5" />
                             </p>
                         )}
                         <InputError message={form.errors.items} />
@@ -618,12 +689,21 @@ export default function TransferForm({
                         <AlertTriangle className="size-4" />
                         <AlertTitle>
                             {preflightPassed
-                                ? stage4Translate("stage4.ui.1e76b646dcfd", stage4Locale)
-                                : stage4Translate("stage4.ui.c7566b3c19fd", stage4Locale)}
+                                ? stage4Translate(
+                                      'stage4.ui.1e76b646dcfd',
+                                      stage4Locale,
+                                  )
+                                : stage4Translate(
+                                      'stage4.ui.c7566b3c19fd',
+                                      stage4Locale,
+                                  )}
                         </AlertTitle>
                         <AlertDescription>
                             {preflightPassed ? (
-                                stage4Translate("stage4.ui.679c68f17230", stage4Locale)
+                                stage4Translate(
+                                    'stage4.ui.679c68f17230',
+                                    stage4Locale,
+                                )
                             ) : (
                                 <ul className="list-disc pl-5">
                                     {blockers.map((blocker, index) => (
@@ -643,7 +723,9 @@ export default function TransferForm({
                 <Card>
                     <CardContent className="flex flex-wrap items-end justify-between gap-4 pt-6">
                         <div className="min-w-64 flex-1">
-                            <Label><Stage4Text k="stage4.ui.9005fb18d95a" /></Label>
+                            <Label>
+                                <Stage4Text k="stage4.ui.9005fb18d95a" />
+                            </Label>
                             <Input
                                 className="mt-1"
                                 value={form.data.approval_notes}
@@ -653,7 +735,10 @@ export default function TransferForm({
                                         event.target.value,
                                     )
                                 }
-                                placeholder={stage4Translate("stage4.ui.cf048762964b", stage4Locale)}
+                                placeholder={stage4Translate(
+                                    'stage4.ui.cf048762964b',
+                                    stage4Locale,
+                                )}
                             />
                         </div>
                         <div className="flex flex-wrap gap-2">
@@ -662,20 +747,23 @@ export default function TransferForm({
                                 variant="outline"
                                 onClick={() => void preflight()}
                                 disabled={form.processing}
-                            ><Stage4Text k="stage4.ui.cc88975dfdff" />
+                            >
+                                <Stage4Text k="stage4.ui.cc88975dfdff" />
                             </Button>
                             <Button
                                 type="button"
                                 variant="secondary"
                                 onClick={(event) => submit(event, false)}
                                 disabled={form.processing}
-                            ><Stage4Text k="stage4.ui.5591ae665d57" />
+                            >
+                                <Stage4Text k="stage4.ui.5591ae665d57" />
                             </Button>
                             <Button
                                 type="button"
                                 onClick={(event) => submit(event, true)}
                                 disabled={form.processing}
-                            ><Stage4Text k="stage4.ui.324c41f02cf2" />
+                            >
+                                <Stage4Text k="stage4.ui.324c41f02cf2" />
                             </Button>
                         </div>
                     </CardContent>

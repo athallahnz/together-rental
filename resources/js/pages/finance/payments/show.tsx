@@ -9,7 +9,13 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import type { FormEvent, ReactNode } from 'react';
-import { stage5Display, Stage5Text, stage5Translate, stage5Date, stage5Money } from '@/components/stage5-text';
+import {
+    stage5Display,
+    Stage5Text,
+    stage5Translate,
+    stage5Date,
+    stage5Money,
+} from '@/components/stage5-text';
 import InputError from '@/components/input-error';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -221,7 +227,10 @@ export default function PaymentCenterShow({
                         </div>
                         <p className="mt-2 text-sm text-muted-foreground">
                             {payment.branch.code} — {payment.branch.name} ·{' '}
-                            {stage5Date(new Date(payment.paid_at), stage5Locale)}
+                            {stage5Date(
+                                new Date(payment.paid_at),
+                                stage5Locale,
+                            )}
                         </p>
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -246,13 +255,17 @@ export default function PaymentCenterShow({
                 {payment.status === 'void' && (
                     <Alert variant="destructive">
                         <Ban className="size-4" />
-                        <AlertTitle><Stage5Text k="stage5.ui.d08f6f1021c1" /></AlertTitle>
+                        <AlertTitle>
+                            <Stage5Text k="stage5.ui.d08f6f1021c1" />
+                        </AlertTitle>
                         <AlertDescription>
                             {payment.void_reason ??
                                 'Alasan void tidak tersedia.'}
                             {payment.voided_at && (
                                 <span className="mt-1 block">
-                                    <Stage5Text k="stage5.ui.aad1a980791c" /> {payment.voider?.name ?? 'Sistem'} <Stage5Text k="stage5.ui.ed79f0f92534" />{' '}
+                                    <Stage5Text k="stage5.ui.aad1a980791c" />{' '}
+                                    {payment.voider?.name ?? 'Sistem'}{' '}
+                                    <Stage5Text k="stage5.ui.ed79f0f92534" />{' '}
                                     {stage5Date(
                                         new Date(payment.voided_at),
                                         stage5Locale,
@@ -267,7 +280,9 @@ export default function PaymentCenterShow({
                 {payment.status === 'completed' && !voidEligibility.allowed && (
                     <Alert>
                         <AlertTriangle className="size-4" />
-                        <AlertTitle><Stage5Text k="stage5.ui.bad514aff9dc" /></AlertTitle>
+                        <AlertTitle>
+                            <Stage5Text k="stage5.ui.bad514aff9dc" />
+                        </AlertTitle>
                         <AlertDescription>
                             {voidEligibility.reason}
                         </AlertDescription>
@@ -277,24 +292,41 @@ export default function PaymentCenterShow({
                 <section className="grid gap-6 lg:grid-cols-3">
                     <Card className="lg:col-span-2">
                         <CardHeader>
-                            <CardTitle><Stage5Text k="stage5.ui.844dbba9d8ec" /></CardTitle>
+                            <CardTitle>
+                                <Stage5Text k="stage5.ui.844dbba9d8ec" />
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="grid gap-5 sm:grid-cols-2">
                             <Info
-                                label={stage5Translate("stage5.ui.1795d163388f", stage5Locale)}
+                                label={stage5Translate(
+                                    'stage5.ui.1795d163388f',
+                                    stage5Locale,
+                                )}
                                 value={money.format(signedPaymentAmount)}
                                 emphasis
                             />
                             <Info
-                                label={stage5Translate("stage5.ui.fabb2b5c779a", stage5Locale)}
-                                value={stage5Display(typeLabels[payment.type] ?? payment.type, stage5Locale)}
+                                label={stage5Translate(
+                                    'stage5.ui.fabb2b5c779a',
+                                    stage5Locale,
+                                )}
+                                value={stage5Display(
+                                    typeLabels[payment.type] ?? payment.type,
+                                    stage5Locale,
+                                )}
                             />
                             <Info
-                                label={stage5Translate("stage5.ui.5ac33f2c588b", stage5Locale)}
+                                label={stage5Translate(
+                                    'stage5.ui.5ac33f2c588b',
+                                    stage5Locale,
+                                )}
                                 value={`${payment.payment_method.name} (${payment.payment_method.code})`}
                             />
                             <Info
-                                label={stage5Translate("stage5.ui.b7964404a785", stage5Locale)}
+                                label={stage5Translate(
+                                    'stage5.ui.b7964404a785',
+                                    stage5Locale,
+                                )}
                                 value={
                                     payment.financial_category
                                         ? `${payment.financial_category.code} — ${payment.financial_category.name}`
@@ -302,24 +334,39 @@ export default function PaymentCenterShow({
                                 }
                             />
                             <Info
-                                label={stage5Translate("stage5.ui.3b251765602d", stage5Locale)}
+                                label={stage5Translate(
+                                    'stage5.ui.3b251765602d',
+                                    stage5Locale,
+                                )}
                                 value={payment.external_reference ?? '—'}
                             />
                             <Info
-                                label={stage5Translate("stage5.ui.3d4782fa2f70", stage5Locale)}
+                                label={stage5Translate(
+                                    'stage5.ui.3d4782fa2f70',
+                                    stage5Locale,
+                                )}
                                 value={payment.receiver?.name ?? 'Sistem'}
                             />
                             <Info
-                                label={stage5Translate("stage5.ui.af0ab4433946", stage5Locale)}
+                                label={stage5Translate(
+                                    'stage5.ui.af0ab4433946',
+                                    stage5Locale,
+                                )}
                                 value={payment.customer?.name ?? '—'}
                             />
                             <Info
-                                label={stage5Translate("stage5.ui.92218a799243", stage5Locale)}
+                                label={stage5Translate(
+                                    'stage5.ui.92218a799243',
+                                    stage5Locale,
+                                )}
                                 value={payment.customer?.customer_number ?? '—'}
                             />
                             <div className="sm:col-span-2">
                                 <Info
-                                    label={stage5Translate("stage5.ui.9f09aefd0dd4", stage5Locale)}
+                                    label={stage5Translate(
+                                        'stage5.ui.9f09aefd0dd4',
+                                        stage5Locale,
+                                    )}
                                     value={payment.notes ?? '—'}
                                 />
                             </div>
@@ -328,17 +375,30 @@ export default function PaymentCenterShow({
 
                     <Card>
                         <CardHeader>
-                            <CardTitle><Stage5Text k="stage5.ui.ad1a90983285" /></CardTitle>
+                            <CardTitle>
+                                <Stage5Text k="stage5.ui.ad1a90983285" />
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <Info
-                                label={stage5Translate("stage5.ui.d4d23aee0b07", stage5Locale)}
+                                label={stage5Translate(
+                                    'stage5.ui.d4d23aee0b07',
+                                    stage5Locale,
+                                )}
                                 value={stage5Display(
-                                    sourceLabels[payment.source_context ?? ''] ?? 'Legacy / tidak diketahui',
+                                    sourceLabels[
+                                        payment.source_context ?? ''
+                                    ] ?? 'Legacy / tidak diketahui',
                                     stage5Locale,
                                 )}
                             />
-                            <Info label={stage5Translate("stage5.ui.3166201d7baf", stage5Locale)} value={source.label} />
+                            <Info
+                                label={stage5Translate(
+                                    'stage5.ui.3166201d7baf',
+                                    stage5Locale,
+                                )}
+                                value={source.label}
+                            />
                             {source.href && (
                                 <Button variant="outline" size="sm" asChild>
                                     <Link href={source.href}>
@@ -353,24 +413,35 @@ export default function PaymentCenterShow({
 
                 <Card>
                     <CardHeader>
-                        <CardTitle><Stage5Text k="stage5.ui.f484f1589ffc" /></CardTitle>
+                        <CardTitle>
+                            <Stage5Text k="stage5.ui.f484f1589ffc" />
+                        </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-5">
                         <div className="grid gap-4 sm:grid-cols-3">
                             <Info
-                                label={stage5Translate("stage5.ui.3c78f49c2760", stage5Locale)}
+                                label={stage5Translate(
+                                    'stage5.ui.3c78f49c2760',
+                                    stage5Locale,
+                                )}
                                 value={money.format(
                                     refundEligibility.paid_refund_amount,
                                 )}
                             />
                             <Info
-                                label={stage5Translate("stage5.ui.09e5ddbe1057", stage5Locale)}
+                                label={stage5Translate(
+                                    'stage5.ui.09e5ddbe1057',
+                                    stage5Locale,
+                                )}
                                 value={money.format(
                                     refundEligibility.reserved_refund_amount,
                                 )}
                             />
                             <Info
-                                label={stage5Translate("stage5.ui.c8b6af554e4d", stage5Locale)}
+                                label={stage5Translate(
+                                    'stage5.ui.c8b6af554e4d',
+                                    stage5Locale,
+                                )}
                                 value={money.format(
                                     refundEligibility.refundable_amount,
                                 )}
@@ -382,9 +453,15 @@ export default function PaymentCenterShow({
                                 <table className="w-full min-w-[720px] text-sm">
                                     <thead className="text-left text-muted-foreground">
                                         <tr>
-                                            <th className="py-2"><Stage5Text k="stage5.ui.e17c8ad0dc2e" /></th>
-                                            <th className="py-2"><Stage5Text k="stage5.ui.5ac33f2c588b" /></th>
-                                            <th className="py-2"><Stage5Text k="stage5.ui.bae7d5be7082" /></th>
+                                            <th className="py-2">
+                                                <Stage5Text k="stage5.ui.e17c8ad0dc2e" />
+                                            </th>
+                                            <th className="py-2">
+                                                <Stage5Text k="stage5.ui.5ac33f2c588b" />
+                                            </th>
+                                            <th className="py-2">
+                                                <Stage5Text k="stage5.ui.bae7d5be7082" />
+                                            </th>
                                             <th className="py-2 text-right">
                                                 <Stage5Text k="stage5.ui.1795d163388f" />
                                             </th>
@@ -410,7 +487,8 @@ export default function PaymentCenterShow({
                                                     </p>
                                                     {refund.purpose && (
                                                         <p className="text-xs text-muted-foreground">
-                                                            {refund.purpose === 'booking_cancellation'
+                                                            {refund.purpose ===
+                                                            'booking_cancellation'
                                                                 ? 'Pembatalan Booking'
                                                                 : 'Koreksi Pembayaran'}
                                                         </p>
@@ -451,21 +529,32 @@ export default function PaymentCenterShow({
                 <section className="grid gap-6 lg:grid-cols-2">
                     <Card>
                         <CardHeader>
-                            <CardTitle><Stage5Text k="stage5.ui.774cb2029193" /></CardTitle>
+                            <CardTitle>
+                                <Stage5Text k="stage5.ui.774cb2029193" />
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             {payment.cash_session ? (
                                 <div className="grid gap-4 sm:grid-cols-2">
                                     <Info
-                                        label={stage5Translate("stage5.ui.d672995a1465", stage5Locale)}
+                                        label={stage5Translate(
+                                            'stage5.ui.d672995a1465',
+                                            stage5Locale,
+                                        )}
                                         value={`${payment.cash_session.register.code} — ${payment.cash_session.register.name}`}
                                     />
                                     <Info
-                                        label={stage5Translate("stage5.ui.292da2fd4603", stage5Locale)}
+                                        label={stage5Translate(
+                                            'stage5.ui.292da2fd4603',
+                                            stage5Locale,
+                                        )}
                                         value={payment.cash_session.status}
                                     />
                                     <Info
-                                        label={stage5Translate("stage5.ui.374027752cd7", stage5Locale)}
+                                        label={stage5Translate(
+                                            'stage5.ui.374027752cd7',
+                                            stage5Locale,
+                                        )}
                                         value={stage5Date(
                                             new Date(
                                                 payment.cash_session.opened_at,
@@ -474,7 +563,10 @@ export default function PaymentCenterShow({
                                         )}
                                     />
                                     <Info
-                                        label={stage5Translate("stage5.ui.0e97e7214c08", stage5Locale)}
+                                        label={stage5Translate(
+                                            'stage5.ui.0e97e7214c08',
+                                            stage5Locale,
+                                        )}
                                         value={
                                             payment.cash_session.closed_at
                                                 ? stage5Date(
@@ -499,8 +591,12 @@ export default function PaymentCenterShow({
                                     <table className="w-full min-w-[560px] text-sm">
                                         <thead className="text-left text-muted-foreground">
                                             <tr>
-                                                <th className="py-2"><Stage5Text k="stage5.ui.1aa2f31ee7cc" /></th>
-                                                <th className="py-2"><Stage5Text k="stage5.ui.c86c93709b3d" /></th>
+                                                <th className="py-2">
+                                                    <Stage5Text k="stage5.ui.1aa2f31ee7cc" />
+                                                </th>
+                                                <th className="py-2">
+                                                    <Stage5Text k="stage5.ui.c86c93709b3d" />
+                                                </th>
                                                 <th className="py-2 text-right">
                                                     <Stage5Text k="stage5.ui.1795d163388f" />
                                                 </th>
@@ -558,7 +654,9 @@ export default function PaymentCenterShow({
 
                     <Card>
                         <CardHeader>
-                            <CardTitle><Stage5Text k="stage5.ui.e01eacc119b7" /></CardTitle>
+                            <CardTitle>
+                                <Stage5Text k="stage5.ui.e01eacc119b7" />
+                            </CardTitle>
                         </CardHeader>
                         <CardContent>
                             <div className="space-y-4">
@@ -603,23 +701,34 @@ export default function PaymentCenterShow({
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>
-                            <Stage5Text k="stage5.ui.9ef202f871b3" /> {payment.payment_number}
+                            <Stage5Text k="stage5.ui.9ef202f871b3" />{' '}
+                            {payment.payment_number}
                         </DialogTitle>
                         <DialogDescription>
                             <Stage5Text k="stage5.ui.93fc47a981b1" />{' '}
-                            {money.format(refundEligibility.refundable_amount)}<Stage5Text k="stage5.ui.63bdda617579" />
+                            {money.format(refundEligibility.refundable_amount)}
+                            <Stage5Text k="stage5.ui.63bdda617579" />
                         </DialogDescription>
                     </DialogHeader>
                     <form className="space-y-4" onSubmit={submitRefund}>
                         {bookingDp && (
                             <div className="space-y-2">
-                                <Label><Stage5Text k="stage5.ui.2c3b6a6f8734" /></Label>
+                                <Label>
+                                    <Stage5Text k="stage5.ui.2c3b6a6f8734" />
+                                </Label>
                                 <Select
                                     value={refundForm.data.purpose}
-                                    onValueChange={(value) => refundForm.setData('purpose', value)}
+                                    onValueChange={(value) =>
+                                        refundForm.setData('purpose', value)
+                                    }
                                 >
                                     <SelectTrigger>
-                                        <SelectValue placeholder={stage5Translate("stage5.ui.3790f31f0139", stage5Locale)} />
+                                        <SelectValue
+                                            placeholder={stage5Translate(
+                                                'stage5.ui.3790f31f0139',
+                                                stage5Locale,
+                                            )}
+                                        />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {cancellationAvailable && (
@@ -632,11 +741,16 @@ export default function PaymentCenterShow({
                                         </SelectItem>
                                     </SelectContent>
                                 </Select>
-                                <InputError message={refundForm.errors.purpose} />
-                                {refundForm.data.purpose === 'booking_cancellation' && (
+                                <InputError
+                                    message={refundForm.errors.purpose}
+                                />
+                                {refundForm.data.purpose ===
+                                    'booking_cancellation' && (
                                     <Alert>
                                         <AlertTriangle className="size-4" />
-                                        <AlertTitle><Stage5Text k="stage5.ui.badc4290067f" /></AlertTitle>
+                                        <AlertTitle>
+                                            <Stage5Text k="stage5.ui.badc4290067f" />
+                                        </AlertTitle>
                                         <AlertDescription>
                                             <Stage5Text k="stage5.ui.3f6af5f706e5" />
                                         </AlertDescription>
@@ -645,7 +759,9 @@ export default function PaymentCenterShow({
                             </div>
                         )}
                         <div className="space-y-2">
-                            <Label htmlFor="refund-amount"><Stage5Text k="stage5.ui.1795d163388f" /></Label>
+                            <Label htmlFor="refund-amount">
+                                <Stage5Text k="stage5.ui.1795d163388f" />
+                            </Label>
                             <Input
                                 id="refund-amount"
                                 type="number"
@@ -659,12 +775,17 @@ export default function PaymentCenterShow({
                                         event.target.value,
                                     )
                                 }
-                                placeholder={stage5Translate("stage5.ui.3b8f9bd8120d", stage5Locale)}
+                                placeholder={stage5Translate(
+                                    'stage5.ui.3b8f9bd8120d',
+                                    stage5Locale,
+                                )}
                             />
                             <InputError message={refundForm.errors.amount} />
                         </div>
                         <div className="space-y-2">
-                            <Label><Stage5Text k="stage5.ui.06867a894580" /></Label>
+                            <Label>
+                                <Stage5Text k="stage5.ui.06867a894580" />
+                            </Label>
                             <Select
                                 value={refundForm.data.payment_method_id}
                                 onValueChange={(value) =>
@@ -675,7 +796,12 @@ export default function PaymentCenterShow({
                                 }
                             >
                                 <SelectTrigger>
-                                    <SelectValue placeholder={stage5Translate("stage5.ui.cfabec6a6763", stage5Locale)} />
+                                    <SelectValue
+                                        placeholder={stage5Translate(
+                                            'stage5.ui.cfabec6a6763',
+                                            stage5Locale,
+                                        )}
+                                    />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {paymentMethods.map((method) => (
@@ -693,7 +819,9 @@ export default function PaymentCenterShow({
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="refund-reason"><Stage5Text k="stage5.ui.25118d647ee3" /></Label>
+                            <Label htmlFor="refund-reason">
+                                <Stage5Text k="stage5.ui.25118d647ee3" />
+                            </Label>
                             <textarea
                                 id="refund-reason"
                                 value={refundForm.data.reason}
@@ -706,7 +834,10 @@ export default function PaymentCenterShow({
                                 rows={4}
                                 maxLength={1000}
                                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50"
-                                placeholder={stage5Translate("stage5.ui.03b7aa1b137c", stage5Locale)}
+                                placeholder={stage5Translate(
+                                    'stage5.ui.03b7aa1b137c',
+                                    stage5Locale,
+                                )}
                             />
                             <InputError message={refundForm.errors.reason} />
                         </div>
@@ -759,14 +890,19 @@ export default function PaymentCenterShow({
             <Dialog open={voidDialogOpen} onOpenChange={setVoidDialogOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle><Stage5Text k="stage5.ui.207c7c00630b" /> {payment.payment_number}</DialogTitle>
+                        <DialogTitle>
+                            <Stage5Text k="stage5.ui.207c7c00630b" />{' '}
+                            {payment.payment_number}
+                        </DialogTitle>
                         <DialogDescription>
                             <Stage5Text k="stage5.ui.da2aa61b1ef8" />
                         </DialogDescription>
                     </DialogHeader>
                     <form className="space-y-4" onSubmit={submitVoid}>
                         <div className="space-y-2">
-                            <Label htmlFor="void-reason"><Stage5Text k="stage5.ui.c2a53eee88e3" /></Label>
+                            <Label htmlFor="void-reason">
+                                <Stage5Text k="stage5.ui.c2a53eee88e3" />
+                            </Label>
                             <textarea
                                 id="void-reason"
                                 value={voidForm.data.reason}
@@ -779,7 +915,10 @@ export default function PaymentCenterShow({
                                 rows={5}
                                 maxLength={1000}
                                 className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50"
-                                placeholder={stage5Translate("stage5.ui.e8f3b6e4be4c", stage5Locale)}
+                                placeholder={stage5Translate(
+                                    'stage5.ui.e8f3b6e4be4c',
+                                    stage5Locale,
+                                )}
                                 autoFocus
                             />
                             <InputError message={voidForm.errors.reason} />
@@ -896,7 +1035,9 @@ function RefundStatusBadge({ status }: { status: RefundStatus }) {
                 ? 'secondary'
                 : 'default';
 
-    return <Badge variant={variant}>{stage5Display(status, stage5Locale)}</Badge>;
+    return (
+        <Badge variant={variant}>{stage5Display(status, stage5Locale)}</Badge>
+    );
 }
 
 function activityLabel(event: string): string {

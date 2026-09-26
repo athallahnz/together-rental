@@ -55,9 +55,14 @@ const labels: Record<SearchType, string> = {
 };
 
 const optionMeta = (option: BookingSearchOption) =>
-    [option.customer_number ?? option.sku ?? option.code ?? '',
-        option.tracking_type === 'bulk' || option.tracking_type === 'quantity' ? 'Bulk' : '',
-    ].filter(Boolean).join(' · ');
+    [
+        option.customer_number ?? option.sku ?? option.code ?? '',
+        option.tracking_type === 'bulk' || option.tracking_type === 'quantity'
+            ? 'Bulk'
+            : '',
+    ]
+        .filter(Boolean)
+        .join(' · ');
 
 export function SearchPickerDialog({
     type,
@@ -75,9 +80,12 @@ export function SearchPickerDialog({
     const [loading, setLoading] = useState(false);
     const [failed, setFailed] = useState(false);
     const inputRef = useRef<HTMLInputElement>(null);
-    const label = stage4Locale === 'en'
-        ? { customer: 'customer', product: 'product', package: 'package' }[type]
-        : labels[type];
+    const label =
+        stage4Locale === 'en'
+            ? { customer: 'customer', product: 'product', package: 'package' }[
+                  type
+              ]
+            : labels[type];
     const missingContext = type !== 'customer' && (!branchId || !ratePlanId);
 
     useEffect(() => {
@@ -201,7 +209,7 @@ export function SearchPickerDialog({
                 >
                     {value
                         ? `${value.name}${optionMeta(value) ? ` · ${optionMeta(value)}` : ''}`
-                        : `${stage4Translate("stage4.ui.e137919915b5", stage4Locale)} ${label}`}
+                        : `${stage4Translate('stage4.ui.e137919915b5', stage4Locale)} ${label}`}
                 </span>
                 <ChevronsUpDown className="ml-2 size-4 shrink-0 opacity-50" />
             </Button>
@@ -209,13 +217,17 @@ export function SearchPickerDialog({
             <Dialog open={open} onOpenChange={handleOpenChange}>
                 <DialogContent className="flex max-h-[88vh] flex-col sm:max-w-3xl">
                     <DialogHeader>
-                        <DialogTitle><Stage4Text k="stage4.ui.e137919915b5" /> {label}</DialogTitle>
-                        <DialogDescription><Stage4Text k="stage4.ui.72b7034fe2b9" />
+                        <DialogTitle>
+                            <Stage4Text k="stage4.ui.e137919915b5" /> {label}
+                        </DialogTitle>
+                        <DialogDescription>
+                            <Stage4Text k="stage4.ui.72b7034fe2b9" />
                         </DialogDescription>
                     </DialogHeader>
 
                     {missingContext ? (
-                        <p className="rounded-md border border-dashed p-4 text-sm text-muted-foreground"><Stage4Text k="stage4.ui.601ffccbb716" />
+                        <p className="rounded-md border border-dashed p-4 text-sm text-muted-foreground">
+                            <Stage4Text k="stage4.ui.601ffccbb716" />
                         </p>
                     ) : (
                         <>
@@ -225,7 +237,7 @@ export function SearchPickerDialog({
                                     ref={inputRef}
                                     value={query}
                                     className="pr-9 pl-9"
-                                    placeholder={`${stage4Translate("stage4.ui.560e3c2f18d3", stage4Locale)} ${label}...`}
+                                    placeholder={`${stage4Translate('stage4.ui.560e3c2f18d3', stage4Locale)} ${label}...`}
                                     onChange={(event) =>
                                         handleQueryChange(event.target.value)
                                     }
@@ -237,11 +249,14 @@ export function SearchPickerDialog({
 
                             <div className="min-h-52 flex-1 overflow-y-auto rounded-md border">
                                 {query.trim().length < 2 && (
-                                    <p className="p-6 text-center text-sm text-muted-foreground"><Stage4Text k="stage4.ui.8fdea1923869" /> {label}.
+                                    <p className="p-6 text-center text-sm text-muted-foreground">
+                                        <Stage4Text k="stage4.ui.8fdea1923869" />{' '}
+                                        {label}.
                                     </p>
                                 )}
                                 {failed && (
-                                    <p className="p-6 text-center text-sm text-destructive"><Stage4Text k="stage4.ui.8a6bc6513c46" />
+                                    <p className="p-6 text-center text-sm text-destructive">
+                                        <Stage4Text k="stage4.ui.8a6bc6513c46" />
                                     </p>
                                 )}
                                 {!loading &&
@@ -249,7 +264,11 @@ export function SearchPickerDialog({
                                     query.trim().length >= 2 &&
                                     results.length === 0 && (
                                         <p className="p-6 text-center text-sm text-muted-foreground">
-                                            {label} {stage4Translate("stage4.ui.a26e90671794", stage4Locale)}
+                                            {label}{' '}
+                                            {stage4Translate(
+                                                'stage4.ui.a26e90671794',
+                                                stage4Locale,
+                                            )}
                                         </p>
                                     )}
                                 {results.map((option) => (
@@ -278,7 +297,10 @@ export function SearchPickerDialog({
                                                             }
                                                             alt={
                                                                 option.brand ??
-                                                                stage4Translate("stage4.ui.62b4aa574f70", stage4Locale)
+                                                                stage4Translate(
+                                                                    'stage4.ui.62b4aa574f70',
+                                                                    stage4Locale,
+                                                                )
                                                             }
                                                             className="max-h-5 max-w-full object-contain"
                                                         />

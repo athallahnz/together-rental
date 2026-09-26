@@ -50,7 +50,14 @@ type Rental = {
         holder_name: string | null;
         received_at: string | null;
     }>;
-    items: Array<{ id: number; description: string; quantity: number; returned_quantity: number; is_bulk: boolean; assets: Unit[] }>;
+    items: Array<{
+        id: number;
+        description: string;
+        quantity: number;
+        returned_quantity: number;
+        is_bulk: boolean;
+        assets: Unit[];
+    }>;
 };
 type OperationalCorrection = {
     correction_number: string;
@@ -69,7 +76,10 @@ type ReturnLine = {
     cleaning_fee_amount: number;
     notes: string;
 };
-type BulkReturnLine = Omit<ReturnLine, 'rental_item_asset_id' | 'replacement_asset_id'> & {
+type BulkReturnLine = Omit<
+    ReturnLine,
+    'rental_item_asset_id' | 'replacement_asset_id'
+> & {
     rental_item_id: number;
     quantity: number;
 };
@@ -86,7 +96,10 @@ type OvertimeBreakdown = {
 };
 type OvertimePreview = {
     serialized: Record<number, OvertimeBreakdown>;
-    bulk: Record<number, { per_unit: OvertimeBreakdown; remaining: OvertimeBreakdown }>;
+    bulk: Record<
+        number,
+        { per_unit: OvertimeBreakdown; remaining: OvertimeBreakdown }
+    >;
 };
 
 type ReplacementAsset = {
@@ -115,7 +128,9 @@ const money = new Intl.NumberFormat('id-ID', {
 });
 const localDateTime = (value?: string) => {
     const source = value ? new Date(value) : new Date();
-    const date = new Date(source.getTime() - source.getTimezoneOffset() * 60000);
+    const date = new Date(
+        source.getTime() - source.getTimezoneOffset() * 60000,
+    );
 
     return date.toISOString().slice(0, 16);
 };
@@ -143,7 +158,9 @@ export default function RentalReturn({
     const units = rental.items.flatMap((item) =>
         item.assets.map((unit) => ({ ...unit, description: item.description })),
     );
-    const bulkItems = rental.items.filter((item) => item.is_bulk && item.quantity > item.returned_quantity);
+    const bulkItems = rental.items.filter(
+        (item) => item.is_bulk && item.quantity > item.returned_quantity,
+    );
     const form = useForm<FormData>({
         returned_at: correctionMode
             ? new Date(operationalCorrection.original_return.returned_at)
@@ -178,9 +195,16 @@ export default function RentalReturn({
     });
     const selected = form.data.items.filter((item) => item.selected);
     const selectedBulk = form.data.bulk_items.filter((item) => item.selected);
-    const returningBulk = selectedBulk.reduce((sum, item) => sum + Number(item.quantity), 0);
-    const remainingBulk = bulkItems.reduce((sum, item) => sum + item.quantity - item.returned_quantity, 0);
-    const isFinalReturn = selected.length === units.length && returningBulk === remainingBulk;
+    const returningBulk = selectedBulk.reduce(
+        (sum, item) => sum + Number(item.quantity),
+        0,
+    );
+    const remainingBulk = bulkItems.reduce(
+        (sum, item) => sum + item.quantity - item.returned_quantity,
+        0,
+    );
+    const isFinalReturn =
+        selected.length === units.length && returningBulk === remainingBulk;
     const overtimeCharge = correctionMode
         ? 0
         : selected.reduce(
@@ -238,21 +262,33 @@ export default function RentalReturn({
         form.setData('items', items);
     };
     const setBulkLine = (index: number, patch: Partial<BulkReturnLine>) => {
-        form.setData('bulk_items', form.data.bulk_items.map((item, position) =>
-            position === index ? { ...item, ...patch } : item,
-        ));
+        form.setData(
+            'bulk_items',
+            form.data.bulk_items.map((item, position) =>
+                position === index ? { ...item, ...patch } : item,
+            ),
+        );
     };
     const splitBulkLine = (index: number) => {
         const line = form.data.bulk_items[index];
 
         if (line.quantity < 2) {
-return;
-}
+            return;
+        }
 
         form.setData('bulk_items', [
-            ...form.data.bulk_items.map((item, position) => position === index
-                ? { ...item, quantity: item.quantity - 1 } : item),
-            { ...line, quantity: 1, damage_fee_amount: 0, cleaning_fee_amount: 0, notes: '' },
+            ...form.data.bulk_items.map((item, position) =>
+                position === index
+                    ? { ...item, quantity: item.quantity - 1 }
+                    : item,
+            ),
+            {
+                ...line,
+                quantity: 1,
+                damage_fee_amount: 0,
+                cleaning_fee_amount: 0,
+                notes: '',
+            },
         ]);
     };
     const submit = (event: FormEvent) => {
@@ -268,7 +304,9 @@ return;
 
     return (
         <>
-            <Head title={`${stage4Translate("stage4.ui.f59b32920284", stage4Locale)} ${rental.rental_number}`} />
+            <Head
+                title={`${stage4Translate('stage4.ui.f59b32920284', stage4Locale)} ${rental.rental_number}`}
+            />
             <form
                 onSubmit={submit}
                 className="flex flex-1 flex-col gap-6 p-4 md:p-6"
@@ -276,10 +314,12 @@ return;
                 <header>
                     <Button variant="ghost" size="sm" asChild>
                         <Link href={`/rentals/${rental.id}`}>
-                            <ArrowLeft /><Stage4Text k="stage4.ui.8d3adbe5e57d" />
+                            <ArrowLeft />
+                            <Stage4Text k="stage4.ui.8d3adbe5e57d" />
                         </Link>
                     </Button>
-                    <h1 className="mt-3 text-2xl font-semibold"><Stage4Text k="stage4.ui.f59b32920284" />
+                    <h1 className="mt-3 text-2xl font-semibold">
+                        <Stage4Text k="stage4.ui.f59b32920284" />
                     </h1>
                     <p className="text-sm text-muted-foreground">
                         {rental.rental_number} · {rental.customer.name} ·{' '}
@@ -290,30 +330,38 @@ return;
                 {correctionMode && (
                     <Alert>
                         <AlertTriangle />
-                        <AlertTitle><Stage4Text k="stage4.ui.6bcdfebc3863" />{' '}
+                        <AlertTitle>
+                            <Stage4Text k="stage4.ui.6bcdfebc3863" />{' '}
                             {operationalCorrection.correction_number}
                         </AlertTitle>
-                        <AlertDescription><Stage4Text k="stage4.ui.0af956075f65" />{' '}
+                        <AlertDescription>
+                            <Stage4Text k="stage4.ui.0af956075f65" />{' '}
                             {
                                 operationalCorrection.original_return
                                     .return_number
-                            }<Stage4Text k="stage4.ui.2865d8261361" />
+                            }
+                            <Stage4Text k="stage4.ui.2865d8261361" />
                         </AlertDescription>
                     </Alert>
                 )}
                 {!correctionMode && new Date(rental.due_at) < new Date() && (
                     <Alert variant="destructive">
                         <AlertTriangle />
-                        <AlertTitle><Stage4Text k="stage4.ui.caf3db77f175" /></AlertTitle>
-                        <AlertDescription><Stage4Text k="stage4.ui.544f0ae5c151" />
+                        <AlertTitle>
+                            <Stage4Text k="stage4.ui.caf3db77f175" />
+                        </AlertTitle>
+                        <AlertDescription>
+                            <Stage4Text k="stage4.ui.544f0ae5c151" />
                         </AlertDescription>
                     </Alert>
                 )}
                 <InputError message={form.errors.items} />
                 <InputError message={form.errors.bulk_items} />
-                {Object.entries(form.errors).filter(([key]) => key.startsWith('bulk_items.')).map(([key, message]) => (
-                    <InputError key={key} message={message} />
-                ))}
+                {Object.entries(form.errors)
+                    .filter(([key]) => key.startsWith('bulk_items.'))
+                    .map(([key, message]) => (
+                        <InputError key={key} message={message} />
+                    ))}
                 <InputError
                     message={(form.errors as Record<string, string>).rental}
                 />
@@ -327,10 +375,13 @@ return;
                 {!correctionMode && rental.collaterals.length > 0 && (
                     <Card>
                         <CardHeader>
-                            <CardTitle><Stage4Text k="stage4.ui.c14f794ccd56" /></CardTitle>
+                            <CardTitle>
+                                <Stage4Text k="stage4.ui.c14f794ccd56" />
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-3">
-                            <p className="text-sm text-muted-foreground"><Stage4Text k="stage4.ui.4185e45d4cf8" />
+                            <p className="text-sm text-muted-foreground">
+                                <Stage4Text k="stage4.ui.4185e45d4cf8" />
                             </p>
                             {rental.collaterals.map((collateral) => {
                                 const checked =
@@ -368,9 +419,11 @@ return;
                             {finalReturnHasHeldCollateral && (
                                 <Alert variant="destructive">
                                     <AlertTriangle />
-                                    <AlertTitle><Stage4Text k="stage4.ui.32652bf89678" />
+                                    <AlertTitle>
+                                        <Stage4Text k="stage4.ui.32652bf89678" />
                                     </AlertTitle>
-                                    <AlertDescription><Stage4Text k="stage4.ui.4e99ffd2ae06" />
+                                    <AlertDescription>
+                                        <Stage4Text k="stage4.ui.4e99ffd2ae06" />
                                     </AlertDescription>
                                 </Alert>
                             )}
@@ -380,53 +433,185 @@ return;
 
                 <Card>
                     <CardHeader>
-                        <CardTitle><Stage4Text k="stage4.ui.48b9db9322bf" /></CardTitle>
+                        <CardTitle>
+                            <Stage4Text k="stage4.ui.48b9db9322bf" />
+                        </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         {form.data.bulk_items.map((line, index) => {
-                            const item = bulkItems.find((candidate) => candidate.id === line.rental_item_id);
+                            const item = bulkItems.find(
+                                (candidate) =>
+                                    candidate.id === line.rental_item_id,
+                            );
 
                             if (!item) {
-return null;
-}
+                                return null;
+                            }
 
                             return (
-                                <div key={`bulk-${index}`} className="space-y-4 rounded-lg border p-4">
+                                <div
+                                    key={`bulk-${index}`}
+                                    className="space-y-4 rounded-lg border p-4"
+                                >
                                     <div className="flex items-center gap-3">
-                                        <Checkbox checked={line.selected} onCheckedChange={(value) => setBulkLine(index, { selected: value === true })} />
-                                        <p className="font-medium">{item.description}<Stage4Text k="stage4.ui.0662e2442bc7" /> {item.quantity - item.returned_quantity}<Stage4Text k="stage4.ui.0df9eea0bad5" /></p>
+                                        <Checkbox
+                                            checked={line.selected}
+                                            onCheckedChange={(value) =>
+                                                setBulkLine(index, {
+                                                    selected: value === true,
+                                                })
+                                            }
+                                        />
+                                        <p className="font-medium">
+                                            {item.description}
+                                            <Stage4Text k="stage4.ui.0662e2442bc7" />{' '}
+                                            {item.quantity -
+                                                item.returned_quantity}
+                                            <Stage4Text k="stage4.ui.0df9eea0bad5" />
+                                        </p>
                                     </div>
                                     {line.selected && (
                                         <div className="grid gap-4 md:grid-cols-3">
-                                            <Field label={stage4Translate("stage4.ui.a3a7b9fed220", stage4Locale)}>
-                                                <Input type="number" min={1} max={item.quantity - item.returned_quantity} value={line.quantity} onChange={(event) => setBulkLine(index, { quantity: Number(event.target.value) })} />
+                                            <Field
+                                                label={stage4Translate(
+                                                    'stage4.ui.a3a7b9fed220',
+                                                    stage4Locale,
+                                                )}
+                                            >
+                                                <Input
+                                                    type="number"
+                                                    min={1}
+                                                    max={
+                                                        item.quantity -
+                                                        item.returned_quantity
+                                                    }
+                                                    value={line.quantity}
+                                                    onChange={(event) =>
+                                                        setBulkLine(index, {
+                                                            quantity: Number(
+                                                                event.target
+                                                                    .value,
+                                                            ),
+                                                        })
+                                                    }
+                                                />
                                             </Field>
-                                            <Field label={stage4Translate("stage4.ui.b723bb628009", stage4Locale)}>
-                                                <Select value={line.condition} onValueChange={(condition) => setBulkLine(index, { condition })}>
-                                                    <SelectTrigger><SelectValue /></SelectTrigger>
+                                            <Field
+                                                label={stage4Translate(
+                                                    'stage4.ui.b723bb628009',
+                                                    stage4Locale,
+                                                )}
+                                            >
+                                                <Select
+                                                    value={line.condition}
+                                                    onValueChange={(
+                                                        condition,
+                                                    ) =>
+                                                        setBulkLine(index, {
+                                                            condition,
+                                                        })
+                                                    }
+                                                >
+                                                    <SelectTrigger>
+                                                        <SelectValue />
+                                                    </SelectTrigger>
                                                     <SelectContent>
-                                                        <SelectItem value="excellent"><Stage4Text k="stage4.ui.e90dcd5d96b8" /></SelectItem>
-                                                        <SelectItem value="good"><Stage4Text k="stage4.ui.04f5b5ce0518" /></SelectItem>
-                                                        <SelectItem value="fair"><Stage4Text k="stage4.ui.e776a0660b3d" /></SelectItem>
-                                                        <SelectItem value="damaged"><Stage4Text k="stage4.ui.f1238819f6ca" /></SelectItem>
-                                                        <SelectItem value="lost"><Stage4Text k="stage4.ui.71efaa642140" /></SelectItem>
+                                                        <SelectItem value="excellent">
+                                                            <Stage4Text k="stage4.ui.e90dcd5d96b8" />
+                                                        </SelectItem>
+                                                        <SelectItem value="good">
+                                                            <Stage4Text k="stage4.ui.04f5b5ce0518" />
+                                                        </SelectItem>
+                                                        <SelectItem value="fair">
+                                                            <Stage4Text k="stage4.ui.e776a0660b3d" />
+                                                        </SelectItem>
+                                                        <SelectItem value="damaged">
+                                                            <Stage4Text k="stage4.ui.f1238819f6ca" />
+                                                        </SelectItem>
+                                                        <SelectItem value="lost">
+                                                            <Stage4Text k="stage4.ui.71efaa642140" />
+                                                        </SelectItem>
                                                     </SelectContent>
                                                 </Select>
                                             </Field>
-                                            <Field label={stage4Translate("stage4.ui.8b6b43040432", stage4Locale)}>
+                                            <Field
+                                                label={stage4Translate(
+                                                    'stage4.ui.8b6b43040432',
+                                                    stage4Locale,
+                                                )}
+                                            >
                                                 <div className="rounded-md border bg-muted/40 px-3 py-2 text-sm">
-                                                    {money.format((overtimePreview.bulk[item.id]?.per_unit.unit_charge_amount ?? 0) * Number(line.quantity))}
+                                                    {money.format(
+                                                        (overtimePreview.bulk[
+                                                            item.id
+                                                        ]?.per_unit
+                                                            .unit_charge_amount ??
+                                                            0) *
+                                                            Number(
+                                                                line.quantity,
+                                                            ),
+                                                    )}
                                                     <span className="block text-xs text-muted-foreground">
-                                                        {overtimePreview.bulk[item.id]?.per_unit.billable_hours ?? 0}<Stage4Text k="stage4.ui.5e86e0edd02d" />
+                                                        {overtimePreview.bulk[
+                                                            item.id
+                                                        ]?.per_unit
+                                                            .billable_hours ??
+                                                            0}
+                                                        <Stage4Text k="stage4.ui.5e86e0edd02d" />
                                                     </span>
                                                 </div>
                                             </Field>
-                                            <MoneyField label={stage4Translate("stage4.ui.e258b4a52180", stage4Locale)} value={line.damage_fee_amount} onChange={(damage_fee_amount) => setBulkLine(index, { damage_fee_amount })} />
-                                            <MoneyField label={stage4Translate("stage4.ui.0055268d93c2", stage4Locale)} value={line.cleaning_fee_amount} onChange={(cleaning_fee_amount) => setBulkLine(index, { cleaning_fee_amount })} />
-                                            <Field label={stage4Translate("stage4.ui.9f09aefd0dd4", stage4Locale)}>
-                                                <Input value={line.notes} onChange={(event) => setBulkLine(index, { notes: event.target.value })} />
+                                            <MoneyField
+                                                label={stage4Translate(
+                                                    'stage4.ui.e258b4a52180',
+                                                    stage4Locale,
+                                                )}
+                                                value={line.damage_fee_amount}
+                                                onChange={(damage_fee_amount) =>
+                                                    setBulkLine(index, {
+                                                        damage_fee_amount,
+                                                    })
+                                                }
+                                            />
+                                            <MoneyField
+                                                label={stage4Translate(
+                                                    'stage4.ui.0055268d93c2',
+                                                    stage4Locale,
+                                                )}
+                                                value={line.cleaning_fee_amount}
+                                                onChange={(
+                                                    cleaning_fee_amount,
+                                                ) =>
+                                                    setBulkLine(index, {
+                                                        cleaning_fee_amount,
+                                                    })
+                                                }
+                                            />
+                                            <Field
+                                                label={stage4Translate(
+                                                    'stage4.ui.9f09aefd0dd4',
+                                                    stage4Locale,
+                                                )}
+                                            >
+                                                <Input
+                                                    value={line.notes}
+                                                    onChange={(event) =>
+                                                        setBulkLine(index, {
+                                                            notes: event.target
+                                                                .value,
+                                                        })
+                                                    }
+                                                />
                                             </Field>
-                                            <Button type="button" variant="outline" disabled={line.quantity < 2} onClick={() => splitBulkLine(index)}><Stage4Text k="stage4.ui.941c87fb3c32" />
+                                            <Button
+                                                type="button"
+                                                variant="outline"
+                                                disabled={line.quantity < 2}
+                                                onClick={() =>
+                                                    splitBulkLine(index)
+                                                }
+                                            >
+                                                <Stage4Text k="stage4.ui.941c87fb3c32" />
                                             </Button>
                                         </div>
                                     )}
@@ -465,7 +650,12 @@ return null;
                                 {form.data.items[index].selected && (
                                     <div className="grid gap-4 md:grid-cols-4">
                                         {correctionMode && (
-                                            <Field label={stage4Translate("stage4.ui.3c93f5c8bccf", stage4Locale)}>
+                                            <Field
+                                                label={stage4Translate(
+                                                    'stage4.ui.3c93f5c8bccf',
+                                                    stage4Locale,
+                                                )}
+                                            >
                                                 <Select
                                                     value={String(
                                                         form.data.items[index]
@@ -490,7 +680,8 @@ return null;
                                                             {
                                                                 unit.asset
                                                                     .asset_code
-                                                            }{' '}<Stage4Text k="stage4.ui.9be5d9d8c5b1" />
+                                                            }{' '}
+                                                            <Stage4Text k="stage4.ui.9be5d9d8c5b1" />
                                                         </SelectItem>
                                                         {replacementAssets
                                                             .filter(
@@ -520,7 +711,12 @@ return null;
                                                 </Select>
                                             </Field>
                                         )}
-                                        <Field label={stage4Translate("stage4.ui.c777d0aa5c18", stage4Locale)}>
+                                        <Field
+                                            label={stage4Translate(
+                                                'stage4.ui.c777d0aa5c18',
+                                                stage4Locale,
+                                            )}
+                                        >
                                             <Select
                                                 value={
                                                     form.data.items[index]
@@ -536,31 +732,56 @@ return null;
                                                     <SelectValue />
                                                 </SelectTrigger>
                                                 <SelectContent>
-                                                    <SelectItem value="excellent"><Stage4Text k="stage4.ui.e90dcd5d96b8" />
+                                                    <SelectItem value="excellent">
+                                                        <Stage4Text k="stage4.ui.e90dcd5d96b8" />
                                                     </SelectItem>
-                                                    <SelectItem value="good"><Stage4Text k="stage4.ui.04f5b5ce0518" />
+                                                    <SelectItem value="good">
+                                                        <Stage4Text k="stage4.ui.04f5b5ce0518" />
                                                     </SelectItem>
-                                                    <SelectItem value="fair"><Stage4Text k="stage4.ui.e776a0660b3d" />
+                                                    <SelectItem value="fair">
+                                                        <Stage4Text k="stage4.ui.e776a0660b3d" />
                                                     </SelectItem>
-                                                    <SelectItem value="damaged"><Stage4Text k="stage4.ui.f1238819f6ca" />
+                                                    <SelectItem value="damaged">
+                                                        <Stage4Text k="stage4.ui.f1238819f6ca" />
                                                     </SelectItem>
-                                                    <SelectItem value="lost"><Stage4Text k="stage4.ui.71efaa642140" />
+                                                    <SelectItem value="lost">
+                                                        <Stage4Text k="stage4.ui.71efaa642140" />
                                                     </SelectItem>
                                                 </SelectContent>
                                             </Select>
                                         </Field>
                                         {!correctionMode && (
                                             <>
-                                                <Field label={stage4Translate("stage4.ui.8b6b43040432", stage4Locale)}>
+                                                <Field
+                                                    label={stage4Translate(
+                                                        'stage4.ui.8b6b43040432',
+                                                        stage4Locale,
+                                                    )}
+                                                >
                                                     <div className="rounded-md border bg-muted/40 px-3 py-2 text-sm">
-                                                        {money.format(overtimePreview.serialized[unit.id]?.total_charge_amount ?? 0)}
+                                                        {money.format(
+                                                            overtimePreview
+                                                                .serialized[
+                                                                unit.id
+                                                            ]
+                                                                ?.total_charge_amount ??
+                                                                0,
+                                                        )}
                                                         <span className="block text-xs text-muted-foreground">
-                                                            {overtimePreview.serialized[unit.id]?.billable_hours ?? 0}<Stage4Text k="stage4.ui.5e86e0edd02d" />
+                                                            {overtimePreview
+                                                                .serialized[
+                                                                unit.id
+                                                            ]?.billable_hours ??
+                                                                0}
+                                                            <Stage4Text k="stage4.ui.5e86e0edd02d" />
                                                         </span>
                                                     </div>
                                                 </Field>
                                                 <MoneyField
-                                                    label={stage4Translate("stage4.ui.f9f8434f7834", stage4Locale)}
+                                                    label={stage4Translate(
+                                                        'stage4.ui.f9f8434f7834',
+                                                        stage4Locale,
+                                                    )}
                                                     value={
                                                         form.data.items[index]
                                                             .damage_fee_amount
@@ -574,7 +795,10 @@ return null;
                                                     }
                                                 />
                                                 <MoneyField
-                                                    label={stage4Translate("stage4.ui.967fc6cfa290", stage4Locale)}
+                                                    label={stage4Translate(
+                                                        'stage4.ui.967fc6cfa290',
+                                                        stage4Locale,
+                                                    )}
                                                     value={
                                                         form.data.items[index]
                                                             .cleaning_fee_amount
@@ -590,7 +814,9 @@ return null;
                                             </>
                                         )}
                                         <div className="md:col-span-4">
-                                            <Label><Stage4Text k="stage4.ui.eb5f10d7dafe" /></Label>
+                                            <Label>
+                                                <Stage4Text k="stage4.ui.eb5f10d7dafe" />
+                                            </Label>
                                             <Input
                                                 value={
                                                     form.data.items[index].notes
@@ -601,7 +827,10 @@ return null;
                                                             .value,
                                                     })
                                                 }
-                                                placeholder={stage4Translate("stage4.ui.8ad95ceb48f1", stage4Locale)}
+                                                placeholder={stage4Translate(
+                                                    'stage4.ui.8ad95ceb48f1',
+                                                    stage4Locale,
+                                                )}
                                             />
                                         </div>
                                     </div>
@@ -614,24 +843,35 @@ return null;
                 <section className="grid gap-4 lg:grid-cols-2">
                     <Card>
                         <CardHeader>
-                            <CardTitle><Stage4Text k="stage4.ui.3c28a14c5b4f" /></CardTitle>
+                            <CardTitle>
+                                <Stage4Text k="stage4.ui.3c28a14c5b4f" />
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="grid gap-4 sm:grid-cols-2">
-                            <Field label={stage4Translate("stage4.ui.b9c6fd451de4", stage4Locale)}>
+                            <Field
+                                label={stage4Translate(
+                                    'stage4.ui.b9c6fd451de4',
+                                    stage4Locale,
+                                )}
+                            >
                                 <Input
                                     type="datetime-local"
                                     value={form.data.returned_at}
                                     readOnly
                                     aria-readonly="true"
                                 />
-                                <p className="text-xs text-muted-foreground"><Stage4Text k="stage4.ui.01974963ac08" />
+                                <p className="text-xs text-muted-foreground">
+                                    <Stage4Text k="stage4.ui.01974963ac08" />
                                 </p>
                                 <InputError message={form.errors.returned_at} />
                             </Field>
                             {!correctionMode && (
                                 <>
                                     <MoneyField
-                                        label={stage4Translate("stage4.ui.6cb0606cef8b", stage4Locale)}
+                                        label={stage4Translate(
+                                            'stage4.ui.6cb0606cef8b',
+                                            stage4Locale,
+                                        )}
                                         value={form.data.discount_amount}
                                         onChange={(value) =>
                                             form.setData(
@@ -644,7 +884,10 @@ return null;
                                         message={form.errors.discount_amount}
                                     />
                                     <MoneyField
-                                        label={stage4Translate("stage4.ui.779199ba9cb2", stage4Locale)}
+                                        label={stage4Translate(
+                                            'stage4.ui.779199ba9cb2',
+                                            stage4Locale,
+                                        )}
                                         value={form.data.payment_amount}
                                         onChange={(value) =>
                                             form.setData(
@@ -656,7 +899,12 @@ return null;
                                     <InputError
                                         message={form.errors.payment_amount}
                                     />
-                                    <Field label={stage4Translate("stage4.ui.53eb1a623ade", stage4Locale)}>
+                                    <Field
+                                        label={stage4Translate(
+                                            'stage4.ui.53eb1a623ade',
+                                            stage4Locale,
+                                        )}
+                                    >
                                         <Select
                                             value={
                                                 form.data.payment_method_id ??
@@ -674,7 +922,12 @@ return null;
                                             }}
                                         >
                                             <SelectTrigger>
-                                                <SelectValue placeholder={stage4Translate("stage4.ui.cfabec6a6763", stage4Locale)} />
+                                                <SelectValue
+                                                    placeholder={stage4Translate(
+                                                        'stage4.ui.cfabec6a6763',
+                                                        stage4Locale,
+                                                    )}
+                                                />
                                             </SelectTrigger>
                                             <SelectContent>
                                                 {paymentMethods.map(
@@ -714,7 +967,9 @@ return null;
                                         error={form.errors.cash_session_id}
                                     />
                                     <div className="sm:col-span-2">
-                                        <Label><Stage4Text k="stage4.ui.7f2cc58cb31e" /></Label>
+                                        <Label>
+                                            <Stage4Text k="stage4.ui.7f2cc58cb31e" />
+                                        </Label>
                                         <Input
                                             value={form.data.payment_reference}
                                             onChange={(event) =>
@@ -736,45 +991,66 @@ return null;
                     </Card>
                     <Card>
                         <CardHeader>
-                            <CardTitle><Stage4Text k="stage4.ui.8766c184eea3" /></CardTitle>
+                            <CardTitle>
+                                <Stage4Text k="stage4.ui.8766c184eea3" />
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-3 text-sm">
                             <Summary
-                                label={stage4Translate("stage4.ui.9f46961351fe", stage4Locale)}
+                                label={stage4Translate(
+                                    'stage4.ui.9f46961351fe',
+                                    stage4Locale,
+                                )}
                                 value={rental.balance_due}
                             />
                             {!correctionMode && (
                                 <>
                                     <Summary
-                                        label={stage4Translate("stage4.ui.fd3ab9a66418", stage4Locale)}
+                                        label={stage4Translate(
+                                            'stage4.ui.fd3ab9a66418',
+                                            stage4Locale,
+                                        )}
                                         value={finalCharge}
                                     />
                                     <Summary
-                                        label={stage4Translate("stage4.ui.f0874594eb78", stage4Locale)}
+                                        label={stage4Translate(
+                                            'stage4.ui.f0874594eb78',
+                                            stage4Locale,
+                                        )}
                                         value={-form.data.payment_amount}
                                     />
                                 </>
                             )}
                             <Summary
-                                label={stage4Translate("stage4.ui.92020f684329", stage4Locale)}
+                                label={stage4Translate(
+                                    'stage4.ui.92020f684329',
+                                    stage4Locale,
+                                )}
                                 value={projectedBalance}
                             />
                             {finalReturnHasBalance && (
                                 <Alert variant="destructive">
                                     <AlertTriangle />
-                                    <AlertTitle><Stage4Text k="stage4.ui.7999fe381882" /></AlertTitle>
-                                    <AlertDescription><Stage4Text k="stage4.ui.b7439bdbb32d" />{' '}
-                                        {money.format(projectedBalance)}<Stage4Text k="stage4.ui.613ac834ee60" />
+                                    <AlertTitle>
+                                        <Stage4Text k="stage4.ui.7999fe381882" />
+                                    </AlertTitle>
+                                    <AlertDescription>
+                                        <Stage4Text k="stage4.ui.b7439bdbb32d" />{' '}
+                                        {money.format(projectedBalance)}
+                                        <Stage4Text k="stage4.ui.613ac834ee60" />
                                     </AlertDescription>
                                 </Alert>
                             )}
                             {!isFinalReturn && projectedBalance > 0 && (
                                 <Alert>
                                     <AlertTriangle />
-                                    <AlertTitle><Stage4Text k="stage4.ui.1333e1003d69" />
+                                    <AlertTitle>
+                                        <Stage4Text k="stage4.ui.1333e1003d69" />
                                     </AlertTitle>
-                                    <AlertDescription><Stage4Text k="stage4.ui.6c565cffdad7" />{' '}
-                                        {money.format(projectedBalance)}<Stage4Text k="stage4.ui.d9387738f355" />
+                                    <AlertDescription>
+                                        <Stage4Text k="stage4.ui.6c565cffdad7" />{' '}
+                                        {money.format(projectedBalance)}
+                                        <Stage4Text k="stage4.ui.d9387738f355" />
                                     </AlertDescription>
                                 </Alert>
                             )}
@@ -786,17 +1062,27 @@ return null;
                         type="submit"
                         disabled={
                             form.processing ||
-                            (selected.length === 0 && selectedBulk.length === 0) ||
+                            (selected.length === 0 &&
+                                selectedBulk.length === 0) ||
                             finalReturnHasBalance ||
                             finalReturnHasHeldCollateral
                         }
                     >
                         <PackageCheck />
                         {form.processing
-                            ? stage4Translate("stage4.ui.5f2061cbdf8f", stage4Locale)
+                            ? stage4Translate(
+                                  'stage4.ui.5f2061cbdf8f',
+                                  stage4Locale,
+                              )
                             : correctionMode
-                              ? stage4Translate("stage4.ui.ff08f3772b4d", stage4Locale)
-                              : stage4Translate("stage4.ui.fa8e866ce2c1", stage4Locale)}
+                              ? stage4Translate(
+                                    'stage4.ui.ff08f3772b4d',
+                                    stage4Locale,
+                                )
+                              : stage4Translate(
+                                    'stage4.ui.fa8e866ce2c1',
+                                    stage4Locale,
+                                )}
                     </Button>
                 </div>
             </form>

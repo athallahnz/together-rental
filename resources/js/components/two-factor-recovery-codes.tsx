@@ -77,7 +77,9 @@ export default function TwoFactorRecoveryCodes({
                             className="size-4"
                             aria-hidden="true"
                         />
-                        {codesAreVisible ? tr('settings.recovery.hide') : tr('settings.recovery.view')}
+                        {codesAreVisible
+                            ? tr('settings.recovery.hide')
+                            : tr('settings.recovery.view')}
                     </Button>
 
                     {canRegenerateCodes && (
@@ -93,7 +95,8 @@ export default function TwoFactorRecoveryCodes({
                                     disabled={processing}
                                     aria-describedby="regenerate-warning"
                                 >
-                                    <RefreshCw /> {tr('settings.recovery.regenerate')}
+                                    <RefreshCw />{' '}
+                                    {tr('settings.recovery.regenerate')}
                                 </Button>
                             )}
                         </Form>
@@ -128,7 +131,9 @@ export default function TwoFactorRecoveryCodes({
                                     ) : (
                                         <div
                                             className="space-y-2"
-                                            aria-label={tr('settings.recovery.loading')}
+                                            aria-label={tr(
+                                                'settings.recovery.loading',
+                                            )}
                                         >
                                             {Array.from(
                                                 { length: 8 },

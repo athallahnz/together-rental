@@ -3,7 +3,11 @@ import { useMemo, useState } from 'react';
 import type { FormEvent, ReactNode } from 'react';
 import { ArchiveRestore, PackagePlus, Search } from 'lucide-react';
 import { useGlobalLocale } from '@/lib/locale-store';
-import { formatStage3Date, stage3AssetStatus, stage3DisposalMethod } from '@/lib/stage3-display';
+import {
+    formatStage3Date,
+    stage3AssetStatus,
+    stage3DisposalMethod,
+} from '@/lib/stage3-display';
 import { Stage3Text, stage3Translate } from '@/components/stage3-text';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -209,47 +213,77 @@ export default function AssetLifecycle({
 
     return (
         <>
-            <Head title={stage3Translate('stage3.ui.siklus.aset.f537b', stage3Locale)} />
+            <Head
+                title={stage3Translate(
+                    'stage3.ui.siklus.aset.f537b',
+                    stage3Locale,
+                )}
+            />
             <div className="space-y-6 p-4 md:p-6">
                 <header className="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                        <h1 className="text-2xl font-semibold"><Stage3Text k="stage3.ui.siklus.aset.f537b" /></h1>
+                        <h1 className="text-2xl font-semibold">
+                            <Stage3Text k="stage3.ui.siklus.aset.f537b" />
+                        </h1>
                         <p className="text-sm text-muted-foreground">
-                            <Stage3Text k="stage3.ui.catat.perolehan.unit.serialized.dan.tutup.aset.81ea6" /></p>
+                            <Stage3Text k="stage3.ui.catat.perolehan.unit.serialized.dan.tutup.aset.81ea6" />
+                        </p>
                     </div>
                     {permissions.manage && (
                         <Button onClick={() => setAcquisitionOpen(true)}>
                             <PackagePlus />
-                            <Stage3Text k="stage3.ui.catat.acquisition.bc362" /></Button>
+                            <Stage3Text k="stage3.ui.catat.acquisition.bc362" />
+                        </Button>
                     )}
                 </header>
 
                 <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
                     <MetricCard
-                        label={stage3Translate('stage3.ui.aset.aktif.6041a', stage3Locale)}
+                        label={stage3Translate(
+                            'stage3.ui.aset.aktif.6041a',
+                            stage3Locale,
+                        )}
                         value={summary.active_assets.toString()}
                     />
                     <MetricCard
-                        label={stage3Translate('stage3.ui.acquisition.e85b4', stage3Locale)}
+                        label={stage3Translate(
+                            'stage3.ui.acquisition.e85b4',
+                            stage3Locale,
+                        )}
                         value={summary.acquisition_count.toString()}
                     />
                     <MetricCard
-                        label={stage3Translate('stage3.ui.nilai.perolehan.3e353', stage3Locale)}
+                        label={stage3Translate(
+                            'stage3.ui.nilai.perolehan.3e353',
+                            stage3Locale,
+                        )}
                         value={money.format(summary.acquisition_value)}
                     />
                     <MetricCard
-                        label={stage3Translate('stage3.ui.disposal.5fad6', stage3Locale)}
+                        label={stage3Translate(
+                            'stage3.ui.disposal.5fad6',
+                            stage3Locale,
+                        )}
                         value={summary.disposal_count.toString()}
                     />
                     <MetricCard
-                        label={stage3Translate('stage3.ui.hasil.penjualan.550dc', stage3Locale)}
+                        label={stage3Translate(
+                            'stage3.ui.hasil.penjualan.550dc',
+                            stage3Locale,
+                        )}
                         value={money.format(summary.sale_proceeds)}
                     />
                 </div>
 
                 <FilterBar
-                    title={stage3Translate('stage3.ui.filter.siklus.aset.a4555', stage3Locale)}
-                    description={stage3Translate('stage3.ui.cari.nomor.acquisition.disposal.vendor.aset.ser.3e419', stage3Locale)}
+                    title={stage3Translate(
+                        'stage3.ui.filter.siklus.aset.a4555',
+                        stage3Locale,
+                    )}
+                    description={stage3Translate(
+                        'stage3.ui.cari.nomor.acquisition.disposal.vendor.aset.ser.3e419',
+                        stage3Locale,
+                    )}
                 >
                     <Input
                         value={search}
@@ -257,7 +291,10 @@ export default function AssetLifecycle({
                         onKeyDown={(event) =>
                             event.key === 'Enter' && applyFilter({})
                         }
-                        placeholder={stage3Translate('stage3.ui.cari.aset.atau.dokumen.lifecycle.c4800', stage3Locale)}
+                        placeholder={stage3Translate(
+                            'stage3.ui.cari.aset.atau.dokumen.lifecycle.c4800',
+                            stage3Locale,
+                        )}
                     />
                     <Select
                         value={filters.branch_id?.toString() ?? 'all'}
@@ -268,10 +305,17 @@ export default function AssetLifecycle({
                         }
                     >
                         <SelectTrigger>
-                            <SelectValue placeholder={stage3Translate('stage3.ui.semua.cabang.27d30', stage3Locale)} />
+                            <SelectValue
+                                placeholder={stage3Translate(
+                                    'stage3.ui.semua.cabang.27d30',
+                                    stage3Locale,
+                                )}
+                            />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="all"><Stage3Text k="stage3.ui.semua.cabang.27d30" /></SelectItem>
+                            <SelectItem value="all">
+                                <Stage3Text k="stage3.ui.semua.cabang.27d30" />
+                            </SelectItem>
                             {branches.map((branch) => (
                                 <SelectItem
                                     key={branch.id}
@@ -284,24 +328,39 @@ export default function AssetLifecycle({
                     </Select>
                     <Button variant="outline" onClick={() => applyFilter({})}>
                         <Search />
-                        <Stage3Text k="stage3.ui.cari.3f227" /></Button>
+                        <Stage3Text k="stage3.ui.cari.3f227" />
+                    </Button>
                 </FilterBar>
 
                 <div className="grid gap-6 xl:grid-cols-2">
                     <Card>
                         <CardHeader>
-                            <CardTitle><Stage3Text k="stage3.ui.acquisition.terbaru.f8f12" /></CardTitle>
+                            <CardTitle>
+                                <Stage3Text k="stage3.ui.acquisition.terbaru.f8f12" />
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="overflow-x-auto">
                             <table className="w-full min-w-[720px] text-sm">
                                 <thead className="border-b text-left text-muted-foreground">
                                     <tr>
-                                        <th className="py-3"><Stage3Text k="stage3.ui.nomor.8d334" /></th>
-                                        <th><Stage3Text k="stage3.ui.tanggal.80715" /></th>
-                                        <th><Stage3Text k="stage3.ui.cabang.13874" /></th>
-                                        <th><Stage3Text k="stage3.ui.vendor.d9615" /></th>
-                                        <th><Stage3Text k="stage3.ui.unit.f6b93" /></th>
-                                        <th className="text-right"><Stage3Text k="stage3.ui.nilai.74c54" /></th>
+                                        <th className="py-3">
+                                            <Stage3Text k="stage3.ui.nomor.8d334" />
+                                        </th>
+                                        <th>
+                                            <Stage3Text k="stage3.ui.tanggal.80715" />
+                                        </th>
+                                        <th>
+                                            <Stage3Text k="stage3.ui.cabang.13874" />
+                                        </th>
+                                        <th>
+                                            <Stage3Text k="stage3.ui.vendor.d9615" />
+                                        </th>
+                                        <th>
+                                            <Stage3Text k="stage3.ui.unit.f6b93" />
+                                        </th>
+                                        <th className="text-right">
+                                            <Stage3Text k="stage3.ui.nilai.74c54" />
+                                        </th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -322,7 +381,12 @@ export default function AssetLifecycle({
                                                         .join(', ')}
                                                 </p>
                                             </td>
-                                            <td>{formatStage3Date(row.acquisition_date, stage3Locale)}</td>
+                                            <td>
+                                                {formatStage3Date(
+                                                    row.acquisition_date,
+                                                    stage3Locale,
+                                                )}
+                                            </td>
                                             <td>{row.branch.code}</td>
                                             <td>{row.vendor_name || '—'}</td>
                                             <td>{row.items_count}</td>
@@ -339,7 +403,8 @@ export default function AssetLifecycle({
                                                 colSpan={6}
                                                 className="py-10 text-center text-muted-foreground"
                                             >
-                                                <Stage3Text k="stage3.ui.belum.ada.acquisition.sesuai.filter.eb0e5" /></td>
+                                                <Stage3Text k="stage3.ui.belum.ada.acquisition.sesuai.filter.eb0e5" />
+                                            </td>
                                         </tr>
                                     )}
                                 </tbody>
@@ -349,17 +414,29 @@ export default function AssetLifecycle({
 
                     <Card>
                         <CardHeader>
-                            <CardTitle><Stage3Text k="stage3.ui.disposal.terbaru.7e271" /></CardTitle>
+                            <CardTitle>
+                                <Stage3Text k="stage3.ui.disposal.terbaru.7e271" />
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="overflow-x-auto">
                             <table className="w-full min-w-[720px] text-sm">
                                 <thead className="border-b text-left text-muted-foreground">
                                     <tr>
-                                        <th className="py-3"><Stage3Text k="stage3.ui.nomor.8d334" /></th>
-                                        <th><Stage3Text k="stage3.ui.aset.a2eed" /></th>
-                                        <th><Stage3Text k="stage3.ui.metode.5ac33" /></th>
-                                        <th><Stage3Text k="stage3.ui.cabang.13874" /></th>
-                                        <th className="text-right"><Stage3Text k="stage3.ui.hasil.c123e" /></th>
+                                        <th className="py-3">
+                                            <Stage3Text k="stage3.ui.nomor.8d334" />
+                                        </th>
+                                        <th>
+                                            <Stage3Text k="stage3.ui.aset.a2eed" />
+                                        </th>
+                                        <th>
+                                            <Stage3Text k="stage3.ui.metode.5ac33" />
+                                        </th>
+                                        <th>
+                                            <Stage3Text k="stage3.ui.cabang.13874" />
+                                        </th>
+                                        <th className="text-right">
+                                            <Stage3Text k="stage3.ui.hasil.c123e" />
+                                        </th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -371,7 +448,10 @@ export default function AssetLifecycle({
                                             <td className="py-3 font-medium">
                                                 {row.disposal_number}
                                                 <p className="mt-1 text-xs font-normal text-muted-foreground">
-                                                    {formatStage3Date(row.disposal_date, stage3Locale)}
+                                                    {formatStage3Date(
+                                                        row.disposal_date,
+                                                        stage3Locale,
+                                                    )}
                                                 </p>
                                             </td>
                                             <td>
@@ -381,7 +461,10 @@ export default function AssetLifecycle({
                                                 </p>
                                             </td>
                                             <td>
-                                                {stage3DisposalMethod(row.method, stage3Locale)}
+                                                {stage3DisposalMethod(
+                                                    row.method,
+                                                    stage3Locale,
+                                                )}
                                             </td>
                                             <td>{row.branch.code}</td>
                                             <td className="text-right">
@@ -397,7 +480,8 @@ export default function AssetLifecycle({
                                                 colSpan={5}
                                                 className="py-10 text-center text-muted-foreground"
                                             >
-                                                <Stage3Text k="stage3.ui.belum.ada.disposal.sesuai.filter.629cb" /></td>
+                                                <Stage3Text k="stage3.ui.belum.ada.disposal.sesuai.filter.629cb" />
+                                            </td>
                                         </tr>
                                     )}
                                 </tbody>
@@ -408,20 +492,35 @@ export default function AssetLifecycle({
 
                 <Card>
                     <CardHeader>
-                        <CardTitle><Stage3Text k="stage3.ui.unit.siap.disposal.40e34" /></CardTitle>
+                        <CardTitle>
+                            <Stage3Text k="stage3.ui.unit.siap.disposal.40e34" />
+                        </CardTitle>
                     </CardHeader>
                     <CardContent className="overflow-x-auto">
                         <p className="mb-4 text-sm text-muted-foreground">
-                            <Stage3Text k="stage3.ui.hanya.unit.aktif.berstatus.available.atau.lost.c7489" /></p>
+                            <Stage3Text k="stage3.ui.hanya.unit.aktif.berstatus.available.atau.lost.c7489" />
+                        </p>
                         <table className="w-full min-w-[820px] text-sm">
                             <thead className="border-b text-left text-muted-foreground">
                                 <tr>
-                                    <th className="py-3"><Stage3Text k="stage3.ui.aset.a2eed" /></th>
-                                    <th><Stage3Text k="stage3.ui.produk.869eb" /></th>
-                                    <th><Stage3Text k="stage3.ui.cabang.13874" /></th>
-                                    <th><Stage3Text k="stage3.ui.status.bae7d" /></th>
-                                    <th><Stage3Text k="stage3.ui.harga.beli.19e23" /></th>
-                                    <th className="text-right"><Stage3Text k="stage3.ui.aksi.60ad4" /></th>
+                                    <th className="py-3">
+                                        <Stage3Text k="stage3.ui.aset.a2eed" />
+                                    </th>
+                                    <th>
+                                        <Stage3Text k="stage3.ui.produk.869eb" />
+                                    </th>
+                                    <th>
+                                        <Stage3Text k="stage3.ui.cabang.13874" />
+                                    </th>
+                                    <th>
+                                        <Stage3Text k="stage3.ui.status.bae7d" />
+                                    </th>
+                                    <th>
+                                        <Stage3Text k="stage3.ui.harga.beli.19e23" />
+                                    </th>
+                                    <th className="text-right">
+                                        <Stage3Text k="stage3.ui.aksi.60ad4" />
+                                    </th>
                                 </tr>
                             </thead>
                             <tbody>
@@ -436,7 +535,12 @@ export default function AssetLifecycle({
                                         </td>
                                         <td>{asset.product.name}</td>
                                         <td>{asset.current_branch.code}</td>
-                                        <td>{stage3AssetStatus(asset.status, stage3Locale)}</td>
+                                        <td>
+                                            {stage3AssetStatus(
+                                                asset.status,
+                                                stage3Locale,
+                                            )}
+                                        </td>
                                         <td>
                                             {money.format(
                                                 Number(asset.purchase_price),
@@ -452,7 +556,8 @@ export default function AssetLifecycle({
                                                     }
                                                 >
                                                     <ArchiveRestore />
-                                                    <Stage3Text k="stage3.ui.dispose.87876" /></Button>
+                                                    <Stage3Text k="stage3.ui.dispose.87876" />
+                                                </Button>
                                             ) : (
                                                 '—'
                                             )}
@@ -465,7 +570,8 @@ export default function AssetLifecycle({
                                             colSpan={6}
                                             className="py-10 text-center text-muted-foreground"
                                         >
-                                            <Stage3Text k="stage3.ui.tidak.ada.unit.yang.siap.disposal.pada.scope.in.55369" /></td>
+                                            <Stage3Text k="stage3.ui.tidak.ada.unit.yang.siap.disposal.pada.scope.in.55369" />
+                                        </td>
                                     </tr>
                                 )}
                             </tbody>
@@ -477,11 +583,18 @@ export default function AssetLifecycle({
             <Dialog open={acquisitionOpen} onOpenChange={setAcquisitionOpen}>
                 <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-2xl">
                     <DialogHeader>
-                        <DialogTitle><Stage3Text k="stage3.ui.catat.acquisition.aset.fab0c" /></DialogTitle>
+                        <DialogTitle>
+                            <Stage3Text k="stage3.ui.catat.acquisition.aset.fab0c" />
+                        </DialogTitle>
                     </DialogHeader>
                     <form className="grid gap-4" onSubmit={submitAcquisition}>
                         <div className="grid gap-4 sm:grid-cols-2">
-                            <Field label={stage3Translate('stage3.ui.cabang.13874', stage3Locale)}>
+                            <Field
+                                label={stage3Translate(
+                                    'stage3.ui.cabang.13874',
+                                    stage3Locale,
+                                )}
+                            >
                                 <Select
                                     value={acquisitionForm.data.branch_id}
                                     onValueChange={(value) =>
@@ -492,7 +605,12 @@ export default function AssetLifecycle({
                                     }
                                 >
                                     <SelectTrigger>
-                                        <SelectValue placeholder={stage3Translate('stage3.ui.pilih.cabang.f5340', stage3Locale)} />
+                                        <SelectValue
+                                            placeholder={stage3Translate(
+                                                'stage3.ui.pilih.cabang.f5340',
+                                                stage3Locale,
+                                            )}
+                                        />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {branches.map((branch) => (
@@ -509,7 +627,12 @@ export default function AssetLifecycle({
                                     value={acquisitionForm.errors.branch_id}
                                 />
                             </Field>
-                            <Field label={stage3Translate('stage3.ui.produk.serialized.dd056', stage3Locale)}>
+                            <Field
+                                label={stage3Translate(
+                                    'stage3.ui.produk.serialized.dd056',
+                                    stage3Locale,
+                                )}
+                            >
                                 <Select
                                     value={acquisitionForm.data.product_id}
                                     onValueChange={(value) => {
@@ -533,7 +656,12 @@ export default function AssetLifecycle({
                                     }}
                                 >
                                     <SelectTrigger>
-                                        <SelectValue placeholder={stage3Translate('stage3.ui.pilih.produk.75abb', stage3Locale)} />
+                                        <SelectValue
+                                            placeholder={stage3Translate(
+                                                'stage3.ui.pilih.produk.75abb',
+                                                stage3Locale,
+                                            )}
+                                        />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {products.map((product) => (
@@ -550,7 +678,12 @@ export default function AssetLifecycle({
                                     value={acquisitionForm.errors.product_id}
                                 />
                             </Field>
-                            <Field label={stage3Translate('stage3.ui.jumlah.unit.39fc5', stage3Locale)}>
+                            <Field
+                                label={stage3Translate(
+                                    'stage3.ui.jumlah.unit.39fc5',
+                                    stage3Locale,
+                                )}
+                            >
                                 <Input
                                     type="number"
                                     min={1}
@@ -567,7 +700,12 @@ export default function AssetLifecycle({
                                     value={acquisitionForm.errors.quantity}
                                 />
                             </Field>
-                            <Field label={stage3Translate('stage3.ui.tanggal.acquisition.25fed', stage3Locale)}>
+                            <Field
+                                label={stage3Translate(
+                                    'stage3.ui.tanggal.acquisition.25fed',
+                                    stage3Locale,
+                                )}
+                            >
                                 <Input
                                     type="date"
                                     max={today}
@@ -587,7 +725,12 @@ export default function AssetLifecycle({
                                     }
                                 />
                             </Field>
-                            <Field label={stage3Translate('stage3.ui.harga.beli.unit.5c6fa', stage3Locale)}>
+                            <Field
+                                label={stage3Translate(
+                                    'stage3.ui.harga.beli.unit.5c6fa',
+                                    stage3Locale,
+                                )}
+                            >
                                 <RupiahInput
                                     value={acquisitionForm.data.unit_cost}
                                     onValueChange={(value) =>
@@ -601,7 +744,12 @@ export default function AssetLifecycle({
                                     value={acquisitionForm.errors.unit_cost}
                                 />
                             </Field>
-                            <Field label={stage3Translate('stage3.ui.nilai.penggantian.unit.ae79a', stage3Locale)}>
+                            <Field
+                                label={stage3Translate(
+                                    'stage3.ui.nilai.penggantian.unit.ae79a',
+                                    stage3Locale,
+                                )}
+                            >
                                 <RupiahInput
                                     value={
                                         acquisitionForm.data.replacement_value
@@ -629,7 +777,12 @@ export default function AssetLifecycle({
                                     }
                                 />
                             </Field>
-                            <Field label={stage3Translate('stage3.ui.vendor.d9615', stage3Locale)}>
+                            <Field
+                                label={stage3Translate(
+                                    'stage3.ui.vendor.d9615',
+                                    stage3Locale,
+                                )}
+                            >
                                 <Input
                                     value={acquisitionForm.data.vendor_name}
                                     onChange={(event) =>
@@ -638,13 +791,21 @@ export default function AssetLifecycle({
                                             event.target.value,
                                         )
                                     }
-                                    placeholder={stage3Translate('stage3.ui.opsional.cf048', stage3Locale)}
+                                    placeholder={stage3Translate(
+                                        'stage3.ui.opsional.cf048',
+                                        stage3Locale,
+                                    )}
                                 />
                                 <ErrorText
                                     value={acquisitionForm.errors.vendor_name}
                                 />
                             </Field>
-                            <Field label={stage3Translate('stage3.ui.referensi.pembelian.5ed00', stage3Locale)}>
+                            <Field
+                                label={stage3Translate(
+                                    'stage3.ui.referensi.pembelian.5ed00',
+                                    stage3Locale,
+                                )}
+                            >
                                 <Input
                                     value={
                                         acquisitionForm.data.reference_number
@@ -655,7 +816,10 @@ export default function AssetLifecycle({
                                             event.target.value,
                                         )
                                     }
-                                    placeholder={stage3Translate('stage3.ui.invoice.po.nota.78aa2', stage3Locale)}
+                                    placeholder={stage3Translate(
+                                        'stage3.ui.invoice.po.nota.78aa2',
+                                        stage3Locale,
+                                    )}
                                 />
                                 <ErrorText
                                     value={
@@ -663,7 +827,12 @@ export default function AssetLifecycle({
                                     }
                                 />
                             </Field>
-                            <Field label={stage3Translate('stage3.ui.garansi.sampai.fa65c', stage3Locale)}>
+                            <Field
+                                label={stage3Translate(
+                                    'stage3.ui.garansi.sampai.fa65c',
+                                    stage3Locale,
+                                )}
+                            >
                                 <Input
                                     type="date"
                                     value={acquisitionForm.data.warranty_until}
@@ -681,7 +850,12 @@ export default function AssetLifecycle({
                                 />
                             </Field>
                         </div>
-                        <Field label={stage3Translate('stage3.ui.serial.number.satu.baris.per.unit.dbf36', stage3Locale)}>
+                        <Field
+                            label={stage3Translate(
+                                'stage3.ui.serial.number.satu.baris.per.unit.dbf36',
+                                stage3Locale,
+                            )}
+                        >
                             <textarea
                                 className="min-h-28 w-full rounded-md border bg-background px-3 py-2 text-sm"
                                 value={acquisitionForm.data.serial_numbers}
@@ -697,7 +871,12 @@ export default function AssetLifecycle({
                                 value={acquisitionForm.errors.serial_numbers}
                             />
                         </Field>
-                        <Field label={stage3Translate('stage3.ui.catatan.9f09a', stage3Locale)}>
+                        <Field
+                            label={stage3Translate(
+                                'stage3.ui.catatan.9f09a',
+                                stage3Locale,
+                            )}
+                        >
                             <textarea
                                 className="min-h-20 w-full rounded-md border bg-background px-3 py-2 text-sm"
                                 value={acquisitionForm.data.notes}
@@ -711,16 +890,19 @@ export default function AssetLifecycle({
                             <ErrorText value={acquisitionForm.errors.notes} />
                         </Field>
                         <p className="text-xs text-muted-foreground">
-                            <Stage3Text k="stage3.ui.asset.code.dibuat.otomatis.dari.nomor.acquisiti.07bfd" /></p>
+                            <Stage3Text k="stage3.ui.asset.code.dibuat.otomatis.dari.nomor.acquisiti.07bfd" />
+                        </p>
                         <DialogFooter>
                             <Button
                                 type="button"
                                 variant="outline"
                                 onClick={() => setAcquisitionOpen(false)}
                             >
-                                <Stage3Text k="stage3.ui.batal.14335" /></Button>
+                                <Stage3Text k="stage3.ui.batal.14335" />
+                            </Button>
                             <Button disabled={acquisitionForm.processing}>
-                                <Stage3Text k="stage3.ui.simpan.acquisition.e09fa" /></Button>
+                                <Stage3Text k="stage3.ui.simpan.acquisition.e09fa" />
+                            </Button>
                         </DialogFooter>
                     </form>
                 </DialogContent>
@@ -733,12 +915,18 @@ export default function AssetLifecycle({
                 <DialogContent className="sm:max-w-xl">
                     <DialogHeader>
                         <DialogTitle>
-                            <Stage3Text k="stage3.ui.dispose.87876" />{disposalAsset?.asset_code}
+                            <Stage3Text k="stage3.ui.dispose.87876" />
+                            {disposalAsset?.asset_code}
                         </DialogTitle>
                     </DialogHeader>
                     <form className="grid gap-4" onSubmit={submitDisposal}>
                         <ErrorText value={disposalForm.errors.asset} />
-                        <Field label={stage3Translate('stage3.ui.tanggal.disposal.4adcd', stage3Locale)}>
+                        <Field
+                            label={stage3Translate(
+                                'stage3.ui.tanggal.disposal.4adcd',
+                                stage3Locale,
+                            )}
+                        >
                             <Input
                                 type="date"
                                 max={today}
@@ -754,7 +942,12 @@ export default function AssetLifecycle({
                                 value={disposalForm.errors.disposal_date}
                             />
                         </Field>
-                        <Field label={stage3Translate('stage3.ui.metode.5ac33', stage3Locale)}>
+                        <Field
+                            label={stage3Translate(
+                                'stage3.ui.metode.5ac33',
+                                stage3Locale,
+                            )}
+                        >
                             <Select
                                 value={disposalForm.data.method}
                                 onValueChange={(value) =>
@@ -767,20 +960,28 @@ export default function AssetLifecycle({
                                 <SelectContent>
                                     {disposalAsset?.status !== 'lost' && (
                                         <SelectItem value="sold">
-                                            <Stage3Text k="stage3.ui.dijual.76dbb" /></SelectItem>
+                                            <Stage3Text k="stage3.ui.dijual.76dbb" />
+                                        </SelectItem>
                                     )}
                                     <SelectItem value="write_off">
-                                        <Stage3Text k="stage3.ui.write.off.95181" /></SelectItem>
+                                        <Stage3Text k="stage3.ui.write.off.95181" />
+                                    </SelectItem>
                                     {disposalAsset?.status !== 'lost' && (
                                         <SelectItem value="donated">
-                                            <Stage3Text k="stage3.ui.donasi.d1891" /></SelectItem>
+                                            <Stage3Text k="stage3.ui.donasi.d1891" />
+                                        </SelectItem>
                                     )}
                                 </SelectContent>
                             </Select>
                             <ErrorText value={disposalForm.errors.method} />
                         </Field>
                         {disposalForm.data.method === 'sold' && (
-                            <Field label={stage3Translate('stage3.ui.nilai.penjualan.ad434', stage3Locale)}>
+                            <Field
+                                label={stage3Translate(
+                                    'stage3.ui.nilai.penjualan.ad434',
+                                    stage3Locale,
+                                )}
+                            >
                                 <RupiahInput
                                     value={disposalForm.data.sale_amount}
                                     onValueChange={(value) =>
@@ -795,7 +996,12 @@ export default function AssetLifecycle({
                                 />
                             </Field>
                         )}
-                        <Field label={stage3Translate('stage3.ui.alasan.3faa8', stage3Locale)}>
+                        <Field
+                            label={stage3Translate(
+                                'stage3.ui.alasan.3faa8',
+                                stage3Locale,
+                            )}
+                        >
                             <textarea
                                 className="min-h-24 w-full rounded-md border bg-background px-3 py-2 text-sm"
                                 value={disposalForm.data.reason}
@@ -805,11 +1011,19 @@ export default function AssetLifecycle({
                                         event.target.value,
                                     )
                                 }
-                                placeholder={stage3Translate('stage3.ui.jelaskan.alasan.disposal.9858a', stage3Locale)}
+                                placeholder={stage3Translate(
+                                    'stage3.ui.jelaskan.alasan.disposal.9858a',
+                                    stage3Locale,
+                                )}
                             />
                             <ErrorText value={disposalForm.errors.reason} />
                         </Field>
-                        <Field label={stage3Translate('stage3.ui.catatan.tambahan.e2149', stage3Locale)}>
+                        <Field
+                            label={stage3Translate(
+                                'stage3.ui.catatan.tambahan.e2149',
+                                stage3Locale,
+                            )}
+                        >
                             <textarea
                                 className="min-h-20 w-full rounded-md border bg-background px-3 py-2 text-sm"
                                 value={disposalForm.data.notes}
@@ -823,16 +1037,19 @@ export default function AssetLifecycle({
                             <ErrorText value={disposalForm.errors.notes} />
                         </Field>
                         <p className="text-xs text-muted-foreground">
-                            <Stage3Text k="stage3.ui.disposal.mengubah.aset.menjadi.retired.dan.nona.c0394" /></p>
+                            <Stage3Text k="stage3.ui.disposal.mengubah.aset.menjadi.retired.dan.nona.c0394" />
+                        </p>
                         <DialogFooter>
                             <Button
                                 type="button"
                                 variant="outline"
                                 onClick={() => setDisposalAsset(null)}
                             >
-                                <Stage3Text k="stage3.ui.batal.14335" /></Button>
+                                <Stage3Text k="stage3.ui.batal.14335" />
+                            </Button>
                             <Button disabled={disposalForm.processing}>
-                                <Stage3Text k="stage3.ui.konfirmasi.disposal.29197" /></Button>
+                                <Stage3Text k="stage3.ui.konfirmasi.disposal.29197" />
+                            </Button>
                         </DialogFooter>
                     </form>
                 </DialogContent>

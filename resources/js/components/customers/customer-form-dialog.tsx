@@ -109,17 +109,29 @@ export function CustomerFormDialog({
                 <DialogHeader>
                     <DialogTitle>
                         {customer
-                            ? stage3Translate('stage3.ui.correction.edit.53016', stage3Locale) + ' ' + customer.name
-                            : stage3Translate('stage3.ui.correction.tambah.pelanggan.bc83e', stage3Locale)}
+                            ? stage3Translate(
+                                  'stage3.ui.correction.edit.53016',
+                                  stage3Locale,
+                              ) +
+                              ' ' +
+                              customer.name
+                            : stage3Translate(
+                                  'stage3.ui.correction.tambah.pelanggan.bc83e',
+                                  stage3Locale,
+                              )}
                     </DialogTitle>
                     <DialogDescription>
-                        <Stage3Text k="stage3.ui.nomor.pelanggan.dibuat.otomatis.berdasarkan.cab.a0265" /></DialogDescription>
+                        <Stage3Text k="stage3.ui.nomor.pelanggan.dibuat.otomatis.berdasarkan.cab.a0265" />
+                    </DialogDescription>
                 </DialogHeader>
 
                 <form onSubmit={submit} className="grid gap-5">
                     <div className="grid gap-4 sm:grid-cols-2">
                         <FormField
-                            label={stage3Translate('stage3.ui.cabang.pendaftaran.317dc', stage3Locale)}
+                            label={stage3Translate(
+                                'stage3.ui.cabang.pendaftaran.317dc',
+                                stage3Locale,
+                            )}
                             name="registered_branch_id"
                             error={form.errors.registered_branch_id}
                         >
@@ -136,7 +148,12 @@ export function CustomerFormDialog({
                                 }
                             >
                                 <SelectTrigger id="registered_branch_id">
-                                    <SelectValue placeholder={stage3Translate('stage3.ui.pilih.cabang.f5340', stage3Locale)} />
+                                    <SelectValue
+                                        placeholder={stage3Translate(
+                                            'stage3.ui.pilih.cabang.f5340',
+                                            stage3Locale,
+                                        )}
+                                    />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {branches.map((branch) => (
@@ -151,7 +168,10 @@ export function CustomerFormDialog({
                             </Select>
                         </FormField>
                         <FormField
-                            label={stage3Translate('stage3.ui.nama.lengkap.c3587', stage3Locale)}
+                            label={stage3Translate(
+                                'stage3.ui.nama.lengkap.c3587',
+                                stage3Locale,
+                            )}
                             name="name"
                             error={form.errors.name}
                         >
@@ -165,7 +185,10 @@ export function CustomerFormDialog({
                             />
                         </FormField>
                         <FormField
-                            label={stage3Translate('stage3.ui.telepon.396dc', stage3Locale)}
+                            label={stage3Translate(
+                                'stage3.ui.telepon.396dc',
+                                stage3Locale,
+                            )}
                             name="phone"
                             error={form.errors.phone}
                         >
@@ -192,7 +215,10 @@ export function CustomerFormDialog({
                             />
                         </FormField>
                         <FormField
-                            label={stage3Translate('stage3.ui.jenis.kelamin.64cd3', stage3Locale)}
+                            label={stage3Translate(
+                                'stage3.ui.jenis.kelamin.64cd3',
+                                stage3Locale,
+                            )}
                             name="gender"
                             error={form.errors.gender}
                         >
@@ -212,16 +238,22 @@ export function CustomerFormDialog({
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="none">
-                                        <Stage3Text k="stage3.ui.tidak.diisi.46951" /></SelectItem>
+                                        <Stage3Text k="stage3.ui.tidak.diisi.46951" />
+                                    </SelectItem>
                                     <SelectItem value="male">
-                                        <Stage3Text k="stage3.ui.laki.laki.afdcb" /></SelectItem>
+                                        <Stage3Text k="stage3.ui.laki.laki.afdcb" />
+                                    </SelectItem>
                                     <SelectItem value="female">
-                                        <Stage3Text k="stage3.ui.perempuan.bc797" /></SelectItem>
+                                        <Stage3Text k="stage3.ui.perempuan.bc797" />
+                                    </SelectItem>
                                 </SelectContent>
                             </Select>
                         </FormField>
                         <FormField
-                            label={stage3Translate('stage3.ui.institusi.305f2', stage3Locale)}
+                            label={stage3Translate(
+                                'stage3.ui.institusi.305f2',
+                                stage3Locale,
+                            )}
                             name="institution"
                             error={form.errors.institution}
                         >
@@ -237,7 +269,10 @@ export function CustomerFormDialog({
                             />
                         </FormField>
                         <FormField
-                            label={stage3Translate('stage3.ui.tempat.lahir.c76be', stage3Locale)}
+                            label={stage3Translate(
+                                'stage3.ui.tempat.lahir.c76be',
+                                stage3Locale,
+                            )}
                             name="birth_place"
                             error={form.errors.birth_place}
                         >
@@ -253,7 +288,10 @@ export function CustomerFormDialog({
                             />
                         </FormField>
                         <FormField
-                            label={stage3Translate('stage3.ui.tanggal.lahir.c7642', stage3Locale)}
+                            label={stage3Translate(
+                                'stage3.ui.tanggal.lahir.c7642',
+                                stage3Locale,
+                            )}
                             name="birth_date"
                             error={form.errors.birth_date}
                         >
@@ -270,7 +308,10 @@ export function CustomerFormDialog({
                             />
                         </FormField>
                         <FormField
-                            label={stage3Translate('stage3.ui.status.pelanggan.a2b9b', stage3Locale)}
+                            label={stage3Translate(
+                                'stage3.ui.status.pelanggan.a2b9b',
+                                stage3Locale,
+                            )}
                             name="status"
                             error={form.errors.status}
                         >
@@ -288,16 +329,22 @@ export function CustomerFormDialog({
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="active">
-                                        <Stage3Text k="stage3.ui.aktif.89f29" /></SelectItem>
+                                        <Stage3Text k="stage3.ui.aktif.89f29" />
+                                    </SelectItem>
                                     <SelectItem value="inactive">
-                                        <Stage3Text k="stage3.ui.nonaktif.60944" /></SelectItem>
+                                        <Stage3Text k="stage3.ui.nonaktif.60944" />
+                                    </SelectItem>
                                     <SelectItem value="blocked">
-                                        <Stage3Text k="stage3.ui.diblokir.ae752" /></SelectItem>
+                                        <Stage3Text k="stage3.ui.diblokir.ae752" />
+                                    </SelectItem>
                                 </SelectContent>
                             </Select>
                         </FormField>
                         <FormField
-                            label={stage3Translate('stage3.ui.risk.profile.38bab', stage3Locale)}
+                            label={stage3Translate(
+                                'stage3.ui.risk.profile.38bab',
+                                stage3Locale,
+                            )}
                             name="risk_level"
                             error={form.errors.risk_level}
                         >
@@ -314,12 +361,18 @@ export function CustomerFormDialog({
                                     <SelectValue />
                                 </SelectTrigger>
                                 <SelectContent>
-                                    <SelectItem value="low"><Stage3Text k="stage3.ui.rendah.afc56" /></SelectItem>
+                                    <SelectItem value="low">
+                                        <Stage3Text k="stage3.ui.rendah.afc56" />
+                                    </SelectItem>
                                     <SelectItem value="normal">
-                                        <Stage3Text k="stage3.ui.normal.45e11" /></SelectItem>
-                                    <SelectItem value="high"><Stage3Text k="stage3.ui.tinggi.dc1b9" /></SelectItem>
+                                        <Stage3Text k="stage3.ui.normal.45e11" />
+                                    </SelectItem>
+                                    <SelectItem value="high">
+                                        <Stage3Text k="stage3.ui.tinggi.dc1b9" />
+                                    </SelectItem>
                                     <SelectItem value="critical">
-                                        <Stage3Text k="stage3.ui.kritis.f690d" /></SelectItem>
+                                        <Stage3Text k="stage3.ui.kritis.f690d" />
+                                    </SelectItem>
                                 </SelectContent>
                             </Select>
                         </FormField>
@@ -335,15 +388,20 @@ export function CustomerFormDialog({
                             />
                             <span>
                                 <span className="block text-sm font-medium">
-                                    <Stage3Text k="stage3.ui.pelanggan.member.60ff6" /></span>
+                                    <Stage3Text k="stage3.ui.pelanggan.member.60ff6" />
+                                </span>
                                 <span className="mt-1 block text-xs text-muted-foreground">
-                                    <Stage3Text k="stage3.ui.nomor.member.dibuat.otomatis.jika.dikosongkan.e1d83" /></span>
+                                    <Stage3Text k="stage3.ui.nomor.member.dibuat.otomatis.jika.dikosongkan.e1d83" />
+                                </span>
                             </span>
                         </label>
                         {form.data.is_member && (
                             <div className="grid gap-4 sm:grid-cols-2">
                                 <FormField
-                                    label={stage3Translate('stage3.ui.nomor.member.3eb17', stage3Locale)}
+                                    label={stage3Translate(
+                                        'stage3.ui.nomor.member.3eb17',
+                                        stage3Locale,
+                                    )}
                                     name="member_number"
                                     error={form.errors.member_number}
                                 >
@@ -356,11 +414,17 @@ export function CustomerFormDialog({
                                                 event.target.value,
                                             )
                                         }
-                                        placeholder={stage3Translate('stage3.ui.otomatis.33a0b', stage3Locale)}
+                                        placeholder={stage3Translate(
+                                            'stage3.ui.otomatis.33a0b',
+                                            stage3Locale,
+                                        )}
                                     />
                                 </FormField>
                                 <FormField
-                                    label={stage3Translate('stage3.ui.member.sejak.5f568', stage3Locale)}
+                                    label={stage3Translate(
+                                        'stage3.ui.member.sejak.5f568',
+                                        stage3Locale,
+                                    )}
                                     name="member_since"
                                     error={form.errors.member_since}
                                 >
@@ -381,7 +445,10 @@ export function CustomerFormDialog({
                     </div>
 
                     <FormField
-                        label={stage3Translate('stage3.ui.catatan.internal.1ae31', stage3Locale)}
+                        label={stage3Translate(
+                            'stage3.ui.catatan.internal.1ae31',
+                            stage3Locale,
+                        )}
                         name="notes"
                         error={form.errors.notes}
                     >
@@ -403,13 +470,23 @@ export function CustomerFormDialog({
                             onClick={() => onOpenChange(false)}
                             disabled={form.processing}
                         >
-                            <Stage3Text k="stage3.ui.batal.14335" /></Button>
+                            <Stage3Text k="stage3.ui.batal.14335" />
+                        </Button>
                         <Button type="submit" disabled={form.processing}>
                             {form.processing
-                                ? stage3Translate('stage3.ui.correction.menyimpan.92e24', stage3Locale)
+                                ? stage3Translate(
+                                      'stage3.ui.correction.menyimpan.92e24',
+                                      stage3Locale,
+                                  )
                                 : customer
-                                  ? stage3Translate('stage3.ui.correction.simpan.perubahan.099b3', stage3Locale)
-                                  : stage3Translate('stage3.ui.correction.buat.pelanggan.1f102', stage3Locale)}
+                                  ? stage3Translate(
+                                        'stage3.ui.correction.simpan.perubahan.099b3',
+                                        stage3Locale,
+                                    )
+                                  : stage3Translate(
+                                        'stage3.ui.correction.buat.pelanggan.1f102',
+                                        stage3Locale,
+                                    )}
                         </Button>
                     </DialogFooter>
                 </form>

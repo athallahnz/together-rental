@@ -44,15 +44,15 @@ export function formatStage3Date(
     locale: AppLocale,
 ): string {
     if (!value) {
-return '—';
-}
+        return '—';
+    }
 
     const dateOnly = /^\d{4}-\d{2}-\d{2}$/.test(value);
     const date = new Date(dateOnly ? `${value}T12:00:00Z` : value);
 
     if (Number.isNaN(date.getTime())) {
-return '—';
-}
+        return '—';
+    }
 
     return new Intl.DateTimeFormat(locale === 'en' ? 'en-GB' : 'id-ID', {
         day: 'numeric',
@@ -90,7 +90,10 @@ const modules: Record<string, [string, string]> = {
     users: ['Pengguna', 'Users'],
 };
 
-export function stage3PermissionModule(value: string, locale: AppLocale): string {
+export function stage3PermissionModule(
+    value: string,
+    locale: AppLocale,
+): string {
     return displayValue(value, modules, locale);
 }
 
@@ -147,12 +150,12 @@ export function stage3PermissionName(
     locale: AppLocale,
 ): string {
     if (locale === 'en') {
-return sourceName;
-}
+        return sourceName;
+    }
 
     if (permissionOverrides[slug]) {
-return permissionOverrides[slug];
-}
+        return permissionOverrides[slug];
+    }
 
     const segments = slug.split('.');
     const action = segments[segments.length - 1];

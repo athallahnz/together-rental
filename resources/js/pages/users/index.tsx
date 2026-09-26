@@ -270,9 +270,31 @@ export default function UserIndex({
     const toggleStatus = async (user: ManagedUser) => {
         const activating = user.status !== 'active';
         const confirmed = await confirm({
-            title: activating ? stage3Translate('stage3.ui.correction.aktifkan.akun.2711c', stage3Locale) : stage3Translate('stage3.ui.correction.nonaktifkan.akun.53c2b', stage3Locale),
-            description: stage3Translate(activating ? 'stage3.ui.correction.confirm.user.activate' : 'stage3.ui.correction.confirm.user.deactivate', stage3Locale, { name: user.name }),
-            confirmLabel: activating ? stage3Translate('stage3.ui.correction.aktifkan.b2fe9', stage3Locale) : stage3Translate('stage3.ui.correction.nonaktifkan.42191', stage3Locale),
+            title: activating
+                ? stage3Translate(
+                      'stage3.ui.correction.aktifkan.akun.2711c',
+                      stage3Locale,
+                  )
+                : stage3Translate(
+                      'stage3.ui.correction.nonaktifkan.akun.53c2b',
+                      stage3Locale,
+                  ),
+            description: stage3Translate(
+                activating
+                    ? 'stage3.ui.correction.confirm.user.activate'
+                    : 'stage3.ui.correction.confirm.user.deactivate',
+                stage3Locale,
+                { name: user.name },
+            ),
+            confirmLabel: activating
+                ? stage3Translate(
+                      'stage3.ui.correction.aktifkan.b2fe9',
+                      stage3Locale,
+                  )
+                : stage3Translate(
+                      'stage3.ui.correction.nonaktifkan.42191',
+                      stage3Locale,
+                  ),
             variant: activating ? 'default' : 'destructive',
         });
 
@@ -285,22 +307,31 @@ export default function UserIndex({
 
     return (
         <>
-            <Head title={stage3Translate('stage3.ui.akun.pengguna.22ab5', stage3Locale)} />
+            <Head
+                title={stage3Translate(
+                    'stage3.ui.akun.pengguna.22ab5',
+                    stage3Locale,
+                )}
+            />
 
             <div className="flex h-full flex-1 flex-col gap-6 overflow-x-auto rounded-xl p-4 md:p-6">
                 <header className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                     <div>
                         <p className="text-sm font-medium text-primary">
-                            <Stage3Text k="stage3.ui.administrasi.580b7" /></p>
+                            <Stage3Text k="stage3.ui.administrasi.580b7" />
+                        </p>
                         <h1 className="mt-1 text-2xl font-semibold tracking-tight">
-                            <Stage3Text k="stage3.ui.akun.pengguna.433cd" /></h1>
+                            <Stage3Text k="stage3.ui.akun.pengguna.433cd" />
+                        </h1>
                         <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-                            <Stage3Text k="stage3.ui.kelola.akun.status.login.cabang.kerja.serta.rol.97d53" /></p>
+                            <Stage3Text k="stage3.ui.kelola.akun.status.login.cabang.kerja.serta.rol.97d53" />
+                        </p>
                     </div>
                     {permissions.manage && (
                         <Button onClick={openCreate}>
                             <Plus />
-                            <Stage3Text k="stage3.ui.tambah.pengguna.e505d" /></Button>
+                            <Stage3Text k="stage3.ui.tambah.pengguna.e505d" />
+                        </Button>
                     )}
                 </header>
 
@@ -309,7 +340,9 @@ export default function UserIndex({
                 {typeof pageErrors.user === 'string' && (
                     <Alert variant="destructive">
                         <CircleOff />
-                        <AlertTitle><Stage3Text k="stage3.ui.perubahan.pengguna.ditolak.a7601" /></AlertTitle>
+                        <AlertTitle>
+                            <Stage3Text k="stage3.ui.perubahan.pengguna.ditolak.a7601" />
+                        </AlertTitle>
                         <AlertDescription>{pageErrors.user}</AlertDescription>
                     </Alert>
                 )}
@@ -317,22 +350,34 @@ export default function UserIndex({
                 <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                     {[
                         {
-                            label: stage3Translate('stage3.ui.correction.total.akun.d3aba', stage3Locale),
+                            label: stage3Translate(
+                                'stage3.ui.correction.total.akun.d3aba',
+                                stage3Locale,
+                            ),
                             value: summary.total,
                             icon: Users,
                         },
                         {
-                            label: stage3Translate('stage3.ui.correction.akun.aktif.87263', stage3Locale),
+                            label: stage3Translate(
+                                'stage3.ui.correction.akun.aktif.87263',
+                                stage3Locale,
+                            ),
                             value: summary.active,
                             icon: CheckCircle2,
                         },
                         {
-                            label: stage3Translate('stage3.ui.correction.nonaktif.suspend.3a748', stage3Locale),
+                            label: stage3Translate(
+                                'stage3.ui.correction.nonaktif.suspend.3a748',
+                                stage3Locale,
+                            ),
                             value: summary.inactive,
                             icon: CircleOff,
                         },
                         {
-                            label: stage3Translate('stage3.ui.correction.2fa.aktif.815b3', stage3Locale),
+                            label: stage3Translate(
+                                'stage3.ui.correction.2fa.aktif.815b3',
+                                stage3Locale,
+                            ),
                             value: summary.twoFactor,
                             icon: ShieldCheck,
                         },
@@ -349,9 +394,12 @@ export default function UserIndex({
                 <Card>
                     <CardHeader className="gap-4">
                         <div>
-                            <CardTitle><Stage3Text k="stage3.ui.daftar.akun.9dcb1" /></CardTitle>
+                            <CardTitle>
+                                <Stage3Text k="stage3.ui.daftar.akun.9dcb1" />
+                            </CardTitle>
                             <CardDescription>
-                                <Stage3Text k="stage3.ui.akun.sendiri.dikelola.melalui.pengaturan.profil.503e7" /></CardDescription>
+                                <Stage3Text k="stage3.ui.akun.sendiri.dikelola.melalui.pengaturan.profil.503e7" />
+                            </CardDescription>
                         </div>
                         <div
                             data-slot="filter-grid"
@@ -372,14 +420,20 @@ export default function UserIndex({
                                             setSearch(event.target.value)
                                         }
                                         className="w-full pl-9"
-                                        placeholder={stage3Translate('stage3.ui.nama.email.atau.nik.b3023', stage3Locale)}
+                                        placeholder={stage3Translate(
+                                            'stage3.ui.nama.email.atau.nik.b3023',
+                                            stage3Locale,
+                                        )}
                                     />
                                 </div>
                                 <Button
                                     type="submit"
                                     size="icon"
                                     variant="outline"
-                                    aria-label={stage3Translate('stage3.ui.cari.pengguna.02f2f', stage3Locale)}
+                                    aria-label={stage3Translate(
+                                        'stage3.ui.cari.pengguna.02f2f',
+                                        stage3Locale,
+                                    )}
                                 >
                                     <Search />
                                 </Button>
@@ -398,7 +452,8 @@ export default function UserIndex({
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="all">
-                                        <Stage3Text k="stage3.ui.semua.cabang.27d30" /></SelectItem>
+                                        <Stage3Text k="stage3.ui.semua.cabang.27d30" />
+                                    </SelectItem>
                                     {branches.map((branch) => (
                                         <SelectItem
                                             key={branch.id}
@@ -420,13 +475,17 @@ export default function UserIndex({
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="all">
-                                        <Stage3Text k="stage3.ui.semua.status.baa2a" /></SelectItem>
+                                        <Stage3Text k="stage3.ui.semua.status.baa2a" />
+                                    </SelectItem>
                                     <SelectItem value="active">
-                                        <Stage3Text k="stage3.ui.aktif.89f29" /></SelectItem>
+                                        <Stage3Text k="stage3.ui.aktif.89f29" />
+                                    </SelectItem>
                                     <SelectItem value="inactive">
-                                        <Stage3Text k="stage3.ui.nonaktif.60944" /></SelectItem>
+                                        <Stage3Text k="stage3.ui.nonaktif.60944" />
+                                    </SelectItem>
                                     <SelectItem value="suspended">
-                                        <Stage3Text k="stage3.ui.suspend.b2424" /></SelectItem>
+                                        <Stage3Text k="stage3.ui.suspend.b2424" />
+                                    </SelectItem>
                                 </SelectContent>
                             </Select>
                         </div>
@@ -436,9 +495,11 @@ export default function UserIndex({
                             <div className="py-16 text-center">
                                 <UserRoundCog className="mx-auto size-9 text-muted-foreground" />
                                 <p className="mt-4 font-medium">
-                                    <Stage3Text k="stage3.ui.pengguna.tidak.ditemukan.b228a" /></p>
+                                    <Stage3Text k="stage3.ui.pengguna.tidak.ditemukan.b228a" />
+                                </p>
                                 <p className="mt-1 text-sm text-muted-foreground">
-                                    <Stage3Text k="stage3.ui.ubah.filter.atau.tambahkan.akun.baru.ec194" /></p>
+                                    <Stage3Text k="stage3.ui.ubah.filter.atau.tambahkan.akun.baru.ec194" />
+                                </p>
                             </div>
                         ) : (
                             <div className="grid gap-3">
@@ -462,7 +523,8 @@ export default function UserIndex({
                                                     </h2>
                                                     {isSelf && (
                                                         <Badge>
-                                                            <Stage3Text k="stage3.ui.sesi.aktif.a5fbb" /></Badge>
+                                                            <Stage3Text k="stage3.ui.sesi.aktif.a5fbb" />
+                                                        </Badge>
                                                     )}
                                                     <StatusBadge
                                                         status={user.status}
@@ -480,7 +542,10 @@ export default function UserIndex({
                                                 <p className="mt-2 text-xs text-muted-foreground">
                                                     {user.employee
                                                         ? `${user.employee.employee_number} · ${user.employee.name}`
-                                                        : stage3Translate('stage3.ui.correction.belum.terhubung.ke.data.karyawan.20903', stage3Locale)}
+                                                        : stage3Translate(
+                                                              'stage3.ui.correction.belum.terhubung.ke.data.karyawan.20903',
+                                                              stage3Locale,
+                                                          )}
                                                 </p>
                                             </div>
 
@@ -488,13 +553,19 @@ export default function UserIndex({
                                                 <p className="flex items-center gap-2">
                                                     <BadgeCheck className="size-4 text-muted-foreground" />
                                                     {companyRole?.name ??
-                                                        stage3Translate('stage3.ui.correction.akses.berbasis.cabang.a7198', stage3Locale)}
+                                                        stage3Translate(
+                                                            'stage3.ui.correction.akses.berbasis.cabang.a7198',
+                                                            stage3Locale,
+                                                        )}
                                                 </p>
                                                 <p className="flex items-center gap-2 text-muted-foreground">
                                                     <Building2 className="size-4" />
                                                     {user.current_branch
                                                         ? `${user.current_branch.code} · ${user.current_branch.name}`
-                                                        : stage3Translate('stage3.ui.correction.cabang.kerja.belum.ditetapkan.3d0ed', stage3Locale)}
+                                                        : stage3Translate(
+                                                              'stage3.ui.correction.cabang.kerja.belum.ditetapkan.3d0ed',
+                                                              stage3Locale,
+                                                          )}
                                                     {user.branches.length > 1 &&
                                                         ` +${user.branches.length - 1}`}
                                                 </p>
@@ -511,7 +582,8 @@ export default function UserIndex({
                                                         disabled={isSelf}
                                                     >
                                                         <Pencil />
-                                                        <Stage3Text k="stage3.ui.edit.53016" /></Button>
+                                                        <Stage3Text k="stage3.ui.edit.53016" />
+                                                    </Button>
                                                     <Button
                                                         size="sm"
                                                         variant={
@@ -533,8 +605,14 @@ export default function UserIndex({
                                                         )}
                                                         {user.status ===
                                                         'active'
-                                                            ? stage3Translate('stage3.ui.correction.nonaktifkan.42191', stage3Locale)
-                                                            : stage3Translate('stage3.ui.correction.aktifkan.b2fe9', stage3Locale)}
+                                                            ? stage3Translate(
+                                                                  'stage3.ui.correction.nonaktifkan.42191',
+                                                                  stage3Locale,
+                                                              )
+                                                            : stage3Translate(
+                                                                  'stage3.ui.correction.aktifkan.b2fe9',
+                                                                  stage3Locale,
+                                                              )}
                                                     </Button>
                                                 </div>
                                             )}
@@ -559,17 +637,29 @@ export default function UserIndex({
                     <DialogHeader>
                         <DialogTitle>
                             {editingUser
-                                ? stage3Translate('stage3.ui.correction.edit.53016', stage3Locale) + ' ' + editingUser.name
-                                : stage3Translate('stage3.ui.correction.tambah.pengguna.e505d', stage3Locale)}
+                                ? stage3Translate(
+                                      'stage3.ui.correction.edit.53016',
+                                      stage3Locale,
+                                  ) +
+                                  ' ' +
+                                  editingUser.name
+                                : stage3Translate(
+                                      'stage3.ui.correction.tambah.pengguna.e505d',
+                                      stage3Locale,
+                                  )}
                         </DialogTitle>
                         <DialogDescription>
-                            <Stage3Text k="stage3.ui.role.perusahaan.berlaku.ke.semua.cabang.role.ca.3adf4" /></DialogDescription>
+                            <Stage3Text k="stage3.ui.role.perusahaan.berlaku.ke.semua.cabang.role.ca.3adf4" />
+                        </DialogDescription>
                     </DialogHeader>
 
                     <form onSubmit={submit} className="grid gap-6">
                         <div className="grid gap-4 sm:grid-cols-2">
                             <FormField
-                                label={stage3Translate('stage3.ui.nama.pengguna.7f64a', stage3Locale)}
+                                label={stage3Translate(
+                                    'stage3.ui.nama.pengguna.7f64a',
+                                    stage3Locale,
+                                )}
                                 name="name"
                                 error={form.errors.name}
                             >
@@ -583,7 +673,10 @@ export default function UserIndex({
                                 />
                             </FormField>
                             <FormField
-                                label={stage3Translate('stage3.ui.email.login.d8f0f', stage3Locale)}
+                                label={stage3Translate(
+                                    'stage3.ui.email.login.d8f0f',
+                                    stage3Locale,
+                                )}
                                 name="email"
                                 error={form.errors.email}
                             >
@@ -603,8 +696,14 @@ export default function UserIndex({
                             <FormField
                                 label={
                                     editingUser
-                                        ? stage3Translate('stage3.ui.correction.password.baru.opsional.72cfc', stage3Locale)
-                                        : stage3Translate('stage3.ui.correction.password.8be3c', stage3Locale)
+                                        ? stage3Translate(
+                                              'stage3.ui.correction.password.baru.opsional.72cfc',
+                                              stage3Locale,
+                                          )
+                                        : stage3Translate(
+                                              'stage3.ui.correction.password.8be3c',
+                                              stage3Locale,
+                                          )
                                 }
                                 name="password"
                                 error={form.errors.password}
@@ -623,7 +722,10 @@ export default function UserIndex({
                                 />
                             </FormField>
                             <FormField
-                                label={stage3Translate('stage3.ui.konfirmasi.password.8acb9', stage3Locale)}
+                                label={stage3Translate(
+                                    'stage3.ui.konfirmasi.password.8acb9',
+                                    stage3Locale,
+                                )}
                                 name="password_confirmation"
                             >
                                 <Input
@@ -643,7 +745,10 @@ export default function UserIndex({
                                 />
                             </FormField>
                             <FormField
-                                label={stage3Translate('stage3.ui.status.akun.baccb', stage3Locale)}
+                                label={stage3Translate(
+                                    'stage3.ui.status.akun.baccb',
+                                    stage3Locale,
+                                )}
                                 name="status"
                                 error={form.errors.status}
                             >
@@ -661,16 +766,22 @@ export default function UserIndex({
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="active">
-                                            <Stage3Text k="stage3.ui.aktif.89f29" /></SelectItem>
+                                            <Stage3Text k="stage3.ui.aktif.89f29" />
+                                        </SelectItem>
                                         <SelectItem value="inactive">
-                                            <Stage3Text k="stage3.ui.nonaktif.60944" /></SelectItem>
+                                            <Stage3Text k="stage3.ui.nonaktif.60944" />
+                                        </SelectItem>
                                         <SelectItem value="suspended">
-                                            <Stage3Text k="stage3.ui.suspend.b2424" /></SelectItem>
+                                            <Stage3Text k="stage3.ui.suspend.b2424" />
+                                        </SelectItem>
                                     </SelectContent>
                                 </Select>
                             </FormField>
                             <FormField
-                                label={stage3Translate('stage3.ui.data.karyawan.1a14c', stage3Locale)}
+                                label={stage3Translate(
+                                    'stage3.ui.data.karyawan.1a14c',
+                                    stage3Locale,
+                                )}
                                 name="employee_id"
                                 error={form.errors.employee_id}
                             >
@@ -693,7 +804,8 @@ export default function UserIndex({
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="none">
-                                            <Stage3Text k="stage3.ui.tidak.dihubungkan.867c6" /></SelectItem>
+                                            <Stage3Text k="stage3.ui.tidak.dihubungkan.867c6" />
+                                        </SelectItem>
                                         {employeeOptions.map((employee) => (
                                             <SelectItem
                                                 key={employee.id}
@@ -710,9 +822,12 @@ export default function UserIndex({
 
                         <div className="grid gap-4 rounded-xl border p-4">
                             <div>
-                                <p className="font-medium"><Stage3Text k="stage3.ui.akses.perusahaan.e9af8" /></p>
+                                <p className="font-medium">
+                                    <Stage3Text k="stage3.ui.akses.perusahaan.e9af8" />
+                                </p>
                                 <p className="mt-1 text-xs text-muted-foreground">
-                                    <Stage3Text k="stage3.ui.pilih.jika.pengguna.perlu.akses.lintas.cabang.k.c32dc" /></p>
+                                    <Stage3Text k="stage3.ui.pilih.jika.pengguna.perlu.akses.lintas.cabang.k.c32dc" />
+                                </p>
                             </div>
                             <Select
                                 value={
@@ -731,7 +846,8 @@ export default function UserIndex({
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="none">
-                                        <Stage3Text k="stage3.ui.tanpa.role.perusahaan.a184d" /></SelectItem>
+                                        <Stage3Text k="stage3.ui.tanpa.role.perusahaan.a184d" />
+                                    </SelectItem>
                                     {companyRoles.map((role) => (
                                         <SelectItem
                                             key={role.id}
@@ -747,13 +863,17 @@ export default function UserIndex({
 
                         <div className="grid gap-4 rounded-xl border p-4">
                             <div>
-                                <p className="font-medium"><Stage3Text k="stage3.ui.akses.cabang.7595d" /></p>
+                                <p className="font-medium">
+                                    <Stage3Text k="stage3.ui.akses.cabang.7595d" />
+                                </p>
                                 <p className="mt-1 text-xs text-muted-foreground">
-                                    <Stage3Text k="stage3.ui.centang.cabang.dan.tentukan.role.operasional.un.fb364" /></p>
+                                    <Stage3Text k="stage3.ui.centang.cabang.dan.tentukan.role.operasional.un.fb364" />
+                                </p>
                             </div>
                             {branches.length === 0 ? (
                                 <p className="text-sm text-muted-foreground">
-                                    <Stage3Text k="stage3.ui.belum.ada.cabang.aktif.5dfa7" /></p>
+                                    <Stage3Text k="stage3.ui.belum.ada.cabang.aktif.5dfa7" />
+                                </p>
                             ) : (
                                 <div className="grid gap-3">
                                     {branches.map((branch) => {
@@ -831,7 +951,10 @@ export default function UserIndex({
                         </div>
 
                         <FormField
-                            label={stage3Translate('stage3.ui.cabang.kerja.default.97237', stage3Locale)}
+                            label={stage3Translate(
+                                'stage3.ui.cabang.kerja.default.97237',
+                                stage3Locale,
+                            )}
                             name="default_branch_id"
                             error={form.errors.default_branch_id}
                         >
@@ -852,7 +975,8 @@ export default function UserIndex({
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="none">
-                                        <Stage3Text k="stage3.ui.belum.ditetapkan.d4955" /></SelectItem>
+                                        <Stage3Text k="stage3.ui.belum.ditetapkan.d4955" />
+                                    </SelectItem>
                                     {branches.map((branch) => (
                                         <SelectItem
                                             key={branch.id}
@@ -872,13 +996,23 @@ export default function UserIndex({
                                 onClick={() => setDialogOpen(false)}
                                 disabled={form.processing}
                             >
-                                <Stage3Text k="stage3.ui.batal.14335" /></Button>
+                                <Stage3Text k="stage3.ui.batal.14335" />
+                            </Button>
                             <Button type="submit" disabled={form.processing}>
                                 {form.processing
-                                    ? stage3Translate('stage3.ui.correction.menyimpan.92e24', stage3Locale)
+                                    ? stage3Translate(
+                                          'stage3.ui.correction.menyimpan.92e24',
+                                          stage3Locale,
+                                      )
                                     : editingUser
-                                      ? stage3Translate('stage3.ui.correction.simpan.perubahan.099b3', stage3Locale)
-                                      : stage3Translate('stage3.ui.correction.buat.pengguna.8c72f', stage3Locale)}
+                                      ? stage3Translate(
+                                            'stage3.ui.correction.simpan.perubahan.099b3',
+                                            stage3Locale,
+                                        )
+                                      : stage3Translate(
+                                            'stage3.ui.correction.buat.pengguna.8c72f',
+                                            stage3Locale,
+                                        )}
                             </Button>
                         </DialogFooter>
                     </form>
@@ -894,10 +1028,19 @@ function StatusBadge({ status }: { status: ManagedUser['status'] }) {
     return (
         <Badge variant={status === 'active' ? 'outline' : 'secondary'}>
             {status === 'active'
-                ? stage3Translate('stage3.ui.correction.aktif.89f29', stage3Locale)
+                ? stage3Translate(
+                      'stage3.ui.correction.aktif.89f29',
+                      stage3Locale,
+                  )
                 : status === 'suspended'
-                  ? stage3Translate('stage3.ui.correction.suspend.b2424', stage3Locale)
-                  : stage3Translate('stage3.ui.correction.nonaktif.60944', stage3Locale)}
+                  ? stage3Translate(
+                        'stage3.ui.correction.suspend.b2424',
+                        stage3Locale,
+                    )
+                  : stage3Translate(
+                        'stage3.ui.correction.nonaktif.60944',
+                        stage3Locale,
+                    )}
         </Badge>
     );
 }

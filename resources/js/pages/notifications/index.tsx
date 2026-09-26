@@ -14,7 +14,14 @@ import {
 } from 'lucide-react';
 import type { FormEvent, ReactNode } from 'react';
 import { useState } from 'react';
-import { stage5Choice, stage5Display, stage5RuleLabel, Stage5Text, stage5Translate, stage5Date } from '@/components/stage5-text';
+import {
+    stage5Choice,
+    stage5Display,
+    stage5RuleLabel,
+    Stage5Text,
+    stage5Translate,
+    stage5Date,
+} from '@/components/stage5-text';
 import InputError from '@/components/input-error';
 import { PaginationLinks } from '@/components/pagination-links';
 import { Badge } from '@/components/ui/badge';
@@ -89,8 +96,6 @@ const severityLabels: Record<NotificationSeverity, string> = {
     critical: 'Kritis',
 };
 
-
-
 function severityVariant(severity: NotificationSeverity) {
     if (severity === 'critical') {
         return 'destructive' as const;
@@ -147,7 +152,9 @@ export default function NotificationCenter({
 
     return (
         <>
-            <Head title={stage5Translate("stage5.ui.4907a6b6d8fc", stage5Locale)} />
+            <Head
+                title={stage5Translate('stage5.ui.4907a6b6d8fc', stage5Locale)}
+            />
             <div className="space-y-6 p-4 md:p-6">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
@@ -179,15 +186,33 @@ export default function NotificationCenter({
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                    <SummaryCard label={stage5Translate("stage5.ui.375d213b4a8b", stage5Locale)} value={summary.total} />
-                    <SummaryCard label={stage5Translate("stage5.ui.e5ae91935245", stage5Locale)} value={summary.unread} />
                     <SummaryCard
-                        label={stage5Translate("stage5.ui.31e52fc1ccf5", stage5Locale)}
+                        label={stage5Translate(
+                            'stage5.ui.375d213b4a8b',
+                            stage5Locale,
+                        )}
+                        value={summary.total}
+                    />
+                    <SummaryCard
+                        label={stage5Translate(
+                            'stage5.ui.e5ae91935245',
+                            stage5Locale,
+                        )}
+                        value={summary.unread}
+                    />
+                    <SummaryCard
+                        label={stage5Translate(
+                            'stage5.ui.31e52fc1ccf5',
+                            stage5Locale,
+                        )}
                         value={summary.critical}
                         critical
                     />
                     <SummaryCard
-                        label={stage5Translate("stage5.ui.b6c1c8d3db49", stage5Locale)}
+                        label={stage5Translate(
+                            'stage5.ui.b6c1c8d3db49',
+                            stage5Locale,
+                        )}
                         value={summary.snoozed}
                     />
                 </div>
@@ -221,8 +246,14 @@ export default function NotificationCenter({
                 {tab === 'inbox' && (
                     <div className="space-y-4">
                         <FilterBar
-                            title={stage5Translate("stage5.ui.3c66b920b3ff", stage5Locale)}
-                            description={stage5Translate("stage5.ui.9c0f6fcd4610", stage5Locale)}
+                            title={stage5Translate(
+                                'stage5.ui.3c66b920b3ff',
+                                stage5Locale,
+                            )}
+                            description={stage5Translate(
+                                'stage5.ui.9c0f6fcd4610',
+                                stage5Locale,
+                            )}
                             contentClassName="sm:grid-cols-2 xl:grid-cols-6"
                         >
                             <Input
@@ -235,15 +266,24 @@ export default function NotificationCenter({
                                         applyFilters({});
                                     }
                                 }}
-                                placeholder={stage5Translate("stage5.ui.f664ced63a69", stage5Locale)}
+                                placeholder={stage5Translate(
+                                    'stage5.ui.f664ced63a69',
+                                    stage5Locale,
+                                )}
                                 className="xl:col-span-2"
                             />
                             <FilterSelect
                                 value={filters.category || 'all'}
-                                placeholder={stage5Translate("stage5.ui.3ee43aaffaaf", stage5Locale)}
+                                placeholder={stage5Translate(
+                                    'stage5.ui.3ee43aaffaaf',
+                                    stage5Locale,
+                                )}
                                 options={categories.map((category) => ({
                                     value: category,
-                                    label: stage5Display(categoryLabels[category], stage5Locale),
+                                    label: stage5Display(
+                                        categoryLabels[category],
+                                        stage5Locale,
+                                    ),
                                 }))}
                                 onChange={(value) =>
                                     applyFilters({
@@ -253,10 +293,16 @@ export default function NotificationCenter({
                             />
                             <FilterSelect
                                 value={filters.severity || 'all'}
-                                placeholder={stage5Translate("stage5.ui.6635e0faecfa", stage5Locale)}
+                                placeholder={stage5Translate(
+                                    'stage5.ui.6635e0faecfa',
+                                    stage5Locale,
+                                )}
                                 options={severities.map((severity) => ({
                                     value: severity,
-                                    label: stage5Display(severityLabels[severity], stage5Locale),
+                                    label: stage5Display(
+                                        severityLabels[severity],
+                                        stage5Locale,
+                                    ),
                                 }))}
                                 onChange={(value) =>
                                     applyFilters({
@@ -266,20 +312,38 @@ export default function NotificationCenter({
                             />
                             <FilterSelect
                                 value={filters.state || 'all'}
-                                placeholder={stage5Translate("stage5.ui.baa2adda4148", stage5Locale)}
+                                placeholder={stage5Translate(
+                                    'stage5.ui.baa2adda4148',
+                                    stage5Locale,
+                                )}
                                 options={[
                                     {
                                         value: 'unread',
-                                        label: stage5Translate("stage5.ui.e5ae91935245", stage5Locale),
+                                        label: stage5Translate(
+                                            'stage5.ui.e5ae91935245',
+                                            stage5Locale,
+                                        ),
                                     },
                                     {
                                         value: 'read',
-                                        label: stage5Translate("stage5.ui.3b29ff9fdcce", stage5Locale),
+                                        label: stage5Translate(
+                                            'stage5.ui.3b29ff9fdcce',
+                                            stage5Locale,
+                                        ),
                                     },
-                                    { value: 'snoozed', label: stage5Translate("stage5.ui.977c21bd43c8", stage5Locale) },
+                                    {
+                                        value: 'snoozed',
+                                        label: stage5Translate(
+                                            'stage5.ui.977c21bd43c8',
+                                            stage5Locale,
+                                        ),
+                                    },
                                     {
                                         value: 'dismissed',
-                                        label: stage5Translate("stage5.ui.0e97e7214c08", stage5Locale),
+                                        label: stage5Translate(
+                                            'stage5.ui.0e97e7214c08',
+                                            stage5Locale,
+                                        ),
                                     },
                                 ]}
                                 onChange={(value) =>
@@ -292,7 +356,10 @@ export default function NotificationCenter({
                                         ? 'all'
                                         : String(filters.branch_id)
                                 }
-                                placeholder={stage5Translate("stage5.ui.27d30aba48a4", stage5Locale)}
+                                placeholder={stage5Translate(
+                                    'stage5.ui.27d30aba48a4',
+                                    stage5Locale,
+                                )}
                                 options={auth.branches.map((branch) => ({
                                     value: String(branch.id),
                                     label: branch.code + ' · ' + branch.name,
@@ -412,7 +479,10 @@ function MessageCard({ message }: { message: NotificationItem }) {
                                 {stage5Display(message.severity, stage5Locale)}
                             </Badge>
                             <Badge variant="outline">
-                                {stage5Display(categoryLabels[message.category], stage5Locale)}
+                                {stage5Display(
+                                    categoryLabels[message.category],
+                                    stage5Locale,
+                                )}
                             </Badge>
                             {message.branch && (
                                 <Badge variant="outline">
@@ -434,12 +504,17 @@ function MessageCard({ message }: { message: NotificationItem }) {
                             {message.due_at && (
                                 <span>
                                     <Stage5Text k="stage5.ui.50c63df51c98" />{' '}
-                                    {stage5Date(new Date(message.due_at), stage5Locale)}
+                                    {stage5Date(
+                                        new Date(message.due_at),
+                                        stage5Locale,
+                                    )}
                                 </span>
                             )}
                             {message.occurrences > 1 && (
                                 <span>
-                                    <Stage5Text k="stage5.ui.e59d1ed21ba8" /> {message.occurrences} <Stage5Text k="stage5.ui.e7e971e55af1" />
+                                    <Stage5Text k="stage5.ui.e59d1ed21ba8" />{' '}
+                                    {message.occurrences}{' '}
+                                    <Stage5Text k="stage5.ui.e7e971e55af1" />
                                 </span>
                             )}
                             {message.snoozed_until &&
@@ -520,12 +595,23 @@ function MessageCard({ message }: { message: NotificationItem }) {
                     >
                         <SelectTrigger className="h-8 w-36 text-xs">
                             <Clock3 className="size-3.5" />
-                            <SelectValue placeholder={stage5Translate("stage5.ui.4e912cb03a60", stage5Locale)} />
+                            <SelectValue
+                                placeholder={stage5Translate(
+                                    'stage5.ui.4e912cb03a60',
+                                    stage5Locale,
+                                )}
+                            />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="60"><Stage5Text k="stage5.ui.8122b3bc2fe4" /></SelectItem>
-                            <SelectItem value="1440"><Stage5Text k="stage5.ui.4e32dc13c238" /></SelectItem>
-                            <SelectItem value="10080"><Stage5Text k="stage5.ui.7a462da65851" /></SelectItem>
+                            <SelectItem value="60">
+                                <Stage5Text k="stage5.ui.8122b3bc2fe4" />
+                            </SelectItem>
+                            <SelectItem value="1440">
+                                <Stage5Text k="stage5.ui.4e32dc13c238" />
+                            </SelectItem>
+                            <SelectItem value="10080">
+                                <Stage5Text k="stage5.ui.7a462da65851" />
+                            </SelectItem>
                         </SelectContent>
                     </Select>
                     <Button
@@ -616,7 +702,9 @@ function PreferencePanel({
 
                     <div className="grid gap-4 md:grid-cols-3">
                         <div className="space-y-2">
-                            <Label><Stage5Text k="stage5.ui.ad2cdff9957d" /></Label>
+                            <Label>
+                                <Stage5Text k="stage5.ui.ad2cdff9957d" />
+                            </Label>
                             <Select
                                 value={form.data.email_min_severity}
                                 onValueChange={(value: NotificationSeverity) =>
@@ -632,7 +720,10 @@ function PreferencePanel({
                                             key={severity}
                                             value={severity}
                                         >
-                                            {stage5Display(severityLabels[severity], stage5Locale)}
+                                            {stage5Display(
+                                                severityLabels[severity],
+                                                stage5Locale,
+                                            )}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
@@ -681,7 +772,9 @@ function PreferencePanel({
 
                     <div className="space-y-3">
                         <div>
-                            <Label><Stage5Text k="stage5.ui.b4d8c9a0d587" /></Label>
+                            <Label>
+                                <Stage5Text k="stage5.ui.b4d8c9a0d587" />
+                            </Label>
                             <p className="text-xs text-muted-foreground">
                                 <Stage5Text k="stage5.ui.88485d13bbef" />
                             </p>
@@ -703,7 +796,10 @@ function PreferencePanel({
                                                 toggleCategory(category)
                                             }
                                         />
-                                        {stage5Display(categoryLabels[category], stage5Locale)}
+                                        {stage5Display(
+                                            categoryLabels[category],
+                                            stage5Locale,
+                                        )}
                                     </label>
                                 ))}
                         </div>
@@ -712,8 +808,16 @@ function PreferencePanel({
 
                     <Button type="submit" disabled={form.processing}>
                         {form.processing
-                            ? stage5Choice('Menyimpan...', 'Saving...', stage5Locale)
-                            : stage5Choice('Simpan preferensi', 'Save preferences', stage5Locale)}
+                            ? stage5Choice(
+                                  'Menyimpan...',
+                                  'Saving...',
+                                  stage5Locale,
+                              )
+                            : stage5Choice(
+                                  'Simpan preferensi',
+                                  'Save preferences',
+                                  stage5Locale,
+                              )}
                     </Button>
                 </form>
             </CardContent>
@@ -747,13 +851,28 @@ function RuleEditor({
                 <div className="flex items-start justify-between gap-3">
                     <div>
                         <div className="flex flex-wrap items-center gap-2">
-                            <CardTitle>{stage5RuleLabel(rule.code, rule.name, 'title', stage5Locale)}</CardTitle>
+                            <CardTitle>
+                                {stage5RuleLabel(
+                                    rule.code,
+                                    rule.name,
+                                    'title',
+                                    stage5Locale,
+                                )}
+                            </CardTitle>
                             <Badge variant="outline">
-                                {stage5Display(categoryLabels[rule.category], stage5Locale)}
+                                {stage5Display(
+                                    categoryLabels[rule.category],
+                                    stage5Locale,
+                                )}
                             </Badge>
                         </div>
                         <CardDescription className="mt-2">
-                            {stage5RuleLabel(rule.code, rule.description, 'description', stage5Locale)}
+                            {stage5RuleLabel(
+                                rule.code,
+                                rule.description,
+                                'description',
+                                stage5Locale,
+                            )}
                         </CardDescription>
                     </div>
                     <label className="flex items-center gap-2 text-sm">
@@ -772,7 +891,9 @@ function RuleEditor({
                 <form className="space-y-4" onSubmit={submit}>
                     <div className="grid gap-3 sm:grid-cols-3">
                         <div className="space-y-2">
-                            <Label><Stage5Text k="stage5.ui.51cb5d20e6cb" /></Label>
+                            <Label>
+                                <Stage5Text k="stage5.ui.51cb5d20e6cb" />
+                            </Label>
                             <Select
                                 value={form.data.severity}
                                 onValueChange={(value: NotificationSeverity) =>
@@ -788,14 +909,19 @@ function RuleEditor({
                                             key={severity}
                                             value={severity}
                                         >
-                                            {stage5Display(severityLabels[severity], stage5Locale)}
+                                            {stage5Display(
+                                                severityLabels[severity],
+                                                stage5Locale,
+                                            )}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
                         </div>
                         <div className="space-y-2">
-                            <Label><Stage5Text k="stage5.ui.3fb56e744bbd" /></Label>
+                            <Label>
+                                <Stage5Text k="stage5.ui.3fb56e744bbd" />
+                            </Label>
                             <Input
                                 type="number"
                                 min={0}
@@ -810,7 +936,9 @@ function RuleEditor({
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label><Stage5Text k="stage5.ui.d5a816caf986" /></Label>
+                            <Label>
+                                <Stage5Text k="stage5.ui.d5a816caf986" />
+                            </Label>
                             <Input
                                 type="number"
                                 min={5}
@@ -827,7 +955,8 @@ function RuleEditor({
                     </div>
                     <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-4">
                         <p className="text-xs text-muted-foreground">
-                            <Stage5Text k="stage5.ui.d85617e54a61" /> <code>{rule.recipient_permission}</code>
+                            <Stage5Text k="stage5.ui.d85617e54a61" />{' '}
+                            <code>{rule.recipient_permission}</code>
                         </p>
                         <Button
                             type="submit"
@@ -835,8 +964,16 @@ function RuleEditor({
                             disabled={form.processing}
                         >
                             {form.processing
-                                ? stage5Choice('Menyimpan...', 'Saving...', stage5Locale)
-                                : stage5Choice('Simpan aturan', 'Save rule', stage5Locale)}
+                                ? stage5Choice(
+                                      'Menyimpan...',
+                                      'Saving...',
+                                      stage5Locale,
+                                  )
+                                : stage5Choice(
+                                      'Simpan aturan',
+                                      'Save rule',
+                                      stage5Locale,
+                                  )}
                         </Button>
                     </div>
                 </form>

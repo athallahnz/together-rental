@@ -1,5 +1,11 @@
 import { Link, usePage } from '@inertiajs/react';
-import { CircleUserRound, Globe2, LockKeyhole, Palette, Settings2 } from 'lucide-react';
+import {
+    CircleUserRound,
+    Globe2,
+    LockKeyhole,
+    Palette,
+    Settings2,
+} from 'lucide-react';
 import type { PropsWithChildren } from 'react';
 import { Button } from '@/components/ui/button';
 import { useCurrentUrl } from '@/hooks/use-current-url';

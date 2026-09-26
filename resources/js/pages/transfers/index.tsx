@@ -1,7 +1,13 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { ArrowLeftRight, Plus, Settings2 } from 'lucide-react';
 import { useState } from 'react';
-import { Stage4Text, stage4Translate, stage4TranslateDynamic, stage4FormatDateTime, stage4ItemCount } from '@/components/stage4-text';
+import {
+    Stage4Text,
+    stage4Translate,
+    stage4TranslateDynamic,
+    stage4FormatDateTime,
+    stage4ItemCount,
+} from '@/components/stage4-text';
 import { useAppLocale } from '@/lib/i18n';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -54,7 +60,6 @@ const labels: Record<TransferStatus, string> = {
     cancelled: 'Dibatalkan',
 };
 
-
 export default function TransferIndex({
     transfers,
     summary,
@@ -81,27 +86,33 @@ export default function TransferIndex({
 
     return (
         <>
-            <Head title={stage4Translate("stage4.ui.519c5796eec3", stage4Locale)} />
+            <Head
+                title={stage4Translate('stage4.ui.519c5796eec3', stage4Locale)}
+            />
             <div className="space-y-6 p-4 md:p-6">
                 <div className="flex flex-wrap items-center justify-between gap-3">
                     <div>
-                        <h1 className="text-2xl font-semibold"><Stage4Text k="stage4.ui.519c5796eec3" />
+                        <h1 className="text-2xl font-semibold">
+                            <Stage4Text k="stage4.ui.519c5796eec3" />
                         </h1>
-                        <p className="text-sm text-muted-foreground"><Stage4Text k="stage4.ui.49319f6fcb47" />
+                        <p className="text-sm text-muted-foreground">
+                            <Stage4Text k="stage4.ui.49319f6fcb47" />
                         </p>
                     </div>
                     <div className="flex gap-2">
                         {permissions.settings && (
                             <Button variant="outline" asChild>
                                 <Link href="/transfers/settings">
-                                    <Settings2 className="size-4" /><Stage4Text k="stage4.ui.3fcdc1c4886d" />
+                                    <Settings2 className="size-4" />
+                                    <Stage4Text k="stage4.ui.3fcdc1c4886d" />
                                 </Link>
                             </Button>
                         )}
                         {permissions.create && (
                             <Button asChild>
                                 <Link href="/transfers/create">
-                                    <Plus className="size-4" /><Stage4Text k="stage4.ui.13363d3d0063" />
+                                    <Plus className="size-4" />
+                                    <Stage4Text k="stage4.ui.13363d3d0063" />
                                 </Link>
                             </Button>
                         )}
@@ -109,19 +120,52 @@ export default function TransferIndex({
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-5">
-                    <Summary label={stage4Translate("stage4.ui.23d33e22acfc", stage4Locale)} value={summary.draft} />
                     <Summary
-                        label={stage4Translate("stage4.ui.6618acf15388", stage4Locale)}
+                        label={stage4Translate(
+                            'stage4.ui.23d33e22acfc',
+                            stage4Locale,
+                        )}
+                        value={summary.draft}
+                    />
+                    <Summary
+                        label={stage4Translate(
+                            'stage4.ui.6618acf15388',
+                            stage4Locale,
+                        )}
                         value={summary.pending_approval}
                     />
-                    <Summary label={stage4Translate("stage4.ui.41b81eb8db1b", stage4Locale)} value={summary.approved} />
-                    <Summary label={stage4Translate("stage4.ui.046e5cee819c", stage4Locale)} value={summary.in_transit} />
-                    <Summary label={stage4Translate("stage4.ui.001d34d78ee8", stage4Locale)} value={summary.discrepancy} />
+                    <Summary
+                        label={stage4Translate(
+                            'stage4.ui.41b81eb8db1b',
+                            stage4Locale,
+                        )}
+                        value={summary.approved}
+                    />
+                    <Summary
+                        label={stage4Translate(
+                            'stage4.ui.046e5cee819c',
+                            stage4Locale,
+                        )}
+                        value={summary.in_transit}
+                    />
+                    <Summary
+                        label={stage4Translate(
+                            'stage4.ui.001d34d78ee8',
+                            stage4Locale,
+                        )}
+                        value={summary.discrepancy}
+                    />
                 </div>
 
                 <FilterBar
-                    title={stage4Translate("stage4.ui.d3ce1a14ad57", stage4Locale)}
-                    description={stage4Translate("stage4.ui.496463625e8f", stage4Locale)}
+                    title={stage4Translate(
+                        'stage4.ui.d3ce1a14ad57',
+                        stage4Locale,
+                    )}
+                    description={stage4Translate(
+                        'stage4.ui.496463625e8f',
+                        stage4Locale,
+                    )}
                 >
                     <Input
                         value={search}
@@ -131,7 +175,10 @@ export default function TransferIndex({
                                 applyFilters({});
                             }
                         }}
-                        placeholder={stage4Translate("stage4.ui.b9efc6d6975e", stage4Locale)}
+                        placeholder={stage4Translate(
+                            'stage4.ui.b9efc6d6975e',
+                            stage4Locale,
+                        )}
                     />
                     <Select
                         value={filters.status || 'all'}
@@ -142,13 +189,23 @@ export default function TransferIndex({
                         }
                     >
                         <SelectTrigger>
-                            <SelectValue placeholder={stage4Translate("stage4.ui.baa2adda4148", stage4Locale)} />
+                            <SelectValue
+                                placeholder={stage4Translate(
+                                    'stage4.ui.baa2adda4148',
+                                    stage4Locale,
+                                )}
+                            />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="all"><Stage4Text k="stage4.ui.baa2adda4148" /></SelectItem>
+                            <SelectItem value="all">
+                                <Stage4Text k="stage4.ui.baa2adda4148" />
+                            </SelectItem>
                             {Object.entries(labels).map(([value, label]) => (
                                 <SelectItem key={value} value={value}>
-                                    {stage4TranslateDynamic(label, stage4Locale)}
+                                    {stage4TranslateDynamic(
+                                        label,
+                                        stage4Locale,
+                                    )}
                                 </SelectItem>
                             ))}
                         </SelectContent>
@@ -166,10 +223,17 @@ export default function TransferIndex({
                         }
                     >
                         <SelectTrigger>
-                            <SelectValue placeholder={stage4Translate("stage4.ui.27d30aba48a4", stage4Locale)} />
+                            <SelectValue
+                                placeholder={stage4Translate(
+                                    'stage4.ui.27d30aba48a4',
+                                    stage4Locale,
+                                )}
+                            />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="all"><Stage4Text k="stage4.ui.27d30aba48a4" /></SelectItem>
+                            <SelectItem value="all">
+                                <Stage4Text k="stage4.ui.27d30aba48a4" />
+                            </SelectItem>
                             {branches.map((branch) => (
                                 <SelectItem
                                     key={branch.id}
@@ -183,7 +247,8 @@ export default function TransferIndex({
                     <Button
                         variant="secondary"
                         onClick={() => applyFilters({})}
-                    ><Stage4Text k="stage4.ui.3f2275d79afb" />
+                    >
+                        <Stage4Text k="stage4.ui.3f2275d79afb" />
                     </Button>
                 </FilterBar>
 
@@ -193,11 +258,21 @@ export default function TransferIndex({
                             <table className="w-full text-sm">
                                 <thead className="border-b bg-muted/40 text-left">
                                     <tr>
-                                        <th className="px-4 py-3"><Stage4Text k="stage4.ui.cbb4cc49824b" /></th>
-                                        <th className="px-4 py-3"><Stage4Text k="stage4.ui.607e80f9c0c7" /></th>
-                                        <th className="px-4 py-3"><Stage4Text k="stage4.ui.92d937165b09" /></th>
-                                        <th className="px-4 py-3"><Stage4Text k="stage4.ui.ecdda59aea5e" /></th>
-                                        <th className="px-4 py-3"><Stage4Text k="stage4.ui.bae7d5be7082" /></th>
+                                        <th className="px-4 py-3">
+                                            <Stage4Text k="stage4.ui.cbb4cc49824b" />
+                                        </th>
+                                        <th className="px-4 py-3">
+                                            <Stage4Text k="stage4.ui.607e80f9c0c7" />
+                                        </th>
+                                        <th className="px-4 py-3">
+                                            <Stage4Text k="stage4.ui.92d937165b09" />
+                                        </th>
+                                        <th className="px-4 py-3">
+                                            <Stage4Text k="stage4.ui.ecdda59aea5e" />
+                                        </th>
+                                        <th className="px-4 py-3">
+                                            <Stage4Text k="stage4.ui.bae7d5be7082" />
+                                        </th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -213,7 +288,8 @@ export default function TransferIndex({
                                                 >
                                                     {transfer.transfer_number}
                                                 </Link>
-                                                <p className="text-xs text-muted-foreground"><Stage4Text k="stage4.ui.ede67d8c2d61" />{' '}
+                                                <p className="text-xs text-muted-foreground">
+                                                    <Stage4Text k="stage4.ui.ede67d8c2d61" />{' '}
                                                     {transfer.revision_number}
                                                 </p>
                                             </td>
@@ -238,17 +314,26 @@ export default function TransferIndex({
                                             </td>
                                             <td className="px-4 py-3 text-muted-foreground">
                                                 {transfer.planned_dispatch_at
-                                                    ? stage4FormatDateTime(new Date(
+                                                    ? stage4FormatDateTime(
+                                                          new Date(
                                                               transfer.planned_dispatch_at,
-                                                          ), stage4Locale)
+                                                          ),
+                                                          stage4Locale,
+                                                      )
                                                     : '—'}
                                             </td>
                                             <td className="px-4 py-3">
-                                                {stage4ItemCount(transfer.items_count ?? 0, stage4Locale)}
+                                                {stage4ItemCount(
+                                                    transfer.items_count ?? 0,
+                                                    stage4Locale,
+                                                )}
                                             </td>
                                             <td className="px-4 py-3">
                                                 <Badge variant="secondary">
-                                                    {stage4TranslateDynamic(labels[transfer.status], stage4Locale)}
+                                                    {stage4TranslateDynamic(
+                                                        labels[transfer.status],
+                                                        stage4Locale,
+                                                    )}
                                                 </Badge>
                                             </td>
                                         </tr>
@@ -258,7 +343,8 @@ export default function TransferIndex({
                                             <td
                                                 colSpan={5}
                                                 className="px-4 py-12 text-center text-muted-foreground"
-                                            ><Stage4Text k="stage4.ui.b2df2d0f9976" />
+                                            >
+                                                <Stage4Text k="stage4.ui.b2df2d0f9976" />
                                             </td>
                                         </tr>
                                     )}

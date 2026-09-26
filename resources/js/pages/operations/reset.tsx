@@ -13,7 +13,12 @@ import {
     Wrench,
 } from 'lucide-react';
 import type { FormEvent } from 'react';
-import { stage5Choice, Stage5Text, stage5Translate, stage5IntlLocale } from '@/components/stage5-text';
+import {
+    stage5Choice,
+    Stage5Text,
+    stage5Translate,
+    stage5IntlLocale,
+} from '@/components/stage5-text';
 import { useConfirmDialog } from '@/components/confirm-dialog-provider';
 import InputError from '@/components/input-error';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
@@ -138,8 +143,12 @@ export default function OperationalDataReset({
         event.preventDefault();
 
         const approved = await confirm({
-            title: stage5Translate("stage5.ui.c71a7063881f", stage5Locale),
-            description: stage5Choice(`Pemesanan, rental, transaksi keuangan terkait, dokumen, pengembalian, perawatan, pemeriksaan stok, dan transfer pada ${scopeLabel} akan dihapus permanen dari lingkungan ${environment}. Data induk pelanggan, katalog, aset, harga, cabang, pengguna, dan peran tetap dipertahankan.`, `Bookings, rentals, associated financial transactions, documents, returns, maintenance, stocktaking, and transfers in ${scopeLabel} will be permanently deleted from ${environment}. Customer, catalog, asset, pricing, branch, user and role master data will be preserved.`, stage5Locale),
+            title: stage5Translate('stage5.ui.c71a7063881f', stage5Locale),
+            description: stage5Choice(
+                `Pemesanan, rental, transaksi keuangan terkait, dokumen, pengembalian, perawatan, pemeriksaan stok, dan transfer pada ${scopeLabel} akan dihapus permanen dari lingkungan ${environment}. Data induk pelanggan, katalog, aset, harga, cabang, pengguna, dan peran tetap dipertahankan.`,
+                `Bookings, rentals, associated financial transactions, documents, returns, maintenance, stocktaking, and transfers in ${scopeLabel} will be permanently deleted from ${environment}. Customer, catalog, asset, pricing, branch, user and role master data will be preserved.`,
+                stage5Locale,
+            ),
             confirmLabel: 'Ya, reset operasional',
             variant: 'destructive',
         });
@@ -162,7 +171,9 @@ export default function OperationalDataReset({
 
     return (
         <>
-            <Head title={stage5Translate("stage5.ui.4341da9b183f", stage5Locale)} />
+            <Head
+                title={stage5Translate('stage5.ui.4341da9b183f', stage5Locale)}
+            />
 
             <div className="flex h-full flex-1 flex-col gap-6 overflow-x-auto rounded-xl p-4 md:p-6">
                 <header className="flex flex-col gap-4 xl:flex-row xl:items-end xl:justify-between">
@@ -179,7 +190,9 @@ export default function OperationalDataReset({
                     </div>
 
                     <div className="w-full max-w-sm space-y-2">
-                        <Label htmlFor="reset-scope"><Stage5Text k="stage5.ui.a5da1c3778e0" /></Label>
+                        <Label htmlFor="reset-scope">
+                            <Stage5Text k="stage5.ui.a5da1c3778e0" />
+                        </Label>
                         <Select
                             value={selectedScope}
                             onValueChange={switchScope}
@@ -217,58 +230,86 @@ export default function OperationalDataReset({
 
                 <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                     <SummaryCard
-                        label={stage5Translate("stage5.ui.e38ea8eebe78", stage5Locale)}
+                        label={stage5Translate(
+                            'stage5.ui.e38ea8eebe78',
+                            stage5Locale,
+                        )}
                         value={summary.bookings}
                         detail={`${summary.reservations.toLocaleString(stage5IntlLocale(stage5Locale))} reservasi aset ikut dilepas`}
                         icon={CalendarDays}
                     />
                     <SummaryCard
-                        label={stage5Translate("stage5.ui.e703935c66bf", stage5Locale)}
+                        label={stage5Translate(
+                            'stage5.ui.e703935c66bf',
+                            stage5Locale,
+                        )}
                         value={summary.rentals}
                         detail={`${summary.returns.toLocaleString(stage5IntlLocale(stage5Locale))} pengembalian ikut dibersihkan`}
                         icon={ShoppingBag}
                     />
                     <SummaryCard
-                        label={stage5Translate("stage5.ui.15f141a61e02", stage5Locale)}
+                        label={stage5Translate(
+                            'stage5.ui.15f141a61e02',
+                            stage5Locale,
+                        )}
                         value={totalFinance}
                         detail={`${summary.payments.toLocaleString(stage5IntlLocale(stage5Locale))} payment · ${summary.refunds.toLocaleString(stage5IntlLocale(stage5Locale))} refund · ${summary.operational_expenses.toLocaleString(stage5IntlLocale(stage5Locale))} expense · ${summary.transaction_documents.toLocaleString(stage5IntlLocale(stage5Locale))} dokumen`}
                         icon={CircleDollarSign}
                     />
                     <SummaryCard
-                        label={stage5Translate("stage5.ui.94de303bbef8", stage5Locale)}
+                        label={stage5Translate(
+                            'stage5.ui.94de303bbef8',
+                            stage5Locale,
+                        )}
                         value={summary.maintenance}
                         detail={`${summary.inspections.toLocaleString(stage5IntlLocale(stage5Locale))} inspection pada lingkup reset`}
                         icon={Wrench}
                     />
                     <SummaryCard
-                        label={stage5Translate("stage5.ui.5b358c94674d", stage5Locale)}
+                        label={stage5Translate(
+                            'stage5.ui.5b358c94674d',
+                            stage5Locale,
+                        )}
                         value={summary.inventory_audits}
                         detail={
-                            summary.notifications.toLocaleString(stage5IntlLocale(stage5Locale)) +
-                            ' reminder operasional terkait ikut dibersihkan'
+                            summary.notifications.toLocaleString(
+                                stage5IntlLocale(stage5Locale),
+                            ) + ' reminder operasional terkait ikut dibersihkan'
                         }
                         icon={ClipboardCheck}
                     />
                     <SummaryCard
-                        label={stage5Translate("stage5.ui.b7480f1ffbe7", stage5Locale)}
+                        label={stage5Translate(
+                            'stage5.ui.b7480f1ffbe7',
+                            stage5Locale,
+                        )}
                         value={summary.transfers}
                         detail={`${summary.transfer_expenses.toLocaleString(stage5IntlLocale(stage5Locale))} biaya transfer terkait`}
                         icon={ArrowLeftRight}
                     />
                     <SummaryCard
-                        label={stage5Translate("stage5.ui.7dba4563705a", stage5Locale)}
+                        label={stage5Translate(
+                            'stage5.ui.7dba4563705a',
+                            stage5Locale,
+                        )}
                         value={summary.serialized_assets}
                         detail="Aset aktif akan dikembalikan ke status available"
                         icon={PackageCheck}
                     />
                     <SummaryCard
-                        label={stage5Translate("stage5.ui.3722564cb316", stage5Locale)}
+                        label={stage5Translate(
+                            'stage5.ui.3722564cb316',
+                            stage5Locale,
+                        )}
                         value={summary.bulk_inventory_rows}
                         detail="Counter reserved, rented, maintenance, dan transfer → 0"
                         icon={Database}
                     />
                     <SummaryCard
-                        label={stage5Translate("stage5.ui.7f0e0b23bf61", stage5Locale)}
+                        label={stage5Translate(
+                            'stage5.ui.7f0e0b23bf61',
+                            stage5Locale,
+                        )}
                         value={selectedScope === 'all' ? branches.length : 1}
                         detail={scopeLabel}
                         icon={ShieldCheck}
@@ -278,7 +319,9 @@ export default function OperationalDataReset({
                 <div className="grid gap-6 xl:grid-cols-2">
                     <Card>
                         <CardHeader>
-                            <CardTitle><Stage5Text k="stage5.ui.ac0c8b0bcc50" /></CardTitle>
+                            <CardTitle>
+                                <Stage5Text k="stage5.ui.ac0c8b0bcc50" />
+                            </CardTitle>
                             <CardDescription>
                                 <Stage5Text k="stage5.ui.ee66f28d4a35" />
                             </CardDescription>
@@ -307,7 +350,9 @@ export default function OperationalDataReset({
 
                     <Card>
                         <CardHeader>
-                            <CardTitle><Stage5Text k="stage5.ui.5d456a91ba3e" /></CardTitle>
+                            <CardTitle>
+                                <Stage5Text k="stage5.ui.5d456a91ba3e" />
+                            </CardTitle>
                             <CardDescription>
                                 <Stage5Text k="stage5.ui.f3c2b6a5bd4d" />
                             </CardDescription>
@@ -338,7 +383,9 @@ export default function OperationalDataReset({
                 <form onSubmit={submit} className="space-y-6">
                     <Card>
                         <CardHeader>
-                            <CardTitle><Stage5Text k="stage5.ui.ae1618687629" /></CardTitle>
+                            <CardTitle>
+                                <Stage5Text k="stage5.ui.ae1618687629" />
+                            </CardTitle>
                             <CardDescription>
                                 <Stage5Text k="stage5.ui.14adff6c5281" />
                             </CardDescription>
@@ -430,7 +477,10 @@ export default function OperationalDataReset({
                                             )
                                         }
                                         autoComplete="current-password"
-                                        placeholder={stage5Translate("stage5.ui.5bbfdb51d1c0", stage5Locale)}
+                                        placeholder={stage5Translate(
+                                            'stage5.ui.5bbfdb51d1c0',
+                                            stage5Locale,
+                                        )}
                                     />
                                     <InputError
                                         message={form.errors.password}
@@ -442,7 +492,11 @@ export default function OperationalDataReset({
 
                             <div className="flex flex-col gap-3 border-t pt-5 sm:flex-row sm:items-center sm:justify-between">
                                 <p className="max-w-2xl text-xs leading-5 text-muted-foreground">
-                                    <Stage5Text k="stage5.ui.652ac2cbbafc" /> <strong>{scopeLabel}</strong> <Stage5Text k="stage5.ui.17568ffbc7ac" /> <strong>{environment}</strong><Stage5Text k="stage5.ui.75e1f0b8a405" />
+                                    <Stage5Text k="stage5.ui.652ac2cbbafc" />{' '}
+                                    <strong>{scopeLabel}</strong>{' '}
+                                    <Stage5Text k="stage5.ui.17568ffbc7ac" />{' '}
+                                    <strong>{environment}</strong>
+                                    <Stage5Text k="stage5.ui.75e1f0b8a405" />
                                 </p>
                                 <Button
                                     type="submit"

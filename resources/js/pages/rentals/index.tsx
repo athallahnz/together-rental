@@ -13,7 +13,13 @@ import {
     X,
 } from 'lucide-react';
 import { useState } from 'react';
-import { Stage4Text, stage4Translate, stage4TranslateDynamic, stage4FormatDateTime, stage4ItemCount } from '@/components/stage4-text';
+import {
+    Stage4Text,
+    stage4Translate,
+    stage4TranslateDynamic,
+    stage4FormatDateTime,
+    stage4ItemCount,
+} from '@/components/stage4-text';
 import { useAppLocale } from '@/lib/i18n';
 import { PaginationLinks } from '@/components/pagination-links';
 import { FilterBar } from '@/components/ui/filter-bar';
@@ -182,21 +188,27 @@ export default function RentalIndex({
 
     return (
         <>
-            <Head title={stage4Translate("stage4.ui.e703935c66bf", stage4Locale)} />
+            <Head
+                title={stage4Translate('stage4.ui.e703935c66bf', stage4Locale)}
+            />
             <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
                 <header className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                     <div>
-                        <p className="text-sm font-medium text-primary"><Stage4Text k="stage4.ui.b38dd60e9971" />
+                        <p className="text-sm font-medium text-primary">
+                            <Stage4Text k="stage4.ui.b38dd60e9971" />
                         </p>
-                        <h1 className="mt-1 text-2xl font-semibold"><Stage4Text k="stage4.ui.e33d53015c42" />
+                        <h1 className="mt-1 text-2xl font-semibold">
+                            <Stage4Text k="stage4.ui.e33d53015c42" />
                         </h1>
-                        <p className="mt-2 max-w-3xl text-sm text-muted-foreground"><Stage4Text k="stage4.ui.54c24ed70f3b" />
+                        <p className="mt-2 max-w-3xl text-sm text-muted-foreground">
+                            <Stage4Text k="stage4.ui.54c24ed70f3b" />
                         </p>
                     </div>
                     {permissions.create && (
                         <Button asChild>
                             <Link href="/rentals/direct/create">
-                                <Plus /><Stage4Text k="stage4.ui.fd25629b8a39" />
+                                <Plus />
+                                <Stage4Text k="stage4.ui.fd25629b8a39" />
                             </Link>
                         </Button>
                     )}
@@ -209,9 +221,11 @@ export default function RentalIndex({
                                 <AlertTriangle className="mt-0.5 size-5 text-destructive" />
                                 <div>
                                     <p className="font-semibold">
-                                        {summary.overdue}{' '}<Stage4Text k="stage4.ui.ced72ae92775" />
+                                        {summary.overdue}{' '}
+                                        <Stage4Text k="stage4.ui.ced72ae92775" />
                                     </p>
-                                    <p className="text-sm text-muted-foreground"><Stage4Text k="stage4.ui.a4b5f1171d1c" />
+                                    <p className="text-sm text-muted-foreground">
+                                        <Stage4Text k="stage4.ui.a4b5f1171d1c" />
                                     </p>
                                 </div>
                             </div>
@@ -221,7 +235,8 @@ export default function RentalIndex({
                                 onClick={() =>
                                     apply({ operational_state: 'overdue' })
                                 }
-                            ><Stage4Text k="stage4.ui.b7e0532f37b4" />
+                            >
+                                <Stage4Text k="stage4.ui.b7e0532f37b4" />
                             </Button>
                         </CardContent>
                     </Card>
@@ -229,38 +244,59 @@ export default function RentalIndex({
 
                 <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-7">
                     <SummaryCard
-                        label={stage4Translate("stage4.ui.f2c455b53bdd", stage4Locale)}
+                        label={stage4Translate(
+                            'stage4.ui.f2c455b53bdd',
+                            stage4Locale,
+                        )}
                         value={summary.active}
                         icon={ShoppingBag}
                     />
                     <SummaryCard
-                        label={stage4Translate("stage4.ui.07217c77199f", stage4Locale)}
+                        label={stage4Translate(
+                            'stage4.ui.07217c77199f',
+                            stage4Locale,
+                        )}
                         value={summary.overdue}
                         icon={AlertTriangle}
                         attention={summary.overdue > 0}
                     />
                     <SummaryCard
-                        label={stage4Translate("stage4.ui.7363e72a1abb", stage4Locale)}
+                        label={stage4Translate(
+                            'stage4.ui.7363e72a1abb',
+                            stage4Locale,
+                        )}
                         value={summary.dueToday}
                         icon={CalendarClock}
                     />
                     <SummaryCard
-                        label={stage4Translate("stage4.ui.bcdd13c8aa84", stage4Locale)}
+                        label={stage4Translate(
+                            'stage4.ui.bcdd13c8aa84',
+                            stage4Locale,
+                        )}
                         value={summary.partialReturn}
                         icon={PackageCheck}
                     />
                     <SummaryCard
-                        label={stage4Translate("stage4.ui.4e2fd9a9ddeb", stage4Locale)}
+                        label={stage4Translate(
+                            'stage4.ui.4e2fd9a9ddeb',
+                            stage4Locale,
+                        )}
                         value={summary.correctionPending}
                         icon={TimerReset}
                     />
                     <SummaryCard
-                        label={stage4Translate("stage4.ui.153db5843671", stage4Locale)}
+                        label={stage4Translate(
+                            'stage4.ui.153db5843671',
+                            stage4Locale,
+                        )}
                         value={summary.closed}
                         icon={CheckCircle2}
                     />
                     <SummaryCard
-                        label={stage4Translate("stage4.ui.6f4acc7bef42", stage4Locale)}
+                        label={stage4Translate(
+                            'stage4.ui.6f4acc7bef42',
+                            stage4Locale,
+                        )}
                         value={money.format(summary.outstandingAmount)}
                         icon={CircleDollarSign}
                         compact
@@ -268,12 +304,22 @@ export default function RentalIndex({
                 </section>
 
                 <FilterBar
-                    title={stage4Translate("stage4.ui.348e3295d626", stage4Locale)}
-                    description={stage4Translate("stage4.ui.580126f82ca4", stage4Locale)}
+                    title={stage4Translate(
+                        'stage4.ui.348e3295d626',
+                        stage4Locale,
+                    )}
+                    description={stage4Translate(
+                        'stage4.ui.580126f82ca4',
+                        stage4Locale,
+                    )}
                     context={
                         <Badge variant="outline" className="w-fit">
                             <Building2 />{' '}
-                            {selectedBranch?.name ?? stage4Translate("stage4.ui.27d30aba48a4", stage4Locale)}
+                            {selectedBranch?.name ??
+                                stage4Translate(
+                                    'stage4.ui.27d30aba48a4',
+                                    stage4Locale,
+                                )}
                         </Badge>
                     }
                     contentClassName="grid-cols-1"
@@ -293,7 +339,10 @@ export default function RentalIndex({
                                     setSearch(event.target.value)
                                 }
                                 className="pl-9"
-                                placeholder={stage4Translate("stage4.ui.05bc9145293e", stage4Locale)}
+                                placeholder={stage4Translate(
+                                    'stage4.ui.05bc9145293e',
+                                    stage4Locale,
+                                )}
                             />
                         </div>
                         <Select
@@ -303,20 +352,31 @@ export default function RentalIndex({
                             }
                         >
                             <SelectTrigger>
-                                <SelectValue placeholder={stage4Translate("stage4.ui.f9cd492228d5", stage4Locale)} />
+                                <SelectValue
+                                    placeholder={stage4Translate(
+                                        'stage4.ui.f9cd492228d5',
+                                        stage4Locale,
+                                    )}
+                                />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all"><Stage4Text k="stage4.ui.dc2afe7ec281" />
+                                <SelectItem value="all">
+                                    <Stage4Text k="stage4.ui.dc2afe7ec281" />
                                 </SelectItem>
-                                <SelectItem value="active"><Stage4Text k="stage4.ui.b1c48ec1abd9" />
+                                <SelectItem value="active">
+                                    <Stage4Text k="stage4.ui.b1c48ec1abd9" />
                                 </SelectItem>
-                                <SelectItem value="overdue"><Stage4Text k="stage4.ui.becb656b7939" />
+                                <SelectItem value="overdue">
+                                    <Stage4Text k="stage4.ui.becb656b7939" />
                                 </SelectItem>
-                                <SelectItem value="due_today"><Stage4Text k="stage4.ui.7363e72a1abb" />
+                                <SelectItem value="due_today">
+                                    <Stage4Text k="stage4.ui.7363e72a1abb" />
                                 </SelectItem>
-                                <SelectItem value="due_soon"><Stage4Text k="stage4.ui.564bd339bddd" />
+                                <SelectItem value="due_soon">
+                                    <Stage4Text k="stage4.ui.564bd339bddd" />
                                 </SelectItem>
-                                <SelectItem value="closed"><Stage4Text k="stage4.ui.207c57b0cc2e" />
+                                <SelectItem value="closed">
+                                    <Stage4Text k="stage4.ui.207c57b0cc2e" />
                                 </SelectItem>
                             </SelectContent>
                         </Select>
@@ -325,10 +385,16 @@ export default function RentalIndex({
                             onValueChange={(value) => apply({ status: value })}
                         >
                             <SelectTrigger>
-                                <SelectValue placeholder={stage4Translate("stage4.ui.aff17f5198f2", stage4Locale)} />
+                                <SelectValue
+                                    placeholder={stage4Translate(
+                                        'stage4.ui.aff17f5198f2',
+                                        stage4Locale,
+                                    )}
+                                />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all"><Stage4Text k="stage4.ui.baa2adda4148" />
+                                <SelectItem value="all">
+                                    <Stage4Text k="stage4.ui.baa2adda4148" />
                                 </SelectItem>
                                 {[
                                     'active',
@@ -338,7 +404,10 @@ export default function RentalIndex({
                                     'completed',
                                 ].map((status) => (
                                     <SelectItem key={status} value={status}>
-                                        {stage4TranslateDynamic(statusLabel[status], stage4Locale)}
+                                        {stage4TranslateDynamic(
+                                            statusLabel[status],
+                                            stage4Locale,
+                                        )}
                                     </SelectItem>
                                 ))}
                             </SelectContent>
@@ -350,15 +419,25 @@ export default function RentalIndex({
                             }
                         >
                             <SelectTrigger>
-                                <SelectValue placeholder={stage4Translate("stage4.ui.f0874594eb78", stage4Locale)} />
+                                <SelectValue
+                                    placeholder={stage4Translate(
+                                        'stage4.ui.f0874594eb78',
+                                        stage4Locale,
+                                    )}
+                                />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all"><Stage4Text k="stage4.ui.5dd2b05158d3" />
+                                <SelectItem value="all">
+                                    <Stage4Text k="stage4.ui.5dd2b05158d3" />
                                 </SelectItem>
-                                <SelectItem value="outstanding"><Stage4Text k="stage4.ui.fb8f5f8a4b8e" />
+                                <SelectItem value="outstanding">
+                                    <Stage4Text k="stage4.ui.fb8f5f8a4b8e" />
                                 </SelectItem>
-                                <SelectItem value="paid"><Stage4Text k="stage4.ui.e065b60384ad" /></SelectItem>
-                                <SelectItem value="overpaid"><Stage4Text k="stage4.ui.0f378897a3f6" />
+                                <SelectItem value="paid">
+                                    <Stage4Text k="stage4.ui.e065b60384ad" />
+                                </SelectItem>
+                                <SelectItem value="overpaid">
+                                    <Stage4Text k="stage4.ui.0f378897a3f6" />
                                 </SelectItem>
                             </SelectContent>
                         </Select>
@@ -367,14 +446,22 @@ export default function RentalIndex({
                             onValueChange={(value) => apply({ source: value })}
                         >
                             <SelectTrigger>
-                                <SelectValue placeholder={stage4Translate("stage4.ui.ff648afc53ef", stage4Locale)} />
+                                <SelectValue
+                                    placeholder={stage4Translate(
+                                        'stage4.ui.ff648afc53ef',
+                                        stage4Locale,
+                                    )}
+                                />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all"><Stage4Text k="stage4.ui.7f8f0dfcaffd" />
+                                <SelectItem value="all">
+                                    <Stage4Text k="stage4.ui.7f8f0dfcaffd" />
                                 </SelectItem>
-                                <SelectItem value="direct"><Stage4Text k="stage4.ui.fd25629b8a39" />
+                                <SelectItem value="direct">
+                                    <Stage4Text k="stage4.ui.fd25629b8a39" />
                                 </SelectItem>
-                                <SelectItem value="booking"><Stage4Text k="stage4.ui.e52caf59c035" />
+                                <SelectItem value="booking">
+                                    <Stage4Text k="stage4.ui.e52caf59c035" />
                                 </SelectItem>
                             </SelectContent>
                         </Select>
@@ -385,15 +472,25 @@ export default function RentalIndex({
                             }
                         >
                             <SelectTrigger>
-                                <SelectValue placeholder={stage4Translate("stage4.ui.3ac8e9e58c5a", stage4Locale)} />
+                                <SelectValue
+                                    placeholder={stage4Translate(
+                                        'stage4.ui.3ac8e9e58c5a',
+                                        stage4Locale,
+                                    )}
+                                />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all"><Stage4Text k="stage4.ui.9c09ca580623" />
+                                <SelectItem value="all">
+                                    <Stage4Text k="stage4.ui.9c09ca580623" />
                                 </SelectItem>
-                                <SelectItem value="today"><Stage4Text k="stage4.ui.2c6ad1441fa8" /></SelectItem>
-                                <SelectItem value="last7"><Stage4Text k="stage4.ui.1dc3ae18814b" />
+                                <SelectItem value="today">
+                                    <Stage4Text k="stage4.ui.2c6ad1441fa8" />
                                 </SelectItem>
-                                <SelectItem value="last30"><Stage4Text k="stage4.ui.98c14c956935" />
+                                <SelectItem value="last7">
+                                    <Stage4Text k="stage4.ui.1dc3ae18814b" />
+                                </SelectItem>
+                                <SelectItem value="last30">
+                                    <Stage4Text k="stage4.ui.98c14c956935" />
                                 </SelectItem>
                             </SelectContent>
                         </Select>
@@ -407,10 +504,16 @@ export default function RentalIndex({
                             }
                         >
                             <SelectTrigger>
-                                <SelectValue placeholder={stage4Translate("stage4.ui.27d30aba48a4", stage4Locale)} />
+                                <SelectValue
+                                    placeholder={stage4Translate(
+                                        'stage4.ui.27d30aba48a4',
+                                        stage4Locale,
+                                    )}
+                                />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="all"><Stage4Text k="stage4.ui.27d30aba48a4" />
+                                <SelectItem value="all">
+                                    <Stage4Text k="stage4.ui.27d30aba48a4" />
                                 </SelectItem>
                                 {branches.map((branch) => (
                                     <SelectItem
@@ -423,7 +526,8 @@ export default function RentalIndex({
                             </SelectContent>
                         </Select>
                         <Button type="submit">
-                            <Search /><Stage4Text k="stage4.ui.3f2275d79afb" />
+                            <Search />
+                            <Stage4Text k="stage4.ui.3f2275d79afb" />
                         </Button>
                     </form>
                     {hasFilters && (
@@ -433,15 +537,19 @@ export default function RentalIndex({
                             size="sm"
                             onClick={reset}
                         >
-                            <X /><Stage4Text k="stage4.ui.165a47f62b2d" />
+                            <X />
+                            <Stage4Text k="stage4.ui.165a47f62b2d" />
                         </Button>
                     )}
                 </FilterBar>
 
                 <Card>
                     <CardHeader>
-                        <CardTitle><Stage4Text k="stage4.ui.c903fbea15fc" /></CardTitle>
-                        <CardDescription><Stage4Text k="stage4.ui.c855053b55c1" />
+                        <CardTitle>
+                            <Stage4Text k="stage4.ui.c903fbea15fc" />
+                        </CardTitle>
+                        <CardDescription>
+                            <Stage4Text k="stage4.ui.c855053b55c1" />
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="space-y-4">
@@ -468,7 +576,10 @@ export default function RentalIndex({
                                                     rental.status,
                                                 )}
                                             >
-                                                {stage4TranslateDynamic(rental.status, stage4Locale)}
+                                                {stage4TranslateDynamic(
+                                                    rental.status,
+                                                    stage4Locale,
+                                                )}
                                             </Badge>
                                             <Badge
                                                 variant={
@@ -477,9 +588,12 @@ export default function RentalIndex({
                                                         : 'outline'
                                                 }
                                             >
-                                                {stage4TranslateDynamic(dueStateLabel(
-                                                    rental.due_state,
-                                                ), stage4Locale)}
+                                                {stage4TranslateDynamic(
+                                                    dueStateLabel(
+                                                        rental.due_state,
+                                                    ),
+                                                    stage4Locale,
+                                                )}
                                             </Badge>
                                         </div>
                                         <p className="mt-2 text-sm text-muted-foreground">
@@ -494,10 +608,15 @@ export default function RentalIndex({
                                         </p>
                                     </div>
                                     <div className="text-sm">
-                                        <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase"><Stage4Text k="stage4.ui.92d937165b09" />
+                                        <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                                            <Stage4Text k="stage4.ui.92d937165b09" />
                                         </p>
-                                        <p className="mt-1"><Stage4Text k="stage4.ui.3ac8e9e58c5a" />{' '}
-                                            {stage4FormatDateTime(new Date(rental.checked_out_at), stage4Locale)}
+                                        <p className="mt-1">
+                                            <Stage4Text k="stage4.ui.3ac8e9e58c5a" />{' '}
+                                            {stage4FormatDateTime(
+                                                new Date(rental.checked_out_at),
+                                                stage4Locale,
+                                            )}
                                         </p>
                                         <p
                                             className={
@@ -505,12 +624,17 @@ export default function RentalIndex({
                                                     ? 'mt-1 font-medium text-destructive'
                                                     : 'mt-1 text-muted-foreground'
                                             }
-                                        ><Stage4Text k="stage4.ui.c43a6e25b712" />{' '}
-                                            {stage4FormatDateTime(new Date(rental.due_at), stage4Locale)}
+                                        >
+                                            <Stage4Text k="stage4.ui.c43a6e25b712" />{' '}
+                                            {stage4FormatDateTime(
+                                                new Date(rental.due_at),
+                                                stage4Locale,
+                                            )}
                                         </p>
                                     </div>
                                     <div className="text-sm">
-                                        <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase"><Stage4Text k="stage4.ui.0a8204b7320f" />
+                                        <p className="text-xs font-medium tracking-wide text-muted-foreground uppercase">
+                                            <Stage4Text k="stage4.ui.0a8204b7320f" />
                                         </p>
                                         <p className="mt-1 font-semibold">
                                             {money.format(
@@ -525,23 +649,31 @@ export default function RentalIndex({
                                             }
                                         >
                                             {Number(rental.balance_due) > 0
-                                                ? `${stage4Translate("stage4.ui.b8cc324b1af5", stage4Locale)} ${money.format(Number(rental.balance_due))}`
+                                                ? `${stage4Translate('stage4.ui.b8cc324b1af5', stage4Locale)} ${money.format(Number(rental.balance_due))}`
                                                 : Number(rental.balance_due) < 0
-                                                  ? `${stage4Translate("stage4.ui.608c0f802588", stage4Locale)} ${money.format(Math.abs(Number(rental.balance_due)))}`
-                                                  : stage4Translate("stage4.ui.e065b60384ad", stage4Locale)}
+                                                  ? `${stage4Translate('stage4.ui.608c0f802588', stage4Locale)} ${money.format(Math.abs(Number(rental.balance_due)))}`
+                                                  : stage4Translate(
+                                                        'stage4.ui.e065b60384ad',
+                                                        stage4Locale,
+                                                    )}
                                         </p>
                                         <p className="mt-1 text-xs text-muted-foreground">
-                                            {stage4ItemCount(rental.items_count, stage4Locale)}
+                                            {stage4ItemCount(
+                                                rental.items_count,
+                                                stage4Locale,
+                                            )}
                                         </p>
                                     </div>
                                     <Button variant="outline" size="sm" asChild>
-                                        <Link href={`/rentals/${rental.id}`}><Stage4Text k="stage4.ui.7c9a7c0610c1" />
+                                        <Link href={`/rentals/${rental.id}`}>
+                                            <Stage4Text k="stage4.ui.7c9a7c0610c1" />
                                         </Link>
                                     </Button>
                                 </div>
                             ))}
                             {rentals.data.length === 0 && (
-                                <div className="rounded-xl border border-dashed p-10 text-center text-sm text-muted-foreground"><Stage4Text k="stage4.ui.e6a2d73476bf" />
+                                <div className="rounded-xl border border-dashed p-10 text-center text-sm text-muted-foreground">
+                                    <Stage4Text k="stage4.ui.e6a2d73476bf" />
                                 </div>
                             )}
                         </div>

@@ -10,7 +10,13 @@ import {
 } from 'lucide-react';
 import type { FormEvent, ReactNode } from 'react';
 import { useMemo, useState } from 'react';
-import { Stage5Text, stage5Translate, stage5Date, stage5Money, stage5Display } from '@/components/stage5-text';
+import {
+    Stage5Text,
+    stage5Translate,
+    stage5Date,
+    stage5Money,
+    stage5Display,
+} from '@/components/stage5-text';
 import InputError from '@/components/input-error';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -110,7 +116,6 @@ type PayForm = {
 
 const money = { format: stage5Money };
 
-
 function localDateTime(value: string | Date): string {
     const date = value instanceof Date ? value : new Date(value);
     const offset = date.getTimezoneOffset() * 60_000;
@@ -190,13 +195,16 @@ export default function OperationalExpenseShow({
 
     return (
         <>
-            <Head title={`${stage5Display('Expense', stage5Locale)} ${expense.expense_number}`} />
+            <Head
+                title={`${stage5Display('Expense', stage5Locale)} ${expense.expense_number}`}
+            />
             <div className="space-y-6 p-4 md:p-6">
                 <header className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
                     <div>
                         <Button variant="ghost" asChild className="mb-2 -ml-3">
                             <Link href="/finance/expenses">
-                                <ArrowLeft /> <Stage5Text k="stage5.ui.18927b067117" />
+                                <ArrowLeft />{' '}
+                                <Stage5Text k="stage5.ui.18927b067117" />
                             </Link>
                         </Button>
                         <h1 className="flex items-center gap-2 text-2xl font-semibold">
@@ -206,7 +214,10 @@ export default function OperationalExpenseShow({
                         <p className="mt-1 text-sm text-muted-foreground">
                             {expense.branch.code} ·{' '}
                             {expense.financial_category.name} ·{' '}
-                            {stage5Date(new Date(expense.incurred_at), stage5Locale)}
+                            {stage5Date(
+                                new Date(expense.incurred_at),
+                                stage5Locale,
+                            )}
                         </p>
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -215,7 +226,8 @@ export default function OperationalExpenseShow({
                                 type="button"
                                 onClick={() => setPayOpen(true)}
                             >
-                                <WalletCards /> <Stage5Text k="stage5.ui.c2493c0bae46" />
+                                <WalletCards />{' '}
+                                <Stage5Text k="stage5.ui.c2493c0bae46" />
                             </Button>
                         )}
                         {expense.status !== 'void' && permissions.void && (
@@ -224,7 +236,8 @@ export default function OperationalExpenseShow({
                                 variant="destructive"
                                 onClick={() => setVoidOpen(true)}
                             >
-                                <Ban /> <Stage5Text k="stage5.ui.207c7c00630b" />
+                                <Ban />{' '}
+                                <Stage5Text k="stage5.ui.207c7c00630b" />
                             </Button>
                         )}
                     </div>
@@ -233,7 +246,9 @@ export default function OperationalExpenseShow({
                 {expense.status === 'recorded' && (
                     <Alert>
                         <WalletCards />
-                        <AlertTitle><Stage5Text k="stage5.ui.55a29d40d62c" /></AlertTitle>
+                        <AlertTitle>
+                            <Stage5Text k="stage5.ui.55a29d40d62c" />
+                        </AlertTitle>
                         <AlertDescription>
                             <Stage5Text k="stage5.ui.c9d1efd3a450" />
                         </AlertDescription>
@@ -242,7 +257,9 @@ export default function OperationalExpenseShow({
                 {expense.status === 'void' && (
                     <Alert variant="destructive">
                         <Ban />
-                        <AlertTitle><Stage5Text k="stage5.ui.da0bf9ad8769" /></AlertTitle>
+                        <AlertTitle>
+                            <Stage5Text k="stage5.ui.da0bf9ad8769" />
+                        </AlertTitle>
                         <AlertDescription>
                             <Stage5Text k="stage5.ui.5d34a26816f9" />{' '}
                             {expense.void_reason
@@ -255,52 +272,115 @@ export default function OperationalExpenseShow({
                 <section className="grid gap-4 lg:grid-cols-3">
                     <Card className="lg:col-span-2">
                         <CardHeader>
-                            <CardTitle><Stage5Text k="stage5.ui.0660664934cc" /></CardTitle>
+                            <CardTitle>
+                                <Stage5Text k="stage5.ui.0660664934cc" />
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="grid gap-4 sm:grid-cols-2">
-                            <Info label={stage5Translate("stage5.ui.bae7d5be7082", stage5Locale)}>
+                            <Info
+                                label={stage5Translate(
+                                    'stage5.ui.bae7d5be7082',
+                                    stage5Locale,
+                                )}
+                            >
                                 <StatusBadge status={expense.status} />
                             </Info>
-                            <Info label={stage5Translate("stage5.ui.1795d163388f", stage5Locale)}>
+                            <Info
+                                label={stage5Translate(
+                                    'stage5.ui.1795d163388f',
+                                    stage5Locale,
+                                )}
+                            >
                                 <strong>
                                     {money.format(Number(expense.amount))}
                                 </strong>
                             </Info>
-                            <Info label={stage5Translate("stage5.ui.e3f18544463f", stage5Locale)}>
+                            <Info
+                                label={stage5Translate(
+                                    'stage5.ui.e3f18544463f',
+                                    stage5Locale,
+                                )}
+                            >
                                 {expense.vendor_name ?? '—'}
                             </Info>
-                            <Info label={stage5Translate("stage5.ui.3166201d7baf", stage5Locale)}>
+                            <Info
+                                label={stage5Translate(
+                                    'stage5.ui.3166201d7baf',
+                                    stage5Locale,
+                                )}
+                            >
                                 {expense.external_reference ?? '—'}
                             </Info>
-                            <Info label={stage5Translate("stage5.ui.b7964404a785", stage5Locale)}>
+                            <Info
+                                label={stage5Translate(
+                                    'stage5.ui.b7964404a785',
+                                    stage5Locale,
+                                )}
+                            >
                                 {expense.financial_category.code} ·{' '}
                                 {expense.financial_category.name}
                             </Info>
-                            <Info label={stage5Translate("stage5.ui.1387475bd674", stage5Locale)}>
+                            <Info
+                                label={stage5Translate(
+                                    'stage5.ui.1387475bd674',
+                                    stage5Locale,
+                                )}
+                            >
                                 {expense.branch.code} · {expense.branch.name}
                             </Info>
-                            <Info label={stage5Translate("stage5.ui.1216355f2efb", stage5Locale)}>
+                            <Info
+                                label={stage5Translate(
+                                    'stage5.ui.1216355f2efb',
+                                    stage5Locale,
+                                )}
+                            >
                                 {expense.creator?.name ?? '—'}
                             </Info>
-                            <Info label={stage5Translate("stage5.ui.e74fdd23a4cc", stage5Locale)}>
+                            <Info
+                                label={stage5Translate(
+                                    'stage5.ui.e74fdd23a4cc',
+                                    stage5Locale,
+                                )}
+                            >
                                 {expense.payer?.name ?? '—'}
                             </Info>
-                            <Info label={stage5Translate("stage5.ui.33da3f80c25b", stage5Locale)}>
+                            <Info
+                                label={stage5Translate(
+                                    'stage5.ui.33da3f80c25b',
+                                    stage5Locale,
+                                )}
+                            >
                                 {expense.paid_at
-                                    ? stage5Date(new Date(expense.paid_at), stage5Locale)
+                                    ? stage5Date(
+                                          new Date(expense.paid_at),
+                                          stage5Locale,
+                                      )
                                     : '—'}
                             </Info>
-                            <Info label={stage5Translate("stage5.ui.85de16445a90", stage5Locale)}>
+                            <Info
+                                label={stage5Translate(
+                                    'stage5.ui.85de16445a90',
+                                    stage5Locale,
+                                )}
+                            >
                                 {expense.payment_method?.name ?? '—'}
                             </Info>
-                            <Info label={stage5Translate("stage5.ui.9f09aefd0dd4", stage5Locale)} className="sm:col-span-2">
+                            <Info
+                                label={stage5Translate(
+                                    'stage5.ui.9f09aefd0dd4',
+                                    stage5Locale,
+                                )}
+                                className="sm:col-span-2"
+                            >
                                 {expense.notes ?? '—'}
                             </Info>
                         </CardContent>
                     </Card>
                     <Card>
                         <CardHeader>
-                            <CardTitle><Stage5Text k="stage5.ui.80e39e6fbaa8" /></CardTitle>
+                            <CardTitle>
+                                <Stage5Text k="stage5.ui.80e39e6fbaa8" />
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-3">
                             {hasProof ? (
@@ -342,7 +422,8 @@ export default function OperationalExpenseShow({
                             )}
                             {expense.cash_session?.register && (
                                 <p className="rounded-md border p-3 text-xs text-muted-foreground">
-                                    <Stage5Text k="stage5.ui.ad2a6ab5762c" />{expense.cash_session.id} ·{' '}
+                                    <Stage5Text k="stage5.ui.ad2a6ab5762c" />
+                                    {expense.cash_session.id} ·{' '}
                                     {expense.cash_session.register.code}{' '}
                                     {expense.cash_session.register.name}
                                 </p>
@@ -354,7 +435,9 @@ export default function OperationalExpenseShow({
                 {expense.status === 'recorded' && permissions.manage && (
                     <Card>
                         <CardHeader>
-                            <CardTitle><Stage5Text k="stage5.ui.de87a51461ff" /></CardTitle>
+                            <CardTitle>
+                                <Stage5Text k="stage5.ui.de87a51461ff" />
+                            </CardTitle>
                         </CardHeader>
                         <CardContent>
                             <form
@@ -362,7 +445,10 @@ export default function OperationalExpenseShow({
                                 onSubmit={updateExpense}
                             >
                                 <Field
-                                    label={stage5Translate("stage5.ui.b7964404a785", stage5Locale)}
+                                    label={stage5Translate(
+                                        'stage5.ui.b7964404a785',
+                                        stage5Locale,
+                                    )}
                                     error={
                                         editForm.errors.financial_category_id
                                     }
@@ -399,7 +485,10 @@ export default function OperationalExpenseShow({
                                     </Select>
                                 </Field>
                                 <Field
-                                    label={stage5Translate("stage5.ui.1795d163388f", stage5Locale)}
+                                    label={stage5Translate(
+                                        'stage5.ui.1795d163388f',
+                                        stage5Locale,
+                                    )}
                                     error={editForm.errors.amount}
                                 >
                                     <RupiahInput
@@ -410,7 +499,10 @@ export default function OperationalExpenseShow({
                                     />
                                 </Field>
                                 <Field
-                                    label={stage5Translate("stage5.ui.08206fcf8a87", stage5Locale)}
+                                    label={stage5Translate(
+                                        'stage5.ui.08206fcf8a87',
+                                        stage5Locale,
+                                    )}
                                     error={editForm.errors.incurred_at}
                                 >
                                     <Input
@@ -425,7 +517,10 @@ export default function OperationalExpenseShow({
                                     />
                                 </Field>
                                 <Field
-                                    label={stage5Translate("stage5.ui.e3f18544463f", stage5Locale)}
+                                    label={stage5Translate(
+                                        'stage5.ui.e3f18544463f',
+                                        stage5Locale,
+                                    )}
                                     error={editForm.errors.vendor_name}
                                 >
                                     <Input
@@ -439,7 +534,10 @@ export default function OperationalExpenseShow({
                                     />
                                 </Field>
                                 <Field
-                                    label={stage5Translate("stage5.ui.3166201d7baf", stage5Locale)}
+                                    label={stage5Translate(
+                                        'stage5.ui.3166201d7baf',
+                                        stage5Locale,
+                                    )}
                                     error={editForm.errors.external_reference}
                                 >
                                     <Input
@@ -453,7 +551,10 @@ export default function OperationalExpenseShow({
                                     />
                                 </Field>
                                 <Field
-                                    label={stage5Translate("stage5.ui.f5af564bd34a", stage5Locale)}
+                                    label={stage5Translate(
+                                        'stage5.ui.f5af564bd34a',
+                                        stage5Locale,
+                                    )}
                                     error={editForm.errors.proof}
                                 >
                                     <Input
@@ -468,7 +569,10 @@ export default function OperationalExpenseShow({
                                     />
                                 </Field>
                                 <Field
-                                    label={stage5Translate("stage5.ui.9f09aefd0dd4", stage5Locale)}
+                                    label={stage5Translate(
+                                        'stage5.ui.9f09aefd0dd4',
+                                        stage5Locale,
+                                    )}
                                     error={editForm.errors.notes}
                                 >
                                     <Input
@@ -486,7 +590,8 @@ export default function OperationalExpenseShow({
                                         type="submit"
                                         disabled={editForm.processing}
                                     >
-                                        <Save /> <Stage5Text k="stage5.ui.099b36f6ccbb" />
+                                        <Save />{' '}
+                                        <Stage5Text k="stage5.ui.099b36f6ccbb" />
                                     </Button>
                                 </div>
                             </form>
@@ -496,7 +601,9 @@ export default function OperationalExpenseShow({
 
                 <Card>
                     <CardHeader>
-                        <CardTitle><Stage5Text k="stage5.ui.e2a0860210b2" /></CardTitle>
+                        <CardTitle>
+                            <Stage5Text k="stage5.ui.e2a0860210b2" />
+                        </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-3">
                         {activities.map((activity) => (
@@ -536,16 +643,21 @@ export default function OperationalExpenseShow({
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>
-                            <Stage5Text k="stage5.ui.6290c54f33d8" /> {expense.expense_number}
+                            <Stage5Text k="stage5.ui.6290c54f33d8" />{' '}
+                            {expense.expense_number}
                         </DialogTitle>
                         <DialogDescription>
                             <Stage5Text k="stage5.ui.ad2e4eed4cbd" />{' '}
-                            {money.format(Number(expense.amount))} <Stage5Text k="stage5.ui.3e46a43dcfbb" />
+                            {money.format(Number(expense.amount))}{' '}
+                            <Stage5Text k="stage5.ui.3e46a43dcfbb" />
                         </DialogDescription>
                     </DialogHeader>
                     <form className="space-y-4" onSubmit={payExpense}>
                         <Field
-                            label={stage5Translate("stage5.ui.53eb1a623ade", stage5Locale)}
+                            label={stage5Translate(
+                                'stage5.ui.53eb1a623ade',
+                                stage5Locale,
+                            )}
                             error={payForm.errors.payment_method_id}
                         >
                             <Select
@@ -572,7 +684,12 @@ export default function OperationalExpenseShow({
                                 }}
                             >
                                 <SelectTrigger>
-                                    <SelectValue placeholder={stage5Translate("stage5.ui.cfabec6a6763", stage5Locale)} />
+                                    <SelectValue
+                                        placeholder={stage5Translate(
+                                            'stage5.ui.cfabec6a6763',
+                                            stage5Locale,
+                                        )}
+                                    />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {paymentMethods.map((method) => (
@@ -588,7 +705,10 @@ export default function OperationalExpenseShow({
                         </Field>
                         {selectedMethod?.type === 'cash' && (
                             <Field
-                                label={stage5Translate("stage5.ui.bdf75fb65c7f", stage5Locale)}
+                                label={stage5Translate(
+                                    'stage5.ui.bdf75fb65c7f',
+                                    stage5Locale,
+                                )}
                                 error={payForm.errors.cash_session_id}
                             >
                                 <Select
@@ -607,7 +727,12 @@ export default function OperationalExpenseShow({
                                     }
                                 >
                                     <SelectTrigger>
-                                        <SelectValue placeholder={stage5Translate("stage5.ui.cfde4a0267a8", stage5Locale)} />
+                                        <SelectValue
+                                            placeholder={stage5Translate(
+                                                'stage5.ui.cfde4a0267a8',
+                                                stage5Locale,
+                                            )}
+                                        />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {availableCashSessions.map(
@@ -632,7 +757,10 @@ export default function OperationalExpenseShow({
                             </Field>
                         )}
                         <Field
-                            label={stage5Translate("stage5.ui.33da3f80c25b", stage5Locale)}
+                            label={stage5Translate(
+                                'stage5.ui.33da3f80c25b',
+                                stage5Locale,
+                            )}
                             error={payForm.errors.paid_at}
                         >
                             <Input
@@ -647,7 +775,10 @@ export default function OperationalExpenseShow({
                             />
                         </Field>
                         <Field
-                            label={stage5Translate("stage5.ui.7f2cc58cb31e", stage5Locale)}
+                            label={stage5Translate(
+                                'stage5.ui.7f2cc58cb31e',
+                                stage5Locale,
+                            )}
                             error={payForm.errors.payment_reference}
                         >
                             <Input
@@ -666,7 +797,10 @@ export default function OperationalExpenseShow({
                             />
                         </Field>
                         <Field
-                            label={stage5Translate("stage5.ui.3be039f9f735", stage5Locale)}
+                            label={stage5Translate(
+                                'stage5.ui.3be039f9f735',
+                                stage5Locale,
+                            )}
                             error={payForm.errors.notes}
                         >
                             <Input
@@ -695,14 +829,20 @@ export default function OperationalExpenseShow({
             <Dialog open={voidOpen} onOpenChange={setVoidOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle><Stage5Text k="stage5.ui.207c7c00630b" /> {expense.expense_number}</DialogTitle>
+                        <DialogTitle>
+                            <Stage5Text k="stage5.ui.207c7c00630b" />{' '}
+                            {expense.expense_number}
+                        </DialogTitle>
                         <DialogDescription>
                             <Stage5Text k="stage5.ui.169b524a288c" />
                         </DialogDescription>
                     </DialogHeader>
                     <form className="space-y-4" onSubmit={voidExpense}>
                         <Field
-                            label={stage5Translate("stage5.ui.c2a53eee88e3", stage5Locale)}
+                            label={stage5Translate(
+                                'stage5.ui.c2a53eee88e3',
+                                stage5Locale,
+                            )}
                             error={voidForm.errors.reason}
                         >
                             <Input
@@ -713,7 +853,10 @@ export default function OperationalExpenseShow({
                                         event.target.value,
                                     )
                                 }
-                                placeholder={stage5Translate("stage5.ui.24e468e21005", stage5Locale)}
+                                placeholder={stage5Translate(
+                                    'stage5.ui.24e468e21005',
+                                    stage5Locale,
+                                )}
                             />
                         </Field>
                         <DialogFooter>
@@ -729,7 +872,8 @@ export default function OperationalExpenseShow({
                                 variant="destructive"
                                 disabled={voidForm.processing}
                             >
-                                <Ban /> <Stage5Text k="stage5.ui.92afd25a7c3b" />
+                                <Ban />{' '}
+                                <Stage5Text k="stage5.ui.92afd25a7c3b" />
                             </Button>
                         </DialogFooter>
                     </form>

@@ -17,7 +17,15 @@ import {
     UploadCloud,
 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { stage5Choice, stage5PaginatorLabel, stage5Date, stage5Number, stage5Display, Stage5Text, stage5Translate } from '@/components/stage5-text';
+import {
+    stage5Choice,
+    stage5PaginatorLabel,
+    stage5Date,
+    stage5Number,
+    stage5Display,
+    Stage5Text,
+    stage5Translate,
+} from '@/components/stage5-text';
 import { useConfirmDialog } from '@/components/confirm-dialog-provider';
 import InputError from '@/components/input-error';
 import { Badge } from '@/components/ui/badge';
@@ -287,8 +295,12 @@ export default function LegacyImportShow({
 
         if (nextAction.key === 'execution') {
             const confirmed = await confirm({
-                title: stage5Translate("stage5.ui.34a7e4c10d84", stage5Locale),
-                description: stage5Choice(`Data tervalidasi akan ditulis ke tabel operasional V2 untuk ${batch.source_city || batch.branch.name} dengan PREFIX ${batch.import_prefix || '---'}. Pastikan tujuan, pemetaan, dan penghambat sudah diperiksa.`, `Validated data will be written to V2 operational tables for ${batch.source_city || batch.branch.name} using prefix ${batch.import_prefix || '---'}. Confirm the destination, mappings, and blockers first.`, stage5Locale),
+                title: stage5Translate('stage5.ui.34a7e4c10d84', stage5Locale),
+                description: stage5Choice(
+                    `Data tervalidasi akan ditulis ke tabel operasional V2 untuk ${batch.source_city || batch.branch.name} dengan PREFIX ${batch.import_prefix || '---'}. Pastikan tujuan, pemetaan, dan penghambat sudah diperiksa.`,
+                    `Validated data will be written to V2 operational tables for ${batch.source_city || batch.branch.name} using prefix ${batch.import_prefix || '---'}. Confirm the destination, mappings, and blockers first.`,
+                    stage5Locale,
+                ),
                 confirmLabel: 'Execute import',
                 variant: 'destructive',
             });
@@ -348,7 +360,9 @@ export default function LegacyImportShow({
 
     return (
         <>
-            <Head title={`${stage5Display('Import', stage5Locale)} ${batch.source_filename}`} />
+            <Head
+                title={`${stage5Display('Import', stage5Locale)} ${batch.source_filename}`}
+            />
 
             <div className="flex h-full flex-1 flex-col gap-6 overflow-x-auto rounded-xl p-4 md:p-6">
                 <header>
@@ -371,14 +385,16 @@ export default function LegacyImportShow({
                                         batch.branch.name}
                                 </Badge>
                                 <Badge variant="outline" className="font-mono">
-                                    <Stage5Text k="stage5.ui.890121a7a9c7" /> {batch.import_prefix || '---'}
+                                    <Stage5Text k="stage5.ui.890121a7a9c7" />{' '}
+                                    {batch.import_prefix || '---'}
                                 </Badge>
                             </div>
                             <h1 className="mt-3 max-w-3xl truncate text-2xl font-semibold tracking-tight">
                                 {batch.source_filename}
                             </h1>
                             <p className="mt-2 font-mono text-xs text-muted-foreground">
-                                <Stage5Text k="stage5.ui.8bf1ef5668b1" /> {batch.id} · SHA-256{' '}
+                                <Stage5Text k="stage5.ui.8bf1ef5668b1" />{' '}
+                                {batch.id} · SHA-256{' '}
                                 {batch.source_sha256.slice(0, 20)}…
                             </p>
                         </div>
@@ -604,7 +620,10 @@ export default function LegacyImportShow({
                         ) : (
                             <div className="grid gap-3 sm:grid-cols-3">
                                 <TargetSummary
-                                    label={stage5Translate("stage5.ui.1f1ad92e0a04", stage5Locale)}
+                                    label={stage5Translate(
+                                        'stage5.ui.1f1ad92e0a04',
+                                        stage5Locale,
+                                    )}
                                     value={
                                         batch.source_city ||
                                         batch.branch.city ||
@@ -612,11 +631,17 @@ export default function LegacyImportShow({
                                     }
                                 />
                                 <TargetSummary
-                                    label={stage5Translate("stage5.ui.1387475bd674", stage5Locale)}
+                                    label={stage5Translate(
+                                        'stage5.ui.1387475bd674',
+                                        stage5Locale,
+                                    )}
                                     value={`${batch.branch.code} · ${batch.branch.name}`}
                                 />
                                 <TargetSummary
-                                    label={stage5Translate("stage5.ui.890121a7a9c7", stage5Locale)}
+                                    label={stage5Translate(
+                                        'stage5.ui.890121a7a9c7',
+                                        stage5Locale,
+                                    )}
                                     value={batch.import_prefix || '---'}
                                     mono
                                 />
@@ -666,24 +691,51 @@ export default function LegacyImportShow({
                 </section>
 
                 <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-6">
-                    <Metric label={stage5Translate("stage5.ui.1bca9d2465f1", stage5Locale)} value={batch.total_rows} />
                     <Metric
-                        label={stage5Translate("stage5.ui.a4aefa35c3b5", stage5Locale)}
+                        label={stage5Translate(
+                            'stage5.ui.1bca9d2465f1',
+                            stage5Locale,
+                        )}
+                        value={batch.total_rows}
+                    />
+                    <Metric
+                        label={stage5Translate(
+                            'stage5.ui.a4aefa35c3b5',
+                            stage5Locale,
+                        )}
                         value={batch.valid_rows}
                         tone="success"
                     />
                     <Metric
-                        label={stage5Translate("stage5.ui.e9c45563358e", stage5Locale)}
+                        label={stage5Translate(
+                            'stage5.ui.e9c45563358e',
+                            stage5Locale,
+                        )}
                         value={batch.warning_rows}
                         tone="warning"
                     />
                     <Metric
-                        label={stage5Translate("stage5.ui.7f2f6a15cf8d", stage5Locale)}
+                        label={stage5Translate(
+                            'stage5.ui.7f2f6a15cf8d',
+                            stage5Locale,
+                        )}
                         value={batch.error_rows}
                         tone="danger"
                     />
-                    <Metric label={stage5Translate("stage5.ui.434eb26f4835", stage5Locale)} value={batch.imported_rows} />
-                    <Metric label={stage5Translate("stage5.ui.5a000ad7bd1b", stage5Locale)} value={batch.skipped_rows} />
+                    <Metric
+                        label={stage5Translate(
+                            'stage5.ui.434eb26f4835',
+                            stage5Locale,
+                        )}
+                        value={batch.imported_rows}
+                    />
+                    <Metric
+                        label={stage5Translate(
+                            'stage5.ui.5a000ad7bd1b',
+                            stage5Locale,
+                        )}
+                        value={batch.skipped_rows}
+                    />
                 </section>
 
                 {batch.status === 'validated' && batch.error_rows > 0 && (
@@ -694,7 +746,9 @@ export default function LegacyImportShow({
                                 <Stage5Text k="stage5.ui.5f98a2c064eb" />
                             </p>
                             <p className="mt-1 text-muted-foreground">
-                                <Stage5Text k="stage5.ui.8ddc17935d34" /> {number(batch.error_rows)} <Stage5Text k="stage5.ui.139d22e6cb24" />
+                                <Stage5Text k="stage5.ui.8ddc17935d34" />{' '}
+                                {number(batch.error_rows)}{' '}
+                                <Stage5Text k="stage5.ui.139d22e6cb24" />
                             </p>
                             {permissions.validate &&
                                 (resolutionOptions.orphan_booking_details > 0 ||
@@ -731,7 +785,11 @@ export default function LegacyImportShow({
                                                     onClick={() =>
                                                         resolveIssues(
                                                             'skip-orphan-booking-details',
-                                                            stage5Choice(`Abaikan ${number(resolutionOptions.orphan_booking_details)} detail pemesanan tanpa induk?`, `Skip ${number(resolutionOptions.orphan_booking_details)} orphan booking details?`, stage5Locale),
+                                                            stage5Choice(
+                                                                `Abaikan ${number(resolutionOptions.orphan_booking_details)} detail pemesanan tanpa induk?`,
+                                                                `Skip ${number(resolutionOptions.orphan_booking_details)} orphan booking details?`,
+                                                                stage5Locale,
+                                                            ),
                                                             'Baris tanpa booking induk akan ditandai skipped dan tidak pernah ditulis saat Execute.',
                                                         )
                                                     }
@@ -785,7 +843,9 @@ export default function LegacyImportShow({
 
                 <Card>
                     <CardHeader>
-                        <CardTitle><Stage5Text k="stage5.ui.72de16fe3d36" /></CardTitle>
+                        <CardTitle>
+                            <Stage5Text k="stage5.ui.72de16fe3d36" />
+                        </CardTitle>
                         <CardDescription>
                             <Stage5Text k="stage5.ui.aeee349afc45" />
                         </CardDescription>
@@ -878,10 +938,14 @@ export default function LegacyImportShow({
                 {batch.mappings.length > 0 && (
                     <Card>
                         <CardHeader>
-                            <CardTitle><Stage5Text k="stage5.ui.e959916ef2a1" /></CardTitle>
+                            <CardTitle>
+                                <Stage5Text k="stage5.ui.e959916ef2a1" />
+                            </CardTitle>
                             <CardDescription>
                                 <Stage5Text k="stage5.ui.359e746fe943" />{' '}
-                                {batch.source_city || batch.branch.name} <Stage5Text k="stage5.ui.bca410287f09" /> {batch.import_prefix || '---'}.
+                                {batch.source_city || batch.branch.name}{' '}
+                                <Stage5Text k="stage5.ui.bca410287f09" />{' '}
+                                {batch.import_prefix || '---'}.
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="grid gap-3 md:grid-cols-2 xl:grid-cols-3">
@@ -943,7 +1007,9 @@ export default function LegacyImportShow({
                                             {check.label}
                                         </p>
                                         <p className="mt-1 text-xs text-muted-foreground">
-                                            <Stage5Text k="stage5.ui.6ac87f344682" /> {check.expected} <Stage5Text k="stage5.ui.3c6c8a829ef1" />{' '}
+                                            <Stage5Text k="stage5.ui.6ac87f344682" />{' '}
+                                            {check.expected}{' '}
+                                            <Stage5Text k="stage5.ui.3c6c8a829ef1" />{' '}
                                             {check.actual}
                                             {check.difference
                                                 ? ` · Selisih ${check.difference}`
@@ -970,7 +1036,9 @@ export default function LegacyImportShow({
                 <section className="grid gap-6 xl:grid-cols-2">
                     <Card>
                         <CardHeader>
-                            <CardTitle><Stage5Text k="stage5.ui.77c00cde7a79" /></CardTitle>
+                            <CardTitle>
+                                <Stage5Text k="stage5.ui.77c00cde7a79" />
+                            </CardTitle>
                             <CardDescription>
                                 <Stage5Text k="stage5.ui.b6990c46d4aa" />
                             </CardDescription>
@@ -1024,7 +1092,8 @@ export default function LegacyImportShow({
                                                 {row.legacy_key}
                                             </p>
                                             <p className="mt-1 text-xs text-muted-foreground">
-                                                <Stage5Text k="stage5.ui.9bf7a8e8909b" /> {number(row.row_number)}
+                                                <Stage5Text k="stage5.ui.9bf7a8e8909b" />{' '}
+                                                {number(row.row_number)}
                                                 {row.target_id
                                                     ? ` → ${row.target_table}#${row.target_id}`
                                                     : ''}
@@ -1067,7 +1136,8 @@ export default function LegacyImportShow({
                                 <Stage5Text k="stage5.ui.7b256f57f313" />
                             </CardTitle>
                             <CardDescription>
-                                {number(issues.total)} <Stage5Text k="stage5.ui.b0e6a4fb5343" />{' '}
+                                {number(issues.total)}{' '}
+                                <Stage5Text k="stage5.ui.b0e6a4fb5343" />{' '}
                                 {issueSummary
                                     .map(
                                         (item) =>
@@ -1142,7 +1212,9 @@ export default function LegacyImportShow({
 
                 <Card>
                     <CardHeader>
-                        <CardTitle><Stage5Text k="stage5.ui.ff3e0d680200" /></CardTitle>
+                        <CardTitle>
+                            <Stage5Text k="stage5.ui.ff3e0d680200" />
+                        </CardTitle>
                         <CardDescription>
                             <Stage5Text k="stage5.ui.a9c6ba7d49f8" />
                         </CardDescription>
@@ -1241,7 +1313,7 @@ function resolveAction(
         return {
             key: 'verification',
             endpoint: 'verify',
-            label: stage5Translate("stage5.ui.e0e0fc564bad"),
+            label: stage5Translate('stage5.ui.e0e0fc564bad'),
             icon: ScanSearch,
         };
     }
@@ -1328,9 +1400,7 @@ function StatusBadge({ status }: { status: string }) {
               : 'secondary';
 
     return (
-        <Badge variant={variant}>
-            {stage5Display(status, stage5Locale)}
-        </Badge>
+        <Badge variant={variant}>{stage5Display(status, stage5Locale)}</Badge>
     );
 }
 
@@ -1382,7 +1452,12 @@ function Pagination({
                         <Link
                             href={link.url}
                             preserveScroll
-                            dangerouslySetInnerHTML={{ __html: stage5PaginatorLabel(link.label, stage5Locale) }}
+                            dangerouslySetInnerHTML={{
+                                __html: stage5PaginatorLabel(
+                                    link.label,
+                                    stage5Locale,
+                                ),
+                            }}
                         />
                     </Button>
                 ) : (
@@ -1391,7 +1466,12 @@ function Pagination({
                         size="sm"
                         variant="outline"
                         disabled
-                        dangerouslySetInnerHTML={{ __html: stage5PaginatorLabel(link.label, stage5Locale) }}
+                        dangerouslySetInnerHTML={{
+                            __html: stage5PaginatorLabel(
+                                link.label,
+                                stage5Locale,
+                            ),
+                        }}
                     />
                 ),
             )}

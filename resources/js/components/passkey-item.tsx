@@ -45,13 +45,15 @@ export default function PasskeyItem({ passkey, onDelete }: Props) {
                         )}
                     </div>
                     <p className="text-sm text-muted-foreground">
-                        {tr('settings.passkeyItem.added')} {passkey.created_at_diff}
+                        {tr('settings.passkeyItem.added')}{' '}
+                        {passkey.created_at_diff}
                         {passkey.last_used_at_diff && (
                             <>
                                 <span className="mx-1 text-muted-foreground/50">
                                     /
                                 </span>
-                                {tr('settings.passkeyItem.lastUsed')} {passkey.last_used_at_diff}
+                                {tr('settings.passkeyItem.lastUsed')}{' '}
+                                {passkey.last_used_at_diff}
                             </>
                         )}
                     </p>
@@ -66,24 +68,34 @@ export default function PasskeyItem({ passkey, onDelete }: Props) {
                         className="text-destructive hover:bg-destructive/10 hover:text-destructive"
                     >
                         <Trash2 className="h-4 w-4" />
-                        <span className="sr-only">{tr('settings.passkeyItem.remove')}</span>
+                        <span className="sr-only">
+                            {tr('settings.passkeyItem.remove')}
+                        </span>
                     </Button>
                 </DialogTrigger>
                 <DialogContent>
-                    <DialogTitle>{tr('settings.passkeyItem.removeTitle')}</DialogTitle>
+                    <DialogTitle>
+                        {tr('settings.passkeyItem.removeTitle')}
+                    </DialogTitle>
                     <DialogDescription>
-                        {tr('settings.passkeyItem.confirmation', { name: passkey.name })}
+                        {tr('settings.passkeyItem.confirmation', {
+                            name: passkey.name,
+                        })}
                     </DialogDescription>
                     <DialogFooter className="gap-2">
                         <DialogClose asChild>
-                            <Button variant="secondary">{tr('settings.passkeyItem.cancel')}</Button>
+                            <Button variant="secondary">
+                                {tr('settings.passkeyItem.cancel')}
+                            </Button>
                         </DialogClose>
                         <Button
                             variant="destructive"
                             onClick={handleDelete}
                             disabled={isDeleting}
                         >
-                            {isDeleting ? tr('settings.passkeyItem.removing') : tr('settings.passkeyItem.removeConfirm')}
+                            {isDeleting
+                                ? tr('settings.passkeyItem.removing')
+                                : tr('settings.passkeyItem.removeConfirm')}
                         </Button>
                     </DialogFooter>
                 </DialogContent>

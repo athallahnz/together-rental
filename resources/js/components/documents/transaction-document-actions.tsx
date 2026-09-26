@@ -1,6 +1,10 @@
 import { Download, FileCheck2, Printer, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
-import { Stage4Text, stage4Translate, stage4TranslateDynamic } from '@/components/stage4-text';
+import {
+    Stage4Text,
+    stage4Translate,
+    stage4TranslateDynamic,
+} from '@/components/stage4-text';
 import { useAppLocale } from '@/lib/i18n';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -55,7 +59,8 @@ export function TransactionDocumentActions({
     const [error, setError] = useState<string | null>(null);
 
     const documentTypes = useMemo<DocumentType[]>(
-        () => (sourceType === 'booking' ? ['invoice'] : ['invoice', 'agreement']),
+        () =>
+            sourceType === 'booking' ? ['invoice'] : ['invoice', 'agreement'],
         [sourceType],
     );
 
@@ -93,7 +98,10 @@ export function TransactionDocumentActions({
                 setAuthorized(exists);
             })
             .catch((reason: unknown) => {
-                if (reason instanceof DOMException && reason.name === 'AbortError') {
+                if (
+                    reason instanceof DOMException &&
+                    reason.name === 'AbortError'
+                ) {
                     return;
                 }
 
@@ -158,7 +166,11 @@ export function TransactionDocumentActions({
                 if (previewWindow) {
                     previewWindow.location.href = data.preview_url;
                 } else {
-                    window.open(data.preview_url, '_blank', 'noopener,noreferrer');
+                    window.open(
+                        data.preview_url,
+                        '_blank',
+                        'noopener,noreferrer',
+                    );
                 }
             } else {
                 const link = document.createElement('a');
@@ -190,9 +202,11 @@ export function TransactionDocumentActions({
                 <div className="flex items-start justify-between gap-4">
                     <div>
                         <CardTitle className="flex items-center gap-2 text-base">
-                            <FileCheck2 className="size-4" /><Stage4Text k="stage4.ui.e0d3e769c653" />
+                            <FileCheck2 className="size-4" />
+                            <Stage4Text k="stage4.ui.e0d3e769c653" />
                         </CardTitle>
-                        <p className="mt-1 text-sm text-muted-foreground"><Stage4Text k="stage4.ui.274a60e86740" />
+                        <p className="mt-1 text-sm text-muted-foreground">
+                            <Stage4Text k="stage4.ui.274a60e86740" />
                         </p>
                     </div>
                     <Button
@@ -201,7 +215,8 @@ export function TransactionDocumentActions({
                         size="sm"
                         onClick={() => setDismissed(true)}
                     >
-                        <X /><Stage4Text k="stage4.ui.8bd638497107" />
+                        <X />
+                        <Stage4Text k="stage4.ui.8bd638497107" />
                     </Button>
                 </div>
             </CardHeader>
@@ -213,9 +228,13 @@ export function TransactionDocumentActions({
                     >
                         <div>
                             <p className="font-medium">
-                                {stage4TranslateDynamic(documentLabels[documentType], stage4Locale)}
+                                {stage4TranslateDynamic(
+                                    documentLabels[documentType],
+                                    stage4Locale,
+                                )}
                             </p>
-                            <p className="text-xs text-muted-foreground"><Stage4Text k="stage4.ui.90a079715238" />
+                            <p className="text-xs text-muted-foreground">
+                                <Stage4Text k="stage4.ui.90a079715238" />
                             </p>
                         </div>
                         <div className="flex gap-2">
@@ -228,8 +247,14 @@ export function TransactionDocumentActions({
                             >
                                 <Printer />
                                 {busy === `${documentType}:print`
-                                    ? stage4Translate("stage4.ui.9683d9f785f4", stage4Locale)
-                                    : stage4Translate("stage4.ui.e96378dc0a9d", stage4Locale)}
+                                    ? stage4Translate(
+                                          'stage4.ui.9683d9f785f4',
+                                          stage4Locale,
+                                      )
+                                    : stage4Translate(
+                                          'stage4.ui.e96378dc0a9d',
+                                          stage4Locale,
+                                      )}
                             </Button>
                             <Button
                                 type="button"
@@ -239,8 +264,14 @@ export function TransactionDocumentActions({
                             >
                                 <Download />
                                 {busy === `${documentType}:download`
-                                    ? stage4Translate("stage4.ui.9683d9f785f4", stage4Locale)
-                                    : stage4Translate("stage4.ui.a479c9c34e87", stage4Locale)}
+                                    ? stage4Translate(
+                                          'stage4.ui.9683d9f785f4',
+                                          stage4Locale,
+                                      )
+                                    : stage4Translate(
+                                          'stage4.ui.a479c9c34e87',
+                                          stage4Locale,
+                                      )}
                             </Button>
                         </div>
                     </div>
@@ -249,13 +280,17 @@ export function TransactionDocumentActions({
                 {message && (
                     <Alert>
                         <FileCheck2 />
-                        <AlertTitle><Stage4Text k="stage4.ui.4928cf59e856" /></AlertTitle>
+                        <AlertTitle>
+                            <Stage4Text k="stage4.ui.4928cf59e856" />
+                        </AlertTitle>
                         <AlertDescription>{message}</AlertDescription>
                     </Alert>
                 )}
                 {error && (
                     <Alert variant="destructive">
-                        <AlertTitle><Stage4Text k="stage4.ui.e1b9d99c661b" /></AlertTitle>
+                        <AlertTitle>
+                            <Stage4Text k="stage4.ui.e1b9d99c661b" />
+                        </AlertTitle>
                         <AlertDescription>{error}</AlertDescription>
                     </Alert>
                 )}

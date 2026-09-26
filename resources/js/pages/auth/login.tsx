@@ -39,7 +39,9 @@ export default function Login({ status, canResetPassword }: Props) {
                     <>
                         <div className="grid gap-6">
                             <div className="grid gap-2">
-                                <Label htmlFor="email">{tr('auth.email')}</Label>
+                                <Label htmlFor="email">
+                                    {tr('auth.email')}
+                                </Label>
                                 <Input
                                     id="email"
                                     type="email"
@@ -55,7 +57,9 @@ export default function Login({ status, canResetPassword }: Props) {
 
                             <div className="grid gap-2">
                                 <div className="flex items-center">
-                                    <Label htmlFor="password">{tr('auth.password')}</Label>
+                                    <Label htmlFor="password">
+                                        {tr('auth.password')}
+                                    </Label>
                                     {canResetPassword && (
                                         <TextLink
                                             href={request()}
@@ -83,7 +87,9 @@ export default function Login({ status, canResetPassword }: Props) {
                                     name="remember"
                                     tabIndex={3}
                                 />
-                                <Label htmlFor="remember">{tr('auth.login.remember')}</Label>
+                                <Label htmlFor="remember">
+                                    {tr('auth.login.remember')}
+                                </Label>
                             </div>
 
                             <Button
