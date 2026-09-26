@@ -2,6 +2,7 @@
 
 namespace App\Jobs;
 
+use App\Domain\Notifications\NotificationContentLocalizer;
 use App\Models\NotificationMessage;
 use Illuminate\Contracts\Queue\ShouldQueue;
 use Illuminate\Foundation\Queue\Queueable;
@@ -21,10 +22,10 @@ class SendNotificationEmail implements ShouldQueue
         public readonly int $notificationMessageId,
     ) {}
 
-    public function handle(): void
+    public function handle(NotificationContentLocalizer $contentLocalizer): void
     {
         $message = NotificationMessage::query()
-            ->with('recipient:id,name,email,status,email_verified_at')
+            ->with('recipient:id,name,email,status,email_verified_at,locale')
             ->findOrFail($this->notificationMessageId);
 
         if ($message->email_status === 'sent'
@@ -34,12 +35,20 @@ class SendNotificationEmail implements ShouldQueue
         }
 
         try {
+            $locale = $message->recipient->locale === 'en' ? 'en' : 'id';
+            $localized = $contentLocalizer->localize(
+                $message->rule_code,
+                $message->title,
+                $message->body,
+                $locale,
+            );
+
             Mail::raw(
-                $message->body."\n\nBuka: ".url($message->action_url ?? '/notifications'),
-                function (Message $mail) use ($message): void {
+                $localized['body']."\n\n".($locale === 'en' ? 'Open: ' : 'Buka: ').url($message->action_url ?? '/notifications'),
+                function (Message $mail) use ($message, $localized): void {
                     $mail
                         ->to($message->recipient->email, $message->recipient->name)
-                        ->subject('[Together Kamera] '.$message->title);
+                        ->subject('[Together Kamera] '.$localized['title']);
                 },
             );
 

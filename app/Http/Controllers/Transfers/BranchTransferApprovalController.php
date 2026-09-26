@@ -45,8 +45,8 @@ class BranchTransferApprovalController extends Controller
         return back()->with('toast', [
             'type' => 'success',
             'message' => $request->validated('decision') === 'approved'
-                ? 'Persetujuan berhasil dicatat.'
-                : 'Transfer ditolak dan alasan tersimpan.',
+                ? __('uat035b_stage4.flash.approval_recorded')
+                : __('uat035b_stage4.flash.transfer_rejected'),
         ]);
     }
 }

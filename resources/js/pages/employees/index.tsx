@@ -12,6 +12,8 @@ import {
 } from 'lucide-react';
 import type { FormEvent } from 'react';
 import { useMemo, useState } from 'react';
+import { useGlobalLocale } from '@/lib/locale-store';
+import { Stage3Text, stage3Translate } from '@/components/stage3-text';
 import { AccessNav } from '@/components/access-nav';
 import { useConfirmDialog } from '@/components/confirm-dialog-provider';
 import InputError from '@/components/input-error';
@@ -181,6 +183,7 @@ export default function EmployeeIndex({
     availableUsers,
     permissions,
 }: Props) {
+    const stage3Locale = useGlobalLocale();
     const { errors: pageErrors } = usePage().props;
     const confirm = useConfirmDialog();
     const [search, setSearch] = useState(filters.search);
@@ -289,9 +292,31 @@ export default function EmployeeIndex({
     const toggleEmployeeStatus = async (employee: Employee) => {
         const activating = employee.status !== 'active';
         const confirmed = await confirm({
-            title: activating ? 'Aktifkan karyawan?' : 'Nonaktifkan karyawan?',
-            description: `${employee.name} akan ${activating ? 'diaktifkan kembali' : 'dinonaktifkan dari operasional aktif'}.`,
-            confirmLabel: activating ? 'Aktifkan' : 'Nonaktifkan',
+            title: activating
+                ? stage3Translate(
+                      'stage3.ui.correction.aktifkan.karyawan.a2548',
+                      stage3Locale,
+                  )
+                : stage3Translate(
+                      'stage3.ui.correction.nonaktifkan.karyawan.77bdf',
+                      stage3Locale,
+                  ),
+            description: stage3Translate(
+                activating
+                    ? 'stage3.ui.correction.confirm.employee.activate'
+                    : 'stage3.ui.correction.confirm.employee.deactivate',
+                stage3Locale,
+                { name: employee.name },
+            ),
+            confirmLabel: activating
+                ? stage3Translate(
+                      'stage3.ui.correction.aktifkan.b2fe9',
+                      stage3Locale,
+                  )
+                : stage3Translate(
+                      'stage3.ui.correction.nonaktifkan.42191',
+                      stage3Locale,
+                  ),
             variant: activating ? 'default' : 'destructive',
         });
 
@@ -309,9 +334,31 @@ export default function EmployeeIndex({
     const togglePositionStatus = async (position: Position) => {
         const activating = !position.is_active;
         const confirmed = await confirm({
-            title: activating ? 'Aktifkan jabatan?' : 'Nonaktifkan jabatan?',
-            description: `Jabatan ${position.name} akan ${activating ? 'diaktifkan kembali' : 'dinonaktifkan untuk penugasan baru'}.`,
-            confirmLabel: activating ? 'Aktifkan' : 'Nonaktifkan',
+            title: activating
+                ? stage3Translate(
+                      'stage3.ui.correction.aktifkan.jabatan.15cb2',
+                      stage3Locale,
+                  )
+                : stage3Translate(
+                      'stage3.ui.correction.nonaktifkan.jabatan.4df18',
+                      stage3Locale,
+                  ),
+            description: stage3Translate(
+                activating
+                    ? 'stage3.ui.correction.confirm.position.activate'
+                    : 'stage3.ui.correction.confirm.position.deactivate',
+                stage3Locale,
+                { name: position.name },
+            ),
+            confirmLabel: activating
+                ? stage3Translate(
+                      'stage3.ui.correction.aktifkan.b2fe9',
+                      stage3Locale,
+                  )
+                : stage3Translate(
+                      'stage3.ui.correction.nonaktifkan.42191',
+                      stage3Locale,
+                  ),
             variant: activating ? 'default' : 'destructive',
         });
 
@@ -328,20 +375,24 @@ export default function EmployeeIndex({
 
     return (
         <>
-            <Head title="Karyawan & Jabatan" />
+            <Head
+                title={stage3Translate(
+                    'stage3.ui.karyawan.jabatan.1ff53',
+                    stage3Locale,
+                )}
+            />
 
             <div className="flex h-full flex-1 flex-col gap-6 overflow-x-auto rounded-xl p-4 md:p-6">
                 <header className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                     <div>
                         <p className="text-sm font-medium text-primary">
-                            Modul Pengguna & Akses
+                            <Stage3Text k="stage3.ui.administrasi.580b7" />
                         </p>
                         <h1 className="mt-1 text-2xl font-semibold tracking-tight">
-                            Karyawan & jabatan
+                            <Stage3Text k="stage3.ui.karyawan.jabatan.1c11a" />
                         </h1>
                         <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-                            Kelola identitas staf, penempatan cabang, jabatan,
-                            status kepegawaian, dan hubungan ke akun login.
+                            <Stage3Text k="stage3.ui.kelola.identitas.staf.penempatan.cabang.jabatan.e3940" />
                         </p>
                     </div>
                     {permissions.manage && (
@@ -351,11 +402,11 @@ export default function EmployeeIndex({
                                 onClick={openCreatePosition}
                             >
                                 <BriefcaseBusiness />
-                                Tambah jabatan
+                                <Stage3Text k="stage3.ui.tambah.jabatan.508e4" />
                             </Button>
                             <Button onClick={openCreateEmployee}>
                                 <Plus />
-                                Tambah karyawan
+                                <Stage3Text k="stage3.ui.tambah.karyawan.03c69" />
                             </Button>
                         </div>
                     )}
@@ -366,7 +417,9 @@ export default function EmployeeIndex({
                 {typeof pageErrors.employee === 'string' && (
                     <Alert variant="destructive">
                         <CircleOff />
-                        <AlertTitle>Perubahan karyawan ditolak</AlertTitle>
+                        <AlertTitle>
+                            <Stage3Text k="stage3.ui.perubahan.karyawan.ditolak.c3af9" />
+                        </AlertTitle>
                         <AlertDescription>
                             {pageErrors.employee}
                         </AlertDescription>
@@ -375,7 +428,9 @@ export default function EmployeeIndex({
                 {typeof pageErrors.position === 'string' && (
                     <Alert variant="destructive">
                         <CircleOff />
-                        <AlertTitle>Perubahan jabatan ditolak</AlertTitle>
+                        <AlertTitle>
+                            <Stage3Text k="stage3.ui.perubahan.jabatan.ditolak.9fee6" />
+                        </AlertTitle>
                         <AlertDescription>
                             {pageErrors.position}
                         </AlertDescription>
@@ -385,22 +440,34 @@ export default function EmployeeIndex({
                 <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-4">
                     {[
                         {
-                            label: 'Total karyawan',
+                            label: stage3Translate(
+                                'stage3.ui.correction.total.karyawan.4ebc7',
+                                stage3Locale,
+                            ),
                             value: summary.total,
                             icon: ContactRound,
                         },
                         {
-                            label: 'Karyawan aktif',
+                            label: stage3Translate(
+                                'stage3.ui.correction.karyawan.aktif.acfc1',
+                                stage3Locale,
+                            ),
                             value: summary.active,
                             icon: CheckCircle2,
                         },
                         {
-                            label: 'Belum punya akun',
+                            label: stage3Translate(
+                                'stage3.ui.correction.belum.punya.akun.c465c',
+                                stage3Locale,
+                            ),
                             value: summary.withoutAccount,
                             icon: Link2,
                         },
                         {
-                            label: 'Sedang cuti',
+                            label: stage3Translate(
+                                'stage3.ui.correction.sedang.cuti.04b97',
+                                stage3Locale,
+                            ),
                             value: summary.onLeave,
                             icon: CircleOff,
                         },
@@ -417,10 +484,11 @@ export default function EmployeeIndex({
                 <Card>
                     <CardHeader className="gap-4">
                         <div>
-                            <CardTitle>Daftar karyawan</CardTitle>
+                            <CardTitle>
+                                <Stage3Text k="stage3.ui.daftar.karyawan.4c6c1" />
+                            </CardTitle>
                             <CardDescription>
-                                Satu karyawan hanya dapat dihubungkan ke satu
-                                akun login.
+                                <Stage3Text k="stage3.ui.satu.karyawan.hanya.dapat.dihubungkan.ke.satu.a.f4c1e" />
                             </CardDescription>
                         </div>
                         <div
@@ -442,14 +510,20 @@ export default function EmployeeIndex({
                                             setSearch(event.target.value)
                                         }
                                         className="w-full pl-9"
-                                        placeholder="Nama, nomor, telepon"
+                                        placeholder={stage3Translate(
+                                            'stage3.ui.nama.nomor.telepon.2167f',
+                                            stage3Locale,
+                                        )}
                                     />
                                 </div>
                                 <Button
                                     type="submit"
                                     size="icon"
                                     variant="outline"
-                                    aria-label="Cari karyawan"
+                                    aria-label={stage3Translate(
+                                        'stage3.ui.cari.karyawan.d36b4',
+                                        stage3Locale,
+                                    )}
                                 >
                                     <Search />
                                 </Button>
@@ -468,7 +542,7 @@ export default function EmployeeIndex({
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="all">
-                                        Semua cabang
+                                        <Stage3Text k="stage3.ui.semua.cabang.27d30" />
                                     </SelectItem>
                                     {branches.map((branch) => (
                                         <SelectItem
@@ -491,17 +565,19 @@ export default function EmployeeIndex({
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="all">
-                                        Semua status
+                                        <Stage3Text k="stage3.ui.semua.status.baa2a" />
                                     </SelectItem>
                                     <SelectItem value="active">
-                                        Aktif
+                                        <Stage3Text k="stage3.ui.aktif.89f29" />
                                     </SelectItem>
                                     <SelectItem value="inactive">
-                                        Nonaktif
+                                        <Stage3Text k="stage3.ui.nonaktif.60944" />
                                     </SelectItem>
-                                    <SelectItem value="leave">Cuti</SelectItem>
+                                    <SelectItem value="leave">
+                                        <Stage3Text k="stage3.ui.cuti.7d69c" />
+                                    </SelectItem>
                                     <SelectItem value="terminated">
-                                        Berakhir
+                                        <Stage3Text k="stage3.ui.berakhir.6e493" />
                                     </SelectItem>
                                 </SelectContent>
                             </Select>
@@ -512,10 +588,10 @@ export default function EmployeeIndex({
                             <div className="py-16 text-center">
                                 <ContactRound className="mx-auto size-9 text-muted-foreground" />
                                 <p className="mt-4 font-medium">
-                                    Karyawan tidak ditemukan
+                                    <Stage3Text k="stage3.ui.karyawan.tidak.ditemukan.59cd5" />
                                 </p>
                                 <p className="mt-1 text-sm text-muted-foreground">
-                                    Ubah filter atau tambahkan karyawan baru.
+                                    <Stage3Text k="stage3.ui.ubah.filter.atau.tambahkan.karyawan.baru.d39ce" />
                                 </p>
                             </div>
                         ) : (
@@ -547,18 +623,27 @@ export default function EmployeeIndex({
                                             <p>
                                                 {employee.position
                                                     ? `${employee.position.code} · ${employee.position.name}`
-                                                    : 'Jabatan belum ditentukan'}
+                                                    : stage3Translate(
+                                                          'stage3.ui.correction.jabatan.belum.ditentukan.6c7d8',
+                                                          stage3Locale,
+                                                      )}
                                             </p>
                                             <p className="text-muted-foreground">
                                                 {employee.primary_branch
                                                     ? `${employee.primary_branch.code} · ${employee.primary_branch.name}`
-                                                    : 'Cabang utama belum ditentukan'}
+                                                    : stage3Translate(
+                                                          'stage3.ui.correction.cabang.utama.belum.ditentukan.ecbfe',
+                                                          stage3Locale,
+                                                      )}
                                             </p>
                                             <p className="flex items-center gap-2 text-xs text-muted-foreground">
                                                 <UserRoundCheck className="size-4" />
                                                 {employee.user
                                                     ? employee.user.email
-                                                    : 'Belum terhubung ke akun'}
+                                                    : stage3Translate(
+                                                          'stage3.ui.correction.belum.terhubung.ke.akun.2dce5',
+                                                          stage3Locale,
+                                                      )}
                                             </p>
                                         </div>
                                         {permissions.manage && (
@@ -573,7 +658,7 @@ export default function EmployeeIndex({
                                                     }
                                                 >
                                                     <Pencil />
-                                                    Edit
+                                                    <Stage3Text k="stage3.ui.edit.53016" />
                                                 </Button>
                                                 <Button
                                                     size="sm"
@@ -597,8 +682,14 @@ export default function EmployeeIndex({
                                                     )}
                                                     {employee.status ===
                                                     'active'
-                                                        ? 'Nonaktifkan'
-                                                        : 'Aktifkan'}
+                                                        ? stage3Translate(
+                                                              'stage3.ui.correction.nonaktifkan.42191',
+                                                              stage3Locale,
+                                                          )
+                                                        : stage3Translate(
+                                                              'stage3.ui.correction.aktifkan.b2fe9',
+                                                              stage3Locale,
+                                                          )}
                                                 </Button>
                                             </div>
                                         )}
@@ -618,16 +709,17 @@ export default function EmployeeIndex({
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>Master jabatan</CardTitle>
+                        <CardTitle>
+                            <Stage3Text k="stage3.ui.master.jabatan.07b9a" />
+                        </CardTitle>
                         <CardDescription>
-                            Jabatan nonaktif tetap dipertahankan untuk menjaga
-                            histori karyawan lama.
+                            <Stage3Text k="stage3.ui.jabatan.nonaktif.tetap.dipertahankan.untuk.menj.f73c6" />
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
                         {positions.length === 0 ? (
                             <p className="py-10 text-center text-sm text-muted-foreground">
-                                Belum ada data jabatan.
+                                <Stage3Text k="stage3.ui.belum.ada.data.jabatan.73c48" />
                             </p>
                         ) : (
                             <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
@@ -650,8 +742,14 @@ export default function EmployeeIndex({
                                                         }
                                                     >
                                                         {position.is_active
-                                                            ? 'Aktif'
-                                                            : 'Nonaktif'}
+                                                            ? stage3Translate(
+                                                                  'stage3.ui.correction.aktif.89f29',
+                                                                  stage3Locale,
+                                                              )
+                                                            : stage3Translate(
+                                                                  'stage3.ui.correction.nonaktif.60944',
+                                                                  stage3Locale,
+                                                              )}
                                                     </Badge>
                                                 </div>
                                                 <p className="mt-1 font-mono text-xs text-muted-foreground">
@@ -660,7 +758,7 @@ export default function EmployeeIndex({
                                             </div>
                                             <Badge variant="secondary">
                                                 {position.employees_count}{' '}
-                                                karyawan
+                                                <Stage3Text k="stage3.ui.karyawan.87c78" />
                                             </Badge>
                                         </div>
                                         <p className="mt-3 min-h-10 text-sm text-muted-foreground">
@@ -679,7 +777,7 @@ export default function EmployeeIndex({
                                                     }
                                                 >
                                                     <Pencil />
-                                                    Edit
+                                                    <Stage3Text k="stage3.ui.edit.53016" />
                                                 </Button>
                                                 <Button
                                                     size="sm"
@@ -691,8 +789,14 @@ export default function EmployeeIndex({
                                                     }
                                                 >
                                                     {position.is_active
-                                                        ? 'Nonaktifkan'
-                                                        : 'Aktifkan'}
+                                                        ? stage3Translate(
+                                                              'stage3.ui.correction.nonaktifkan.42191',
+                                                              stage3Locale,
+                                                          )
+                                                        : stage3Translate(
+                                                              'stage3.ui.correction.aktifkan.b2fe9',
+                                                              stage3Locale,
+                                                          )}
                                                 </Button>
                                             </div>
                                         )}
@@ -712,18 +816,28 @@ export default function EmployeeIndex({
                     <DialogHeader>
                         <DialogTitle>
                             {editingEmployee
-                                ? `Edit ${editingEmployee.name}`
-                                : 'Tambah karyawan'}
+                                ? stage3Translate(
+                                      'stage3.ui.correction.edit.53016',
+                                      stage3Locale,
+                                  ) +
+                                  ' ' +
+                                  editingEmployee.name
+                                : stage3Translate(
+                                      'stage3.ui.correction.tambah.karyawan.03c69',
+                                      stage3Locale,
+                                  )}
                         </DialogTitle>
                         <DialogDescription>
-                            Akun login bersifat opsional dan dapat dihubungkan
-                            kemudian.
+                            <Stage3Text k="stage3.ui.akun.login.bersifat.opsional.dan.dapat.dihubung.07f1f" />
                         </DialogDescription>
                     </DialogHeader>
                     <form onSubmit={submitEmployee} className="grid gap-5">
                         <div className="grid gap-4 sm:grid-cols-2">
                             <FormField
-                                label="Nomor karyawan"
+                                label={stage3Translate(
+                                    'stage3.ui.nomor.karyawan.752b5',
+                                    stage3Locale,
+                                )}
                                 name="employee_number"
                                 error={employeeForm.errors.employee_number}
                             >
@@ -740,7 +854,10 @@ export default function EmployeeIndex({
                                 />
                             </FormField>
                             <FormField
-                                label="Nama lengkap"
+                                label={stage3Translate(
+                                    'stage3.ui.nama.lengkap.c3587',
+                                    stage3Locale,
+                                )}
                                 name="name"
                                 error={employeeForm.errors.name}
                             >
@@ -757,7 +874,10 @@ export default function EmployeeIndex({
                                 />
                             </FormField>
                             <FormField
-                                label="Cabang utama"
+                                label={stage3Translate(
+                                    'stage3.ui.cabang.utama.f13ea',
+                                    stage3Locale,
+                                )}
                                 name="primary_branch_id"
                                 error={employeeForm.errors.primary_branch_id}
                             >
@@ -780,7 +900,7 @@ export default function EmployeeIndex({
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="none">
-                                            Belum ditetapkan
+                                            <Stage3Text k="stage3.ui.belum.ditetapkan.d4955" />
                                         </SelectItem>
                                         {branches.map((branch) => (
                                             <SelectItem
@@ -794,7 +914,10 @@ export default function EmployeeIndex({
                                 </Select>
                             </FormField>
                             <FormField
-                                label="Jabatan"
+                                label={stage3Translate(
+                                    'stage3.ui.jabatan.6cc74',
+                                    stage3Locale,
+                                )}
                                 name="position_id"
                                 error={employeeForm.errors.position_id}
                             >
@@ -817,7 +940,7 @@ export default function EmployeeIndex({
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="none">
-                                            Belum ditetapkan
+                                            <Stage3Text k="stage3.ui.belum.ditetapkan.d4955" />
                                         </SelectItem>
                                         {positions.map((position) => (
                                             <SelectItem
@@ -832,7 +955,10 @@ export default function EmployeeIndex({
                                 </Select>
                             </FormField>
                             <FormField
-                                label="Status"
+                                label={stage3Translate(
+                                    'stage3.ui.status.bae7d',
+                                    stage3Locale,
+                                )}
                                 name="status"
                                 error={employeeForm.errors.status}
                             >
@@ -850,22 +976,25 @@ export default function EmployeeIndex({
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="active">
-                                            Aktif
+                                            <Stage3Text k="stage3.ui.aktif.89f29" />
                                         </SelectItem>
                                         <SelectItem value="inactive">
-                                            Nonaktif
+                                            <Stage3Text k="stage3.ui.nonaktif.60944" />
                                         </SelectItem>
                                         <SelectItem value="leave">
-                                            Cuti
+                                            <Stage3Text k="stage3.ui.cuti.7d69c" />
                                         </SelectItem>
                                         <SelectItem value="terminated">
-                                            Berakhir
+                                            <Stage3Text k="stage3.ui.berakhir.6e493" />
                                         </SelectItem>
                                     </SelectContent>
                                 </Select>
                             </FormField>
                             <FormField
-                                label="Akun login"
+                                label={stage3Translate(
+                                    'stage3.ui.akun.login.94023',
+                                    stage3Locale,
+                                )}
                                 name="user_id"
                                 error={employeeForm.errors.user_id}
                             >
@@ -888,7 +1017,7 @@ export default function EmployeeIndex({
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="none">
-                                            Tidak dihubungkan
+                                            <Stage3Text k="stage3.ui.tidak.dihubungkan.867c6" />
                                         </SelectItem>
                                         {userOptions.map((user) => (
                                             <SelectItem
@@ -902,7 +1031,10 @@ export default function EmployeeIndex({
                                 </Select>
                             </FormField>
                             <FormField
-                                label="Nomor identitas"
+                                label={stage3Translate(
+                                    'stage3.ui.nomor.identitas.54fdf',
+                                    stage3Locale,
+                                )}
                                 name="identity_number"
                                 error={employeeForm.errors.identity_number}
                             >
@@ -918,7 +1050,10 @@ export default function EmployeeIndex({
                                 />
                             </FormField>
                             <FormField
-                                label="Jenis kelamin"
+                                label={stage3Translate(
+                                    'stage3.ui.jenis.kelamin.64cd3',
+                                    stage3Locale,
+                                )}
                                 name="gender"
                                 error={employeeForm.errors.gender}
                             >
@@ -938,19 +1073,22 @@ export default function EmployeeIndex({
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="none">
-                                            Tidak diisi
+                                            <Stage3Text k="stage3.ui.tidak.diisi.46951" />
                                         </SelectItem>
                                         <SelectItem value="male">
-                                            Laki-laki
+                                            <Stage3Text k="stage3.ui.laki.laki.afdcb" />
                                         </SelectItem>
                                         <SelectItem value="female">
-                                            Perempuan
+                                            <Stage3Text k="stage3.ui.perempuan.bc797" />
                                         </SelectItem>
                                     </SelectContent>
                                 </Select>
                             </FormField>
                             <FormField
-                                label="Telepon"
+                                label={stage3Translate(
+                                    'stage3.ui.telepon.396dc',
+                                    stage3Locale,
+                                )}
                                 name="phone"
                                 error={employeeForm.errors.phone}
                             >
@@ -983,7 +1121,10 @@ export default function EmployeeIndex({
                                 />
                             </FormField>
                             <FormField
-                                label="Tempat lahir"
+                                label={stage3Translate(
+                                    'stage3.ui.tempat.lahir.c76be',
+                                    stage3Locale,
+                                )}
                                 name="birth_place"
                                 error={employeeForm.errors.birth_place}
                             >
@@ -999,7 +1140,10 @@ export default function EmployeeIndex({
                                 />
                             </FormField>
                             <FormField
-                                label="Tanggal lahir"
+                                label={stage3Translate(
+                                    'stage3.ui.tanggal.lahir.c7642',
+                                    stage3Locale,
+                                )}
                                 name="birth_date"
                                 error={employeeForm.errors.birth_date}
                             >
@@ -1016,7 +1160,10 @@ export default function EmployeeIndex({
                                 />
                             </FormField>
                             <FormField
-                                label="Tanggal bergabung"
+                                label={stage3Translate(
+                                    'stage3.ui.tanggal.bergabung.85a22',
+                                    stage3Locale,
+                                )}
                                 name="joined_at"
                                 error={employeeForm.errors.joined_at}
                             >
@@ -1033,7 +1180,10 @@ export default function EmployeeIndex({
                                 />
                             </FormField>
                             <FormField
-                                label="Tanggal berakhir"
+                                label={stage3Translate(
+                                    'stage3.ui.tanggal.berakhir.99021',
+                                    stage3Locale,
+                                )}
                                 name="ended_at"
                                 error={employeeForm.errors.ended_at}
                             >
@@ -1051,7 +1201,10 @@ export default function EmployeeIndex({
                             </FormField>
                         </div>
                         <FormField
-                            label="Alamat"
+                            label={stage3Translate(
+                                'stage3.ui.alamat.85b6e',
+                                stage3Locale,
+                            )}
                             name="address"
                             error={employeeForm.errors.address}
                         >
@@ -1075,17 +1228,26 @@ export default function EmployeeIndex({
                                 onClick={() => setEmployeeDialogOpen(false)}
                                 disabled={employeeForm.processing}
                             >
-                                Batal
+                                <Stage3Text k="stage3.ui.batal.14335" />
                             </Button>
                             <Button
                                 type="submit"
                                 disabled={employeeForm.processing}
                             >
                                 {employeeForm.processing
-                                    ? 'Menyimpan…'
+                                    ? stage3Translate(
+                                          'stage3.ui.correction.menyimpan.92e24',
+                                          stage3Locale,
+                                      )
                                     : editingEmployee
-                                      ? 'Simpan perubahan'
-                                      : 'Buat karyawan'}
+                                      ? stage3Translate(
+                                            'stage3.ui.correction.simpan.perubahan.099b3',
+                                            stage3Locale,
+                                        )
+                                      : stage3Translate(
+                                            'stage3.ui.correction.buat.karyawan.aee0c',
+                                            stage3Locale,
+                                        )}
                             </Button>
                         </DialogFooter>
                     </form>
@@ -1100,17 +1262,27 @@ export default function EmployeeIndex({
                     <DialogHeader>
                         <DialogTitle>
                             {editingPosition
-                                ? `Edit ${editingPosition.name}`
-                                : 'Tambah jabatan'}
+                                ? stage3Translate(
+                                      'stage3.ui.correction.edit.53016',
+                                      stage3Locale,
+                                  ) +
+                                  ' ' +
+                                  editingPosition.name
+                                : stage3Translate(
+                                      'stage3.ui.correction.tambah.jabatan.508e4',
+                                      stage3Locale,
+                                  )}
                         </DialogTitle>
                         <DialogDescription>
-                            Kode jabatan unik dalam perusahaan dan dipakai
-                            sebagai referensi kepegawaian.
+                            <Stage3Text k="stage3.ui.kode.jabatan.unik.dalam.perusahaan.dan.dipakai.081ca" />
                         </DialogDescription>
                     </DialogHeader>
                     <form onSubmit={submitPosition} className="grid gap-4">
                         <FormField
-                            label="Kode jabatan"
+                            label={stage3Translate(
+                                'stage3.ui.kode.jabatan.0e67b',
+                                stage3Locale,
+                            )}
                             name="position_code"
                             error={positionForm.errors.code}
                         >
@@ -1127,7 +1299,10 @@ export default function EmployeeIndex({
                             />
                         </FormField>
                         <FormField
-                            label="Nama jabatan"
+                            label={stage3Translate(
+                                'stage3.ui.nama.jabatan.be836',
+                                stage3Locale,
+                            )}
                             name="position_name"
                             error={positionForm.errors.name}
                         >
@@ -1144,7 +1319,10 @@ export default function EmployeeIndex({
                             />
                         </FormField>
                         <FormField
-                            label="Deskripsi"
+                            label={stage3Translate(
+                                'stage3.ui.deskripsi.7e9fd',
+                                stage3Locale,
+                            )}
                             name="position_description"
                             error={positionForm.errors.description}
                         >
@@ -1173,10 +1351,10 @@ export default function EmployeeIndex({
                             />
                             <span>
                                 <span className="block text-sm font-medium">
-                                    Jabatan aktif
+                                    <Stage3Text k="stage3.ui.jabatan.aktif.f91b7" />
                                 </span>
                                 <span className="mt-1 block text-xs text-muted-foreground">
-                                    Dapat dipilih untuk karyawan baru.
+                                    <Stage3Text k="stage3.ui.dapat.dipilih.untuk.karyawan.baru.4800a" />
                                 </span>
                             </span>
                         </label>
@@ -1187,17 +1365,26 @@ export default function EmployeeIndex({
                                 onClick={() => setPositionDialogOpen(false)}
                                 disabled={positionForm.processing}
                             >
-                                Batal
+                                <Stage3Text k="stage3.ui.batal.14335" />
                             </Button>
                             <Button
                                 type="submit"
                                 disabled={positionForm.processing}
                             >
                                 {positionForm.processing
-                                    ? 'Menyimpan…'
+                                    ? stage3Translate(
+                                          'stage3.ui.correction.menyimpan.92e24',
+                                          stage3Locale,
+                                      )
                                     : editingPosition
-                                      ? 'Simpan perubahan'
-                                      : 'Buat jabatan'}
+                                      ? stage3Translate(
+                                            'stage3.ui.correction.simpan.perubahan.099b3',
+                                            stage3Locale,
+                                        )
+                                      : stage3Translate(
+                                            'stage3.ui.correction.buat.jabatan.5df05',
+                                            stage3Locale,
+                                        )}
                             </Button>
                         </DialogFooter>
                     </form>

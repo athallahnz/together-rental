@@ -10,11 +10,8 @@ import {
     DropdownMenuTrigger,
 } from '@/components/ui/dropdown-menu';
 import type { NotificationItem } from '@/types';
-
-const dateTime = new Intl.DateTimeFormat('id-ID', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-});
+import { useAppLocale } from '@/lib/i18n';
+import { formatDateTime } from '@/lib/locale-format';
 
 function severityClass(item: NotificationItem) {
     if (item.severity === 'critical') {
@@ -30,6 +27,7 @@ function severityClass(item: NotificationItem) {
 
 export function NotificationBell() {
     const { auth, notificationCenter } = usePage().props;
+    const { locale, tr, tp } = useAppLocale();
 
     if (!auth.permissions['notifications.view']) {
         return null;
@@ -58,9 +56,11 @@ export function NotificationBell() {
                     className="relative"
                     aria-label={
                         notificationCenter.unread_count > 0
-                            ? notificationCenter.unread_count +
-                              ' notifikasi belum dibaca'
-                            : 'Notifikasi'
+                            ? tp(
+                                  'notifications.unread',
+                                  notificationCenter.unread_count,
+                              )
+                            : tr('nav.notifications')
                     }
                 >
                     {notificationCenter.critical_count > 0 ? (
@@ -83,7 +83,7 @@ export function NotificationBell() {
             >
                 <div className="flex items-center justify-between gap-3 px-2 py-1">
                     <DropdownMenuLabel className="px-0">
-                        Notification Center
+                        {tr('notifications.center')}
                     </DropdownMenuLabel>
                     {notificationCenter.unread_count > 0 && (
                         <Button
@@ -100,7 +100,7 @@ export function NotificationBell() {
                             }
                         >
                             <CheckCheck className="size-3.5" />
-                            Baca semua
+                            {tr('notifications.markAllRead')}
                         </Button>
                     )}
                 </div>
@@ -109,7 +109,7 @@ export function NotificationBell() {
                     {notificationCenter.recent.length === 0 ? (
                         <div className="flex flex-col items-center gap-2 px-4 py-8 text-center text-sm text-muted-foreground">
                             <Inbox className="size-8 opacity-50" />
-                            Tidak ada notifikasi baru.
+                            {tr('notifications.empty')}
                         </div>
                     ) : (
                         notificationCenter.recent.map((item) => (
@@ -136,15 +136,20 @@ export function NotificationBell() {
                                         }
                                         className="shrink-0"
                                     >
-                                        {item.severity}
+                                        {item.severity === 'critical'
+                                            ? tr('status.critical')
+                                            : item.severity === 'warning'
+                                              ? tr('status.warning')
+                                              : tr('status.info')}
                                     </Badge>
                                 </div>
                                 <p className="mt-1 line-clamp-2 text-xs text-muted-foreground">
                                     {item.body}
                                 </p>
                                 <p className="mt-2 text-[11px] text-muted-foreground">
-                                    {dateTime.format(
-                                        new Date(item.last_triggered_at),
+                                    {formatDateTime(
+                                        item.last_triggered_at,
+                                        locale,
                                     )}
                                     {item.branch
                                         ? ' · ' + item.branch.code
@@ -160,7 +165,9 @@ export function NotificationBell() {
                     className="w-full justify-center"
                     asChild
                 >
-                    <Link href="/notifications">Lihat semua notifikasi</Link>
+                    <Link href="/notifications">
+                        {tr('notifications.viewAll')}
+                    </Link>
                 </Button>
             </DropdownMenuContent>
         </DropdownMenu>

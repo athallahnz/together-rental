@@ -9,18 +9,19 @@ import {
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import type { ChangeEvent } from 'react';
+import { useAppLocale } from '@/lib/i18n';
+import { formatDateTime, formatMoney } from '@/lib/locale-format';
+import {
+    publicAvailabilityLabel,
+    publicDurationMinutesLabel,
+    publicRateDurationLabel,
+} from '@/lib/public-i18n';
 import type {
     PublicAvailability,
     PublicAvailabilityResult,
     PublicBranch,
     PublicRate,
 } from '@/types';
-
-const currency = new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    maximumFractionDigits: 0,
-});
 
 function localDateTimeValue(date: Date): string {
     const offset = date.getTimezoneOffset();
@@ -69,6 +70,8 @@ export default function AvailabilityPlanner({
     currentAvailability,
     fallbackInquiryUrl,
 }: Props) {
+    const { locale, tr } = useAppLocale();
+
     const initialPeriod = useMemo(
         () => defaultPeriod(rates[0]?.duration_minutes ?? 1440),
         [rates],
@@ -121,12 +124,12 @@ export default function AvailabilityPlanner({
                 throw new Error(
                     firstError ??
                         errorPayload.message ??
-                        'Ketersediaan belum dapat diperiksa.',
+                        tr('public.detail.planner.failure'),
                 );
             }
 
             if (!('data' in payload)) {
-                throw new Error('Respons ketersediaan tidak valid.');
+                throw new Error(tr('public.detail.planner.invalid'));
             }
 
             setResult(payload.data);
@@ -134,7 +137,7 @@ export default function AvailabilityPlanner({
             setError(
                 requestError instanceof Error
                     ? requestError.message
-                    : 'Ketersediaan belum dapat diperiksa.',
+                    : tr('public.detail.planner.failure'),
             );
         } finally {
             setLoading(false);
@@ -158,11 +161,12 @@ export default function AvailabilityPlanner({
                     </div>
                     <div>
                         <p className="font-semibold">
-                            Cek ketersediaan berdasarkan tanggal
+                            {tr('public.detail.planner.title')}
                         </p>
                         <p className="mt-1 text-sm leading-6 text-neutral-500">
-                            Sistem memeriksa booking dan rental aktif di{' '}
-                            {branch.name} sebelum Anda menghubungi admin.
+                            {tr('public.detail.planner.description', {
+                                branch: branch.name,
+                            })}
                         </p>
                     </div>
                 </div>
@@ -170,7 +174,7 @@ export default function AvailabilityPlanner({
 
             <div className="grid gap-4 p-5 sm:grid-cols-2 sm:p-6">
                 <label className="grid gap-2 text-sm font-medium">
-                    Mulai rental
+                    {tr('public.detail.planner.start')}
                     <input
                         type="datetime-local"
                         value={startsAt}
@@ -181,7 +185,7 @@ export default function AvailabilityPlanner({
                     />
                 </label>
                 <label className="grid gap-2 text-sm font-medium">
-                    Selesai rental
+                    {tr('public.detail.planner.end')}
                     <input
                         type="datetime-local"
                         value={endsAt}
@@ -192,7 +196,7 @@ export default function AvailabilityPlanner({
                     />
                 </label>
                 <label className="grid gap-2 text-sm font-medium">
-                    Jumlah
+                    {tr('public.detail.planner.quantity')}
                     <select
                         value={quantity}
                         onChange={(event: ChangeEvent<HTMLSelectElement>) =>
@@ -205,14 +209,19 @@ export default function AvailabilityPlanner({
                             (_, index) => index + 1,
                         ).map((value) => (
                             <option key={value} value={value}>
-                                {value}{' '}
-                                {itemType === 'package' ? 'paket' : 'unit'}
+                                {itemType === 'package'
+                                    ? tr('public.detail.planner.packages', {
+                                          count: value,
+                                      })
+                                    : tr('public.detail.planner.units', {
+                                          count: value,
+                                      })}
                             </option>
                         ))}
                     </select>
                 </label>
                 <label className="grid gap-2 text-sm font-medium">
-                    Pilihan tarif
+                    {tr('public.detail.planner.rate')}
                     <select
                         value={rateId ?? ''}
                         onChange={(event: ChangeEvent<HTMLSelectElement>) =>
@@ -225,12 +234,17 @@ export default function AvailabilityPlanner({
                         className="h-11 rounded-xl border border-black/10 bg-[#fafaf8] px-3 text-sm transition outline-none focus:border-black/30"
                     >
                         {rates.length === 0 && (
-                            <option value="">Hubungi admin</option>
+                            <option value="">
+                                {tr('public.common.contactAdmin')}
+                            </option>
                         )}
                         {rates.map((rate) => (
                             <option key={rate.id} value={rate.id}>
-                                {rate.duration_label} ·{' '}
-                                {currency.format(rate.amount)}
+                                {publicRateDurationLabel(
+                                    rate.duration_label,
+                                    locale,
+                                )}{' '}
+                                · {formatMoney(rate.amount, locale)}
                             </option>
                         ))}
                     </select>
@@ -247,7 +261,9 @@ export default function AvailabilityPlanner({
                     ) : (
                         <PackageSearch className="size-4" />
                     )}
-                    {loading ? 'Memeriksa jadwal...' : `Cek ${itemName}`}
+                    {loading
+                        ? tr('public.detail.planner.loading')
+                        : tr('public.detail.planner.check', { name: itemName })}
                 </button>
             </div>
 
@@ -273,23 +289,40 @@ export default function AvailabilityPlanner({
                                 )}
                                 <div>
                                     <p className="font-semibold">
-                                        {result.availability.label}
+                                        {publicAvailabilityLabel(
+                                            result.availability.status,
+                                            locale,
+                                        )}
                                     </p>
                                     <p className="mt-1 text-sm opacity-75">
-                                        {result.period.starts_label} –{' '}
-                                        {result.period.ends_label} WIB ·{' '}
-                                        {result.period.duration_label} ·{' '}
-                                        {result.period.timezone_label}
+                                        {formatDateTime(
+                                            new Date(result.period.starts_at),
+                                            locale,
+                                        )}{' '}
+                                        –{' '}
+                                        {formatDateTime(
+                                            new Date(result.period.ends_at),
+                                            locale,
+                                        )}{' '}
+                                        ·{' '}
+                                        {publicDurationMinutesLabel(
+                                            result.period.duration_minutes,
+                                            locale,
+                                        )}{' '}
+                                        · {result.period.timezone_label}
                                     </p>
                                 </div>
                             </div>
                             <div className="rounded-xl bg-white/65 px-4 py-3 text-left sm:text-right">
                                 <p className="text-xs opacity-65">
-                                    Kapasitas periode
+                                    {tr('public.detail.planner.periodCapacity')}
                                 </p>
                                 <p className="mt-1 font-semibold">
-                                    {result.availability.available_units} dari{' '}
-                                    {result.availability.total_units} tersedia
+                                    {tr('public.detail.planner.capacity', {
+                                        available:
+                                            result.availability.available_units,
+                                        total: result.availability.total_units,
+                                    })}
                                 </p>
                             </div>
                         </div>
@@ -298,31 +331,44 @@ export default function AvailabilityPlanner({
                             <div className="mt-4 grid gap-3 border-t border-current/10 pt-4 sm:grid-cols-3">
                                 <div>
                                     <p className="text-xs opacity-65">
-                                        Estimasi rental
+                                        {tr(
+                                            'public.detail.planner.rentalEstimate',
+                                        )}
                                     </p>
                                     <p className="mt-1 font-semibold">
-                                        {currency.format(
+                                        {formatMoney(
                                             result.estimate.rental_amount,
+                                            locale,
                                         )}
                                     </p>
                                 </div>
                                 <div>
                                     <p className="text-xs opacity-65">
-                                        Estimasi deposit
+                                        {tr(
+                                            'public.detail.planner.depositEstimate',
+                                        )}
                                     </p>
                                     <p className="mt-1 font-semibold">
-                                        {currency.format(
+                                        {formatMoney(
                                             result.estimate.deposit_amount,
+                                            locale,
                                         )}
                                     </p>
                                 </div>
                                 <div>
                                     <p className="text-xs opacity-65">
-                                        Siklus tarif
+                                        {tr('public.detail.planner.billing')}
                                     </p>
                                     <p className="mt-1 font-semibold">
                                         {result.estimate.billing_units} ×{' '}
-                                        {result.rate?.duration_label ?? 'tarif'}
+                                        {result.rate
+                                            ? publicRateDurationLabel(
+                                                  result.rate.duration_label,
+                                                  locale,
+                                              )
+                                            : tr(
+                                                  'public.detail.planner.rateFallback',
+                                              )}
                                     </p>
                                 </div>
                             </div>
@@ -331,7 +377,7 @@ export default function AvailabilityPlanner({
                         {result.items.length > 0 && (
                             <div className="mt-4 border-t border-current/10 pt-4">
                                 <p className="text-xs font-semibold tracking-wide uppercase opacity-65">
-                                    Kesiapan isi paket
+                                    {tr('public.detail.planner.packageReady')}
                                 </p>
                                 <div className="mt-3 grid gap-2">
                                     {result.items.map((item) => (
@@ -343,11 +389,16 @@ export default function AvailabilityPlanner({
                                                 {item.name} ·{' '}
                                                 {item.quantity_per_package}×
                                                 {item.is_optional
-                                                    ? ' · opsional'
+                                                    ? ` · ${tr('public.detail.planner.optional')}`
                                                     : ''}
                                             </span>
                                             <span className="shrink-0 font-semibold">
-                                                {item.available_units} tersedia
+                                                {tr(
+                                                    'public.detail.planner.available',
+                                                    {
+                                                        count: item.available_units,
+                                                    },
+                                                )}
                                             </span>
                                         </div>
                                     ))}
@@ -358,8 +409,7 @@ export default function AvailabilityPlanner({
                         <div className="mt-5 flex flex-col gap-3 border-t border-current/10 pt-4 sm:flex-row sm:items-center sm:justify-between">
                             <p className="flex items-start gap-2 text-xs leading-5 opacity-70">
                                 <Clock3 className="mt-0.5 size-3.5 shrink-0" />
-                                Hasil merupakan estimasi real-time. Admin tetap
-                                melakukan konfirmasi final sebelum booking.
+                                {tr('public.detail.planner.notice')}
                             </p>
                             {result.inquiry_url && (
                                 <a
@@ -368,8 +418,8 @@ export default function AvailabilityPlanner({
                                     rel="noreferrer"
                                     className="inline-flex h-11 shrink-0 items-center justify-center gap-2 rounded-full bg-neutral-950 px-5 text-sm font-semibold text-white transition hover:bg-neutral-800"
                                 >
-                                    <MessageCircle className="size-4" /> Kirim
-                                    inquiry terstruktur
+                                    <MessageCircle className="size-4" />{' '}
+                                    {tr('public.detail.planner.inquiry')}
                                 </a>
                             )}
                         </div>
@@ -379,11 +429,15 @@ export default function AvailabilityPlanner({
                         <Clock3 className="mt-0.5 size-5 shrink-0" />
                         <div>
                             <p className="font-semibold">
-                                Kondisi saat ini: {currentAvailability.label}
+                                {tr('public.detail.planner.current', {
+                                    status: publicAvailabilityLabel(
+                                        currentAvailability.status,
+                                        locale,
+                                    ),
+                                })}
                             </p>
                             <p className="mt-1 text-sm opacity-70">
-                                Pilih periode untuk memperoleh hasil yang
-                                mempertimbangkan bentrok jadwal.
+                                {tr('public.detail.planner.choose')}
                             </p>
                             {fallbackInquiryUrl && (
                                 <a
@@ -392,8 +446,8 @@ export default function AvailabilityPlanner({
                                     rel="noreferrer"
                                     className="mt-3 inline-flex items-center gap-2 text-sm font-semibold underline underline-offset-4"
                                 >
-                                    <MessageCircle className="size-4" /> Tanya
-                                    admin tanpa memilih periode
+                                    <MessageCircle className="size-4" />{' '}
+                                    {tr('public.detail.planner.ask')}
                                 </a>
                             )}
                         </div>

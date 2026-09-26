@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Domain\Access\ActivityRecorder;
+use App\Domain\Finance\BookingPaymentSettlement;
 use App\Domain\Rentals\RentalCollateralDocumentStorage;
 use App\Domain\Rentals\RentalFinancialCorrectionManager;
 use App\Domain\Rentals\RentalManager;
@@ -27,6 +28,7 @@ use App\Models\RentalPackage;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Database\Eloquent\Builder;
+use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Collection;
@@ -184,6 +186,37 @@ class RentalController extends Controller
         ]);
     }
 
+    /**
+     * Fetch Customer360 identities for the currently selected Rental In Store customer.
+     * This GET does not receive or hold any collateral; the POST is checkout itself.
+     */
+    public function directCustomerIdentities(Request $request): JsonResponse
+    {
+        Gate::authorize('rentals.create');
+
+        $input = $request->validate([
+            'customer_id' => ['required', 'integer', 'min:1'],
+            'branch_id' => ['required', 'integer', 'min:1'],
+        ]);
+        abort_unless(
+            $request->user()->accessibleBranches()->whereKey((int) $input['branch_id'])->exists(),
+            404,
+        );
+
+        $customer = Customer::query()
+            ->where('company_id', $request->user()->company_id)
+            ->where('status', 'active')
+            ->with(['identities' => fn ($query) => $query
+                ->orderByDesc('is_primary')
+                ->orderByDesc('verified_at')
+                ->orderByDesc('id')])
+            ->findOrFail((int) $input['customer_id']);
+
+        return response()->json([
+            'data' => $this->customerIdentityOptions($customer->identities),
+        ]);
+    }
+
     public function storeDirect(
         StoreDirectRentalRequest $request,
         RentalManager $manager,
@@ -211,12 +244,15 @@ class RentalController extends Controller
 
         return to_route('rentals.show', $rental)->with('toast', [
             'type' => 'success',
-            'message' => "Rental In Store {$rental->rental_number} berhasil di-checkout.",
+            'message' => __('uat035b_stage4.flash.direct_checked_out', ['reference' => $rental->rental_number]),
         ]);
     }
 
-    public function createCheckout(Request $request, Booking $booking): Response
-    {
+    public function createCheckout(
+        Request $request,
+        Booking $booking,
+        BookingPaymentSettlement $paymentSettlement,
+    ): Response {
         Gate::authorize('rentals.create');
         $this->guardBookingAccess($request, $booking);
         abort_unless($booking->status === 'confirmed' && ! $booking->rental()->exists(), 409);
@@ -233,46 +269,17 @@ class RentalController extends Controller
             'items.bulkReservations.product:id,sku,name',
         ]);
 
-        $rentalPaid = (float) $booking->payments()
-            ->where('status', 'completed')
-            ->where('direction', 'in')
-            ->where('type', 'rental')
-            ->sum('amount');
-        $depositPaid = (float) $booking->payments()
-            ->where('status', 'completed')
-            ->where('direction', 'in')
-            ->where('type', 'deposit')
-            ->sum('amount');
+        $settlement = $paymentSettlement->summary($booking);
+        $rentalPaid = $settlement['rental_paid'];
+        $depositPaid = $settlement['deposit_paid'];
 
         $identities = $booking->customer?->identities ?? collect();
-        $eligibleIdentities = $identities->reject(
-            fn (CustomerIdentity $identity): bool => $identity->isExpiredAt(now()),
-        );
-        $defaultIdentity = $eligibleIdentities->first(
-            fn (CustomerIdentity $identity): bool => $identity->is_primary && $identity->verified_at !== null,
-        ) ?? $eligibleIdentities->first(
-            fn (CustomerIdentity $identity): bool => $identity->verified_at !== null,
-        ) ?? $eligibleIdentities->first(
-            fn (CustomerIdentity $identity): bool => $identity->is_primary,
-        ) ?? $eligibleIdentities->first();
 
         return Inertia::render('rentals/checkout', [
             'booking' => $booking,
             'paymentMethods' => $this->paymentMethods($request->user()),
             'cashSessions' => $this->cashSessions($request->user(), $booking->branch_id),
-            'customerIdentities' => $identities->map(fn (CustomerIdentity $identity): array => [
-                'id' => $identity->id,
-                'type' => $identity->type,
-                'collateral_type' => $identity->collateralType(),
-                'number' => $identity->number,
-                'name_on_identity' => $identity->name_on_identity,
-                'expires_at' => $identity->expires_at?->toDateString(),
-                'is_primary' => $identity->is_primary,
-                'verified_at' => $identity->verified_at?->toISOString(),
-                'document_present' => $identity->document_path !== null,
-                'is_expired' => $identity->isExpiredAt(now()),
-                'is_default' => $defaultIdentity?->id === $identity->id,
-            ])->values(),
+            'customerIdentities' => $this->customerIdentityOptions($identities),
             'financialSummary' => [
                 'rental_paid' => $rentalPaid,
                 'deposit_paid' => $depositPaid,
@@ -311,7 +318,7 @@ class RentalController extends Controller
 
         return to_route('rentals.show', $rental)->with('toast', [
             'type' => 'success',
-            'message' => "Booking berhasil di-checkout menjadi {$rental->rental_number}.",
+            'message' => __('uat035b_stage4.flash.booking_checked_out', ['reference' => $rental->rental_number]),
         ]);
     }
 
@@ -356,8 +363,40 @@ class RentalController extends Controller
                 && CarbonImmutable::parse((string) $rental->due_at)->isPast(),
         );
 
+        $identities = $rental->customer
+            ->identities()
+            ->orderByDesc('is_primary')
+            ->orderByDesc('verified_at')
+            ->orderByDesc('id')
+            ->get();
+        $eligibleIdentities = $identities->reject(
+            fn (CustomerIdentity $identity): bool => $identity->isExpiredAt(now()),
+        );
+        $defaultIdentity = $eligibleIdentities->first(
+            fn (CustomerIdentity $identity): bool => $identity->is_primary && $identity->verified_at !== null,
+        ) ?? $eligibleIdentities->first(
+            fn (CustomerIdentity $identity): bool => $identity->verified_at !== null,
+        ) ?? $eligibleIdentities->first(
+            fn (CustomerIdentity $identity): bool => $identity->is_primary,
+        ) ?? $eligibleIdentities->first();
+
         return Inertia::render('rentals/show', [
             'rental' => $rental,
+            'customerIdentities' => $identities->map(
+                fn (CustomerIdentity $identity): array => [
+                    'id' => $identity->id,
+                    'type' => $identity->type,
+                    'collateral_type' => $identity->collateralType(),
+                    'number' => $identity->number,
+                    'name_on_identity' => $identity->name_on_identity,
+                    'expires_at' => $identity->expires_at?->toDateString(),
+                    'is_primary' => $identity->is_primary,
+                    'verified_at' => $identity->verified_at?->toISOString(),
+                    'document_present' => $identity->document_path !== null,
+                    'is_expired' => $identity->isExpiredAt(now()),
+                    'is_default' => $defaultIdentity?->id === $identity->id,
+                ],
+            )->values(),
             'permissions' => $this->permissions($request->user()),
         ]);
     }
@@ -366,8 +405,7 @@ class RentalController extends Controller
         Request $request,
         Rental $rental,
         RentalOvertimeCalculator $overtime,
-    ): Response
-    {
+    ): Response {
         Gate::authorize('rentals.return');
         $this->guardRentalAccess($request, $rental);
         abort_unless(in_array($rental->status, ['active', 'partial_return', 'correction_pending'], true), 409);
@@ -459,7 +497,7 @@ class RentalController extends Controller
 
         return to_route('rentals.return.create', $rental)->with('toast', [
             'type' => 'success',
-            'message' => "{$correction->correction_number} dibuka. Finalisasi ulang pengembalian.",
+            'message' => __('uat035b_stage4.flash.return_reopened', ['reference' => $correction->correction_number]),
         ]);
     }
 
@@ -521,7 +559,7 @@ class RentalController extends Controller
 
         return to_route('rentals.show', $rental)->with('toast', [
             'type' => 'success',
-            'message' => "Pengembalian {$return->return_number} berhasil diproses.",
+            'message' => __('uat035b_stage4.flash.return_recorded', ['reference' => $return->return_number]),
         ]);
     }
 
@@ -568,8 +606,40 @@ class RentalController extends Controller
 
         return back()->with('toast', [
             'type' => 'success',
-            'message' => "Koreksi {$adjustment->adjustment_number} berhasil dicatat.",
+            'message' => __('uat035b_stage4.flash.financial_correction', ['reference' => $adjustment->adjustment_number]),
         ]);
+    }
+
+    /**
+     * @param  Collection<int, CustomerIdentity>  $identities
+     * @return Collection<int, array<string, mixed>>
+     */
+    private function customerIdentityOptions(Collection $identities): Collection
+    {
+        $eligible = $identities->reject(
+            fn (CustomerIdentity $identity): bool => $identity->isExpiredAt(now()),
+        );
+        $default = $eligible->first(
+            fn (CustomerIdentity $identity): bool => $identity->is_primary && $identity->verified_at !== null,
+        ) ?? $eligible->first(
+            fn (CustomerIdentity $identity): bool => $identity->verified_at !== null,
+        ) ?? $eligible->first(
+            fn (CustomerIdentity $identity): bool => $identity->is_primary,
+        ) ?? $eligible->first();
+
+        return $identities->map(fn (CustomerIdentity $identity): array => [
+            'id' => $identity->id,
+            'type' => $identity->type,
+            'collateral_type' => $identity->collateralType(),
+            'number' => $identity->number,
+            'name_on_identity' => $identity->name_on_identity,
+            'expires_at' => $identity->expires_at?->toDateString(),
+            'is_primary' => $identity->is_primary,
+            'verified_at' => $identity->verified_at?->toISOString(),
+            'document_present' => $identity->document_path !== null,
+            'is_expired' => $identity->isExpiredAt(now()),
+            'is_default' => $default?->id === $identity->id,
+        ])->values();
     }
 
     /** @return array<string, mixed> */
@@ -654,6 +724,7 @@ class RentalController extends Controller
             'return' => $user->can('rentals.return'),
             'correctCompleted' => $user->can('rentals.correct_completed'),
             'reopenReturn' => $user->can('rentals.reopen_return'),
+            'updateCustomer' => $user->can('customers.update'),
         ];
     }
 

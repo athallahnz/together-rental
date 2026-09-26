@@ -1,0 +1,731 @@
+{
+  "keys": {
+    "Catalog Intelligence": "stage3.ui.correction.catalog.intelligence.bbba2",
+    "Master produk": "stage3.ui.correction.master.produk.f35f0",
+    "Siap disewakan": "stage3.ui.correction.siap.disewakan.c9572",
+    "Per unit / serial": "stage3.ui.correction.per.unit.serial.cc205",
+    "Paket rental": "stage3.ui.correction.paket.rental.bbc25",
+    "Belum punya harga": "stage3.ui.correction.belum.punya.harga.d0d52",
+    "Aset serialized": "stage3.ui.correction.aset.serialized.7dba4",
+    "Aset tersedia": "stage3.ui.correction.aset.tersedia.0418d",
+    "Aset disewa": "stage3.ui.correction.aset.disewa.06754",
+    "Maintenance / transit": "stage3.ui.correction.maintenance.transit.43451",
+    "Stok bulk": "stage3.ui.correction.stok.bulk.37225",
+    "Produk": "stage3.ui.correction.produk.869eb",
+    "Kategori": "stage3.ui.correction.kategori.b7964",
+    "Paket Rental": "stage3.ui.correction.paket.rental.11f40",
+    "Rate Plan": "stage3.ui.correction.rate.plan.3e998",
+    "kategori": "stage3.ui.correction.kategori.94487",
+    "paket": "stage3.ui.correction.paket.04585",
+    "rate plan": "stage3.ui.correction.rate.plan.a81e7",
+    "produk": "stage3.ui.correction.produk.0a511",
+    "Produk & Kategori": "stage3.ui.correction.produk.kategori.7da22",
+    "Tambah produk": "stage3.ui.correction.tambah.produk.44b51",
+    "Buat produk": "stage3.ui.correction.buat.produk.9a4fb",
+    "Tambah kategori": "stage3.ui.correction.tambah.kategori.f1458",
+    "Tambah rate plan": "stage3.ui.correction.tambah.rate.plan.ad9db",
+    "Tambah paket rental": "stage3.ui.correction.tambah.paket.rental.da009",
+    "Edit harga produk": "stage3.ui.correction.edit.harga.produk.1a2a6",
+    "Edit harga paket": "stage3.ui.correction.edit.harga.paket.f2c05",
+    "Tambah harga paket": "stage3.ui.correction.tambah.harga.paket.a1963",
+    "Simpan perubahan": "stage3.ui.correction.simpan.perubahan.099b3",
+    "Menyimpan…": "stage3.ui.correction.menyimpan.92e24",
+    "Edit": "stage3.ui.correction.edit.53016",
+    "Aktif": "stage3.ui.correction.aktif.89f29",
+    "Nonaktif": "stage3.ui.correction.nonaktif.60944",
+    "Dapat disewa": "stage3.ui.correction.dapat.disewa.18f2a",
+    "Tidak disewakan": "stage3.ui.correction.tidak.disewakan.13719",
+    "Tanpa brand": "stage3.ui.correction.tanpa.brand.61d4f",
+    "Tanpa kategori": "stage3.ui.correction.tanpa.kategori.a3fdc",
+    "Brand dan model belum diisi": "stage3.ui.correction.brand.dan.model.belum.diisi.42319",
+    "Semua model": "stage3.ui.correction.semua.model.ef378",
+    "Pilih brand dahulu": "stage3.ui.correction.pilih.brand.dahulu.fa1b5",
+    "Kategori utama": "stage3.ui.correction.kategori.utama.eda08",
+    "Global seluruh cabang": "stage3.ui.correction.global.seluruh.cabang.b98dd",
+    "Global": "stage3.ui.correction.global.5f118",
+    "Arsipkan kategori?": "stage3.ui.correction.arsipkan.kategori.d4a17",
+    "Canonical": "stage3.ui.correction.canonical.52e10",
+    "Total pelanggan": "stage3.ui.correction.total.pelanggan.7797c",
+    "Pelanggan aktif": "stage3.ui.correction.pelanggan.aktif.a9b25",
+    "Member": "stage3.ui.correction.member.6853c",
+    "Risiko tinggi": "stage3.ui.correction.risiko.tinggi.035bf",
+    "Identitas belum valid": "stage3.ui.correction.identitas.belum.valid.43262",
+    "Diblokir": "stage3.ui.correction.diblokir.ae752",
+    "Non-member": "stage3.ui.correction.non.member.b65c4",
+    "Rendah": "stage3.ui.correction.rendah.afc56",
+    "Normal": "stage3.ui.correction.normal.45e11",
+    "Tinggi": "stage3.ui.correction.tinggi.dc1b9",
+    "Kritis": "stage3.ui.correction.kritis.f690d",
+    "Tambah pelanggan": "stage3.ui.correction.tambah.pelanggan.bc83e",
+    "Buat pelanggan": "stage3.ui.correction.buat.pelanggan.1f102",
+    "Kontak belum diisi": "stage3.ui.correction.kontak.belum.diisi.c944e",
+    "Cabang pendaftaran tidak tersedia": "stage3.ui.correction.cabang.pendaftaran.tidak.tersedia.ab83f",
+    "Identitas belum ditambahkan": "stage3.ui.correction.identitas.belum.ditambahkan.85c89",
+    "Belum ada catatan.": "stage3.ui.correction.belum.ada.catatan.be505",
+    "Belum diisi": "stage3.ui.correction.belum.diisi.098d4",
+    "Terverifikasi": "stage3.ui.correction.terverifikasi.b76a0",
+    "Belum diverifikasi": "stage3.ui.correction.belum.diverifikasi.53109",
+    "Laki-laki": "stage3.ui.correction.laki.laki.afdcb",
+    "Perempuan": "stage3.ui.correction.perempuan.bc797",
+    "Edit identitas": "stage3.ui.correction.edit.identitas.40a46",
+    "Tambah identitas": "stage3.ui.correction.tambah.identitas.dcb13",
+    "Simpan identitas": "stage3.ui.correction.simpan.identitas.807e3",
+    "Edit alamat": "stage3.ui.correction.edit.alamat.3354d",
+    "Tambah alamat": "stage3.ui.correction.tambah.alamat.83ad0",
+    "Simpan alamat": "stage3.ui.correction.simpan.alamat.78405",
+    "Simpan transaksi": "stage3.ui.correction.simpan.transaksi.40d7d",
+    "Tanpa serial": "stage3.ui.correction.tanpa.serial.6a596",
+    "Perolehan": "stage3.ui.correction.perolehan.f1445",
+    "Pelepasan": "stage3.ui.correction.pelepasan.f286d",
+    "Dijual": "stage3.ui.correction.dijual.76dbb",
+    "Write-off": "stage3.ui.correction.write.off.95181",
+    "Donasi": "stage3.ui.correction.donasi.d1891",
+    "Total cabang": "stage3.ui.correction.total.cabang.de76d",
+    "Cabang aktif": "stage3.ui.correction.cabang.aktif.a0bd6",
+    "Tampil publik": "stage3.ui.correction.tampil.publik.db39a",
+    "Aktifkan cabang?": "stage3.ui.correction.aktifkan.cabang.82c5f",
+    "Nonaktifkan cabang?": "stage3.ui.correction.nonaktifkan.cabang.2a14d",
+    "Aktifkan": "stage3.ui.correction.aktifkan.b2fe9",
+    "Nonaktifkan": "stage3.ui.correction.nonaktifkan.42191",
+    "Operasional": "stage3.ui.correction.operasional.425f3",
+    "Tidak publik": "stage3.ui.correction.tidak.publik.f9352",
+    "Lokasi belum diisi": "stage3.ui.correction.lokasi.belum.diisi.fef9c",
+    "Tanggal buka belum diisi": "stage3.ui.correction.tanggal.buka.belum.diisi.b1b69",
+    "Tambah cabang baru": "stage3.ui.correction.tambah.cabang.baru.1145d",
+    "Perbarui identitas dan lokasi cabang.": "stage3.ui.correction.perbarui.identitas.dan.lokasi.cabang.2e140",
+    "Setting, kas utama, dan nomor dokumen akan dibuat otomatis.": "stage3.ui.correction.setting.kas.utama.dan.nomor.dokumen.akan.di.07983",
+    "Buat cabang": "stage3.ui.correction.buat.cabang.3491c",
+    "Total karyawan": "stage3.ui.correction.total.karyawan.4ebc7",
+    "Karyawan aktif": "stage3.ui.correction.karyawan.aktif.acfc1",
+    "Belum punya akun": "stage3.ui.correction.belum.punya.akun.c465c",
+    "Sedang cuti": "stage3.ui.correction.sedang.cuti.04b97",
+    "Tambah karyawan": "stage3.ui.correction.tambah.karyawan.03c69",
+    "Buat karyawan": "stage3.ui.correction.buat.karyawan.aee0c",
+    "Tambah jabatan": "stage3.ui.correction.tambah.jabatan.508e4",
+    "Buat jabatan": "stage3.ui.correction.buat.jabatan.5df05",
+    "Aktifkan karyawan?": "stage3.ui.correction.aktifkan.karyawan.a2548",
+    "Nonaktifkan karyawan?": "stage3.ui.correction.nonaktifkan.karyawan.77bdf",
+    "Aktifkan jabatan?": "stage3.ui.correction.aktifkan.jabatan.15cb2",
+    "Nonaktifkan jabatan?": "stage3.ui.correction.nonaktifkan.jabatan.4df18",
+    "Jabatan belum ditentukan": "stage3.ui.correction.jabatan.belum.ditentukan.6c7d8",
+    "Cabang utama belum ditentukan": "stage3.ui.correction.cabang.utama.belum.ditentukan.ecbfe",
+    "Belum terhubung ke akun": "stage3.ui.correction.belum.terhubung.ke.akun.2dce5",
+    "Tanpa deskripsi.": "stage3.ui.correction.tanpa.deskripsi.315ce",
+    "Total akun": "stage3.ui.correction.total.akun.d3aba",
+    "Akun aktif": "stage3.ui.correction.akun.aktif.87263",
+    "Nonaktif / suspend": "stage3.ui.correction.nonaktif.suspend.3a748",
+    "2FA aktif": "stage3.ui.correction.2fa.aktif.815b3",
+    "Tambah pengguna": "stage3.ui.correction.tambah.pengguna.e505d",
+    "Buat pengguna": "stage3.ui.correction.buat.pengguna.8c72f",
+    "Password baru (opsional)": "stage3.ui.correction.password.baru.opsional.72cfc",
+    "Password": "stage3.ui.correction.password.8be3c",
+    "Belum terhubung ke data karyawan": "stage3.ui.correction.belum.terhubung.ke.data.karyawan.20903",
+    "Akses berbasis cabang": "stage3.ui.correction.akses.berbasis.cabang.a7198",
+    "Cabang kerja belum ditetapkan": "stage3.ui.correction.cabang.kerja.belum.ditetapkan.3d0ed",
+    "Aktifkan akun?": "stage3.ui.correction.aktifkan.akun.2711c",
+    "Nonaktifkan akun?": "stage3.ui.correction.nonaktifkan.akun.53c2b",
+    "Suspend": "stage3.ui.correction.suspend.b2424",
+    "Akun pengguna": "stage3.ui.correction.akun.pengguna.433cd",
+    "Karyawan & jabatan": "stage3.ui.correction.karyawan.jabatan.1c11a",
+    "Role & permission": "stage3.ui.correction.role.permission.fb006",
+    "Buat role khusus": "stage3.ui.correction.buat.role.khusus.0740c",
+    "Atur permission": "stage3.ui.correction.atur.permission.d5a5c",
+    "Perusahaan": "stage3.ui.correction.perusahaan.8de8b",
+    "Cabang": "stage3.ui.correction.cabang.13874",
+    "Nama, slug, dan scope role sistem tetap dikunci. Sesuaikan hanya permission yang diperlukan.": "stage3.ui.correction.nama.slug.dan.scope.role.sistem.tetap.dikun.3ca25",
+    "Berikan permission minimum yang diperlukan sesuai tanggung jawab pengguna.": "stage3.ui.correction.berikan.permission.minimum.yang.diperlukan..304a0",
+    "Per cabang": "stage3.ui.correction.per.cabang.ed167",
+    "Seluruh perusahaan": "stage3.ui.correction.seluruh.perusahaan.fac1d",
+    "otomatis-dari-nama": "stage3.ui.correction.otomatis.dari.nama.14543",
+    "Simpan": "stage3.ui.correction.simpan.87dd9",
+    "Batal": "stage3.ui.correction.batal.14335",
+    "Ya": "stage3.ui.correction.ya.c42a9",
+    "Tidak": "stage3.ui.correction.tidak.39c99",
+    "Lihat": "stage3.ui.correction.lihat.f78db",
+    "Tambahkan": "stage3.ui.correction.tambahkan.51a71",
+    "Tidak diisi": "stage3.ui.correction.tidak.diisi.46951",
+    "Nama lengkap": "stage3.ui.correction.nama.lengkap.c3587"
+  },
+  "translations": {
+    "stage3.ui.correction.catalog.intelligence.bbba2": [
+      "Kecerdasan Katalog",
+      "Catalog Intelligence"
+    ],
+    "stage3.ui.correction.master.produk.f35f0": [
+      "Master produk",
+      "Master products"
+    ],
+    "stage3.ui.correction.siap.disewakan.c9572": [
+      "Siap disewakan",
+      "Ready to rent"
+    ],
+    "stage3.ui.correction.per.unit.serial.cc205": [
+      "Per unit / serial",
+      "Per unit / serial"
+    ],
+    "stage3.ui.correction.paket.rental.bbc25": [
+      "Paket rental",
+      "Rental packages"
+    ],
+    "stage3.ui.correction.belum.punya.harga.d0d52": [
+      "Belum punya harga",
+      "Without prices"
+    ],
+    "stage3.ui.correction.aset.serialized.7dba4": [
+      "Aset berseri",
+      "Serialized assets"
+    ],
+    "stage3.ui.correction.aset.tersedia.0418d": [
+      "Aset tersedia",
+      "Available assets"
+    ],
+    "stage3.ui.correction.aset.disewa.06754": [
+      "Aset disewa",
+      "Rented assets"
+    ],
+    "stage3.ui.correction.maintenance.transit.43451": [
+      "Perawatan / transit",
+      "Maintenance / transit"
+    ],
+    "stage3.ui.correction.stok.bulk.37225": [
+      "Stok massal",
+      "Bulk stock"
+    ],
+    "stage3.ui.correction.produk.869eb": [
+      "Produk",
+      "Products"
+    ],
+    "stage3.ui.correction.kategori.b7964": [
+      "Kategori",
+      "Categories"
+    ],
+    "stage3.ui.correction.paket.rental.11f40": [
+      "Paket rental",
+      "Rental packages"
+    ],
+    "stage3.ui.correction.rate.plan.3e998": [
+      "Skema tarif",
+      "Rate plans"
+    ],
+    "stage3.ui.correction.kategori.94487": [
+      "kategori",
+      "category"
+    ],
+    "stage3.ui.correction.paket.04585": [
+      "paket",
+      "package"
+    ],
+    "stage3.ui.correction.rate.plan.a81e7": [
+      "skema tarif",
+      "rate plan"
+    ],
+    "stage3.ui.correction.produk.0a511": [
+      "produk",
+      "product"
+    ],
+    "stage3.ui.correction.produk.kategori.7da22": [
+      "Produk & kategori",
+      "Products & categories"
+    ],
+    "stage3.ui.correction.tambah.produk.44b51": [
+      "Tambah produk",
+      "Add product"
+    ],
+    "stage3.ui.correction.buat.produk.9a4fb": [
+      "Buat produk",
+      "Create product"
+    ],
+    "stage3.ui.correction.tambah.kategori.f1458": [
+      "Tambah kategori",
+      "Add category"
+    ],
+    "stage3.ui.correction.tambah.rate.plan.ad9db": [
+      "Tambah skema tarif",
+      "Add rate plan"
+    ],
+    "stage3.ui.correction.tambah.paket.rental.da009": [
+      "Tambah paket rental",
+      "Add rental package"
+    ],
+    "stage3.ui.correction.edit.harga.produk.1a2a6": [
+      "Ubah harga produk",
+      "Edit product pricing"
+    ],
+    "stage3.ui.correction.edit.harga.paket.f2c05": [
+      "Ubah harga paket",
+      "Edit package pricing"
+    ],
+    "stage3.ui.correction.tambah.harga.paket.a1963": [
+      "Tambah harga paket",
+      "Add package price"
+    ],
+    "stage3.ui.correction.simpan.perubahan.099b3": [
+      "Simpan perubahan",
+      "Save changes"
+    ],
+    "stage3.ui.correction.menyimpan.92e24": [
+      "Menyimpan…",
+      "Saving…"
+    ],
+    "stage3.ui.correction.edit.53016": [
+      "Ubah",
+      "Edit"
+    ],
+    "stage3.ui.correction.aktif.89f29": [
+      "Aktif",
+      "Active"
+    ],
+    "stage3.ui.correction.nonaktif.60944": [
+      "Nonaktif",
+      "Inactive"
+    ],
+    "stage3.ui.correction.dapat.disewa.18f2a": [
+      "Dapat disewa",
+      "Rentable"
+    ],
+    "stage3.ui.correction.tidak.disewakan.13719": [
+      "Tidak disewakan",
+      "Not rentable"
+    ],
+    "stage3.ui.correction.tanpa.brand.61d4f": [
+      "Tanpa merek",
+      "No brand"
+    ],
+    "stage3.ui.correction.tanpa.kategori.a3fdc": [
+      "Tanpa kategori",
+      "Uncategorized"
+    ],
+    "stage3.ui.correction.brand.dan.model.belum.diisi.42319": [
+      "Merek dan model belum diisi",
+      "Brand and model not provided"
+    ],
+    "stage3.ui.correction.semua.model.ef378": [
+      "Semua model",
+      "All models"
+    ],
+    "stage3.ui.correction.pilih.brand.dahulu.fa1b5": [
+      "Pilih merek dahulu",
+      "Select a brand first"
+    ],
+    "stage3.ui.correction.kategori.utama.eda08": [
+      "Kategori utama",
+      "Parent category"
+    ],
+    "stage3.ui.correction.global.seluruh.cabang.b98dd": [
+      "Global seluruh cabang",
+      "Global across branches"
+    ],
+    "stage3.ui.correction.global.5f118": [
+      "Global",
+      "Global"
+    ],
+    "stage3.ui.correction.arsipkan.kategori.d4a17": [
+      "Arsipkan kategori?",
+      "Archive category?"
+    ],
+    "stage3.ui.correction.canonical.52e10": [
+      "Kanonis",
+      "Canonical"
+    ],
+    "stage3.ui.correction.total.pelanggan.7797c": [
+      "Total pelanggan",
+      "Total customers"
+    ],
+    "stage3.ui.correction.pelanggan.aktif.a9b25": [
+      "Pelanggan aktif",
+      "Active customers"
+    ],
+    "stage3.ui.correction.member.6853c": [
+      "Anggota",
+      "Members"
+    ],
+    "stage3.ui.correction.risiko.tinggi.035bf": [
+      "Risiko tinggi",
+      "High risk"
+    ],
+    "stage3.ui.correction.identitas.belum.valid.43262": [
+      "Identitas belum valid",
+      "Unverified identities"
+    ],
+    "stage3.ui.correction.diblokir.ae752": [
+      "Diblokir",
+      "Blocked"
+    ],
+    "stage3.ui.correction.non.member.b65c4": [
+      "Bukan anggota",
+      "Non-members"
+    ],
+    "stage3.ui.correction.rendah.afc56": [
+      "Rendah",
+      "Low"
+    ],
+    "stage3.ui.correction.normal.45e11": [
+      "Normal",
+      "Normal"
+    ],
+    "stage3.ui.correction.tinggi.dc1b9": [
+      "Tinggi",
+      "High"
+    ],
+    "stage3.ui.correction.kritis.f690d": [
+      "Kritis",
+      "Critical"
+    ],
+    "stage3.ui.correction.tambah.pelanggan.bc83e": [
+      "Tambah pelanggan",
+      "Add customer"
+    ],
+    "stage3.ui.correction.buat.pelanggan.1f102": [
+      "Buat pelanggan",
+      "Create customer"
+    ],
+    "stage3.ui.correction.kontak.belum.diisi.c944e": [
+      "Kontak belum diisi",
+      "Contact not provided"
+    ],
+    "stage3.ui.correction.cabang.pendaftaran.tidak.tersedia.ab83f": [
+      "Cabang pendaftaran tidak tersedia",
+      "Registration branch unavailable"
+    ],
+    "stage3.ui.correction.identitas.belum.ditambahkan.85c89": [
+      "Identitas belum ditambahkan",
+      "Identity not provided"
+    ],
+    "stage3.ui.correction.belum.ada.catatan.be505": [
+      "Belum ada catatan.",
+      "No notes yet."
+    ],
+    "stage3.ui.correction.belum.diisi.098d4": [
+      "Belum diisi",
+      "Not provided"
+    ],
+    "stage3.ui.correction.terverifikasi.b76a0": [
+      "Terverifikasi",
+      "Verified"
+    ],
+    "stage3.ui.correction.belum.diverifikasi.53109": [
+      "Belum diverifikasi",
+      "Not verified"
+    ],
+    "stage3.ui.correction.laki.laki.afdcb": [
+      "Laki-laki",
+      "Male"
+    ],
+    "stage3.ui.correction.perempuan.bc797": [
+      "Perempuan",
+      "Female"
+    ],
+    "stage3.ui.correction.edit.identitas.40a46": [
+      "Ubah identitas",
+      "Edit identity"
+    ],
+    "stage3.ui.correction.tambah.identitas.dcb13": [
+      "Tambah identitas",
+      "Add identity"
+    ],
+    "stage3.ui.correction.simpan.identitas.807e3": [
+      "Simpan identitas",
+      "Save identity"
+    ],
+    "stage3.ui.correction.edit.alamat.3354d": [
+      "Ubah alamat",
+      "Edit address"
+    ],
+    "stage3.ui.correction.tambah.alamat.83ad0": [
+      "Tambah alamat",
+      "Add address"
+    ],
+    "stage3.ui.correction.simpan.alamat.78405": [
+      "Simpan alamat",
+      "Save address"
+    ],
+    "stage3.ui.correction.simpan.transaksi.40d7d": [
+      "Simpan transaksi",
+      "Save transaction"
+    ],
+    "stage3.ui.correction.tanpa.serial.6a596": [
+      "Tanpa nomor seri",
+      "No serial number"
+    ],
+    "stage3.ui.correction.perolehan.f1445": [
+      "Perolehan",
+      "Acquisition"
+    ],
+    "stage3.ui.correction.pelepasan.f286d": [
+      "Pelepasan",
+      "Disposal"
+    ],
+    "stage3.ui.correction.dijual.76dbb": [
+      "Dijual",
+      "Sold"
+    ],
+    "stage3.ui.correction.write.off.95181": [
+      "Penghapusbukuan",
+      "Write-off"
+    ],
+    "stage3.ui.correction.donasi.d1891": [
+      "Donasi",
+      "Donation"
+    ],
+    "stage3.ui.correction.total.cabang.de76d": [
+      "Total cabang",
+      "Total branches"
+    ],
+    "stage3.ui.correction.cabang.aktif.a0bd6": [
+      "Cabang aktif",
+      "Active branches"
+    ],
+    "stage3.ui.correction.tampil.publik.db39a": [
+      "Tampil publik",
+      "Publicly visible"
+    ],
+    "stage3.ui.correction.aktifkan.cabang.82c5f": [
+      "Aktifkan cabang?",
+      "Activate branch?"
+    ],
+    "stage3.ui.correction.nonaktifkan.cabang.2a14d": [
+      "Nonaktifkan cabang?",
+      "Deactivate branch?"
+    ],
+    "stage3.ui.correction.aktifkan.b2fe9": [
+      "Aktifkan",
+      "Activate"
+    ],
+    "stage3.ui.correction.nonaktifkan.42191": [
+      "Nonaktifkan",
+      "Deactivate"
+    ],
+    "stage3.ui.correction.operasional.425f3": [
+      "Operasional",
+      "Operational"
+    ],
+    "stage3.ui.correction.tidak.publik.f9352": [
+      "Tidak publik",
+      "Not public"
+    ],
+    "stage3.ui.correction.lokasi.belum.diisi.fef9c": [
+      "Lokasi belum diisi",
+      "Location not provided"
+    ],
+    "stage3.ui.correction.tanggal.buka.belum.diisi.b1b69": [
+      "Tanggal buka belum diisi",
+      "Opening date not provided"
+    ],
+    "stage3.ui.correction.tambah.cabang.baru.1145d": [
+      "Tambah cabang baru",
+      "Add new branch"
+    ],
+    "stage3.ui.correction.perbarui.identitas.dan.lokasi.cabang.2e140": [
+      "Perbarui identitas dan lokasi cabang.",
+      "Update branch identity and location."
+    ],
+    "stage3.ui.correction.setting.kas.utama.dan.nomor.dokumen.akan.di.07983": [
+      "Pengaturan, kas utama, dan nomor dokumen akan dibuat otomatis.",
+      "Settings, main cash register, and document numbers will be created automatically."
+    ],
+    "stage3.ui.correction.buat.cabang.3491c": [
+      "Buat cabang",
+      "Create branch"
+    ],
+    "stage3.ui.correction.total.karyawan.4ebc7": [
+      "Total karyawan",
+      "Total employees"
+    ],
+    "stage3.ui.correction.karyawan.aktif.acfc1": [
+      "Karyawan aktif",
+      "Active employees"
+    ],
+    "stage3.ui.correction.belum.punya.akun.c465c": [
+      "Belum punya akun",
+      "Without login account"
+    ],
+    "stage3.ui.correction.sedang.cuti.04b97": [
+      "Sedang cuti",
+      "On leave"
+    ],
+    "stage3.ui.correction.tambah.karyawan.03c69": [
+      "Tambah karyawan",
+      "Add employee"
+    ],
+    "stage3.ui.correction.buat.karyawan.aee0c": [
+      "Buat karyawan",
+      "Create employee"
+    ],
+    "stage3.ui.correction.tambah.jabatan.508e4": [
+      "Tambah jabatan",
+      "Add position"
+    ],
+    "stage3.ui.correction.buat.jabatan.5df05": [
+      "Buat jabatan",
+      "Create position"
+    ],
+    "stage3.ui.correction.aktifkan.karyawan.a2548": [
+      "Aktifkan karyawan?",
+      "Activate employee?"
+    ],
+    "stage3.ui.correction.nonaktifkan.karyawan.77bdf": [
+      "Nonaktifkan karyawan?",
+      "Deactivate employee?"
+    ],
+    "stage3.ui.correction.aktifkan.jabatan.15cb2": [
+      "Aktifkan jabatan?",
+      "Activate position?"
+    ],
+    "stage3.ui.correction.nonaktifkan.jabatan.4df18": [
+      "Nonaktifkan jabatan?",
+      "Deactivate position?"
+    ],
+    "stage3.ui.correction.jabatan.belum.ditentukan.6c7d8": [
+      "Jabatan belum ditentukan",
+      "Position not assigned"
+    ],
+    "stage3.ui.correction.cabang.utama.belum.ditentukan.ecbfe": [
+      "Cabang utama belum ditentukan",
+      "Primary branch not assigned"
+    ],
+    "stage3.ui.correction.belum.terhubung.ke.akun.2dce5": [
+      "Belum terhubung ke akun",
+      "Not linked to a login account"
+    ],
+    "stage3.ui.correction.tanpa.deskripsi.315ce": [
+      "Tanpa deskripsi.",
+      "No description."
+    ],
+    "stage3.ui.correction.total.akun.d3aba": [
+      "Total akun",
+      "Total accounts"
+    ],
+    "stage3.ui.correction.akun.aktif.87263": [
+      "Akun aktif",
+      "Active accounts"
+    ],
+    "stage3.ui.correction.nonaktif.suspend.3a748": [
+      "Nonaktif / ditangguhkan",
+      "Inactive / suspended"
+    ],
+    "stage3.ui.correction.2fa.aktif.815b3": [
+      "2FA aktif",
+      "2FA enabled"
+    ],
+    "stage3.ui.correction.tambah.pengguna.e505d": [
+      "Tambah pengguna",
+      "Add user"
+    ],
+    "stage3.ui.correction.buat.pengguna.8c72f": [
+      "Buat pengguna",
+      "Create user"
+    ],
+    "stage3.ui.correction.password.baru.opsional.72cfc": [
+      "Kata sandi baru (opsional)",
+      "New password (optional)"
+    ],
+    "stage3.ui.correction.password.8be3c": [
+      "Kata sandi",
+      "Password"
+    ],
+    "stage3.ui.correction.belum.terhubung.ke.data.karyawan.20903": [
+      "Belum terhubung ke data karyawan",
+      "Not linked to employee data"
+    ],
+    "stage3.ui.correction.akses.berbasis.cabang.a7198": [
+      "Akses berbasis cabang",
+      "Branch-based access"
+    ],
+    "stage3.ui.correction.cabang.kerja.belum.ditetapkan.3d0ed": [
+      "Cabang kerja belum ditetapkan",
+      "Work branch not assigned"
+    ],
+    "stage3.ui.correction.aktifkan.akun.2711c": [
+      "Aktifkan akun?",
+      "Activate account?"
+    ],
+    "stage3.ui.correction.nonaktifkan.akun.53c2b": [
+      "Nonaktifkan akun?",
+      "Deactivate account?"
+    ],
+    "stage3.ui.correction.suspend.b2424": [
+      "Ditangguhkan",
+      "Suspended"
+    ],
+    "stage3.ui.correction.akun.pengguna.433cd": [
+      "Akun pengguna",
+      "User accounts"
+    ],
+    "stage3.ui.correction.karyawan.jabatan.1c11a": [
+      "Karyawan & jabatan",
+      "Employees & positions"
+    ],
+    "stage3.ui.correction.role.permission.fb006": [
+      "Peran & hak akses",
+      "Roles & permissions"
+    ],
+    "stage3.ui.correction.buat.role.khusus.0740c": [
+      "Buat peran khusus",
+      "Create custom role"
+    ],
+    "stage3.ui.correction.atur.permission.d5a5c": [
+      "Atur hak akses",
+      "Manage permissions"
+    ],
+    "stage3.ui.correction.perusahaan.8de8b": [
+      "Perusahaan",
+      "Company"
+    ],
+    "stage3.ui.correction.cabang.13874": [
+      "Cabang",
+      "Branch"
+    ],
+    "stage3.ui.correction.nama.slug.dan.scope.role.sistem.tetap.dikun.3ca25": [
+      "Nama, slug, dan cakupan peran sistem tetap dikunci. Sesuaikan hanya hak akses yang diperlukan.",
+      "System role name, slug, and scope are locked. Adjust only the required permissions."
+    ],
+    "stage3.ui.correction.berikan.permission.minimum.yang.diperlukan..304a0": [
+      "Berikan hak akses minimum sesuai tanggung jawab pengguna.",
+      "Grant only the permissions needed for the user’s responsibilities."
+    ],
+    "stage3.ui.correction.per.cabang.ed167": [
+      "Per cabang",
+      "Per branch"
+    ],
+    "stage3.ui.correction.seluruh.perusahaan.fac1d": [
+      "Seluruh perusahaan",
+      "Company-wide"
+    ],
+    "stage3.ui.correction.otomatis.dari.nama.14543": [
+      "otomatis-dari-nama",
+      "generated-from-name"
+    ],
+    "stage3.ui.correction.simpan.87dd9": [
+      "Simpan",
+      "Save"
+    ],
+    "stage3.ui.correction.batal.14335": [
+      "Batal",
+      "Cancel"
+    ],
+    "stage3.ui.correction.ya.c42a9": [
+      "Ya",
+      "Yes"
+    ],
+    "stage3.ui.correction.tidak.39c99": [
+      "Tidak",
+      "No"
+    ],
+    "stage3.ui.correction.lihat.f78db": [
+      "Lihat",
+      "View"
+    ],
+    "stage3.ui.correction.tambahkan.51a71": [
+      "Tambahkan",
+      "Add"
+    ],
+    "stage3.ui.correction.tidak.diisi.46951": [
+      "Tidak diisi",
+      "Not provided"
+    ],
+    "stage3.ui.correction.nama.lengkap.c3587": [
+      "Nama lengkap",
+      "Full name"
+    ]
+  }
+}

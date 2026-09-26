@@ -59,7 +59,7 @@ class RefundController extends Controller
 
         if ($dateFrom !== '' && $dateTo !== '' && $dateTo < $dateFrom) {
             throw ValidationException::withMessages([
-                'date_to' => 'Tanggal akhir harus sama atau setelah tanggal mulai.',
+                'date_to' => __('uat035b_stage5.flash.date_order'),
             ]);
         }
         if ($branchId !== null) {
@@ -216,11 +216,12 @@ class RefundController extends Controller
             'payment_id' => $refund->payment_id,
             'amount' => $refund->amount,
             'refund_type' => $refund->refund_type,
+            'purpose' => $refund->purpose,
         ], $refund->branch_id);
 
         return redirect()->route('finance.refunds.show', $refund)->with('toast', [
             'type' => 'success',
-            'message' => "Refund {$refund->refund_number} berhasil diajukan.",
+            'message' => __('uat035b_stage5.flash.refund_requested', ['reference' => $refund->refund_number]),
         ]);
     }
 
@@ -237,7 +238,7 @@ class RefundController extends Controller
 
         return back()->with('toast', [
             'type' => 'success',
-            'message' => "Refund {$updated->refund_number} berhasil disetujui.",
+            'message' => __('uat035b_stage5.flash.refund_approved', ['reference' => $updated->refund_number]),
         ]);
     }
 
@@ -258,7 +259,7 @@ class RefundController extends Controller
 
         return back()->with('toast', [
             'type' => 'success',
-            'message' => "Refund {$updated->refund_number} ditolak.",
+            'message' => __('uat035b_stage5.flash.refund_rejected', ['reference' => $updated->refund_number]),
         ]);
     }
 
@@ -271,11 +272,11 @@ class RefundController extends Controller
         $this->guardAccess($request, $refund);
         $proof = $request->file('proof');
         if ($proof === null) {
-            throw ValidationException::withMessages(['proof' => 'Bukti refund wajib diunggah.']);
+            throw ValidationException::withMessages(['proof' => __('uat035b_stage5.flash.refund_proof_required')]);
         }
         $path = $proof->store("finance/refunds/{$refund->refund_number}", 'local');
         if (! is_string($path)) {
-            throw ValidationException::withMessages(['proof' => 'Bukti refund gagal disimpan.']);
+            throw ValidationException::withMessages(['proof' => __('uat035b_stage5.flash.refund_proof_failed')]);
         }
 
         try {
@@ -297,7 +298,7 @@ class RefundController extends Controller
 
         return back()->with('toast', [
             'type' => 'success',
-            'message' => "Refund {$updated->refund_number} berhasil dibayarkan.",
+            'message' => __('uat035b_stage5.flash.refund_paid', ['reference' => $updated->refund_number]),
         ]);
     }
 
@@ -318,7 +319,7 @@ class RefundController extends Controller
 
         return back()->with('toast', [
             'type' => 'success',
-            'message' => "Refund {$updated->refund_number} dibatalkan.",
+            'message' => __('uat035b_stage5.flash.refund_cancelled', ['reference' => $updated->refund_number]),
         ]);
     }
 

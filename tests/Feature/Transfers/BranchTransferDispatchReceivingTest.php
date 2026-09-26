@@ -182,6 +182,69 @@ class BranchTransferDispatchReceivingTest extends TestCase
         $this->assertSame('completed', $transfer->fresh()->status->value);
     }
 
+    public function test_mark_lost_discrepancy_validates_notes_and_sets_serialized_asset_lost(): void
+    {
+        Storage::fake('local');
+        $fixture = $this->transferFixture();
+        $transfer = $this->approvedTransfer($fixture);
+        $item = $transfer->items()->firstOrFail();
+        $this->dispatch($fixture, $transfer, $item->id);
+
+        $this->actingAs($fixture['destinationManager'])
+            ->post(route('transfers.receipts.store', $transfer), [
+                'items' => [[
+                    'item_id' => $item->id,
+                    'receiving_result' => 'missing',
+                    'quantity' => 1,
+                    'condition' => 'good',
+                    'notes' => 'Unit tidak ditemukan saat penerimaan.',
+                    'capture_source' => 'camera',
+                    'photos' => [UploadedFile::fake()->image('missing-mark-lost.jpg')],
+                ]],
+            ])
+            ->assertSessionHasNoErrors();
+
+        $this->actingAs($fixture['destinationManager'])
+            ->post(route('transfers.items.resolve', [$transfer, $item]), [
+                'resolution_action' => 'mark_lost',
+                'notes' => 'abc',
+            ])
+            ->assertSessionHasErrors('notes');
+
+        $this->assertSame('discrepancy', $item->fresh()->status->value);
+        $this->assertSame('in_transit', $fixture['asset']->fresh()->status);
+
+        $resolution = [
+            'resolution_action' => 'mark_lost',
+            'notes' => 'Investigasi transfer menyatakan unit hilang.',
+        ];
+
+        $this->actingAs($fixture['originManager'])
+            ->post(route('transfers.items.resolve', [$transfer, $item]), $resolution)
+            ->assertForbidden();
+
+        $this->actingAs($fixture['destinationManager'])
+            ->post(route('transfers.items.resolve', [$transfer, $item]), $resolution)
+            ->assertSessionHasNoErrors();
+
+        $item->refresh();
+        $asset = $fixture['asset']->fresh();
+
+        $this->assertSame('resolved', $item->status->value);
+        $this->assertSame('mark_lost', $item->resolution_action);
+        $this->assertSame(0, $item->received_quantity);
+        $this->assertSame('lost', $asset->status);
+        $this->assertSame($fixture['origin']->id, $asset->current_branch_id);
+        $this->assertSame('completed', $transfer->fresh()->status->value);
+        $this->assertStringContainsString($resolution['notes'], $item->discrepancy_notes);
+
+        $this->actingAs($fixture['destinationManager'])
+            ->post(route('transfers.items.resolve', [$transfer, $item]), $resolution)
+            ->assertSessionHasNoErrors();
+
+        $this->assertSame('lost', $fixture['asset']->fresh()->status);
+    }
+
     public function test_repeated_receiving_request_is_idempotent(): void
     {
         Storage::fake('local');

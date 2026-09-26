@@ -171,7 +171,7 @@ class AssetLifecycleController extends Controller
         return redirect()->route('assets.lifecycle.index', ['branch_id' => $acquisition->branch_id])
             ->with('toast', [
                 'type' => 'success',
-                'message' => "Acquisition {$acquisition->acquisition_number} berhasil dicatat.",
+                'message' => __('uat035b_stage3.toast.assetlifecycle_1', ['number' => $acquisition->acquisition_number]),
             ]);
     }
 
@@ -206,7 +206,7 @@ class AssetLifecycleController extends Controller
         return redirect()->route('assets.lifecycle.index', ['branch_id' => $disposal->branch_id])
             ->with('toast', [
                 'type' => 'success',
-                'message' => "Disposal {$disposal->disposal_number} berhasil dicatat tanpa menghapus histori aset.",
+                'message' => __('uat035b_stage3.toast.assetlifecycle_2', ['number' => $disposal->disposal_number]),
             ]);
     }
 }

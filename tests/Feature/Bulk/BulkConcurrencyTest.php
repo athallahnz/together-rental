@@ -76,10 +76,14 @@ class BulkConcurrencyTest extends TestCase
      */
     private function race(array $jobs): array
     {
+        // Independent ready markers avoid blocking on sequential Process::waitUntil()
+        // and keep the READY handshake reliable on Windows/Herd.
         $barrier = sys_get_temp_dir().'/bulk-stock-'.bin2hex(random_bytes(12));
         $processes = [];
+        $readyFiles = [];
         try {
-            foreach ($jobs as $job) {
+            foreach ($jobs as $index => $job) {
+                $readyFiles[$index] = $barrier.'.ready-'.$index;
                 $process = new Process([PHP_BINARY, base_path('tests/Support/bulk-stock-worker.php')], base_path());
                 $process->setInput(json_encode([
                     ...$job,
@@ -87,20 +91,51 @@ class BulkConcurrencyTest extends TestCase
                     'actor_id' => $this->operator->id,
                     'now' => now()->toDateTimeString(),
                     'barrier' => $barrier,
+                    'ready' => $readyFiles[$index],
                 ], JSON_THROW_ON_ERROR));
-                $process->setTimeout(40);
+                $process->setTimeout(180);
                 $process->start();
                 $processes[] = $process;
             }
-            foreach ($processes as $process) {
-                $ready = $process->waitUntil(fn (string $type, string $output): bool => str_contains($process->getOutput(), 'READY'));
-                $this->assertTrue($ready, $process->getErrorOutput());
+
+            $readyDeadline = microtime(true) + 60;
+            do {
+                $readyCount = 0;
+                foreach ($processes as $index => $process) {
+                    clearstatcache(true, $readyFiles[$index]);
+                    if (is_file($readyFiles[$index])) {
+                        $readyCount++;
+
+                        continue;
+                    }
+                    if (! $process->isRunning()) {
+                        $this->fail('Worker '.$index.' exited before READY (exit '.$process->getExitCode().'): '
+                            .$process->getErrorOutput());
+                    }
+                }
+                if ($readyCount === count($jobs)) {
+                    break;
+                }
+                if (microtime(true) >= $readyDeadline) {
+                    $this->fail('Workers did not become READY within 60 seconds: '
+                        .implode(' | ', array_map(
+                            fn (Process $process): string => $process->getErrorOutput(),
+                            $processes,
+                        )));
+                }
+                usleep(20000);
+            } while (true);
+
+            if (! touch($barrier) || ! is_file($barrier)) {
+                $this->fail('Could not release the concurrency barrier.');
             }
-            touch($barrier);
+
             $results = [];
-            foreach ($processes as $process) {
-                $this->assertSame(0, $process->wait(), $process->getErrorOutput());
-                $results[] = str_contains($process->getOutput(), 'ACCEPTED') ? 'ACCEPTED' : 'REJECTED';
+            foreach ($processes as $index => $process) {
+                $this->assertSame(0, $process->wait(), 'Worker '.$index.': '.$process->getErrorOutput());
+                $output = $process->getOutput();
+                $this->assertMatchesRegularExpression('/^(ACCEPTED|REJECTED)$/m', $output);
+                $results[] = preg_match('/^ACCEPTED$/m', $output) ? 'ACCEPTED' : 'REJECTED';
             }
             sort($results);
 
@@ -109,6 +144,11 @@ class BulkConcurrencyTest extends TestCase
             foreach ($processes as $process) {
                 if ($process->isRunning()) {
                     $process->stop();
+                }
+            }
+            foreach ($readyFiles as $file) {
+                if (is_file($file)) {
+                    unlink($file);
                 }
             }
             if (is_file($barrier)) {

@@ -64,7 +64,7 @@ class RentalOvertimeCalculator
     }
 
     /** @param array<string, mixed>|null $snapshot
-     *  @return array<string, mixed>
+     * @return array<string, mixed>
      */
     public function finalizeRentalItemSnapshot(?array $snapshot, float $contractUnitAmount): array
     {

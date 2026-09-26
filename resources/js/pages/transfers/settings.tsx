@@ -1,6 +1,9 @@
 import { Head, Link, router, useForm } from '@inertiajs/react';
 import { ArrowLeft, Camera, FileText, Settings2 } from 'lucide-react';
 import type { FormEvent, ReactNode } from 'react';
+import { Stage4Text, stage4Translate } from '@/components/stage4-text';
+import type { Stage4Key } from '@/components/stage4-text';
+import { useAppLocale } from '@/lib/i18n';
 import InputError from '@/components/input-error';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Button } from '@/components/ui/button';
@@ -43,25 +46,23 @@ type Props = {
 
 const captureOptions: Array<{
     value: CaptureMode;
-    label: string;
-    description: string;
+    label: Stage4Key;
+    description: Stage4Key;
 }> = [
     {
         value: 'camera_required',
-        label: 'Kamera wajib',
-        description: 'Bukti harus diambil langsung melalui kamera perangkat.',
+        label: 'stage4.ui.19b92b9e5d81',
+        description: 'stage4.ui.421b2819a9e1',
     },
     {
         value: 'camera_preferred',
-        label: 'Kamera diutamakan',
-        description:
-            'Kamera menjadi alur utama, galeri dapat dipakai sesuai izin.',
+        label: 'stage4.ui.457d8197ce51',
+        description: 'stage4.ui.4b375f0bcd11',
     },
     {
         value: 'gallery_allowed',
-        label: 'Galeri diperbolehkan',
-        description:
-            'Operator dapat mengambil foto atau memilih file dari perangkat.',
+        label: 'stage4.ui.d656c2cfa8b1',
+        description: 'stage4.ui.e58299ba9c8c',
     },
 ];
 
@@ -70,6 +71,8 @@ export default function TransferSettings({
     selectedBranchId,
     settings,
 }: Props) {
+    const { locale: stage4Locale } = useAppLocale();
+
     const form = useForm<SettingsForm>({
         branch_id: selectedBranchId,
         ...settings,
@@ -90,7 +93,9 @@ export default function TransferSettings({
 
     return (
         <>
-            <Head title="Pengaturan Transfer Aset" />
+            <Head
+                title={stage4Translate('stage4.ui.91ffdc7ee124', stage4Locale)}
+            />
 
             <div className="flex h-full flex-1 flex-col gap-6 overflow-x-auto rounded-xl p-4 md:p-6">
                 <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
@@ -103,24 +108,23 @@ export default function TransferSettings({
                         >
                             <Link href="/transfers">
                                 <ArrowLeft />
-                                Kembali ke transfer
+                                <Stage4Text k="stage4.ui.604c5fa0e1ad" />
                             </Link>
                         </Button>
                         <p className="text-sm font-medium text-primary">
-                            Modul Transfer Aset Antar-Cabang
+                            <Stage4Text k="stage4.ui.e7d42379c783" />
                         </p>
                         <h1 className="mt-1 text-2xl font-semibold tracking-tight">
-                            Kebijakan bukti dan penerimaan
+                            <Stage4Text k="stage4.ui.e1f642f53dcf" />
                         </h1>
                         <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-                            Atur sumber foto realtime, jumlah bukti minimum, dan
-                            kewajiban surat jalan untuk masing-masing cabang.
+                            <Stage4Text k="stage4.ui.82cb5c70f14d" />
                         </p>
                     </div>
 
                     <div className="w-full max-w-sm space-y-2">
                         <Label htmlFor="branch-filter">
-                            Cabang yang diatur
+                            <Stage4Text k="stage4.ui.ad74c838e3bf" />
                         </Label>
                         <Select
                             value={String(selectedBranchId)}
@@ -145,12 +149,11 @@ export default function TransferSettings({
 
                 <Alert>
                     <Settings2 />
-                    <AlertTitle>Pengaturan berlaku per tahap</AlertTitle>
+                    <AlertTitle>
+                        <Stage4Text k="stage4.ui.35d6e3032971" />
+                    </AlertTitle>
                     <AlertDescription>
-                        Dispatch menggunakan kebijakan cabang asal, sedangkan
-                        receiving menggunakan kebijakan cabang tujuan. Semua
-                        override tetap mencatat pelaku, alasan, waktu, dan
-                        checksum.
+                        <Stage4Text k="stage4.ui.22ca87fb397b" />
                     </AlertDescription>
                 </Alert>
 
@@ -158,8 +161,14 @@ export default function TransferSettings({
                     <div className="grid gap-6 xl:grid-cols-2">
                         <CapturePolicyCard
                             icon={<Camera className="size-5" />}
-                            title="Pemeriksaan keberangkatan"
-                            description="Digunakan saat aset dilepas dari cabang asal."
+                            title={stage4Translate(
+                                'stage4.ui.d9eb2f157a64',
+                                stage4Locale,
+                            )}
+                            description={stage4Translate(
+                                'stage4.ui.6546bfb7b369',
+                                stage4Locale,
+                            )}
                             mode={form.data.dispatch_capture_mode}
                             minPhotos={form.data.dispatch_min_photos}
                             modeError={form.errors.dispatch_capture_mode}
@@ -174,8 +183,14 @@ export default function TransferSettings({
 
                         <CapturePolicyCard
                             icon={<Camera className="size-5" />}
-                            title="Pemeriksaan penerimaan"
-                            description="Digunakan saat cabang tujuan memeriksa item."
+                            title={stage4Translate(
+                                'stage4.ui.f63456877850',
+                                stage4Locale,
+                            )}
+                            description={stage4Translate(
+                                'stage4.ui.dc0d77c9bcc1',
+                                stage4Locale,
+                            )}
                             mode={form.data.receiving_capture_mode}
                             minPhotos={form.data.receiving_min_photos}
                             modeError={form.errors.receiving_capture_mode}
@@ -193,19 +208,24 @@ export default function TransferSettings({
                         <CardHeader>
                             <CardTitle className="flex items-center gap-2">
                                 <FileText className="size-5" />
-                                Dokumen dan fallback
+                                <Stage4Text k="stage4.ui.c6ee59a59187" />
                             </CardTitle>
                             <CardDescription>
-                                Guardrail tambahan untuk menjaga bukti
-                                pengiriman tetap lengkap dan dapat diaudit.
+                                <Stage4Text k="stage4.ui.edac3bbff6e8" />
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="grid gap-4 md:grid-cols-2">
                             <BooleanSetting
                                 id="require_waybill"
                                 checked={form.data.require_waybill}
-                                title="Surat jalan wajib saat dispatch"
-                                description="Tombol Kirim diblokir sampai nomor atau dokumen surat jalan dilengkapi."
+                                title={stage4Translate(
+                                    'stage4.ui.5f011b83fd7d',
+                                    stage4Locale,
+                                )}
+                                description={stage4Translate(
+                                    'stage4.ui.ec345ad957ee',
+                                    stage4Locale,
+                                )}
                                 onCheckedChange={(checked) =>
                                     form.setData('require_waybill', checked)
                                 }
@@ -213,8 +233,14 @@ export default function TransferSettings({
                             <BooleanSetting
                                 id="allow_gallery_override"
                                 checked={form.data.allow_gallery_override}
-                                title="Izinkan override galeri"
-                                description="Hanya pengguna dengan permission override dan alasan resmi yang dapat memakainya."
+                                title={stage4Translate(
+                                    'stage4.ui.7fb1bef293f5',
+                                    stage4Locale,
+                                )}
+                                description={stage4Translate(
+                                    'stage4.ui.2b4fe5913323',
+                                    stage4Locale,
+                                )}
                                 onCheckedChange={(checked) =>
                                     form.setData(
                                         'allow_gallery_override',
@@ -229,12 +255,20 @@ export default function TransferSettings({
 
                     <div className="flex justify-end gap-3">
                         <Button asChild type="button" variant="outline">
-                            <Link href="/transfers">Batal</Link>
+                            <Link href="/transfers">
+                                <Stage4Text k="stage4.ui.1433539c3b8f" />
+                            </Link>
                         </Button>
                         <Button type="submit" disabled={form.processing}>
                             {form.processing
-                                ? 'Menyimpan...'
-                                : 'Simpan pengaturan'}
+                                ? stage4Translate(
+                                      'stage4.ui.f16f7f9512ac',
+                                      stage4Locale,
+                                  )
+                                : stage4Translate(
+                                      'stage4.ui.fde73801c681',
+                                      stage4Locale,
+                                  )}
                         </Button>
                     </div>
                 </form>
@@ -264,6 +298,8 @@ function CapturePolicyCard({
     onModeChange: (value: CaptureMode) => void;
     onMinPhotosChange: (value: number) => void;
 }) {
+    const { locale: stage4Locale } = useAppLocale();
+
     return (
         <Card>
             <CardHeader>
@@ -275,7 +311,9 @@ function CapturePolicyCard({
             </CardHeader>
             <CardContent className="space-y-5">
                 <div className="space-y-2">
-                    <Label>Mode sumber foto</Label>
+                    <Label>
+                        <Stage4Text k="stage4.ui.e31676f5381c" />
+                    </Label>
                     <Select
                         value={mode}
                         onValueChange={(value) =>
@@ -291,23 +329,35 @@ function CapturePolicyCard({
                                     key={option.value}
                                     value={option.value}
                                 >
-                                    {option.label}
+                                    {stage4Translate(
+                                        option.label,
+                                        stage4Locale,
+                                    )}
                                 </SelectItem>
                             ))}
                         </SelectContent>
                     </Select>
                     <p className="text-xs leading-5 text-muted-foreground">
-                        {
-                            captureOptions.find(
-                                (option) => option.value === mode,
-                            )?.description
-                        }
+                        {(() => {
+                            const option = captureOptions.find(
+                                (item) => item.value === mode,
+                            );
+
+                            return option
+                                ? stage4Translate(
+                                      option.description,
+                                      stage4Locale,
+                                  )
+                                : null;
+                        })()}
                     </p>
                     <InputError message={modeError} />
                 </div>
 
                 <div className="space-y-2">
-                    <Label>Foto minimum per item</Label>
+                    <Label>
+                        <Stage4Text k="stage4.ui.0b16f2b35d84" />
+                    </Label>
                     <Input
                         type="number"
                         min={1}
@@ -318,8 +368,7 @@ function CapturePolicyCard({
                         }
                     />
                     <p className="text-xs leading-5 text-muted-foreground">
-                        Sistem memvalidasi jumlah bukti untuk setiap unit atau
-                        baris pooled inventory sebelum tahap dapat difinalisasi.
+                        <Stage4Text k="stage4.ui.955e57cd037e" />
                     </p>
                     <InputError message={minPhotosError} />
                 </div>

@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { Camera, RefreshCcw } from 'lucide-react';
+import { Stage4Text } from '@/components/stage4-text';
 import { Button } from '@/components/ui/button';
 import {
     Dialog,
@@ -161,7 +162,9 @@ export function TransferCameraDialog({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-w-3xl">
                 <DialogHeader>
-                    <DialogTitle>Ambil Foto Realtime</DialogTitle>
+                    <DialogTitle>
+                        <Stage4Text k="stage4.ui.cdf43da13bc4" />
+                    </DialogTitle>
                 </DialogHeader>
                 <div className="overflow-hidden rounded-lg border bg-black">
                     <video
@@ -183,11 +186,11 @@ export function TransferCameraDialog({
                         onClick={switchCamera}
                     >
                         <RefreshCcw className="size-4" />
-                        Ganti Kamera
+                        <Stage4Text k="stage4.ui.32d5d791bac6" />
                     </Button>
                     <Button type="button" onClick={capture} disabled={!!error}>
                         <Camera className="size-4" />
-                        Ambil Foto
+                        <Stage4Text k="stage4.ui.24e4c73c4c9e" />
                     </Button>
                 </DialogFooter>
             </DialogContent>

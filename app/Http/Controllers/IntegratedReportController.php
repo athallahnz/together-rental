@@ -104,11 +104,17 @@ class IntegratedReportController extends Controller
         $document = [
             'title' => 'Together Kamera · '.$result['reportMeta']['label'],
             'subtitle' => sprintf(
-                'Periode %s s.d. %s · %s · Dibuat %s WIB',
+                'Periode %s s.d. %s · %s · Dibuat %s WIB%s',
                 $filters['from']->format('d-m-Y'),
                 $filters['to']->format('d-m-Y'),
                 $branch,
                 now()->format('d-m-Y H:i'),
+                isset($result['historyMeta'])
+                    ? sprintf(
+                        ' · POSISI HISTORIS: %d baris dapat direkonstruksi, %d belum dapat diverifikasi; subtotal hanya dari baris rekonstruksi',
+                        $result['historyMeta']['verified_count'],
+                        $result['historyMeta']['unverified_count'],
+                    ) : '',
             ),
             'summary' => $result['summary'],
             'columns' => $result['columns'],

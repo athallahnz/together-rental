@@ -2,6 +2,9 @@ import { router } from '@inertiajs/react';
 import { useEffect } from 'react';
 import { toast } from 'sonner';
 import type { FlashToast } from '@/types/ui';
+import { translateKey, translatePlural } from '@/lib/i18n';
+import type { AppLocale } from '@/lib/i18n';
+import { useGlobalLocale } from '@/lib/locale-store';
 
 type ValidationErrorValue = string | string[] | null | undefined;
 type ValidationErrors = Record<string, ValidationErrorValue>;
@@ -23,18 +26,19 @@ function uniqueMessages(errors: ValidationErrors): string[] {
     );
 }
 
-function validationDescription(messages: string[]): string {
+function validationDescription(messages: string[], locale: AppLocale): string {
     const visible = messages.slice(0, 3);
     const remaining = messages.length - visible.length;
     const description = visible.join(' • ');
 
     return remaining > 0
-        ? `${description} • ${remaining} kesalahan lainnya.`
+        ? `${description} • ${translatePlural('errors.more', remaining, locale)}`
         : description;
 }
 
 function fieldLabel(
     element: HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement,
+    locale: AppLocale,
 ): string {
     const explicitLabel = element.getAttribute('aria-label');
 
@@ -48,10 +52,12 @@ function fieldLabel(
         return label.textContent.trim();
     }
 
-    return element.name || 'Kolom ini';
+    return element.name || translateKey('errors.fieldFallback', locale);
 }
 
 export function useFlashToast(): void {
+    const locale = useGlobalLocale();
+
     useEffect(() => {
         const unregisterFlash = router.on('flash', (event) => {
             const flash = (event as CustomEvent).detail?.flash;
@@ -77,27 +83,25 @@ export function useFlashToast(): void {
                 return;
             }
 
-            toast.error('Periksa kembali formulir', {
+            toast.error(translateKey('errors.formTitle', locale), {
                 id: validationToastId,
-                description: validationDescription(messages),
+                description: validationDescription(messages, locale),
                 duration: 7000,
             });
         });
 
         const unregisterHttpException = router.on('httpException', () => {
-            toast.error('Respons server tidak dapat diproses', {
+            toast.error(translateKey('errors.httpTitle', locale), {
                 id: httpExceptionToastId,
-                description:
-                    'Muat ulang halaman lalu ulangi tindakan. Hubungi administrator bila masalah tetap terjadi.',
+                description: translateKey('errors.httpDescription', locale),
                 duration: 7000,
             });
         });
 
         const unregisterNetworkError = router.on('networkError', () => {
-            toast.error('Terjadi kesalahan aplikasi', {
+            toast.error(translateKey('errors.networkTitle', locale), {
                 id: networkErrorToastId,
-                description:
-                    'Tindakan belum dapat diselesaikan. Coba kembali beberapa saat lagi.',
+                description: translateKey('errors.networkDescription', locale),
                 duration: 7000,
             });
         });
@@ -113,9 +117,9 @@ export function useFlashToast(): void {
                 return;
             }
 
-            toast.warning('Lengkapi data yang wajib diisi', {
+            toast.warning(translateKey('errors.requiredTitle', locale), {
                 id: nativeValidationToastId,
-                description: `${fieldLabel(target)}: ${target.validationMessage}`,
+                description: `${fieldLabel(target, locale)}: ${target.validationMessage}`,
                 duration: 5000,
             });
         };
@@ -129,5 +133,5 @@ export function useFlashToast(): void {
             unregisterNetworkError();
             document.removeEventListener('invalid', handleNativeInvalid, true);
         };
-    }, []);
+    }, [locale]);
 }

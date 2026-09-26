@@ -8,6 +8,12 @@ import {
 } from 'lucide-react';
 import AvailabilityPlanner from '@/components/public/availability-planner';
 import PublicShell from '@/components/public/public-shell';
+import { useAppLocale } from '@/lib/i18n';
+import { formatMoney } from '@/lib/locale-format';
+import {
+    publicAvailabilityLabel,
+    publicRateDurationLabel,
+} from '@/lib/public-i18n';
 import type { PublicBranch, PublicPackageDetail } from '@/types';
 
 type Props = {
@@ -16,17 +22,13 @@ type Props = {
     package: PublicPackageDetail;
 };
 
-const currency = new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    maximumFractionDigits: 0,
-});
-
 export default function PublicPackageShow({
     branch,
     branches,
     package: rentalPackage,
 }: Props) {
+    const { locale, tr } = useAppLocale();
+
     return (
         <PublicShell branch={branch} branches={branches}>
             <Head title={rentalPackage.seo_title}>
@@ -90,7 +92,8 @@ export default function PublicPackageShow({
                             }
                             className="inline-flex items-center gap-2 text-sm font-medium text-neutral-500 transition hover:text-neutral-950"
                         >
-                            <ArrowLeft className="size-4" /> Kembali ke katalog
+                            <ArrowLeft className="size-4" />{' '}
+                            {tr('public.detail.back')}
                         </Link>
                     </div>
                 </section>
@@ -114,7 +117,7 @@ export default function PublicPackageShow({
                     <div className="lg:py-3">
                         <div className="flex flex-wrap items-center gap-2">
                             <span className="rounded-full bg-neutral-950 px-3 py-1.5 text-xs font-semibold text-white">
-                                Paket Rental
+                                {tr('public.common.rentalPackage')}
                             </span>
                             <span
                                 className={`inline-flex items-center gap-1 rounded-full px-3 py-1.5 text-xs font-semibold ${
@@ -125,7 +128,10 @@ export default function PublicPackageShow({
                                 }`}
                             >
                                 <CheckCircle2 className="size-3.5" />{' '}
-                                {rentalPackage.availability.label}
+                                {publicAvailabilityLabel(
+                                    rentalPackage.availability.status,
+                                    locale,
+                                )}
                             </span>
                         </div>
                         <h1 className="mt-6 text-4xl leading-tight font-semibold tracking-[-0.045em] sm:text-6xl">
@@ -141,22 +147,24 @@ export default function PublicPackageShow({
                             <div className="flex items-center justify-between gap-4">
                                 <div>
                                     <p className="text-xs text-neutral-500">
-                                        Harga mulai
+                                        {tr('public.detail.product.starting')}
                                     </p>
                                     <p className="mt-1 text-2xl font-semibold">
                                         {rentalPackage.starting_price !== null
-                                            ? currency.format(
+                                            ? formatMoney(
                                                   rentalPackage.starting_price,
+                                                  locale,
                                               )
-                                            : 'Hubungi admin'}
+                                            : tr('public.common.contactAdmin')}
                                     </p>
                                 </div>
                                 <div className="text-right">
                                     <p className="text-xs text-neutral-500">
-                                        Isi paket
+                                        {tr('public.detail.package.included')}
                                     </p>
                                     <p className="mt-1 font-semibold">
-                                        {rentalPackage.items_count} item
+                                        {rentalPackage.items_count}{' '}
+                                        {tr('public.common.items')}
                                     </p>
                                 </div>
                             </div>
@@ -169,10 +177,16 @@ export default function PublicPackageShow({
                                         >
                                             <p className="flex items-center gap-1 text-xs text-neutral-500">
                                                 <Clock3 className="size-3.5" />{' '}
-                                                {rate.duration_label}
+                                                {publicRateDurationLabel(
+                                                    rate.duration_label,
+                                                    locale,
+                                                )}
                                             </p>
                                             <p className="mt-2 font-semibold">
-                                                {currency.format(rate.amount)}
+                                                {formatMoney(
+                                                    rate.amount,
+                                                    locale,
+                                                )}
                                             </p>
                                         </div>
                                     ))}
@@ -203,10 +217,10 @@ export default function PublicPackageShow({
                     <div className="mx-auto grid max-w-7xl gap-12 px-5 lg:grid-cols-[0.75fr_1.25fr] lg:px-8">
                         <div>
                             <p className="text-xs font-semibold tracking-[0.16em] text-neutral-400 uppercase">
-                                Isi paket
+                                {tr('public.detail.package.included')}
                             </p>
                             <h2 className="mt-3 text-3xl font-semibold tracking-tight">
-                                Semua yang Anda perlukan.
+                                {tr('public.detail.package.everything')}
                             </h2>
                             {rentalPackage.description && (
                                 <p className="mt-5 text-base leading-8 whitespace-pre-line text-neutral-500">
@@ -240,9 +254,17 @@ export default function PublicPackageShow({
                                         </Link>
                                         <p className="mt-1 text-xs text-neutral-500">
                                             {item.is_optional
-                                                ? 'Opsional'
-                                                : 'Termasuk'}{' '}
-                                            · {item.availability.label}
+                                                ? tr(
+                                                      'public.detail.package.optional',
+                                                  )
+                                                : tr(
+                                                      'public.detail.package.mandatory',
+                                                  )}{' '}
+                                            ·{' '}
+                                            {publicAvailabilityLabel(
+                                                item.availability.status,
+                                                locale,
+                                            )}
                                         </p>
                                     </div>
                                     <span className="rounded-full bg-neutral-100 px-3 py-1.5 text-xs font-semibold">

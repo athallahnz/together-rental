@@ -10,13 +10,15 @@ import {
     Search,
     ShieldCheck,
 } from 'lucide-react';
-import {
-    useEffect,
-    useMemo,
-    useRef,
-    useState,
-} from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import type { FormEvent } from 'react';
+import {
+    Stage4Text,
+    stage4FormatDateTime,
+    stage4Translate,
+    stage4TranslateDynamic,
+} from '@/components/stage4-text';
+import { useAppLocale } from '@/lib/i18n';
 import { PaginationLinks } from '@/components/pagination-links';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -114,12 +116,6 @@ const sourceLabels: Record<DocumentRow['source_type'], string> = {
     payment: 'Payment',
 };
 
-const localDateTime = (value: string) =>
-    new Intl.DateTimeFormat('id-ID', {
-        dateStyle: 'medium',
-        timeStyle: 'short',
-    }).format(new Date(value));
-
 const money = (value: number) =>
     new Intl.NumberFormat('id-ID', {
         style: 'currency',
@@ -134,6 +130,8 @@ export default function TransactionDocumentsIndex({
     filters,
     canIssue,
 }: Props) {
+    const { locale: stage4Locale } = useAppLocale();
+
     const issueForm = useForm({
         document_type: 'invoice' as DocumentRow['document_type'],
         source_type: 'booking' as DocumentRow['source_type'],
@@ -176,61 +174,67 @@ export default function TransactionDocumentsIndex({
 
     useEffect(() => {
         const controller = new AbortController();
-        const timer = window.setTimeout(async () => {
-            setSourceLoading(true);
-            setSourceLoadError(null);
+        const timer = window.setTimeout(
+            async () => {
+                setSourceLoading(true);
+                setSourceLoadError(null);
 
-            const params = new URLSearchParams({
-                document_type: issueForm.data.document_type,
-                source_type: issueForm.data.source_type,
-            });
+                const params = new URLSearchParams({
+                    document_type: issueForm.data.document_type,
+                    source_type: issueForm.data.source_type,
+                });
 
-            const query = sourceSearch.trim();
+                const query = sourceSearch.trim();
 
-            if (query !== '') {
-                params.set('q', query);
-            }
+                if (query !== '') {
+                    params.set('q', query);
+                }
 
-            try {
-                const response = await fetch(
-                    `/documents/source-options?${params.toString()}`,
-                    {
-                        headers: {
-                            Accept: 'application/json',
-                            'X-Requested-With': 'XMLHttpRequest',
+                try {
+                    const response = await fetch(
+                        `/documents/source-options?${params.toString()}`,
+                        {
+                            headers: {
+                                Accept: 'application/json',
+                                'X-Requested-With': 'XMLHttpRequest',
+                            },
+                            signal: controller.signal,
                         },
-                        signal: controller.signal,
-                    },
-                );
-
-                if (!response.ok) {
-                    throw new Error(
-                        `Gagal memuat sumber (${response.status}).`,
                     );
-                }
 
-                const payload = (await response.json()) as {
-                    data: SourceOption[];
-                };
+                    if (!response.ok) {
+                        throw new Error(
+                            `Gagal memuat sumber (${response.status}).`,
+                        );
+                    }
 
-                setSourceOptions(payload.data);
-            } catch (error) {
-                if (error instanceof DOMException && error.name === 'AbortError') {
-                    return;
-                }
+                    const payload = (await response.json()) as {
+                        data: SourceOption[];
+                    };
 
-                setSourceOptions([]);
-                setSourceLoadError(
-                    error instanceof Error
-                        ? error.message
-                        : 'Gagal memuat daftar sumber.',
-                );
-            } finally {
-                if (!controller.signal.aborted) {
-                    setSourceLoading(false);
+                    setSourceOptions(payload.data);
+                } catch (error) {
+                    if (
+                        error instanceof DOMException &&
+                        error.name === 'AbortError'
+                    ) {
+                        return;
+                    }
+
+                    setSourceOptions([]);
+                    setSourceLoadError(
+                        error instanceof Error
+                            ? error.message
+                            : 'Gagal memuat daftar sumber.',
+                    );
+                } finally {
+                    if (!controller.signal.aborted) {
+                        setSourceLoading(false);
+                    }
                 }
-            }
-        }, sourceSearch.trim() === '' ? 0 : 200);
+            },
+            sourceSearch.trim() === '' ? 0 : 200,
+        );
 
         return () => {
             window.clearTimeout(timer);
@@ -320,41 +324,53 @@ export default function TransactionDocumentsIndex({
 
     return (
         <>
-            <Head title="Invoice, Nota & Agreement" />
+            <Head
+                title={stage4Translate('stage4.ui.53dcc7737065', stage4Locale)}
+            />
             <div className="flex flex-1 flex-col gap-6 p-4 md:p-6">
                 <header>
                     <p className="text-sm font-medium text-primary">
-                        Dokumen Transaksi
+                        <Stage4Text k="stage4.ui.0efaa648c56c" />
                     </p>
                     <h1 className="mt-1 flex items-center gap-2 text-2xl font-semibold tracking-tight">
                         <FileText className="size-6" />
-                        Invoice, Nota & Agreement
+                        <Stage4Text k="stage4.ui.53dcc7737065" />
                     </h1>
                     <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-                        Dokumen diterbitkan dari snapshot transaksi. Dokumen
-                        lama tidak berubah saat harga, pembayaran, atau data
-                        transaksi diperbarui; perubahan menghasilkan versi baru.
+                        <Stage4Text k="stage4.ui.3cbb7330f4f3" />
                     </p>
                 </header>
 
                 <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
                     <SummaryCard
-                        label="Total dokumen"
+                        label={stage4Translate(
+                            'stage4.ui.b896cbcafc0f',
+                            stage4Locale,
+                        )}
                         value={summary.total}
                         icon={FileText}
                     />
                     <SummaryCard
-                        label="Invoice"
+                        label={stage4Translate(
+                            'stage4.ui.f9f38818c406',
+                            stage4Locale,
+                        )}
                         value={summary.invoice}
                         icon={ReceiptText}
                     />
                     <SummaryCard
-                        label="Nota"
+                        label={stage4Translate(
+                            'stage4.ui.1a6b7be7e5a3',
+                            stage4Locale,
+                        )}
                         value={summary.receipt}
                         icon={FileCheck2}
                     />
                     <SummaryCard
-                        label="Agreement"
+                        label={stage4Translate(
+                            'stage4.ui.c8fee8eabe07',
+                            stage4Locale,
+                        )}
                         value={summary.agreement}
                         icon={ShieldCheck}
                     />
@@ -363,7 +379,9 @@ export default function TransactionDocumentsIndex({
                 {canIssue && (
                     <Card>
                         <CardHeader>
-                            <CardTitle>Terbitkan dokumen</CardTitle>
+                            <CardTitle>
+                                <Stage4Text k="stage4.ui.731b293b320d" />
+                            </CardTitle>
                         </CardHeader>
                         <CardContent>
                             <form
@@ -371,7 +389,10 @@ export default function TransactionDocumentsIndex({
                                 className="grid gap-4 md:grid-cols-2 xl:grid-cols-4"
                             >
                                 <Field
-                                    label="Jenis dokumen"
+                                    label={stage4Translate(
+                                        'stage4.ui.a2dcc21a618f',
+                                        stage4Locale,
+                                    )}
                                     error={issueForm.errors.document_type}
                                 >
                                     <Select
@@ -387,20 +408,23 @@ export default function TransactionDocumentsIndex({
                                         </SelectTrigger>
                                         <SelectContent>
                                             <SelectItem value="invoice">
-                                                Invoice
+                                                <Stage4Text k="stage4.ui.f9f38818c406" />
                                             </SelectItem>
                                             <SelectItem value="receipt">
-                                                Nota Pembayaran
+                                                <Stage4Text k="stage4.ui.7f3cf083deff" />
                                             </SelectItem>
                                             <SelectItem value="agreement">
-                                                Agreement Rental
+                                                <Stage4Text k="stage4.ui.ee21c3756070" />
                                             </SelectItem>
                                         </SelectContent>
                                     </Select>
                                 </Field>
 
                                 <Field
-                                    label="Sumber"
+                                    label={stage4Translate(
+                                        'stage4.ui.ff648afc53ef',
+                                        stage4Locale,
+                                    )}
                                     error={issueForm.errors.source_type}
                                 >
                                     <Select
@@ -420,7 +444,10 @@ export default function TransactionDocumentsIndex({
                                                     key={source}
                                                     value={source}
                                                 >
-                                                    {sourceLabels[source]}
+                                                    {stage4TranslateDynamic(
+                                                        sourceLabels[source],
+                                                        stage4Locale,
+                                                    )}
                                                 </SelectItem>
                                             ))}
                                         </SelectContent>
@@ -428,7 +455,10 @@ export default function TransactionDocumentsIndex({
                                 </Field>
 
                                 <Field
-                                    label="Nomor sumber"
+                                    label={stage4Translate(
+                                        'stage4.ui.9f31720dfb5e',
+                                        stage4Locale,
+                                    )}
                                     error={issueForm.errors.source_reference}
                                 >
                                     <div
@@ -455,7 +485,10 @@ export default function TransactionDocumentsIndex({
                                             />
                                             <button
                                                 type="button"
-                                                aria-label="Buka pilihan sumber"
+                                                aria-label={stage4Translate(
+                                                    'stage4.ui.2473533fe5ca',
+                                                    stage4Locale,
+                                                )}
                                                 className="absolute top-1/2 right-2 flex size-7 -translate-y-1/2 items-center justify-center rounded-md text-muted-foreground hover:bg-muted hover:text-foreground"
                                                 onClick={() =>
                                                     setSourceOpen(
@@ -474,8 +507,7 @@ export default function TransactionDocumentsIndex({
                                         {sourceOpen && (
                                             <div className="absolute z-50 mt-1 w-full min-w-[340px] overflow-hidden rounded-md border bg-popover text-popover-foreground shadow-md">
                                                 <div className="border-b px-3 py-2 text-xs text-muted-foreground">
-                                                    Klik untuk memilih. Mengetik
-                                                    hanya mempersempit daftar.
+                                                    <Stage4Text k="stage4.ui.e2f6de41915d" />
                                                 </div>
 
                                                 <div className="max-h-80 overflow-y-auto p-1">
@@ -484,8 +516,7 @@ export default function TransactionDocumentsIndex({
                                                             0 && (
                                                             <div className="flex items-center gap-2 px-3 py-5 text-sm text-muted-foreground">
                                                                 <Loader2 className="size-4 animate-spin" />
-                                                                Memuat sumber
-                                                                tersedia...
+                                                                <Stage4Text k="stage4.ui.09b5f22a7f81" />
                                                             </div>
                                                         )}
 
@@ -503,8 +534,7 @@ export default function TransactionDocumentsIndex({
                                                         sourceOptions.length ===
                                                             0 && (
                                                             <div className="px-3 py-5 text-sm text-muted-foreground">
-                                                                Tidak ada sumber
-                                                                yang sesuai.
+                                                                <Stage4Text k="stage4.ui.63ae9802db0e" />
                                                             </div>
                                                         )}
 
@@ -539,7 +569,7 @@ export default function TransactionDocumentsIndex({
                                                                                     option.reference
                                                                                 }
                                                                             </span>
-                                                                            <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium uppercase text-muted-foreground">
+                                                                            <span className="rounded bg-muted px-1.5 py-0.5 text-[10px] font-medium text-muted-foreground uppercase">
                                                                                 {
                                                                                     option.branch_code
                                                                                 }
@@ -548,7 +578,10 @@ export default function TransactionDocumentsIndex({
 
                                                                         <span className="mt-1 block text-xs text-muted-foreground">
                                                                             {option.customer_name ??
-                                                                                'Tanpa pelanggan'}{' '}
+                                                                                stage4Translate(
+                                                                                    'stage4.ui.14b38f55305d',
+                                                                                    stage4Locale,
+                                                                                )}{' '}
                                                                             ·{' '}
                                                                             {
                                                                                 option.status
@@ -581,9 +614,7 @@ export default function TransactionDocumentsIndex({
                                     </div>
 
                                     <p className="text-xs text-muted-foreground">
-                                        Yang belum diterbitkan diprioritaskan.
-                                        Sumber yang sudah punya versi tetap dapat
-                                        dipilih untuk snapshot berikutnya.
+                                        <Stage4Text k="stage4.ui.9c47e0afb6bf" />
                                     </p>
                                 </Field>
 
@@ -598,7 +629,7 @@ export default function TransactionDocumentsIndex({
                                         }
                                     >
                                         <FileCheck2 />
-                                        Terbitkan snapshot
+                                        <Stage4Text k="stage4.ui.b56313ca4829" />
                                     </Button>
                                 </div>
                             </form>
@@ -608,7 +639,9 @@ export default function TransactionDocumentsIndex({
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>Riwayat dokumen</CardTitle>
+                        <CardTitle>
+                            <Stage4Text k="stage4.ui.83ea9024ae18" />
+                        </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <div className="grid gap-3 md:grid-cols-2 xl:grid-cols-4">
@@ -617,7 +650,10 @@ export default function TransactionDocumentsIndex({
                                 <Input
                                     defaultValue={filters.search}
                                     className="pl-9"
-                                    placeholder="Cari nomor dokumen / sumber..."
+                                    placeholder={stage4Translate(
+                                        'stage4.ui.075d7c053d30',
+                                        stage4Locale,
+                                    )}
                                     onKeyDown={(event) => {
                                         if (event.key === 'Enter') {
                                             applyFilters({
@@ -642,16 +678,16 @@ export default function TransactionDocumentsIndex({
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="all">
-                                        Semua jenis
+                                        <Stage4Text k="stage4.ui.dbf8ef8a9fab" />
                                     </SelectItem>
                                     <SelectItem value="invoice">
-                                        Invoice
+                                        <Stage4Text k="stage4.ui.f9f38818c406" />
                                     </SelectItem>
                                     <SelectItem value="receipt">
-                                        Nota
+                                        <Stage4Text k="stage4.ui.1a6b7be7e5a3" />
                                     </SelectItem>
                                     <SelectItem value="agreement">
-                                        Agreement
+                                        <Stage4Text k="stage4.ui.c8fee8eabe07" />
                                     </SelectItem>
                                 </SelectContent>
                             </Select>
@@ -669,16 +705,16 @@ export default function TransactionDocumentsIndex({
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="all">
-                                        Semua sumber
+                                        <Stage4Text k="stage4.ui.7f8f0dfcaffd" />
                                     </SelectItem>
                                     <SelectItem value="booking">
-                                        Booking
+                                        <Stage4Text k="stage4.ui.e38ea8eebe78" />
                                     </SelectItem>
                                     <SelectItem value="rental">
-                                        Rental
+                                        <Stage4Text k="stage4.ui.e703935c66bf" />
                                     </SelectItem>
                                     <SelectItem value="payment">
-                                        Payment
+                                        <Stage4Text k="stage4.ui.b41a92bed032" />
                                     </SelectItem>
                                 </SelectContent>
                             </Select>
@@ -702,7 +738,7 @@ export default function TransactionDocumentsIndex({
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="all">
-                                        Semua cabang
+                                        <Stage4Text k="stage4.ui.27d30aba48a4" />
                                     </SelectItem>
                                     {branches.map((branch) => (
                                         <SelectItem
@@ -720,13 +756,27 @@ export default function TransactionDocumentsIndex({
                             <table className="w-full min-w-[980px] text-sm">
                                 <thead className="bg-muted/50 text-left">
                                     <tr>
-                                        <th className="p-3">Dokumen</th>
-                                        <th className="p-3">Jenis</th>
-                                        <th className="p-3">Sumber</th>
-                                        <th className="p-3">Cabang</th>
-                                        <th className="p-3">Diterbitkan</th>
-                                        <th className="p-3">Hash</th>
-                                        <th className="p-3 text-right">Aksi</th>
+                                        <th className="p-3">
+                                            <Stage4Text k="stage4.ui.a809e9504f2d" />
+                                        </th>
+                                        <th className="p-3">
+                                            <Stage4Text k="stage4.ui.fabb2b5c779a" />
+                                        </th>
+                                        <th className="p-3">
+                                            <Stage4Text k="stage4.ui.ff648afc53ef" />
+                                        </th>
+                                        <th className="p-3">
+                                            <Stage4Text k="stage4.ui.1387475bd674" />
+                                        </th>
+                                        <th className="p-3">
+                                            <Stage4Text k="stage4.ui.285d33ab85d4" />
+                                        </th>
+                                        <th className="p-3">
+                                            <Stage4Text k="stage4.ui.873507a022b5" />
+                                        </th>
+                                        <th className="p-3 text-right">
+                                            <Stage4Text k="stage4.ui.60ad46d8cab9" />
+                                        </th>
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -740,23 +790,26 @@ export default function TransactionDocumentsIndex({
                                                     {document.document_number}
                                                 </div>
                                                 <div className="text-xs text-muted-foreground">
-                                                    Versi {document.version}
+                                                    <Stage4Text k="stage4.ui.ed3a4fedb93a" />{' '}
+                                                    {document.version}
                                                 </div>
                                             </td>
                                             <td className="p-3">
-                                                {
+                                                {stage4TranslateDynamic(
                                                     typeLabels[
                                                         document.document_type
-                                                    ]
-                                                }
+                                                    ],
+                                                    stage4Locale,
+                                                )}
                                             </td>
                                             <td className="p-3">
                                                 <div>
-                                                    {
+                                                    {stage4TranslateDynamic(
                                                         sourceLabels[
                                                             document.source_type
-                                                        ]
-                                                    }
+                                                        ],
+                                                        stage4Locale,
+                                                    )}
                                                 </div>
                                                 {document.source_url ? (
                                                     <Link
@@ -782,13 +835,17 @@ export default function TransactionDocumentsIndex({
                                             </td>
                                             <td className="p-3">
                                                 <div>
-                                                    {localDateTime(
+                                                    {stage4FormatDateTime(
                                                         document.issued_at,
+                                                        stage4Locale,
                                                     )}
                                                 </div>
                                                 <div className="text-xs text-muted-foreground">
                                                     {document.issuer?.name ??
-                                                        'Sistem'}
+                                                        stage4Translate(
+                                                            'stage4.ui.991f31a64b52',
+                                                            stage4Locale,
+                                                        )}
                                                 </div>
                                             </td>
                                             <td className="p-3 font-mono text-xs text-muted-foreground">
@@ -805,7 +862,8 @@ export default function TransactionDocumentsIndex({
                                                     asChild
                                                 >
                                                     <a href={document.pdf_url}>
-                                                        <Download /> PDF
+                                                        <Download />
+                                                        <Stage4Text k="stage4.ui.d613d88cb2d8" />
                                                     </a>
                                                 </Button>
                                             </td>
@@ -817,8 +875,7 @@ export default function TransactionDocumentsIndex({
                                                 colSpan={7}
                                                 className="p-8 text-center text-muted-foreground"
                                             >
-                                                Belum ada dokumen untuk filter
-                                                ini.
+                                                <Stage4Text k="stage4.ui.24a3ddf58eab" />
                                             </td>
                                         </tr>
                                     )}

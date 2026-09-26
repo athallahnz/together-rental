@@ -3,6 +3,7 @@
 namespace App\Domain\Reporting;
 
 use Carbon\CarbonImmutable;
+use Illuminate\Database\Query\JoinClause;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use stdClass;
@@ -42,27 +43,56 @@ class IntegratedReportService
             default => $this->operationalDataset($scopedBranchIds, $filters),
         };
 
+        $summary = $this->summary($scopedBranchIds, $filters);
+        $branchPerformance = $this->branchPerformance(
+            $companyId, $scopedBranchIds, $filters['from'], $filters['to'],
+        );
+        $history = $dataset['historyMeta'] ?? null;
+
+        if ($filters['report'] === 'receivables' && $history !== null) {
+            foreach ($summary as &$card) {
+                if ($card['key'] === 'receivables') {
+                    $card['label'] = 'Piutang per '.$history['as_of'];
+                    $card['value'] = $history['verified_receivables'];
+                    $card['note'] = sprintf(
+                        'Subtotal rekonstruksi %d rental; %d rental belum dapat diverifikasi dan tidak masuk subtotal.',
+                        $history['verified_count'], $history['unverified_count'],
+                    );
+                }
+            }
+            unset($card);
+
+            foreach ($branchPerformance as &$branch) {
+                $branchId = (int) $branch['id'];
+                $branch['receivables'] = (float) ($dataset['branch_totals'][$branchId] ?? 0);
+            }
+            unset($branch);
+        }
+
         return [
-            'summary' => $this->summary($scopedBranchIds, $filters),
+            'summary' => $summary,
             'trend' => $this->trend($scopedBranchIds, $filters['from'], $filters['to']),
-            'branchPerformance' => $this->branchPerformance(
-                $companyId,
-                $scopedBranchIds,
-                $filters['from'],
-                $filters['to'],
-            ),
+            'branchPerformance' => $branchPerformance,
             'columns' => $dataset['columns'],
             'rows' => $dataset['rows'],
             'statusOptions' => $this->statusOptions($filters['report']),
             'reportMeta' => [
                 'key' => $filters['report'],
                 'label' => $this->reportLabel($filters['report']),
-                'description' => $this->reportDescription($filters['report']),
+                'description' => $history === null
+                    ? $this->reportDescription($filters['report'])
+                    : sprintf(
+                        'Posisi historis %s berdasarkan event bertanggal. %d rental direkonstruksi, %d belum dapat diverifikasi. Jumlah piutang hanya menjumlahkan baris hasil rekonstruksi, bukan estimasi untuk data yang belum lengkap.',
+                        $history['as_of'], $history['verified_count'], $history['unverified_count'],
+                    ),
                 'row_count' => count($dataset['rows']),
             ],
+            ...($history === null ? [] : ['historyMeta' => $history]),
             'methodology' => [
                 'cash_flow' => 'Payment completed masuk dikurangi payment completed keluar dan refund paid. Payment void dan refund selain paid tidak memengaruhi arus kas.',
-                'receivables' => 'Piutang menampilkan saldo rental positif sampai akhir periode dan mengecualikan draft, cancelled, void, serta rejected.',
+                'receivables' => $history === null
+                    ? 'Piutang menampilkan saldo rental positif sampai akhir periode dan mengecualikan draft, cancelled, void, serta rejected.'
+                    : 'Saldo per akhir tanggal dihitung dari kontrak dan payment rental/refund/void bertanggal efektif. Deposit jaminan tidak mengurangi tagihan sewa. Perubahan nilai tanpa riwayat yang cukup ditandai BELUM DAPAT DIVERIFIKASI; nominalnya tidak dimasukkan ke subtotal. Kolom deposit hanya menampilkan nilai kontrak yang tersimpan saat ini.',
                 'rental_value' => 'Nilai rental memakai total_amount pada rental yang checkout/tercatat dalam periode dan tidak berstatus draft, cancelled, void, atau rejected.',
                 'deposit' => 'Deposit ditampilkan terpisah dari penerimaan rental dan saldo deposit held dihitung dari payment deposit completed dikurangi refund deposit paid.',
                 'branch_scope' => 'Laporan konsolidasi hanya menggunakan cabang yang dapat diakses pengguna. Pengguna branch-scoped otomatis terkunci pada cabang aktif.',
@@ -387,32 +417,42 @@ class IntegratedReportService
             ->select([
                 'bookings.id', 'bookings.booking_number', 'bookings.status',
                 'bookings.booked_at', 'bookings.starts_at', 'bookings.ends_at',
-                'bookings.total_amount', 'bookings.deposit_paid',
+                'bookings.total_amount',
                 'customers.name as customer_name', 'branches.code as branch_code',
             ]);
 
         /** @var Collection<int, stdClass> $bookingRecords */
         $bookingRecords = $bookingQuery->get();
-        $bookings = $bookingRecords->map(static fn (stdClass $row): array => [
-            'id' => 'booking-'.(int) $row->id,
-            'href' => '/bookings/'.(int) $row->id,
-            'sort_at' => (string) $row->booked_at,
-            'values' => [
-                'kind' => 'Booking',
-                'number' => (string) $row->booking_number,
-                'reference' => null,
-                'customer' => (string) $row->customer_name,
-                'branch' => (string) $row->branch_code,
-                'status' => (string) $row->status,
-                'occurred_at' => (string) $row->booked_at,
-                'starts_at' => (string) $row->starts_at,
-                'ends_at' => (string) $row->ends_at,
-                'total_amount' => (float) $row->total_amount,
-                'charges' => 0.0,
-                'paid_amount' => (float) $row->deposit_paid,
-                'balance_due' => max(0, (float) $row->total_amount - (float) $row->deposit_paid),
-            ],
-        ]);
+        // Mirror BookingPaymentSettlement: completed incoming rental payments minus PAID
+        // refunds on the same source payment. Security deposits never settle rental fees.
+        // Aggregate in one query instead of calling settlement->summary() per booking.
+        $rentalPaidByBooking = $this->bookingRentalPaidById(
+            $bookingRecords->pluck('id')->map(static fn (mixed $id): int => (int) $id)->all(),
+        );
+        $bookings = $bookingRecords->map(static function (stdClass $row) use ($rentalPaidByBooking): array {
+            $rentalPaid = (float) ($rentalPaidByBooking[(int) $row->id] ?? 0.0);
+
+            return [
+                'id' => 'booking-'.(int) $row->id,
+                'href' => '/bookings/'.(int) $row->id,
+                'sort_at' => (string) $row->booked_at,
+                'values' => [
+                    'kind' => 'Booking',
+                    'number' => (string) $row->booking_number,
+                    'reference' => null,
+                    'customer' => (string) $row->customer_name,
+                    'branch' => (string) $row->branch_code,
+                    'status' => (string) $row->status,
+                    'occurred_at' => (string) $row->booked_at,
+                    'starts_at' => (string) $row->starts_at,
+                    'ends_at' => (string) $row->ends_at,
+                    'total_amount' => (float) $row->total_amount,
+                    'charges' => 0.0,
+                    'paid_amount' => $rentalPaid,
+                    'balance_due' => max(0, round((float) $row->total_amount - $rentalPaid, 2)),
+                ],
+            ];
+        });
 
         $rentalQuery = DB::table('rentals as rentals')
             ->join('branches as branches', 'branches.id', '=', 'rentals.branch_id')
@@ -534,6 +574,49 @@ class IntegratedReportService
         );
 
         return compact('columns', 'rows');
+    }
+
+    /**
+     * Net rental DP by booking, using the same inclusion rules as BookingPaymentSettlement.
+     * A refund must be PAID and linked to the original completed rental payment.
+     * No payment/refund/booking row is mutated by this read-only projection.
+     *
+     * @param  list<int>  $bookingIds
+     * @return array<int, float>
+     */
+    private function bookingRentalPaidById(array $bookingIds): array
+    {
+        if ($bookingIds === []) {
+            return [];
+        }
+
+        $paidRefunds = DB::table('refunds')
+            ->where('status', 'paid')
+            ->select('payment_id')
+            ->selectRaw('SUM(amount) as refunded_amount')
+            ->groupBy('payment_id');
+
+        /** @var Collection<int, stdClass> $totals */
+        $totals = DB::table('payments as payments')
+            ->leftJoinSub($paidRefunds, 'paid_refunds', static function (JoinClause $join): void {
+                $join->on('paid_refunds.payment_id', '=', 'payments.id');
+            })
+            ->whereIntegerInRaw('payments.booking_id', $bookingIds)
+            ->where('payments.status', 'completed')
+            ->where('payments.direction', 'in')
+            ->where('payments.type', 'rental')
+            ->selectRaw('payments.booking_id')
+            ->selectRaw('SUM(CASE WHEN payments.amount > COALESCE(paid_refunds.refunded_amount, 0) '
+                .'THEN payments.amount - COALESCE(paid_refunds.refunded_amount, 0) ELSE 0 END) as rental_paid')
+            ->groupBy('payments.booking_id')
+            ->get();
+
+        $result = [];
+        foreach ($totals as $row) {
+            $result[(int) $row->booking_id] = round((float) $row->rental_paid, 2);
+        }
+
+        return $result;
     }
 
     /**
@@ -738,6 +821,18 @@ class IntegratedReportService
 
         if ($branchIds === []) {
             return compact('columns') + ['rows' => []];
+        }
+
+        if ($filters['to']->startOfDay()->lessThan(now()->toImmutable()->startOfDay())) {
+            $projected = app(HistoricalReceivableProjector::class)->project($branchIds, $filters);
+            $columns[] = $this->column('history_quality', 'Dasar historis', 'text', 48);
+
+            return [
+                'columns' => $columns,
+                'rows' => $projected['rows'],
+                'historyMeta' => $projected['meta'],
+                'branch_totals' => $projected['branch_totals'],
+            ];
         }
 
         $query = DB::table('rentals as rentals')

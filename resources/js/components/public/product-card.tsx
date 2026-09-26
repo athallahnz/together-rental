@@ -7,13 +7,13 @@ import {
     Clock3,
     Truck,
 } from 'lucide-react';
+import { useAppLocale } from '@/lib/i18n';
+import { formatMoney } from '@/lib/locale-format';
+import {
+    publicAvailabilityLabel,
+    publicRateDurationLabel,
+} from '@/lib/public-i18n';
 import type { PublicBranch, PublicProduct } from '@/types';
-
-const currency = new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    maximumFractionDigits: 0,
-});
 
 export default function ProductCard({
     product,
@@ -22,6 +22,8 @@ export default function ProductCard({
     product: PublicProduct;
     branch: PublicBranch;
 }) {
+    const { locale, tr } = useAppLocale();
+
     return (
         <article className="group overflow-hidden rounded-[1.5rem] border border-black/7 bg-white shadow-[0_1px_0_rgba(0,0,0,0.03)] transition hover:-translate-y-1 hover:shadow-xl hover:shadow-black/5">
             <Link
@@ -46,7 +48,7 @@ export default function ProductCard({
                     <div className="absolute top-4 left-4 flex gap-2">
                         {product.is_featured && (
                             <span className="rounded-full bg-neutral-950 px-3 py-1.5 text-[11px] font-semibold text-white">
-                                Pilihan
+                                {tr('public.common.featured')}
                             </span>
                         )}
                         <span
@@ -64,7 +66,10 @@ export default function ProductCard({
                             ) : (
                                 <CheckCircle2 className="size-3" />
                             )}{' '}
-                            {product.availability.label}
+                            {publicAvailabilityLabel(
+                                product.availability.status,
+                                locale,
+                            )}
                         </span>
                     </div>
                 </div>
@@ -74,7 +79,7 @@ export default function ProductCard({
                             <p className="text-xs font-medium tracking-wide text-neutral-500 uppercase">
                                 {product.category?.name ??
                                     product.brand ??
-                                    'Peralatan'}
+                                    tr('public.common.equipment')}
                             </p>
                             <h3 className="mt-1 line-clamp-2 text-lg font-semibold tracking-tight">
                                 {product.name}
@@ -90,24 +95,30 @@ export default function ProductCard({
                     {product.tracking_type === 'serialized' && (
                         <div className="mt-4 flex items-center gap-2 rounded-xl bg-neutral-50 px-3 py-2 text-xs font-medium text-neutral-600">
                             <CalendarDays className="size-3.5" />
-                            Smart calendar tersedia per unit
+                            {tr('public.common.unitCalendar')}
                         </div>
                     )}
                     <div className="mt-5 flex items-end justify-between border-t border-black/5 pt-4">
                         <div>
                             <p className="text-xs text-neutral-500">
-                                Mulai dari
+                                {tr('public.common.from')}
                             </p>
                             <p className="mt-1 font-semibold">
                                 {product.starting_price !== null
-                                    ? currency.format(product.starting_price)
-                                    : 'Hubungi admin'}
+                                    ? formatMoney(
+                                          product.starting_price,
+                                          locale,
+                                      )
+                                    : tr('public.common.contactAdmin')}
                             </p>
                         </div>
                         {product.rates[0] && (
                             <p className="flex items-center gap-1 text-xs text-neutral-500">
                                 <Clock3 className="size-3.5" />{' '}
-                                {product.rates[0].duration_label}
+                                {publicRateDurationLabel(
+                                    product.rates[0].duration_label,
+                                    locale,
+                                )}
                             </p>
                         )}
                     </div>

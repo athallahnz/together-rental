@@ -637,8 +637,8 @@ class PublicCatalogService
         $image = $this->mediaUrl($product->primary_image_path)
             ?? $this->mediaUrl($categoryImage)
             ?? $brandLogo;
-        $description = $product->short_description
-            ?? Str::limit((string) $product->description, 180);
+        $description = $this->localizedContent($product->short_description, $product->short_description_en)
+            ?? Str::limit((string) ($this->localizedContent($product->description, $product->description_en) ?? ''), 180);
         $message = "Halo {$branch['name']}, saya tertarik menyewa {$product->name}. Apakah tersedia?";
 
         $payload = [
@@ -668,9 +668,9 @@ class PublicCatalogService
 
         return [
             ...$payload,
-            'description' => $product->description,
-            'seo_title' => $product->seo_title ?? $product->name,
-            'seo_description' => $product->seo_description ?? $description,
+            'description' => $this->localizedContent($product->description, $product->description_en),
+            'seo_title' => $this->localizedContent($product->seo_title, $product->seo_title_en) ?? $product->name,
+            'seo_description' => $this->localizedContent($product->seo_description, $product->seo_description_en) ?? $description,
             'gallery' => collect($this->stringList($product->getAttribute('gallery')))
                 ->map(fn (string $path): ?string => $this->mediaUrl($path))
                 ->filter()
@@ -735,7 +735,7 @@ class PublicCatalogService
             'id' => $package->id,
             'slug' => $package->slug,
             'name' => $package->name,
-            'short_description' => Str::limit((string) $package->description, 180),
+            'short_description' => Str::limit((string) ($this->localizedContent($package->description, $package->description_en) ?? ''), 180),
             'image_url' => $this->mediaUrl($package->primary_image_path)
                 ?? $items->first()['image_url'] ?? null,
             'rates' => $rates,
@@ -760,10 +760,10 @@ class PublicCatalogService
 
         return [
             ...$payload,
-            'description' => $package->description,
-            'seo_title' => $package->seo_title ?? $package->name,
-            'seo_description' => $package->seo_description
-                ?? Str::limit((string) $package->description, 240),
+            'description' => $this->localizedContent($package->description, $package->description_en),
+            'seo_title' => $this->localizedContent($package->seo_title, $package->seo_title_en) ?? $package->name,
+            'seo_description' => $this->localizedContent($package->seo_description, $package->seo_description_en)
+                ?? Str::limit((string) ($this->localizedContent($package->description, $package->description_en) ?? ''), 240),
             'items' => $items->all(),
         ];
     }
@@ -1059,5 +1059,15 @@ class PublicCatalogService
             'path' => request()->url(),
             'query' => request()->query(),
         ]);
+    }
+
+    /** English is optional; never translate operator content automatically. */
+    private function localizedContent(?string $original, ?string $english): ?string
+    {
+        if (app()->getLocale() === 'en' && $english !== null && trim($english) !== '') {
+            return $english;
+        }
+
+        return $original;
     }
 }

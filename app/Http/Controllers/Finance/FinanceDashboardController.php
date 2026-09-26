@@ -49,13 +49,13 @@ class FinanceDashboardController extends Controller
 
         if ($to->lessThan($from)) {
             throw ValidationException::withMessages([
-                'to' => 'Tanggal akhir harus sama atau setelah tanggal mulai.',
+                'to' => __('uat035b_stage5.flash.date_order'),
             ]);
         }
 
         if ($from->diffInDays($to) > 366) {
             throw ValidationException::withMessages([
-                'to' => 'Rentang Finance Dashboard maksimal 367 hari.',
+                'to' => __('uat035b_stage5.flash.finance_range'),
             ]);
         }
 

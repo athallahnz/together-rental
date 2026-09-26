@@ -96,6 +96,7 @@ class CheckoutBookingRequest extends FormRequest
                                     "collaterals.{$index}.customer_identity_id",
                                     'Identitas Customer360 tidak milik pelanggan booking ini.',
                                 );
+
                                 continue;
                             }
 

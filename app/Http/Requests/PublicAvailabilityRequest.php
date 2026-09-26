@@ -29,6 +29,16 @@ class PublicAvailabilityRequest extends FormRequest
     /** @return array<string, string> */
     public function messages(): array
     {
+        if (app()->getLocale() === 'en') {
+            return [
+                'branch.required' => 'Select a branch first.',
+                'starts_at.required' => 'Enter the rental start date and time.',
+                'ends_at.required' => 'Enter the rental end date and time.',
+                'ends_at.after' => 'The end time must be after the start time.',
+                'quantity.max' => 'Public availability checks are limited to 20 units per request.',
+            ];
+        }
+
         return [
             'branch.required' => 'Pilih cabang terlebih dahulu.',
             'starts_at.required' => 'Isi tanggal dan jam mulai rental.',

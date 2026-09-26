@@ -5,6 +5,9 @@ export type PaymentStatus = 'completed' | 'void';
 export type RefundStatus =
     'requested' | 'approved' | 'rejected' | 'paid' | 'cancelled';
 
+export type RefundPurpose =
+    'booking_cancellation' | 'payment_correction' | null;
+
 export type PaymentSourceContext =
     | 'booking'
     | 'rental_checkout'
@@ -130,6 +133,7 @@ export type RefundCenterRefund = {
     cash_session_id: number | null;
     refund_number: string;
     refund_type: 'full' | 'partial';
+    purpose: RefundPurpose;
     amount: string;
     status: RefundStatus;
     reason: string;

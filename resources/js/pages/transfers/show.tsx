@@ -13,6 +13,15 @@ import {
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import type { FormEvent, ReactNode } from 'react';
+import {
+    Stage4Text,
+    stage4Translate,
+    stage4TranslateDynamic,
+    stage4FormatDateTime,
+} from '@/components/stage4-text';
+import { useAppLocale } from '@/lib/i18n';
+import type { AppLocale } from '@/lib/i18n';
+import { TransferActionDialog } from '@/components/transfers/transfer-action-dialog';
 import { TransferCameraDialog } from '@/components/transfers/transfer-camera-dialog';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -120,10 +129,6 @@ const statusLabels: Record<TransferStatus, string> = {
     cancelled: 'Dibatalkan',
 };
 
-const dateTime = new Intl.DateTimeFormat('id-ID', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-});
 const money = new Intl.NumberFormat('id-ID', {
     style: 'currency',
     currency: 'IDR',
@@ -140,7 +145,13 @@ export default function TransferShow({
     permissions,
     currentBranchId,
 }: Props) {
+    const { locale: stage4Locale } = useAppLocale();
+
     const [approvalNote, setApprovalNote] = useState('');
+    const [rejectionSide, setRejectionSide] = useState<
+        'origin' | 'destination' | null
+    >(null);
+    const [cancelOpen, setCancelOpen] = useState(false);
     const [dispatchOpen, setDispatchOpen] = useState(false);
     const [receivingOpen, setReceivingOpen] = useState(false);
     const [expenseOpen, setExpenseOpen] = useState(false);
@@ -219,15 +230,9 @@ export default function TransferShow({
         side: 'origin' | 'destination',
         decision: 'approved' | 'rejected',
     ) => {
-        const notes =
-            decision === 'rejected'
-                ? window.prompt(
-                      'Alasan penolakan minimal 5 karakter:',
-                      approvalNote,
-                  )
-                : approvalNote;
+        if (decision === 'rejected') {
+            setRejectionSide(side);
 
-        if (decision === 'rejected' && (!notes || notes.trim().length < 5)) {
             return;
         }
 
@@ -236,23 +241,9 @@ export default function TransferShow({
             {
                 side,
                 decision,
-                notes,
+                notes: approvalNote,
                 revision_number: transfer.revision_number,
             },
-            { preserveScroll: true },
-        );
-    };
-
-    const cancelTransfer = () => {
-        const reason = window.prompt('Alasan pembatalan minimal 5 karakter:');
-
-        if (!reason || reason.trim().length < 5) {
-            return;
-        }
-
-        router.post(
-            `/transfers/${transfer.id}/cancel`,
-            { reason },
             { preserveScroll: true },
         );
     };
@@ -407,10 +398,14 @@ export default function TransferShow({
                                 {transfer.transfer_number}
                             </h1>
                             <Badge variant="secondary">
-                                {statusLabels[transfer.status]}
+                                {stage4TranslateDynamic(
+                                    statusLabels[transfer.status],
+                                    stage4Locale,
+                                )}
                             </Badge>
                             <Badge variant="outline">
-                                Revisi {transfer.revision_number}
+                                <Stage4Text k="stage4.ui.ede67d8c2d61" />{' '}
+                                {transfer.revision_number}
                             </Badge>
                         </div>
                         <p className="mt-1 text-sm text-muted-foreground">
@@ -423,7 +418,7 @@ export default function TransferShow({
                             <Button variant="outline" asChild>
                                 <Link href={`/transfers/${transfer.id}/edit`}>
                                     <Pencil className="size-4" />
-                                    Edit
+                                    <Stage4Text k="stage4.ui.5301648dcf6b" />
                                 </Link>
                             </Button>
                         )}
@@ -439,7 +434,7 @@ export default function TransferShow({
                                 }
                             >
                                 <Send className="size-4" />
-                                Ajukan & Setujui
+                                <Stage4Text k="stage4.ui.04974abb0b2f" />
                             </Button>
                         )}
                         {permissions.cancel &&
@@ -451,10 +446,10 @@ export default function TransferShow({
                             ].includes(transfer.status) && (
                                 <Button
                                     variant="destructive"
-                                    onClick={cancelTransfer}
+                                    onClick={() => setCancelOpen(true)}
                                 >
                                     <XCircle className="size-4" />
-                                    Batalkan
+                                    <Stage4Text k="stage4.ui.dbe47c83d4ca" />
                                 </Button>
                             )}
                     </div>
@@ -463,12 +458,11 @@ export default function TransferShow({
                 {transfer.status === 'approved' && (
                     <Alert>
                         <ShieldCheck className="size-4" />
-                        <AlertTitle>Aset sudah dikunci realtime</AlertTitle>
+                        <AlertTitle>
+                            <Stage4Text k="stage4.ui.6daa152bd749" />
+                        </AlertTitle>
                         <AlertDescription>
-                            Seluruh unit transfer berstatus In Transit dan tidak
-                            dapat dipakai untuk booking, checkout, maintenance,
-                            atau transfer lain. Lokasi fisik masih tercatat di
-                            cabang asal sampai receiving selesai.
+                            <Stage4Text k="stage4.ui.cd700891a30e" />
                         </AlertDescription>
                     </Alert>
                 )}
@@ -476,36 +470,71 @@ export default function TransferShow({
                 <div className="grid gap-4 lg:grid-cols-3">
                     <Card className="lg:col-span-2">
                         <CardHeader>
-                            <CardTitle>Ringkasan Transfer</CardTitle>
+                            <CardTitle>
+                                <Stage4Text k="stage4.ui.bd75cc75e3f5" />
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="grid gap-4 sm:grid-cols-2">
                             <Detail
-                                label="Cabang asal"
+                                label={stage4Translate(
+                                    'stage4.ui.e964366f3e5e',
+                                    stage4Locale,
+                                )}
                                 value={`${transfer.origin_branch.code} — ${transfer.origin_branch.name}`}
                             />
                             <Detail
-                                label="Cabang tujuan"
+                                label={stage4Translate(
+                                    'stage4.ui.33344a5c5d9e',
+                                    stage4Locale,
+                                )}
                                 value={`${transfer.destination_branch.code} — ${transfer.destination_branch.name}`}
                             />
                             <Detail
-                                label="Rencana berangkat"
-                                value={formatDate(transfer.planned_dispatch_at)}
+                                label={stage4Translate(
+                                    'stage4.ui.00db17937f85',
+                                    stage4Locale,
+                                )}
+                                value={formatDate(
+                                    transfer.planned_dispatch_at,
+                                    stage4Locale,
+                                )}
                             />
                             <Detail
-                                label="Estimasi tiba"
-                                value={formatDate(transfer.expected_arrival_at)}
+                                label={stage4Translate(
+                                    'stage4.ui.60f3f737fe53',
+                                    stage4Locale,
+                                )}
+                                value={formatDate(
+                                    transfer.expected_arrival_at,
+                                    stage4Locale,
+                                )}
                             />
                             <Detail
-                                label="Waktu dispatch"
-                                value={formatDate(transfer.shipped_at)}
+                                label={stage4Translate(
+                                    'stage4.ui.01b4025580ce',
+                                    stage4Locale,
+                                )}
+                                value={formatDate(
+                                    transfer.shipped_at,
+                                    stage4Locale,
+                                )}
                             />
                             <Detail
-                                label="Waktu receiving"
-                                value={formatDate(transfer.received_at)}
+                                label={stage4Translate(
+                                    'stage4.ui.0f68117c281f',
+                                    stage4Locale,
+                                )}
+                                value={formatDate(
+                                    transfer.received_at,
+                                    stage4Locale,
+                                )}
                             />
                             <div className="sm:col-span-2">
                                 <Detail
-                                    label="Alasan"
+                                    label={stage4Translate(
+                                        'stage4.ui.3faa833b08be',
+                                        stage4Locale,
+                                    )}
                                     value={transfer.reason ?? '-'}
                                 />
                             </div>
@@ -513,27 +542,44 @@ export default function TransferShow({
                     </Card>
                     <Card>
                         <CardHeader>
-                            <CardTitle>Pengiriman</CardTitle>
+                            <CardTitle>
+                                <Stage4Text k="stage4.ui.f5064fda288a" />
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-3 text-sm">
                             <Detail
-                                label="Metode"
+                                label={stage4Translate(
+                                    'stage4.ui.5ac33f2c588b',
+                                    stage4Locale,
+                                )}
                                 value={transfer.shipping_method ?? '-'}
                             />
                             <Detail
-                                label="Kurir"
+                                label={stage4Translate(
+                                    'stage4.ui.b94cd6b63fe5',
+                                    stage4Locale,
+                                )}
                                 value={transfer.courier_name ?? '-'}
                             />
                             <Detail
-                                label="Kendaraan"
+                                label={stage4Translate(
+                                    'stage4.ui.79e4ec31d635',
+                                    stage4Locale,
+                                )}
                                 value={transfer.vehicle_number ?? '-'}
                             />
                             <Detail
-                                label="Surat jalan"
+                                label={stage4Translate(
+                                    'stage4.ui.2e3e14d67952',
+                                    stage4Locale,
+                                )}
                                 value={transfer.waybill_number ?? '-'}
                             />
                             <Detail
-                                label="Resi"
+                                label={stage4Translate(
+                                    'stage4.ui.a0ecf956094b',
+                                    stage4Locale,
+                                )}
                                 value={transfer.tracking_number ?? '-'}
                             />
                         </CardContent>
@@ -542,7 +588,9 @@ export default function TransferShow({
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>Persetujuan Dua Pihak</CardTitle>
+                        <CardTitle>
+                            <Stage4Text k="stage4.ui.20005780c762" />
+                        </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         <Input
@@ -550,11 +598,17 @@ export default function TransferShow({
                             onChange={(event) =>
                                 setApprovalNote(event.target.value)
                             }
-                            placeholder="Catatan persetujuan opsional"
+                            placeholder={stage4Translate(
+                                'stage4.ui.81834ddf2bf5',
+                                stage4Locale,
+                            )}
                         />
                         <div className="grid gap-4 md:grid-cols-2">
                             <ApprovalCard
-                                title="Cabang Asal"
+                                title={stage4Translate(
+                                    'stage4.ui.2101513a76e8',
+                                    stage4Locale,
+                                )}
                                 branch={transfer.origin_branch.name}
                                 approval={approvalFor('origin')}
                                 canDecide={
@@ -568,7 +622,10 @@ export default function TransferShow({
                                 onReject={() => decide('origin', 'rejected')}
                             />
                             <ApprovalCard
-                                title="Cabang Tujuan"
+                                title={stage4Translate(
+                                    'stage4.ui.6b0778ffe369',
+                                    stage4Locale,
+                                )}
                                 branch={transfer.destination_branch.name}
                                 approval={approvalFor('destination')}
                                 canDecide={
@@ -590,18 +647,20 @@ export default function TransferShow({
 
                 <Card>
                     <CardHeader className="flex-row items-center justify-between">
-                        <CardTitle>Item dan Pemeriksaan</CardTitle>
+                        <CardTitle>
+                            <Stage4Text k="stage4.ui.95dd71796388" />
+                        </CardTitle>
                         <div className="flex gap-2">
                             {canDispatch && (
                                 <Button onClick={openDispatch}>
                                     <Truck className="size-4" />
-                                    Proses Dispatch
+                                    <Stage4Text k="stage4.ui.94a982b0c024" />
                                 </Button>
                             )}
                             {canReceive && activeItems.length > 0 && (
                                 <Button onClick={openReceiving}>
                                     <PackageCheck className="size-4" />
-                                    Proses Receiving
+                                    <Stage4Text k="stage4.ui.8a85d3beb823" />
                                 </Button>
                             )}
                         </div>
@@ -621,14 +680,16 @@ export default function TransferShow({
 
                 <Card>
                     <CardHeader className="flex-row items-center justify-between">
-                        <CardTitle>Biaya Transfer</CardTitle>
+                        <CardTitle>
+                            <Stage4Text k="stage4.ui.56391d3a1143" />
+                        </CardTitle>
                         {permissions.expense && (
                             <Button
                                 variant="outline"
                                 onClick={() => setExpenseOpen(true)}
                             >
                                 <CircleDollarSign className="size-4" />
-                                Catat Biaya
+                                <Stage4Text k="stage4.ui.67bc484f09f1" />
                             </Button>
                         )}
                     </CardHeader>
@@ -645,7 +706,7 @@ export default function TransferShow({
                         ))}
                         {transfer.expenses.length === 0 && (
                             <p className="text-sm text-muted-foreground">
-                                Belum ada biaya pengiriman yang dicatat.
+                                <Stage4Text k="stage4.ui.8878876ad5cb" />
                             </p>
                         )}
                     </CardContent>
@@ -654,7 +715,9 @@ export default function TransferShow({
                 <div className="grid gap-4 lg:grid-cols-2">
                     <Card>
                         <CardHeader>
-                            <CardTitle>Dokumen</CardTitle>
+                            <CardTitle>
+                                <Stage4Text k="stage4.ui.a809e9504f2d" />
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-2">
                             {transfer.documents.map((document) => (
@@ -675,14 +738,16 @@ export default function TransferShow({
                             ))}
                             {transfer.documents.length === 0 && (
                                 <p className="text-sm text-muted-foreground">
-                                    Belum ada dokumen transfer.
+                                    <Stage4Text k="stage4.ui.f0248b8272d2" />
                                 </p>
                             )}
                         </CardContent>
                     </Card>
                     <Card>
                         <CardHeader>
-                            <CardTitle>Timeline Status</CardTitle>
+                            <CardTitle>
+                                <Stage4Text k="stage4.ui.a852bc8f3db3" />
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-3">
                             {transfer.status_histories?.map((history) => (
@@ -691,15 +756,27 @@ export default function TransferShow({
                                     className="border-l-2 pl-3 text-sm"
                                 >
                                     <p className="font-medium">
-                                        {history.from_status ?? 'awal'} →{' '}
-                                        {history.to_status}
+                                        {history.from_status ??
+                                            stage4Translate(
+                                                'stage4.ui.99bc6e24bcd6',
+                                                stage4Locale,
+                                            )}{' '}
+                                        → {history.to_status}
                                     </p>
                                     <p className="text-muted-foreground">
                                         {history.reason ?? '-'}
                                     </p>
                                     <p className="text-xs text-muted-foreground">
-                                        {history.changer?.name ?? 'Sistem'} •{' '}
-                                        {formatDate(history.changed_at)}
+                                        {history.changer?.name ??
+                                            stage4Translate(
+                                                'stage4.ui.991f31a64b52',
+                                                stage4Locale,
+                                            )}{' '}
+                                        •{' '}
+                                        {formatDate(
+                                            history.changed_at,
+                                            stage4Locale,
+                                        )}
                                     </p>
                                 </div>
                             ))}
@@ -750,6 +827,61 @@ export default function TransferShow({
                 form={expense}
                 onSubmit={submitExpense}
             />
+            {rejectionSide !== null && (
+                <TransferActionDialog
+                    open
+                    onOpenChange={(open) => {
+                        if (!open) {
+                            setRejectionSide(null);
+                        }
+                    }}
+                    title={stage4Translate(
+                        'stage4.ui.a6e5bd9dbda3',
+                        stage4Locale,
+                    )}
+                    description={`Konfirmasi penolakan dari ${rejectionSide === 'origin' ? 'cabang asal' : 'cabang tujuan'} untuk ${transfer.transfer_number}.`}
+                    submitLabel={stage4Translate(
+                        'stage4.ui.842e3687d067',
+                        stage4Locale,
+                    )}
+                    noteLabel={stage4Translate(
+                        'stage4.ui.1a3a88c34341',
+                        stage4Locale,
+                    )}
+                    url={`/transfers/${transfer.id}/approvals`}
+                    noteField="notes"
+                    initialNotes={approvalNote}
+                    payload={{
+                        side: rejectionSide,
+                        decision: 'rejected',
+                        revision_number: transfer.revision_number,
+                    }}
+                    destructive
+                />
+            )}
+            {cancelOpen && (
+                <TransferActionDialog
+                    open
+                    onOpenChange={setCancelOpen}
+                    title={stage4Translate(
+                        'stage4.ui.a74064db766f',
+                        stage4Locale,
+                    )}
+                    description={`Konfirmasi pembatalan transfer ${transfer.transfer_number}.`}
+                    submitLabel={stage4Translate(
+                        'stage4.ui.0fdaf5c3c1ed',
+                        stage4Locale,
+                    )}
+                    noteLabel={stage4Translate(
+                        'stage4.ui.b759c899d5b0',
+                        stage4Locale,
+                    )}
+                    url={`/transfers/${transfer.id}/cancel`}
+                    noteField="reason"
+                    payload={{}}
+                    destructive
+                />
+            )}
             <TransferCameraDialog
                 open={cameraTarget !== null}
                 onOpenChange={(open) => {
@@ -779,6 +911,8 @@ function ApprovalCard({
     onApprove: () => void;
     onReject: () => void;
 }) {
+    const { locale: stage4Locale } = useAppLocale();
+
     return (
         <div className="rounded-lg border p-4">
             <div className="flex items-start justify-between gap-3">
@@ -787,17 +921,29 @@ function ApprovalCard({
                     <p className="text-sm text-muted-foreground">{branch}</p>
                 </div>
                 <Badge variant={approval ? 'secondary' : 'outline'}>
-                    {approval ? approval.decision : 'Menunggu'}
+                    {approval
+                        ? approval.decision
+                        : stage4Translate(
+                              'stage4.ui.bcc4a60693b2',
+                              stage4Locale,
+                          )}
                 </Badge>
             </div>
             {approval && (
                 <div className="mt-3 text-sm">
-                    <p>{approval.decider?.name ?? 'Sistem'}</p>
+                    <p>
+                        {approval.decider?.name ??
+                            stage4Translate(
+                                'stage4.ui.991f31a64b52',
+                                stage4Locale,
+                            )}
+                    </p>
                     <p className="text-muted-foreground">
-                        {formatDate(approval.decided_at)}
+                        {formatDate(approval.decided_at, stage4Locale)}
                     </p>
                     <p className="mt-2 text-xs text-muted-foreground">
-                        Hash: {approval.snapshot_hash.slice(0, 16)}…
+                        <Stage4Text k="stage4.ui.e5a2ade457c0" />{' '}
+                        {approval.snapshot_hash.slice(0, 16)}…
                     </p>
                 </div>
             )}
@@ -805,10 +951,10 @@ function ApprovalCard({
                 <div className="mt-4 flex gap-2">
                     <Button size="sm" onClick={onApprove}>
                         <CheckCircle2 className="size-4" />
-                        Setujui
+                        <Stage4Text k="stage4.ui.1f9ce43818de" />
                     </Button>
                     <Button size="sm" variant="destructive" onClick={onReject}>
-                        Tolak
+                        <Stage4Text k="stage4.ui.e2f73daf8ad0" />
                     </Button>
                 </div>
             )}
@@ -827,19 +973,20 @@ function ItemCard({
     permissions: TransferPermissions;
     currentBranchId: number;
 }) {
-    const resolve = (action: string) => {
-        const notes = window.prompt('Catatan penyelesaian minimal 5 karakter:');
+    const { locale: stage4Locale } = useAppLocale();
 
-        if (!notes || notes.trim().length < 5) {
-            return;
-        }
-
-        router.post(
-            `/transfers/${transfer.id}/items/${item.id}/resolve`,
-            { resolution_action: action, notes },
-            { preserveScroll: true },
-        );
-    };
+    const [resolutionAction, setResolutionAction] = useState<
+        'accept_at_destination' | 'return_to_origin' | 'mark_lost' | null
+    >(null);
+    const resolutionLabel =
+        resolutionAction === 'accept_at_destination'
+            ? 'Terima di Tujuan'
+            : resolutionAction === 'return_to_origin'
+              ? 'Kembalikan ke Asal'
+              : 'Tandai Hilang';
+    const itemIdentity = item.asset
+        ? `${item.product.name} (${item.asset.asset_code})`
+        : `${item.product.name} (jumlah ${item.quantity})`;
 
     return (
         <div className="rounded-lg border p-4">
@@ -854,18 +1001,32 @@ function ItemCard({
                             : `${item.received_quantity}/${item.quantity} unit diterima`}
                     </p>
                 </div>
-                <Badge variant="outline">{item.status}</Badge>
+                <Badge variant="outline">
+                    {stage4TranslateDynamic(item.status, stage4Locale)}
+                </Badge>
             </div>
             <div className="mt-3 grid gap-3 text-sm sm:grid-cols-3">
                 <Detail
-                    label="Kondisi kirim"
+                    label={stage4Translate(
+                        'stage4.ui.a90de612e4a6',
+                        stage4Locale,
+                    )}
                     value={item.condition_before ?? '-'}
                 />
                 <Detail
-                    label="Kondisi terima"
+                    label={stage4Translate(
+                        'stage4.ui.db02fa0d8893',
+                        stage4Locale,
+                    )}
                     value={item.condition_after ?? '-'}
                 />
-                <Detail label="Hasil" value={item.receiving_result ?? '-'} />
+                <Detail
+                    label={stage4Translate(
+                        'stage4.ui.c123e27ceef7',
+                        stage4Locale,
+                    )}
+                    value={item.receiving_result ?? '-'}
+                />
             </div>
             {item.inspections.length > 0 && (
                 <div className="mt-3 flex flex-wrap gap-2">
@@ -890,10 +1051,15 @@ function ItemCard({
             {item.status === 'discrepancy' && (
                 <Alert variant="destructive" className="mt-4">
                     <AlertTitle>
-                        Discrepancy: {item.discrepancy_type}
+                        <Stage4Text k="stage4.ui.43e4c2068c37" />{' '}
+                        {item.discrepancy_type}
                     </AlertTitle>
                     <AlertDescription>
-                        {item.discrepancy_notes ?? 'Perlu keputusan lanjutan.'}
+                        {item.discrepancy_notes ??
+                            stage4Translate(
+                                'stage4.ui.802cfc4696a7',
+                                stage4Locale,
+                            )}
                     </AlertDescription>
                 </Alert>
             )}
@@ -904,26 +1070,56 @@ function ItemCard({
                     <div className="mt-3 flex flex-wrap gap-2">
                         <Button
                             size="sm"
-                            onClick={() => resolve('accept_at_destination')}
+                            onClick={() =>
+                                setResolutionAction('accept_at_destination')
+                            }
                         >
-                            Terima di Tujuan
+                            <Stage4Text k="stage4.ui.a6493af243f8" />
                         </Button>
                         <Button
                             size="sm"
                             variant="secondary"
-                            onClick={() => resolve('return_to_origin')}
+                            onClick={() =>
+                                setResolutionAction('return_to_origin')
+                            }
                         >
-                            Kembalikan ke Asal
+                            <Stage4Text k="stage4.ui.bd0b5c1091ed" />
                         </Button>
                         <Button
                             size="sm"
                             variant="destructive"
-                            onClick={() => resolve('mark_lost')}
+                            onClick={() => setResolutionAction('mark_lost')}
                         >
-                            Tandai Hilang
+                            <Stage4Text k="stage4.ui.01e683797022" />
                         </Button>
                     </div>
                 )}
+            {resolutionAction !== null && (
+                <TransferActionDialog
+                    open
+                    onOpenChange={(open) => {
+                        if (!open) {
+                            setResolutionAction(null);
+                        }
+                    }}
+                    title={resolutionLabel}
+                    description={`Konfirmasi penyelesaian discrepancy ${itemIdentity} pada transfer ${transfer.transfer_number}.`}
+                    submitLabel={resolutionLabel}
+                    noteLabel={stage4Translate(
+                        'stage4.ui.fcf84c3f50c0',
+                        stage4Locale,
+                    )}
+                    url={`/transfers/${transfer.id}/items/${item.id}/resolve`}
+                    noteField="notes"
+                    payload={{ resolution_action: resolutionAction }}
+                    destructive={resolutionAction === 'mark_lost'}
+                    warning={
+                        resolutionAction === 'mark_lost'
+                            ? 'Keputusan ini menandai aset atau stok sebagai hilang dan menyelesaikan discrepancy. Pastikan hasil investigasi serta identitas item sudah benar.'
+                            : undefined
+                    }
+                />
+            )}
         </div>
     );
 }
@@ -965,6 +1161,8 @@ function DispatchDialog({
     ) => void;
     onOpenCamera: (index: number) => void;
 }) {
+    const { locale: stage4Locale } = useAppLocale();
+
     const errorMessages = Object.values(form.errors).filter(
         (message): message is string =>
             typeof message === 'string' && message.trim() !== '',
@@ -981,11 +1179,18 @@ function DispatchDialog({
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-h-[90vh] max-w-5xl overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>Dispatch Transfer</DialogTitle>
+                    <DialogTitle>
+                        <Stage4Text k="stage4.ui.bcb7cdca0031" />
+                    </DialogTitle>
                 </DialogHeader>
                 <form className="space-y-5" onSubmit={onSubmit}>
                     <div className="grid gap-4 md:grid-cols-2">
-                        <Field label="Metode pengiriman">
+                        <Field
+                            label={stage4Translate(
+                                'stage4.ui.b80fd3a082dd',
+                                stage4Locale,
+                            )}
+                        >
                             <Select
                                 value={form.data.shipping_method}
                                 onValueChange={(value) =>
@@ -997,21 +1202,26 @@ function DispatchDialog({
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="internal">
-                                        Internal
+                                        <Stage4Text k="stage4.ui.fc9225a1693f" />
                                     </SelectItem>
                                     <SelectItem value="courier">
-                                        Kurir
+                                        <Stage4Text k="stage4.ui.b94cd6b63fe5" />
                                     </SelectItem>
                                     <SelectItem value="expedition">
-                                        Ekspedisi
+                                        <Stage4Text k="stage4.ui.3c0a9d366735" />
                                     </SelectItem>
                                     <SelectItem value="other">
-                                        Lainnya
+                                        <Stage4Text k="stage4.ui.844f8a723473" />
                                     </SelectItem>
                                 </SelectContent>
                             </Select>
                         </Field>
-                        <Field label="Nama kurir">
+                        <Field
+                            label={stage4Translate(
+                                'stage4.ui.c8c803dd19f0',
+                                stage4Locale,
+                            )}
+                        >
                             <Input
                                 value={form.data.courier_name}
                                 onChange={(event) =>
@@ -1022,7 +1232,12 @@ function DispatchDialog({
                                 }
                             />
                         </Field>
-                        <Field label="Nomor kendaraan">
+                        <Field
+                            label={stage4Translate(
+                                'stage4.ui.1f2abaea82e9',
+                                stage4Locale,
+                            )}
+                        >
                             <Input
                                 value={form.data.vehicle_number}
                                 onChange={(event) =>
@@ -1033,7 +1248,12 @@ function DispatchDialog({
                                 }
                             />
                         </Field>
-                        <Field label="Nomor surat jalan">
+                        <Field
+                            label={stage4Translate(
+                                'stage4.ui.2ea71bb99448',
+                                stage4Locale,
+                            )}
+                        >
                             <Input
                                 value={form.data.waybill_number}
                                 onChange={(event) =>
@@ -1044,7 +1264,12 @@ function DispatchDialog({
                                 }
                             />
                         </Field>
-                        <Field label="Nomor resi">
+                        <Field
+                            label={stage4Translate(
+                                'stage4.ui.bf2481f9eb0f',
+                                stage4Locale,
+                            )}
+                        >
                             <Input
                                 value={form.data.tracking_number}
                                 onChange={(event) =>
@@ -1055,7 +1280,12 @@ function DispatchDialog({
                                 }
                             />
                         </Field>
-                        <Field label="File surat jalan">
+                        <Field
+                            label={stage4Translate(
+                                'stage4.ui.6e3922b8f989',
+                                stage4Locale,
+                            )}
+                        >
                             <Input
                                 type="file"
                                 accept=".pdf,image/*"
@@ -1076,7 +1306,12 @@ function DispatchDialog({
                         onOpenCamera={onOpenCamera}
                     />
                     {policy.allow_gallery_override && (
-                        <Field label="Alasan override galeri">
+                        <Field
+                            label={stage4Translate(
+                                'stage4.ui.ec744673fc00',
+                                stage4Locale,
+                            )}
+                        >
                             <Input
                                 value={form.data.override_reason}
                                 onChange={(event) =>
@@ -1091,7 +1326,7 @@ function DispatchDialog({
                     {errorMessages.length > 0 && (
                         <Alert variant="destructive">
                             <AlertTitle>
-                                Dispatch belum dapat diproses
+                                <Stage4Text k="stage4.ui.39e461a90624" />
                             </AlertTitle>
                             <AlertDescription>
                                 <ul className="list-disc space-y-1 pl-5">
@@ -1104,13 +1339,14 @@ function DispatchDialog({
                     )}
                     {incompleteEvidenceCount > 0 && (
                         <p className="text-sm text-destructive">
-                            Ambil minimal {policy.min_photos} foto pada setiap
-                            item sebelum konfirmasi dispatch.
+                            <Stage4Text k="stage4.ui.c6ba5bcdf8ce" />{' '}
+                            {policy.min_photos}
+                            <Stage4Text k="stage4.ui.1922edfb37d7" />
                         </p>
                     )}
                     {waybillMissing && (
                         <p className="text-sm text-destructive">
-                            Nomor surat jalan wajib diisi.
+                            <Stage4Text k="stage4.ui.74aeb313d11f" />
                         </p>
                     )}
                     <DialogFooter>
@@ -1119,10 +1355,10 @@ function DispatchDialog({
                             variant="outline"
                             onClick={() => onOpenChange(false)}
                         >
-                            Batal
+                            <Stage4Text k="stage4.ui.1433539c3b8f" />
                         </Button>
                         <Button type="submit" disabled={confirmDisabled}>
-                            Konfirmasi Dispatch
+                            <Stage4Text k="stage4.ui.05405e0b2de3" />
                         </Button>
                     </DialogFooter>
                 </form>
@@ -1160,11 +1396,15 @@ function ReceivingDialog({
     ) => void;
     onOpenCamera: (index: number) => void;
 }) {
+    const { locale: stage4Locale } = useAppLocale();
+
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent className="max-h-[90vh] max-w-5xl overflow-y-auto">
                 <DialogHeader>
-                    <DialogTitle>Receiving Transfer</DialogTitle>
+                    <DialogTitle>
+                        <Stage4Text k="stage4.ui.c6285bb7dd5d" />
+                    </DialogTitle>
                 </DialogHeader>
                 <form className="space-y-5" onSubmit={onSubmit}>
                     {items.map((item, index) => {
@@ -1185,7 +1425,12 @@ function ReceivingDialog({
                                     </p>
                                 </div>
                                 <div className="grid gap-3 md:grid-cols-3">
-                                    <Field label="Hasil penerimaan">
+                                    <Field
+                                        label={stage4Translate(
+                                            'stage4.ui.0cf94b379e86',
+                                            stage4Locale,
+                                        )}
+                                    >
                                         <Select
                                             value={row.receiving_result}
                                             onValueChange={(value) =>
@@ -1201,24 +1446,29 @@ function ReceivingDialog({
                                             </SelectTrigger>
                                             <SelectContent>
                                                 <SelectItem value="accepted_good">
-                                                    Diterima baik
+                                                    <Stage4Text k="stage4.ui.c75b0646ba89" />
                                                 </SelectItem>
                                                 <SelectItem value="accepted_damaged">
-                                                    Diterima rusak
+                                                    <Stage4Text k="stage4.ui.ac65b71bb88c" />
                                                 </SelectItem>
                                                 <SelectItem value="incomplete">
-                                                    Kelengkapan kurang
+                                                    <Stage4Text k="stage4.ui.2debe19f76fb" />
                                                 </SelectItem>
                                                 <SelectItem value="missing">
-                                                    Belum tiba / hilang
+                                                    <Stage4Text k="stage4.ui.bd59b4ab1031" />
                                                 </SelectItem>
                                                 <SelectItem value="rejected">
-                                                    Ditolak
+                                                    <Stage4Text k="stage4.ui.c4397f065ad2" />
                                                 </SelectItem>
                                             </SelectContent>
                                         </Select>
                                     </Field>
-                                    <Field label="Kondisi">
+                                    <Field
+                                        label={stage4Translate(
+                                            'stage4.ui.b723bb628009',
+                                            stage4Locale,
+                                        )}
+                                    >
                                         <Select
                                             value={row.condition}
                                             onValueChange={(value) =>
@@ -1234,19 +1484,24 @@ function ReceivingDialog({
                                             </SelectTrigger>
                                             <SelectContent>
                                                 <SelectItem value="good">
-                                                    Baik
+                                                    <Stage4Text k="stage4.ui.04f5b5ce0518" />
                                                 </SelectItem>
                                                 <SelectItem value="fair">
-                                                    Cukup
+                                                    <Stage4Text k="stage4.ui.e776a0660b3d" />
                                                 </SelectItem>
                                                 <SelectItem value="damaged">
-                                                    Rusak
+                                                    <Stage4Text k="stage4.ui.f1238819f6ca" />
                                                 </SelectItem>
                                             </SelectContent>
                                         </Select>
                                     </Field>
                                     {!item.asset && (
-                                        <Field label="Jumlah diterima">
+                                        <Field
+                                            label={stage4Translate(
+                                                'stage4.ui.a3a7b9fed220',
+                                                stage4Locale,
+                                            )}
+                                        >
                                             <Input
                                                 type="number"
                                                 min={1}
@@ -1283,7 +1538,12 @@ function ReceivingDialog({
                             </div>
                         );
                     })}
-                    <Field label="Catatan penerimaan">
+                    <Field
+                        label={stage4Translate(
+                            'stage4.ui.dbe1f3a1ac37',
+                            stage4Locale,
+                        )}
+                    >
                         <textarea
                             className="min-h-20 w-full rounded-md border bg-background px-3 py-2 text-sm"
                             value={form.data.receiving_notes}
@@ -1296,7 +1556,12 @@ function ReceivingDialog({
                         />
                     </Field>
                     {policy.allow_gallery_override && (
-                        <Field label="Alasan override galeri">
+                        <Field
+                            label={stage4Translate(
+                                'stage4.ui.ec744673fc00',
+                                stage4Locale,
+                            )}
+                        >
                             <Input
                                 value={form.data.override_reason}
                                 onChange={(event) =>
@@ -1314,10 +1579,10 @@ function ReceivingDialog({
                             variant="outline"
                             onClick={() => onOpenChange(false)}
                         >
-                            Batal
+                            <Stage4Text k="stage4.ui.1433539c3b8f" />
                         </Button>
                         <Button disabled={form.processing}>
-                            Simpan Receiving
+                            <Stage4Text k="stage4.ui.aa4787b441e0" />
                         </Button>
                     </DialogFooter>
                 </form>
@@ -1343,9 +1608,13 @@ function EvidenceList({
     ) => void;
     onOpenCamera: (index: number) => void;
 }) {
+    const { locale: stage4Locale } = useAppLocale();
+
     return (
         <div className="space-y-3">
-            <h3 className="font-medium">Pemeriksaan Keberangkatan</h3>
+            <h3 className="font-medium">
+                <Stage4Text k="stage4.ui.016051568571" />
+            </h3>
             {items.map((item, index) => (
                 <div key={item.id} className="space-y-3 rounded-lg border p-4">
                     <div>
@@ -1354,7 +1623,12 @@ function EvidenceList({
                             {item.asset?.asset_code ?? `${item.quantity} unit`}
                         </p>
                     </div>
-                    <Field label="Kondisi">
+                    <Field
+                        label={stage4Translate(
+                            'stage4.ui.b723bb628009',
+                            stage4Locale,
+                        )}
+                    >
                         <Select
                             value={rows[index].condition}
                             onValueChange={(value) =>
@@ -1365,9 +1639,15 @@ function EvidenceList({
                                 <SelectValue />
                             </SelectTrigger>
                             <SelectContent>
-                                <SelectItem value="good">Baik</SelectItem>
-                                <SelectItem value="fair">Cukup</SelectItem>
-                                <SelectItem value="damaged">Rusak</SelectItem>
+                                <SelectItem value="good">
+                                    <Stage4Text k="stage4.ui.04f5b5ce0518" />
+                                </SelectItem>
+                                <SelectItem value="fair">
+                                    <Stage4Text k="stage4.ui.e776a0660b3d" />
+                                </SelectItem>
+                                <SelectItem value="damaged">
+                                    <Stage4Text k="stage4.ui.f1238819f6ca" />
+                                </SelectItem>
                             </SelectContent>
                         </Select>
                     </Field>
@@ -1397,6 +1677,8 @@ function EvidenceControls({
     ) => void;
     onOpenCamera: () => void;
 }) {
+    const { locale: stage4Locale } = useAppLocale();
+
     const galleryAllowed =
         policy.capture_mode !== 'camera_required' ||
         policy.allow_gallery_override;
@@ -1410,11 +1692,11 @@ function EvidenceControls({
                     onClick={onOpenCamera}
                 >
                     <Camera className="size-4" />
-                    Buka Kamera
+                    <Stage4Text k="stage4.ui.974e97129233" />
                 </Button>
                 {galleryAllowed && (
                     <Label className="inline-flex cursor-pointer items-center rounded-md border px-3 py-2 text-sm">
-                        Pilih Galeri
+                        <Stage4Text k="stage4.ui.63e85916b4ac" />
                         <input
                             className="sr-only"
                             type="file"
@@ -1437,11 +1719,16 @@ function EvidenceControls({
                     </Label>
                 )}
                 <Badge variant="outline">
-                    {row.photos.length} foto • minimal {policy.min_photos}
+                    {row.photos.length}
+                    <Stage4Text k="stage4.ui.c67d7603154a" />{' '}
+                    {policy.min_photos}
                 </Badge>
             </div>
             <Input
-                placeholder="Catatan pemeriksaan"
+                placeholder={stage4Translate(
+                    'stage4.ui.eb5f10d7dafe',
+                    stage4Locale,
+                )}
                 value={row.notes}
                 onChange={(event) => onUpdate('notes', event.target.value)}
             />
@@ -1476,14 +1763,23 @@ function ExpenseDialog({
     >;
     onSubmit: (event: FormEvent) => void;
 }) {
+    const { locale: stage4Locale } = useAppLocale();
+
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent>
                 <DialogHeader>
-                    <DialogTitle>Catat Biaya Transfer</DialogTitle>
+                    <DialogTitle>
+                        <Stage4Text k="stage4.ui.922e13964e36" />
+                    </DialogTitle>
                 </DialogHeader>
                 <form className="space-y-4" onSubmit={onSubmit}>
-                    <Field label="Cabang penanggung biaya">
+                    <Field
+                        label={stage4Translate(
+                            'stage4.ui.997328acf0a0',
+                            stage4Locale,
+                        )}
+                    >
                         <Select
                             value={String(form.data.expense_branch_id)}
                             onValueChange={(value) =>
@@ -1507,7 +1803,12 @@ function ExpenseDialog({
                             </SelectContent>
                         </Select>
                     </Field>
-                    <Field label="Kategori keuangan">
+                    <Field
+                        label={stage4Translate(
+                            'stage4.ui.7fa537fc5d9b',
+                            stage4Locale,
+                        )}
+                    >
                         <Select
                             value={String(form.data.financial_category_id)}
                             onValueChange={(value) =>
@@ -1532,7 +1833,12 @@ function ExpenseDialog({
                             </SelectContent>
                         </Select>
                     </Field>
-                    <Field label="Jenis biaya">
+                    <Field
+                        label={stage4Translate(
+                            'stage4.ui.cbcb5c510e6b',
+                            stage4Locale,
+                        )}
+                    >
                         <Select
                             value={form.data.expense_type}
                             onValueChange={(value) =>
@@ -1559,7 +1865,12 @@ function ExpenseDialog({
                             </SelectContent>
                         </Select>
                     </Field>
-                    <Field label="Estimasi">
+                    <Field
+                        label={stage4Translate(
+                            'stage4.ui.1c95cd2048d5',
+                            stage4Locale,
+                        )}
+                    >
                         <RupiahInput
                             value={form.data.estimated_amount}
                             onValueChange={(value) =>
@@ -1567,7 +1878,12 @@ function ExpenseDialog({
                             }
                         />
                     </Field>
-                    <Field label="Aktual">
+                    <Field
+                        label={stage4Translate(
+                            'stage4.ui.8c5da973dcdb',
+                            stage4Locale,
+                        )}
+                    >
                         <RupiahInput
                             value={form.data.actual_amount}
                             onValueChange={(value) =>
@@ -1575,7 +1891,12 @@ function ExpenseDialog({
                             }
                         />
                     </Field>
-                    <Field label="Vendor / penerima">
+                    <Field
+                        label={stage4Translate(
+                            'stage4.ui.e3f18544463f',
+                            stage4Locale,
+                        )}
+                    >
                         <Input
                             value={form.data.vendor_name}
                             onChange={(event) =>
@@ -1583,7 +1904,12 @@ function ExpenseDialog({
                             }
                         />
                     </Field>
-                    <Field label="Bukti biaya">
+                    <Field
+                        label={stage4Translate(
+                            'stage4.ui.58c836282e26',
+                            stage4Locale,
+                        )}
+                    >
                         <Input
                             type="file"
                             accept=".pdf,image/*"
@@ -1601,9 +1927,11 @@ function ExpenseDialog({
                             variant="outline"
                             onClick={() => onOpenChange(false)}
                         >
-                            Batal
+                            <Stage4Text k="stage4.ui.1433539c3b8f" />
                         </Button>
-                        <Button disabled={form.processing}>Simpan Biaya</Button>
+                        <Button disabled={form.processing}>
+                            <Stage4Text k="stage4.ui.7b1cfaf39151" />
+                        </Button>
                     </DialogFooter>
                 </form>
             </DialogContent>
@@ -1624,6 +1952,8 @@ function ExpenseRow({
     cashSessions: Props['cashSessions'];
     canManage: boolean;
 }) {
+    const { locale: stage4Locale } = useAppLocale();
+
     const pay = useForm({
         actual_amount: Number(expense.actual_amount),
         payment_method_id: paymentMethods[0]?.id ?? 0,
@@ -1641,7 +1971,11 @@ function ExpenseRow({
                     <p className="font-medium">{expense.expense_type}</p>
                     <p className="text-sm text-muted-foreground">
                         {expense.expense_branch.name} •{' '}
-                        {expense.vendor_name ?? 'Tanpa vendor'}
+                        {expense.vendor_name ??
+                            stage4Translate(
+                                'stage4.ui.af0fb81397cd',
+                                stage4Locale,
+                            )}
                     </p>
                 </div>
                 <div className="text-right">
@@ -1653,7 +1987,9 @@ function ExpenseRow({
                             ),
                         )}
                     </p>
-                    <Badge variant="outline">{expense.status}</Badge>
+                    <Badge variant="outline">
+                        {stage4TranslateDynamic(expense.status, stage4Locale)}
+                    </Badge>
                 </div>
             </div>
             {canManage &&
@@ -1662,12 +1998,14 @@ function ExpenseRow({
                     <Dialog>
                         <DialogTrigger asChild>
                             <Button className="mt-3" size="sm">
-                                Bayar
+                                <Stage4Text k="stage4.ui.6290c54f33d8" />
                             </Button>
                         </DialogTrigger>
                         <DialogContent>
                             <DialogHeader>
-                                <DialogTitle>Bayar Biaya Transfer</DialogTitle>
+                                <DialogTitle>
+                                    <Stage4Text k="stage4.ui.fc0dfb81eee4" />
+                                </DialogTitle>
                             </DialogHeader>
                             <form
                                 className="space-y-4"
@@ -1682,7 +2020,12 @@ function ExpenseRow({
                                     );
                                 }}
                             >
-                                <Field label="Nominal aktual">
+                                <Field
+                                    label={stage4Translate(
+                                        'stage4.ui.25dcdce8623e',
+                                        stage4Locale,
+                                    )}
+                                >
                                     <RupiahInput
                                         value={pay.data.actual_amount}
                                         onValueChange={(value) =>
@@ -1690,7 +2033,12 @@ function ExpenseRow({
                                         }
                                     />
                                 </Field>
-                                <Field label="Metode pembayaran">
+                                <Field
+                                    label={stage4Translate(
+                                        'stage4.ui.53eb1a623ade',
+                                        stage4Locale,
+                                    )}
+                                >
                                     <Select
                                         value={String(
                                             pay.data.payment_method_id,
@@ -1718,7 +2066,12 @@ function ExpenseRow({
                                     </Select>
                                 </Field>
                                 {cashSessions.length > 0 && (
-                                    <Field label="Sesi kas (opsional)">
+                                    <Field
+                                        label={stage4Translate(
+                                            'stage4.ui.4aff09aaf36e',
+                                            stage4Locale,
+                                        )}
+                                    >
                                         <Select
                                             value={
                                                 pay.data.cash_session_id ===
@@ -1743,7 +2096,7 @@ function ExpenseRow({
                                             </SelectTrigger>
                                             <SelectContent>
                                                 <SelectItem value="none">
-                                                    Tanpa sesi kas
+                                                    <Stage4Text k="stage4.ui.ef8d47c8f015" />
                                                 </SelectItem>
                                                 {cashSessions.map((session) => (
                                                     <SelectItem
@@ -1759,7 +2112,12 @@ function ExpenseRow({
                                         </Select>
                                     </Field>
                                 )}
-                                <Field label="Waktu pembayaran">
+                                <Field
+                                    label={stage4Translate(
+                                        'stage4.ui.9a6129bc4015',
+                                        stage4Locale,
+                                    )}
+                                >
                                     <Input
                                         type="datetime-local"
                                         value={pay.data.paid_at}
@@ -1771,7 +2129,12 @@ function ExpenseRow({
                                         }
                                     />
                                 </Field>
-                                <Field label="Bukti">
+                                <Field
+                                    label={stage4Translate(
+                                        'stage4.ui.d22761a05c30',
+                                        stage4Locale,
+                                    )}
+                                >
                                     <Input
                                         type="file"
                                         accept=".pdf,image/*"
@@ -1785,7 +2148,7 @@ function ExpenseRow({
                                 </Field>
                                 <DialogFooter>
                                     <Button disabled={pay.processing}>
-                                        Catat Pembayaran
+                                        <Stage4Text k="stage4.ui.ca352c0db7a4" />
                                     </Button>
                                 </DialogFooter>
                             </form>
@@ -1816,6 +2179,6 @@ function Field({ label, children }: { label: string; children: ReactNode }) {
     );
 }
 
-function formatDate(value: string | null): string {
-    return value ? dateTime.format(new Date(value)) : '-';
+function formatDate(value: string | null, locale: AppLocale): string {
+    return value ? stage4FormatDateTime(new Date(value), locale) : '-';
 }

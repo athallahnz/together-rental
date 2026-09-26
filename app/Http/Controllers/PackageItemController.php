@@ -32,7 +32,7 @@ class PackageItemController extends Controller
 
         return back()->with('toast', [
             'type' => 'success',
-            'message' => 'Produk berhasil ditambahkan ke paket.',
+            'message' => __('uat035b_stage3.toast.packageitem_1'),
         ]);
     }
 
@@ -63,7 +63,7 @@ class PackageItemController extends Controller
 
         return back()->with('toast', [
             'type' => 'success',
-            'message' => 'Produk berhasil dikeluarkan dari paket.',
+            'message' => __('uat035b_stage3.toast.packageitem_2'),
         ]);
     }
 }

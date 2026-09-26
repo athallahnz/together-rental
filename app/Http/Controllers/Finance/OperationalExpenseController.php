@@ -222,7 +222,7 @@ class OperationalExpenseController extends Controller
 
         return redirect()->route('finance.expenses.index')->with('toast', [
             'type' => 'success',
-            'message' => "Pengeluaran {$expense->expense_number} berhasil dicatat.",
+            'message' => __('uat035b_stage5.flash.expense_recorded', ['reference' => $expense->expense_number]),
         ]);
     }
 
@@ -239,7 +239,7 @@ class OperationalExpenseController extends Controller
 
         return back()->with('toast', [
             'type' => 'success',
-            'message' => "Pengeluaran {$updated->expense_number} berhasil diperbarui.",
+            'message' => __('uat035b_stage5.flash.expense_updated', ['reference' => $updated->expense_number]),
         ]);
     }
 
@@ -256,7 +256,7 @@ class OperationalExpenseController extends Controller
 
         return back()->with('toast', [
             'type' => 'success',
-            'message' => "Pengeluaran {$paid->expense_number} berhasil dibayar.",
+            'message' => __('uat035b_stage5.flash.expense_paid', ['reference' => $paid->expense_number]),
         ]);
     }
 
@@ -273,7 +273,7 @@ class OperationalExpenseController extends Controller
 
         return back()->with('toast', [
             'type' => 'success',
-            'message' => "Pengeluaran {$voided->expense_number} berhasil di-void tanpa menghapus histori.",
+            'message' => __('uat035b_stage5.flash.expense_voided', ['reference' => $voided->expense_number]),
         ]);
     }
 

@@ -102,6 +102,13 @@ export type Booking = {
         status: string;
         amount: string;
         paid_at: string;
+        refunds?: Array<{
+            id: number;
+            refund_number: string;
+            status: string;
+            amount: string;
+            processed_at: string | null;
+        }>;
         external_reference: string | null;
         payment_method?: { id: number; name: string } | null;
     }>;

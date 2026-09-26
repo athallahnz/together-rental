@@ -1,3 +1,4 @@
+import { Stage5Text, stage5Translate } from '@/components/stage5-text';
 import InputError from '@/components/input-error';
 import { Label } from '@/components/ui/label';
 import {
@@ -54,7 +55,9 @@ export function CashSessionSelect({
 
     return (
         <div className="space-y-2">
-            <Label>Sesi kas aktif</Label>
+            <Label>
+                <Stage5Text k="stage5.ui.bdf75fb65c7f" />
+            </Label>
             <Select
                 value={value === null ? '' : String(value)}
                 onValueChange={(nextValue) =>
@@ -62,12 +65,15 @@ export function CashSessionSelect({
                 }
             >
                 <SelectTrigger>
-                    <SelectValue placeholder="Pilih sesi kas" />
+                    <SelectValue
+                        placeholder={stage5Translate('stage5.ui.cfde4a0267a8')}
+                    />
                 </SelectTrigger>
                 <SelectContent>
                     {availableSessions.map((session) => (
                         <SelectItem key={session.id} value={String(session.id)}>
-                            {session.register_name} · dibuka{' '}
+                            {session.register_name}{' '}
+                            <Stage5Text k="stage5.ui.020948e75705" />{' '}
                             {new Date(session.opened_at).toLocaleString(
                                 'id-ID',
                             )}
@@ -77,8 +83,7 @@ export function CashSessionSelect({
             </Select>
             {availableSessions.length === 0 && (
                 <p className="text-sm text-amber-700">
-                    Belum ada sesi kas aktif pada cabang ini. Buka sesi kas
-                    sebelum menerima pembayaran tunai.
+                    <Stage5Text k="stage5.ui.bc90bcc78a07" />
                 </p>
             )}
             <InputError message={error} />

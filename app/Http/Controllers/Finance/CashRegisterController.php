@@ -30,7 +30,7 @@ class CashRegisterController extends Controller
 
         return back()->with('toast', [
             'type' => 'success',
-            'message' => "Kasir {$register->code} berhasil ditambahkan.",
+            'message' => __('uat035b_stage5.flash.register_added', ['reference' => $register->code]),
         ]);
     }
 
@@ -57,7 +57,7 @@ class CashRegisterController extends Controller
 
         return back()->with('toast', [
             'type' => 'success',
-            'message' => "Kasir {$register->code} berhasil diperbarui.",
+            'message' => __('uat035b_stage5.flash.register_updated', ['reference' => $register->code]),
         ]);
     }
 
@@ -83,8 +83,7 @@ class CashRegisterController extends Controller
 
         return back()->with('toast', [
             'type' => 'success',
-            'message' => "Kasir {$register->code} berhasil "
-                .($register->is_active ? 'diaktifkan.' : 'dinonaktifkan.'),
+            'message' => __($register->is_active ? 'uat035b_stage5.flash.register_activated' : 'uat035b_stage5.flash.register_deactivated', ['reference' => $register->code]),
         ]);
     }
 }
