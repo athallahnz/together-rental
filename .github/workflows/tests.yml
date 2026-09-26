@@ -12,6 +12,31 @@ permissions:
 jobs:
   ci:
     runs-on: ubuntu-latest
+    # Standard CI checks use SQLite in-memory; composer setup uses isolated MySQL below.
+    env:
+      DB_CONNECTION: sqlite
+      DB_DATABASE: ':memory:'
+      DB_URL: ''
+      CACHE_STORE: array
+      SESSION_DRIVER: array
+      QUEUE_CONNECTION: sync
+
+    # Ephemeral service scoped to this GitHub Actions job; never connects to local/UAT DB.
+    services:
+      mysql:
+        image: mysql:8.0
+        env:
+          MYSQL_DATABASE: together_rental_ci
+          MYSQL_USER: rental_ci
+          MYSQL_PASSWORD: ci_only_rental_password
+          MYSQL_ROOT_PASSWORD: ci_only_root_password
+        ports:
+          - 3306:3306
+        options: >-
+          --health-cmd="mysqladmin ping -h 127.0.0.1 --silent"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=10
 
     steps:
       - name: Checkout code
@@ -32,6 +57,14 @@ jobs:
           node-version: '22'
 
       - name: Setup Application
+        env:
+          DB_CONNECTION: mysql
+          DB_HOST: 127.0.0.1
+          DB_PORT: '3306'
+          DB_DATABASE: together_rental_ci
+          DB_USERNAME: rental_ci
+          DB_PASSWORD: ci_only_rental_password
+          DB_URL: ''
         run: composer setup
 
       - name: Run CI Checks
