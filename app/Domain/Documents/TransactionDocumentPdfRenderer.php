@@ -33,12 +33,32 @@ class TransactionDocumentPdfRenderer
 
     private string $contentHash = '';
 
-    /** Presentation-only translation; document snapshots and agreement terms remain unchanged. */
+    /** Presentation-only translation; document snapshots remain unchanged. */
     private function l(string $label): string
     {
         $labels = trans('uat035b_stage4.pdf');
 
         return is_array($labels) ? (string) ($labels[$label] ?? $label) : $label;
+    }
+
+    private function displayValue(string $group, mixed $value): string
+    {
+        $raw = $this->value($value);
+        $labels = trans('uat035b_stage4.pdf_values.'.$group);
+
+        return is_array($labels) ? (string) ($labels[$raw] ?? $raw) : $raw;
+    }
+
+    private function agreementClause(string $section, mixed $value): string
+    {
+        $raw = $this->value($value);
+        if (app()->getLocale() !== 'en') {
+            return $raw;
+        }
+
+        $clauses = trans('uat035b_stage4.agreement.'.$section);
+
+        return is_array($clauses) ? (string) ($clauses[$raw] ?? $raw) : $raw;
     }
 
     public function render(TransactionDocument $document): string
@@ -104,7 +124,7 @@ class TransactionDocumentPdfRenderer
         $this->label($this->l('Versi'), (string) $document->version, 320, 60);
         $this->y -= 13;
         $this->label($this->l('Sumber'), $this->value($source['reference'] ?? $document->source_reference), self::MX, 72);
-        $this->label($this->l('Status'), $this->value($source['status'] ?? null), 320, 60);
+        $this->label($this->l('Status'), $this->displayValue('status', $source['status'] ?? null), 320, 60);
         $this->y -= 13;
         $this->label($this->l('Diterbitkan'), $this->dateTime($document->issued_at).' WIB', self::MX, 72);
         $this->label($this->l('Petugas'), $issuer['name'], 320, 60);
@@ -134,7 +154,7 @@ class TransactionDocumentPdfRenderer
                 [$this->l('Mulai'), $this->dateTime($source['starts_at'] ?? $source['checked_out_at'] ?? null)],
                 [$this->l('Kembali'), $this->dateTime($source['ends_at'] ?? $source['due_at'] ?? null)],
                 [$this->l('Selesai'), $this->dateTime($source['returned_at'] ?? null)],
-                [$this->l('Status'), $this->value($source['status'] ?? null)],
+                [$this->l('Status'), $this->displayValue('status', $source['status'] ?? null)],
             ],
         );
 
@@ -197,7 +217,7 @@ class TransactionDocumentPdfRenderer
                     $this->value($payment['payment_number'] ?? null),
                     $this->value($payment['method'] ?? null),
                     $this->money((float) ($payment['amount'] ?? 0)),
-                    $this->value($payment['status'] ?? null),
+                    $this->displayValue('status', $payment['status'] ?? null),
                 ), 7.8, 10);
                 $refunded = (float) ($payment['refunded_amount'] ?? 0);
                 if ($refunded > 0) {
@@ -254,13 +274,13 @@ class TransactionDocumentPdfRenderer
             'Rental' => $related['rental_reference'] ?? null,
             'Perpanjangan' => $related['extension_reference'] ?? null,
             'Referensi eksternal' => $payment['external_reference'] ?? null,
-            'Jenis pembayaran' => $payment['type'] ?? null,
-            'Status' => $payment['status'] ?? null,
+            'Jenis pembayaran' => $this->displayValue('payment_type', $payment['type'] ?? null),
+            'Status' => $this->displayValue('status', $payment['status'] ?? null),
         ] as $label => $value) {
             if ($value === null || $value === '') {
                 continue;
             }
-            $this->label($label, $this->value($value), self::MX + 6, 110, 8.3);
+            $this->label($this->l($label), $this->value($value), self::MX + 6, 110, 8.3);
             $this->y -= 12;
         }
 
@@ -301,9 +321,10 @@ class TransactionDocumentPdfRenderer
                 continue;
             }
             $this->paragraph(sprintf(
-                '%d. %s | Qty %d | %s',
+                '%d. %s | %s %d | %s',
                 $i + 1,
                 $this->value($item['description'] ?? null),
+                $this->l('Qty'),
                 (int) ($item['quantity'] ?? 0),
                 $this->money((float) ($item['total_amount'] ?? 0)),
             ), 8, 10);
@@ -317,7 +338,7 @@ class TransactionDocumentPdfRenderer
                     $this->l('Unit %s | SN %s | kondisi %s'),
                     $this->value($asset['asset_code'] ?? null),
                     $this->value($asset['serial_number'] ?? null),
-                    $this->value($asset['checkout_condition'] ?? null),
+                    $this->displayValue('condition', $asset['checkout_condition'] ?? null),
                 ), 7.4, 9, self::MX + 8);
             }
         }
@@ -334,7 +355,7 @@ class TransactionDocumentPdfRenderer
                     $this->upper($this->value($collateral['type'] ?? null)),
                     $this->value($collateral['number'] ?? null),
                     $this->value($collateral['holder_name'] ?? null),
-                    $this->value($collateral['status'] ?? null),
+                    $this->displayValue('status', $collateral['status'] ?? null),
                 ), 8, 10);
             }
         }
@@ -391,8 +412,8 @@ class TransactionDocumentPdfRenderer
             return;
         }
 
-        $leftLines = $this->termLines(array_values($rights), 238, 6.3, 1);
-        $rightLines = $this->termLines(array_values($terms), 238, 6.3, 1);
+        $leftLines = $this->termLines(array_map(fn (mixed $clause): string => $this->agreementClause('rights', $clause), array_values($rights)), 238, 6.3, 1);
+        $rightLines = $this->termLines(array_map(fn (mixed $clause): string => $this->agreementClause('terms', $clause), array_values($terms)), 238, 6.3, 1);
         $rows = max(count($leftLines), count($rightLines));
         $lineHeight = 8.0;
         $headerHeight = 22.0;
@@ -440,20 +461,20 @@ class TransactionDocumentPdfRenderer
         }
 
         $this->ensure(150);
-        $this->section('HAK, KEWAJIBAN & KETENTUAN SEWA');
+        $this->section($this->l('HAK, KEWAJIBAN & KETENTUAN SEWA'));
         $split = (int) ceil(count($terms) / 2);
         $left = array_slice($terms, 0, $split);
         $right = array_slice($terms, $split);
 
-        $ll = $this->termLines($left, 230, 7.1, 1);
-        $rr = $this->termLines($right, 230, 7.1, $split + 1);
+        $ll = $this->termLines(array_map(fn (mixed $clause): string => $this->agreementClause('terms', $clause), $left), 230, 7.1, 1);
+        $rr = $this->termLines(array_map(fn (mixed $clause): string => $this->agreementClause('terms', $clause), $right), 230, 7.1, $split + 1);
         $rows = max(count($ll), count($rr));
         $height = max(54, $rows * 9);
 
         if ($this->y - $height < self::BOTTOM + 90) {
             $this->finishPage();
             $this->newPage();
-            $this->continuedHeader('HAK, KEWAJIBAN & KETENTUAN SEWA');
+            $this->continuedHeader($this->l('HAK, KEWAJIBAN & KETENTUAN SEWA'));
         }
 
         $start = $this->y;
@@ -716,7 +737,7 @@ class TransactionDocumentPdfRenderer
         $this->line(self::MX, $fy + 12, self::W - self::MX, $fy + 12, .2);
         $hash = $this->contentHash === '' ? '-' : substr($this->contentHash, 0, 16).'...';
         $this->text('Snapshot: '.$hash, self::MX, $fy, 6.3);
-        $this->text('Halaman '.$this->page, self::MX, $fy, 6.3, false, 'right', self::W - 2 * self::MX);
+        $this->text($this->l('Halaman').' '.$this->page, self::MX, $fy, 6.3, false, 'right', self::W - 2 * self::MX);
         $this->pages[] = $this->stream;
         $this->stream = '';
     }

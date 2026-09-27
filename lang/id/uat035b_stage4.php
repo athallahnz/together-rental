@@ -56,7 +56,7 @@ return [
         'RINCIAN BARANG / JASA' => 'RINCIAN BARANG / JASA',
         'No' => 'No',
         'Item' => 'Item',
-        'Qty' => 'Qty',
+        'Qty' => 'Jumlah',
         'Harga' => 'Harga',
         'Total' => 'Total',
         'Tidak ada rincian item.' => 'Tidak ada rincian item.',
@@ -74,7 +74,7 @@ return [
         'HISTORI PEMBAYARAN' => 'HISTORI PEMBAYARAN',
         'DITERIMA DARI' => 'DITERIMA DARI',
         'DETAIL PEMBAYARAN' => 'DETAIL PEMBAYARAN',
-        'No. Payment' => 'No. Payment',
+        'No. Payment' => 'No. Pembayaran',
         'Tanggal' => 'Tanggal',
         'Metode' => 'Metode',
         'TELAH DITERIMA PEMBAYARAN SEBESAR' => 'TELAH DITERIMA PEMBAYARAN SEBESAR',
@@ -112,5 +112,23 @@ return [
         'Refund dibayar: -%s | Bersih: %s' => 'Refund dibayar: -%s | Bersih: %s',
         'Unit %s | SN %s | kondisi %s' => 'Unit %s | SN %s | kondisi %s',
         '%d. %s - %s | atas nama %s | status %s' => '%d. %s - %s | atas nama %s | status %s',
+        'Halaman' => 'Halaman',
+        'HAK, KEWAJIBAN & KETENTUAN SEWA' => 'HAK, KEWAJIBAN & KETENTUAN SEWA',
+    ],
+    'pdf_values' => [
+        'status' => [
+            'active' => 'Aktif', 'approved' => 'Disetujui', 'cancelled' => 'Dibatalkan',
+            'completed' => 'Selesai', 'confirmed' => 'Dikonfirmasi', 'converted' => 'Dikonversi',
+            'draft' => 'Draf', 'expired' => 'Kedaluwarsa', 'held' => 'Ditahan',
+            'paid' => 'Dibayar', 'pending' => 'Menunggu', 'returned' => 'Dikembalikan',
+            'void' => 'Dibatalkan',
+        ],
+        'payment_type' => [
+            'rental' => 'Pembayaran sewa', 'deposit' => 'Deposit jaminan',
+            'extension' => 'Perpanjangan', 'penalty' => 'Denda', 'damage' => 'Kerusakan',
+        ],
+        'condition' => [
+            'good' => 'Baik', 'fair' => 'Cukup', 'poor' => 'Buruk', 'damaged' => 'Rusak',
+        ],
     ],
 ];

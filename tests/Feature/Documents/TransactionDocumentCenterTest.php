@@ -2,6 +2,7 @@
 
 namespace Tests\Feature\Documents;
 
+use App\Domain\Documents\TransactionDocumentPdfRenderer;
 use App\Domain\Operations\OperationalDataResetService;
 use App\Models\Asset;
 use App\Models\Booking;
@@ -244,6 +245,83 @@ class TransactionDocumentCenterTest extends TestCase
         $this->actingAs($foreignManager)
             ->get(route('documents.pdf', $document))
             ->assertNotFound();
+    }
+
+    public function test_transaction_pdf_labels_and_statuses_follow_language_without_changing_snapshots(): void
+    {
+        [$user, $branch, $customer, $product] = $this->fixture();
+        $booking = $this->booking($user, $branch, $customer, $product);
+        $rental = $this->rental($user, $branch, $customer, $product);
+        $payment = $this->payment($user, $branch, $customer, $rental);
+        RentalCollateral::query()->create([
+            'rental_id' => $rental->id,
+            'customer_id' => $customer->id,
+            'type' => 'ktp',
+            'number' => 'COL-I18N-001',
+            'holder_name' => $customer->name,
+            'status' => 'held',
+            'received_at' => now(),
+            'received_by' => $user->id,
+        ]);
+
+        foreach ([
+            ['invoice', 'booking', $booking->booking_number],
+            ['receipt', 'payment', $payment->payment_number],
+            ['agreement', 'rental', $rental->rental_number],
+        ] as [$type, $source, $reference]) {
+            $this->actingAs($user)->post(route('documents.issue'), [
+                'document_type' => $type,
+                'source_type' => $source,
+                'source_reference' => $reference,
+            ])->assertSessionHasNoErrors();
+        }
+
+        $invoice = TransactionDocument::query()->where('document_type', 'invoice')->firstOrFail();
+        $receipt = TransactionDocument::query()->where('document_type', 'receipt')->firstOrFail();
+        $agreement = TransactionDocument::query()->where('document_type', 'agreement')->firstOrFail();
+        $receiptHash = $receipt->content_hash;
+        $agreementHash = $agreement->content_hash;
+        $renderer = app(TransactionDocumentPdfRenderer::class);
+        $previousLocale = app()->getLocale();
+
+        try {
+            app()->setLocale('id');
+            $idInvoice = $renderer->render($invoice);
+            $idReceipt = $renderer->render($receipt);
+            $idAgreement = $renderer->render($agreement);
+            $this->assertStringContainsString('Dikonfirmasi', $idInvoice);
+            $this->assertStringContainsString('Jumlah', $idInvoice);
+            $this->assertStringContainsString('No. Pembayaran', $idReceipt);
+            $this->assertStringContainsString('Pembayaran sewa', $idReceipt);
+            $this->assertStringContainsString('Selesai', $idReceipt);
+            $this->assertStringContainsString('Penyewa berhak bertanya', $idAgreement);
+            $this->assertStringContainsString('Ditahan', $idAgreement);
+
+            app()->setLocale('en');
+            $enInvoice = $renderer->render($invoice);
+            $enReceipt = $renderer->render($receipt);
+            $enAgreement = $renderer->render($agreement);
+            $this->assertStringContainsString('Confirmed', $enInvoice);
+            $this->assertStringContainsString('External reference', $enReceipt);
+            $this->assertStringContainsString('Payment type', $enReceipt);
+            $this->assertStringContainsString('Rental payment', $enReceipt);
+            $this->assertStringContainsString('Completed', $enReceipt);
+            $this->assertStringContainsString('Page 1', $enReceipt);
+            $this->assertStringNotContainsString('Halaman 1', $enReceipt);
+            $this->assertStringContainsString('The renter may ask', $enAgreement);
+            $this->assertStringContainsString('Late returns are charged', $enAgreement);
+            $this->assertStringNotContainsString('Penyewa berhak bertanya', $enAgreement);
+            $this->assertStringContainsString('Held', $enAgreement);
+            $this->assertStringContainsString('Page 2', $enAgreement);
+            $this->assertStringContainsString('Rp 150.000', $idReceipt);
+            $this->assertStringContainsString('Rp 150.000', $enReceipt);
+            $this->assertSame($receiptHash, $receipt->fresh()?->content_hash);
+            $this->assertSame($agreementHash, $agreement->fresh()?->content_hash);
+            $this->assertSame('completed', $this->documentSnapshot($receipt)['payment']['status']);
+            $this->assertSame('Penyewa berhak bertanya mengenai cara penggunaan alat yang disewakan.', $this->documentSnapshot($agreement)['agreement_rights_obligations'][0]);
+        } finally {
+            app()->setLocale($previousLocale);
+        }
     }
 
     public function test_source_options_preload_eligible_booking_and_prioritize_unissued_source(): void
