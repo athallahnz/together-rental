@@ -45,7 +45,7 @@ final class RentalV1Executor
         $branch = DB::table('branches')
             ->where('id', $this->branchId)
             ->first(['company_id', 'code', 'city']);
-        $this->companyId = (int) ($branch?->company_id ?? 0);
+        $this->companyId = (int) (data_get($branch, 'company_id', 0));
         $this->importPrefix = strtoupper(trim((string) $batch->import_prefix));
 
         if ($this->companyId < 1 || $branch === null) {
@@ -714,7 +714,7 @@ final class RentalV1Executor
                 'company_id' => $this->companyId,
                 'branch_id' => $this->branchId,
                 'code' => $this->prefixedLegacyCode('LEG-PROFILE-'.$profileLegacyId, 40),
-                'name' => $profile?->name ?? "Legacy Profile Package {$profileLegacyId}",
+                'name' => data_get($profile, 'name', "Legacy Profile Package {$profileLegacyId}"),
                 'description' => 'Generated from RentalV1 rent_product_package.',
                 'is_active' => true,
                 'created_at' => now(),
@@ -1041,10 +1041,10 @@ final class RentalV1Executor
             'additional_amount' => $additional,
             'discount_amount' => '0.00',
             'total_amount' => $this->lineTotal($quantity, $unitRate, $additional),
-            'due_at' => $rental?->due_at,
+            'due_at' => data_get($rental, 'due_at'),
             'status' => $returned ? 'returned' : 'out',
-            'created_at' => $rental?->checked_out_at ?? now(),
-            'updated_at' => $rental?->returned_at ?? now(),
+            'created_at' => data_get($rental, 'checked_out_at') ?? now(),
+            'updated_at' => data_get($rental, 'returned_at') ?? now(),
         ]);
 
         $assetId = $this->mappedId('rent_product_asset', $productLegacyId);
@@ -1055,8 +1055,8 @@ final class RentalV1Executor
                 'asset_id' => $assetId,
                 'checkout_condition' => 'good',
                 'return_condition' => $returned ? 'good' : null,
-                'checked_out_at' => $rental?->checked_out_at,
-                'returned_at' => $returned ? $rental?->returned_at : null,
+                'checked_out_at' => data_get($rental, 'checked_out_at'),
+                'returned_at' => $returned ? data_get($rental, 'returned_at') : null,
                 'status' => $returned ? 'returned' : 'out',
                 'notes' => 'Imported RentalV1 asset assignment.',
                 'created_at' => now(),
@@ -1078,7 +1078,7 @@ final class RentalV1Executor
         }
 
         $rental = DB::table('rentals')->where('id', $rentalId)->first();
-        $previousDueAt = $rental?->due_at
+        $previousDueAt = data_get($rental, 'due_at')
             ?? RentalV1Value::dateTime($data['extrarental_date_start'] ?? null)
             ?? now()->format('Y-m-d H:i:s');
         $extendedDueAt = RentalV1Value::dateTime($data['extrarental_date_end'] ?? null)
@@ -1197,8 +1197,8 @@ final class RentalV1Executor
             'number' => $number,
             'holder_name' => null,
             'status' => $returned ? 'returned' : 'held',
-            'received_at' => $rental?->checked_out_at,
-            'returned_at' => $returned ? $rental?->returned_at : null,
+            'received_at' => data_get($rental, 'checked_out_at'),
+            'returned_at' => $returned ? data_get($rental, 'returned_at') : null,
             'returned_by' => $returned ? $this->userId : null,
             'notes' => RentalV1Value::string($data['rentaljaminan_keterangan'] ?? null),
             'created_at' => now(),
@@ -1525,7 +1525,7 @@ final class RentalV1Executor
             ->where('batch_id', $this->batch->id)
             ->where('source_table', 'trx_rental')
             ->where('id', $operator, $row->id)
-            ->orderBy('id', $direction)
+            ->orderBy('id', $direction === 'desc' ? 'desc' : 'asc')
             ->limit(10)
             ->get();
 

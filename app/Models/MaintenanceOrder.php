@@ -25,21 +25,25 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 ])]
 class MaintenanceOrder extends Model
 {
+    /** @return BelongsTo<Branch, $this> */
     public function branch(): BelongsTo
     {
         return $this->belongsTo(Branch::class);
     }
 
+    /** @return BelongsTo<Asset, $this> */
     public function asset(): BelongsTo
     {
         return $this->belongsTo(Asset::class);
     }
 
+    /** @return BelongsTo<User, $this> */
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    /** @return BelongsTo<User, $this> */
     public function completer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'completed_by');

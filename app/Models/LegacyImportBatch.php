@@ -8,6 +8,11 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/**
+ * @property array<string, mixed>|null $options
+ * @property array<string, mixed>|null $summary
+ * @property-read Branch|null $branch
+ */
 #[Fillable([
     'id',
     'branch_id',
@@ -44,36 +49,43 @@ class LegacyImportBatch extends Model
 
     protected $keyType = 'string';
 
+    /** @return BelongsTo<Branch, $this> */
     public function branch(): BelongsTo
     {
         return $this->belongsTo(Branch::class);
     }
 
+    /** @return BelongsTo<User, $this> */
     public function uploader(): BelongsTo
     {
         return $this->belongsTo(User::class, 'uploaded_by');
     }
 
+    /** @return HasMany<LegacyImportTable, $this> */
     public function tables(): HasMany
     {
         return $this->hasMany(LegacyImportTable::class, 'batch_id');
     }
 
+    /** @return HasMany<LegacyImportRow, $this> */
     public function rows(): HasMany
     {
         return $this->hasMany(LegacyImportRow::class, 'batch_id');
     }
 
+    /** @return HasMany<LegacyImportMapping, $this> */
     public function mappings(): HasMany
     {
         return $this->hasMany(LegacyImportMapping::class, 'batch_id');
     }
 
+    /** @return HasMany<LegacyImportIssue, $this> */
     public function issues(): HasMany
     {
         return $this->hasMany(LegacyImportIssue::class, 'batch_id');
     }
 
+    /** @return HasMany<LegacyImportEvent, $this> */
     public function events(): HasMany
     {
         return $this->hasMany(LegacyImportEvent::class, 'batch_id');

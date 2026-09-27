@@ -84,6 +84,7 @@ class VerifyReceivablesAsOf extends Command
             return self::FAILURE;
         }
 
+        /** @var array{rows: list<array<string, mixed>>, summary: list<array<string, mixed>>, historyMeta?: array<string, mixed>} $dataset */
         $rows = collect($dataset['rows']);
         $sum = round((float) $rows->sum(static fn (array $row): float => (float) ($row['values']['balance_due'] ?? 0)), 2);
         $unverified = $rows->filter(static fn (array $row): bool => $row['values']['balance_due'] === null)->count();

@@ -104,6 +104,7 @@ class AuditBookingReportPayments extends Command
             'search' => '',
         ];
         $actualReport = $reports->generate((int) $branch->company_id, [(int) $branch->id], $filters);
+        /** @var array{rows: list<array<string, mixed>>} $actualReport */
         $reportById = collect($actualReport['rows'])
             ->filter(static fn (array $row): bool => $row['values']['kind'] === 'Booking')
             ->keyBy('id');

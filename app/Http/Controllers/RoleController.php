@@ -149,11 +149,13 @@ class RoleController extends Controller
             ->where('slug', 'branches.switch')
             ->value('id');
 
-        return collect($permissionIds)
+        $normalized = collect($permissionIds)
             ->when($switchPermissionId !== null, fn ($ids) => $ids->push((int) $switchPermissionId))
             ->unique()
             ->values()
             ->all();
+
+        return array_values($normalized);
     }
 
     private function guardRoleBelongsToActorCompany(Request $request, Role $role): void

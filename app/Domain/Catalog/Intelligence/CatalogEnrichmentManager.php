@@ -286,7 +286,7 @@ class CatalogEnrichmentManager
     /** @return list<array{id: int, name: string, alias: string}> */
     private function brandAliases(int $companyId): array
     {
-        return CatalogBrandAlias::query()
+        $aliases = CatalogBrandAlias::query()
             ->select([
                 'catalog_brands.id',
                 'catalog_brands.name',
@@ -299,10 +299,13 @@ class CatalogEnrichmentManager
             ->get()
             ->map(fn ($alias): array => [
                 'id' => (int) $alias->id,
-                'name' => (string) $alias->name,
+                'name' => (string) $alias->getAttribute('name'),
                 'alias' => (string) $alias->alias,
             ])
+            ->values()
             ->all();
+
+        return array_values($aliases);
     }
 
     private function resolveBrand(int $companyId, ?string $suggestedBrand): ?CatalogBrand

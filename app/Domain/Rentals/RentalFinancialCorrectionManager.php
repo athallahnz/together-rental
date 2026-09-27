@@ -77,6 +77,7 @@ class RentalFinancialCorrectionManager
                 'deposit_amount' => round((float) $rental->deposit_amount + $signedAmount, 2),
                 'balance_due' => (float) $rental->balance_due,
             ],
+            default => throw ValidationException::withMessages(['component' => 'Komponen koreksi tidak valid.']),
         };
     }
 

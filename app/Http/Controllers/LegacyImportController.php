@@ -124,7 +124,9 @@ class LegacyImportController extends Controller
                 'import_prefix' => $prefix,
             ]);
         } catch (Throwable $exception) {
-            Storage::disk($disk)->delete($sourcePath);
+            if (is_string($sourcePath)) {
+                Storage::disk($disk)->delete($sourcePath);
+            }
 
             throw $exception;
         }
@@ -439,7 +441,8 @@ class LegacyImportController extends Controller
             ->unique('branch_id')
             ->keyBy('branch_id');
 
-        return $branches->map(function (Branch $branch) use ($establishedPrefixes): array {
+        /** @var Collection<int, array{id: int, code: string, name: string, city: string, suggested_prefix: string, prefix_locked: bool}> $options */
+        $options = $branches->map(function (Branch $branch) use ($establishedPrefixes): array {
             $established = $establishedPrefixes->get($branch->id)?->import_prefix;
             $letters = preg_replace('/[^A-Z]/', '', strtoupper(Str::ascii($branch->code))) ?? '';
             $suggested = is_string($established) && preg_match('/^[A-Z]{3}$/', $established)
@@ -456,6 +459,8 @@ class LegacyImportController extends Controller
                     && preg_match('/^[A-Z]{3}$/', $established) === 1,
             ];
         });
+
+        return $options;
     }
 
     /** @return Builder<Branch> */

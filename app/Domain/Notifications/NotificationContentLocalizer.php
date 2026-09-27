@@ -66,7 +66,7 @@ final class NotificationContentLocalizer
             ? "Rental {$parts[1]} for {$parts[2]} was due on {$parts[3]}"
             : "Rental {$parts[1]} for {$parts[2]} is due on {$parts[3]}";
 
-        return $message.(isset($parts[5]) && $parts[5] !== '' ? " with a balance of {$parts[5]}" : '').'.';
+        return $message.(isset($parts[5]) ? " with a balance of {$parts[5]}" : '').'.';
     }
 
     private function refundBody(string $body): string

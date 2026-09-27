@@ -579,11 +579,11 @@ class OperationalDashboardService
 
         usort($items, static fn (array $first, array $second): int => [$second['priority'], $second['count']] <=> [$first['priority'], $first['count']]);
 
-        return array_values(array_map(static function (array $item): array {
+        return array_map(static function (array $item): array {
             unset($item['priority']);
 
             return $item;
-        }, array_slice($items, 0, 8)));
+        }, array_slice($items, 0, 8));
     }
 
     /**

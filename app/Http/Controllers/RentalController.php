@@ -273,7 +273,9 @@ class RentalController extends Controller
         $rentalPaid = $settlement['rental_paid'];
         $depositPaid = $settlement['deposit_paid'];
 
-        $identities = $booking->customer?->identities ?? collect();
+        /** @var Customer|null $customer */
+        $customer = $booking->customer;
+        $identities = $customer === null ? collect() : $customer->identities;
 
         return Inertia::render('rentals/checkout', [
             'booking' => $booking,
@@ -627,7 +629,8 @@ class RentalController extends Controller
             fn (CustomerIdentity $identity): bool => $identity->is_primary,
         ) ?? $eligible->first();
 
-        return $identities->map(fn (CustomerIdentity $identity): array => [
+        /** @var Collection<int, array<string, mixed>> $options */
+        $options = $identities->map(fn (CustomerIdentity $identity): array => [
             'id' => $identity->id,
             'type' => $identity->type,
             'collateral_type' => $identity->collateralType(),
@@ -640,6 +643,8 @@ class RentalController extends Controller
             'is_expired' => $identity->isExpiredAt(now()),
             'is_default' => $default?->id === $identity->id,
         ])->values();
+
+        return $options;
     }
 
     /** @return array<string, mixed> */

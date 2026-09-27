@@ -382,7 +382,7 @@ class TransactionDocumentPdfRenderer
         // Dokumen lama hanya mempunyai agreement_terms. Pertahankan layout lama
         // agar versi historis tetap dapat dirender tanpa mengubah snapshot-nya.
         if ($rights === []) {
-            $this->legacyTerms($terms);
+            $this->legacyTerms(array_values($terms));
 
             return;
         }
@@ -391,8 +391,8 @@ class TransactionDocumentPdfRenderer
             return;
         }
 
-        $leftLines = $this->termLines($rights, 238, 6.3, 1);
-        $rightLines = $this->termLines($terms, 238, 6.3, 1);
+        $leftLines = $this->termLines(array_values($rights), 238, 6.3, 1);
+        $rightLines = $this->termLines(array_values($terms), 238, 6.3, 1);
         $rows = max(count($leftLines), count($rightLines));
         $lineHeight = 8.0;
         $headerHeight = 22.0;

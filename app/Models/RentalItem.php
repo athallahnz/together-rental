@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/** @property array<string, mixed>|null $overtime_snapshot */
 #[Fillable([
     'rental_id', 'booking_item_id', 'product_id', 'description', 'quantity',
     'returned_quantity', 'unit_rate', 'additional_amount', 'discount_amount',

@@ -439,7 +439,7 @@ class BookingManager
         return [$package->name, (float) $rate->amount, (float) $rate->deposit_amount, $requirements];
     }
 
-    /** @param Collection<int, array{product_id: int, quantity: int, tracking_type: string}> $requirements */
+    /** @param Collection<int, array{product_id: int, quantity: int, tracking_type: string, overtime_snapshot: array<string, mixed>}> $requirements */
     private function reserveRequirements(Booking $booking, BookingItem $item, Collection $requirements, int $position): void
     {
         foreach ($requirements as $requirement) {
@@ -502,7 +502,8 @@ class BookingManager
     private function assertReservationCompleteness(Booking $booking): void
     {
         foreach ($booking->items()->with(['reservations.asset', 'bulkReservations'])->get() as $item) {
-            $expected = collect($item->stock_requirements ?? []);
+            $storedRequirements = $item->stock_requirements;
+            $expected = collect(is_array($storedRequirements) ? $storedRequirements : []);
             if ($item->stock_requirements === null) {
                 // Compatibility for bookings made before this additive migration.
                 $expected = $item->product_id !== null

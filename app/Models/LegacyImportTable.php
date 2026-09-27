@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property array<string, mixed>|null $summary
+ */
 #[Fillable([
     'batch_id',
     'source_table',
@@ -21,6 +24,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 ])]
 class LegacyImportTable extends Model
 {
+    /** @return BelongsTo<LegacyImportBatch, $this> */
     public function batch(): BelongsTo
     {
         return $this->belongsTo(LegacyImportBatch::class, 'batch_id');

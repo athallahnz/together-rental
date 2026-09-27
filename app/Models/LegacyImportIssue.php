@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property array<string, mixed>|null $suggested_resolution
+ */
 #[Fillable([
     'batch_id',
     'legacy_import_row_id',
@@ -22,11 +25,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 ])]
 class LegacyImportIssue extends Model
 {
+    /** @return BelongsTo<LegacyImportBatch, $this> */
     public function batch(): BelongsTo
     {
         return $this->belongsTo(LegacyImportBatch::class, 'batch_id');
     }
 
+    /** @return BelongsTo<LegacyImportRow, $this> */
     public function row(): BelongsTo
     {
         return $this->belongsTo(LegacyImportRow::class, 'legacy_import_row_id');

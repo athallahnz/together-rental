@@ -300,8 +300,8 @@ class RentalCollateralManager
         }
 
         $type = $identity?->collateralType() ?? trim((string) ($data['type'] ?? ''));
-        $number = $identity?->number ?? trim((string) ($data['number'] ?? ''));
-        $holderName = $identity?->name_on_identity
+        $number = (string) (data_get($identity, 'number') ?? trim((string) ($data['number'] ?? '')));
+        $holderName = data_get($identity, 'name_on_identity')
             ?? $this->nullableString($data['holder_name'] ?? null);
 
         if ($type === '' || $number === '') {

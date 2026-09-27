@@ -4,6 +4,7 @@ namespace App\Models\Concerns;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\SoftDeletingScope;
 use Illuminate\Support\Str;
 
 trait HasPublicSlug
@@ -34,12 +35,12 @@ trait HasPublicSlug
         });
     }
 
-    private static function slugExists(string $slug, Model $model): bool
+    protected static function slugExists(string $slug, Model $model): bool
     {
         $query = static::query()->where('slug', $slug);
 
         if (in_array(SoftDeletes::class, class_uses_recursive(static::class), true)) {
-            $query->withTrashed();
+            $query->withoutGlobalScope(SoftDeletingScope::class);
         }
 
         if ($model->exists) {

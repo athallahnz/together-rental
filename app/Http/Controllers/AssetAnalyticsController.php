@@ -20,6 +20,7 @@ class AssetAnalyticsController extends Controller
     ): Response {
         Gate::authorize('reports.view');
         $actor = $request->user();
+        /** @var list<int> $branchIds */
         $branchIds = $actor->accessibleBranches()
             ->pluck('id')
             ->map(static fn ($id): int => (int) $id)
@@ -29,7 +30,9 @@ class AssetAnalyticsController extends Controller
         $result = $analytics->analyze((int) $actor->company_id, $branchIds, $filters);
         $page = max($request->integer('page', 1), 1);
         $perPage = 25;
-        $rows = collect($result['assets']);
+        /** @var list<array<string, mixed>> $assetRows */
+        $assetRows = $result['assets'];
+        $rows = collect($assetRows);
         $assets = new LengthAwarePaginator(
             $rows->forPage($page, $perPage)->values(),
             $rows->count(),
@@ -85,6 +88,7 @@ class AssetAnalyticsController extends Controller
     ): StreamedResponse {
         Gate::authorize('reports.export');
         $actor = $request->user();
+        /** @var list<int> $branchIds */
         $branchIds = $actor->accessibleBranches()
             ->pluck('id')
             ->map(static fn ($id): int => (int) $id)
@@ -165,7 +169,7 @@ class AssetAnalyticsController extends Controller
                     $row['data_quality']['score'],
                     $row['data_quality']['confidence_label'],
                     $row['data_quality']['has_blocker'] ? 'Ya' : 'Tidak',
-                    collect($row['data_quality']['issues'])
+                    collect((array) $row['data_quality']['issues'])
                         ->map(static fn (array $issue): string => sprintf(
                             '%s (%d)',
                             $issue['label'],

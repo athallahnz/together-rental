@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property array<string, mixed>|null $transform_rule
+ */
 #[Fillable([
     'batch_id',
     'mapping_type',
@@ -19,6 +22,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 ])]
 class LegacyImportMapping extends Model
 {
+    /** @return BelongsTo<LegacyImportBatch, $this> */
     public function batch(): BelongsTo
     {
         return $this->belongsTo(LegacyImportBatch::class, 'batch_id');

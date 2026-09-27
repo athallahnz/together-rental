@@ -179,7 +179,10 @@ class AssetAnalyticsService
             ->get();
     }
 
-    /** @param list<int> $assetIds */
+    /**
+     * @param  list<int>  $assetIds
+     * @return Collection<int, stdClass>
+     */
     private function rentalRows(array $assetIds): Collection
     {
         return DB::table('rental_item_assets as assignments')
@@ -211,6 +214,7 @@ class AssetAnalyticsService
 
     /**
      * @param  Collection<int, stdClass>  $rentalRows
+     * @param  Collection<int, stdClass>  $extensionRows
      * @return array<int, int>
      */
     private function rentalItemAssetCounts(
@@ -293,7 +297,10 @@ class AssetAnalyticsService
             ->all();
     }
 
-    /** @param list<int> $assetIds */
+    /**
+     * @param  list<int>  $assetIds
+     * @return Collection<int, stdClass>
+     */
     private function extensionRows(array $assetIds): Collection
     {
         return DB::table('rental_extension_items as extension_items')
@@ -315,7 +322,10 @@ class AssetAnalyticsService
             ->get();
     }
 
-    /** @param list<int> $assetIds */
+    /**
+     * @param  list<int>  $assetIds
+     * @return Collection<int, stdClass>
+     */
     private function maintenanceRows(array $assetIds): Collection
     {
         return DB::table('maintenance_orders')
@@ -338,6 +348,7 @@ class AssetAnalyticsService
      * @param  array<int, float>  $rentalLineTotals
      * @param  array<int, array<string, mixed>>  $metrics
      * @param  array<string, array<string, mixed>>  $trend
+     * @param  array<string, array<int, bool>>  $quality
      */
     private function applyRentalRevenueAndIntervals(
         Collection $rows,
@@ -503,6 +514,7 @@ class AssetAnalyticsService
      * @param  Collection<int, stdClass>  $rows
      * @param  array<int, array<string, mixed>>  $metrics
      * @param  array<string, array<string, mixed>>  $trend
+     * @param  array<string, array<int, bool>>  $quality
      */
     private function applyMaintenance(
         Collection $rows,
@@ -691,7 +703,11 @@ class AssetAnalyticsService
         ];
     }
 
-    /** @param Collection<int, array<string, mixed>> $rows */
+    /**
+     * @param  Collection<int, array<string, mixed>>  $rows
+     * @param  array<string, array<int, bool>>  $quality
+     * @return array<string, mixed>
+     */
     private function summary(Collection $rows, array $quality): array
     {
         $investment = (float) $rows->sum('purchase_price');
@@ -783,10 +799,13 @@ class AssetAnalyticsService
         ];
     }
 
-    /** @param Collection<int, array<string, mixed>> $rows */
+    /**
+     * @param  Collection<int, array<string, mixed>>  $rows
+     * @return list<array<string, mixed>>
+     */
     private function branchPerformance(Collection $rows): array
     {
-        return $rows
+        return array_values($rows
             ->groupBy(static fn (array $row): int => (int) $row['branch']['id'])
             ->map(function (Collection $branchRows): array {
                 /** @var array<string, mixed> $first */
@@ -817,10 +836,14 @@ class AssetAnalyticsService
             })
             ->sortByDesc('net_contribution')
             ->values()
-            ->all();
+            ->all());
     }
 
-    /** @param Collection<int, array<string, mixed>> $rows */
+    /**
+     * @param  Collection<int, array<string, mixed>>  $rows
+     * @param  array<string, array<int, bool>>  $quality
+     * @return array<string, mixed>
+     */
     private function insights(Collection $rows, array $quality): array
     {
         $topRevenue = $rows
@@ -937,7 +960,7 @@ class AssetAnalyticsService
 
         if ($invalidIntervalCount > 0) {
             $invalidIsBlocker = $invalidRatio >= 10;
-            $usageBlocked = $usageBlocked || $invalidIsBlocker;
+            $usageBlocked = $invalidIsBlocker;
             $score -= $invalidIsBlocker
                 ? ($invalidRatio >= 25 ? 35 : 25)
                 : 8;
@@ -1185,7 +1208,7 @@ class AssetAnalyticsService
         }
 
         return (int) array_sum(array_map(
-            static fn (array $interval): int => $interval[0]->diffInSeconds($interval[1]),
+            static fn (array $interval): float => $interval[0]->diffInSeconds($interval[1]),
             $merged,
         ));
     }
@@ -1213,7 +1236,10 @@ class AssetAnalyticsService
         return round((float) ($value ?? 0), 2);
     }
 
-    /** @param list<int> $assetIds */
+    /**
+     * @param  list<int>  $assetIds
+     * @return array<int, array<string, mixed>>
+     */
     private function blankMetrics(array $assetIds): array
     {
         $metrics = [];

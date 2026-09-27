@@ -121,7 +121,7 @@ final class RentalV1SqlParser
             return;
         }
 
-        $columns = trim((string) ($matches[2] ?? '')) !== ''
+        $columns = trim((string) $matches[2]) !== ''
             ? $this->parseColumnList($matches[2])
             : $schemas[$table]['columns'];
 
@@ -135,10 +135,6 @@ final class RentalV1SqlParser
 
             $schemas[$table]['rows']++;
             $payload = array_combine($columns, $values);
-
-            if ($payload === false) {
-                throw new RuntimeException("Payload tabel [{$table}] tidak dapat dibentuk.");
-            }
 
             $onRow($table, $schemas[$table]['rows'], $payload, $columns);
         }
@@ -255,15 +251,15 @@ final class RentalV1SqlParser
             }
 
             $escaped = $input[$offset++];
-            $value .= match ($escaped) {
+            $escapeMap = [
                 '0' => "\0",
                 'b' => "\x08",
                 'n' => "\n",
                 'r' => "\r",
                 't' => "\t",
                 'Z' => "\x1a",
-                default => $escaped,
-            };
+            ];
+            $value .= $escapeMap[$escaped] ?? $escaped;
         }
 
         throw new RuntimeException('String SQL tidak ditutup.');

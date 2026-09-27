@@ -161,7 +161,10 @@ class RentalOvertimeCalculator
         );
     }
 
-    /** @return array<string, mixed> */
+    /**
+     * @param  array<string, mixed>  $snapshot
+     * @return array<string, mixed>
+     */
     private function breakdown(
         RentalItem $item,
         CarbonImmutable $returnedAt,

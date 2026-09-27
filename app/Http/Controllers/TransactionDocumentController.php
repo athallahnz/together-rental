@@ -110,12 +110,14 @@ class TransactionDocumentController extends Controller
         }
 
         $branchIds = $this->branches($request)->pluck('id');
-        $rows = $this->sourceRows(
+        // sourceRows returns a plain list to avoid invariant Collection return types.
+        // Wrap once here to retain the existing downstream Collection API.
+        $rows = collect($this->sourceRows(
             documentType: $documentType,
             sourceType: $sourceType,
             branchIds: $branchIds,
             search: $search,
-        );
+        ));
 
         $sourceIds = $rows
             ->pluck('source_id')
@@ -327,7 +329,7 @@ class TransactionDocumentController extends Controller
 
     /**
      * @param  Collection<int, int>  $branchIds
-     * @return Collection<int, array{
+     * @return list<array{
      *     source_id: int,
      *     reference: string,
      *     branch_id: int,
@@ -343,8 +345,9 @@ class TransactionDocumentController extends Controller
         string $sourceType,
         Collection $branchIds,
         string $search,
-    ): Collection {
-        return match ($sourceType) {
+    ): array {
+        /** @var Collection<int, array{source_id: int, reference: string, branch_id: int, branch_code: string, branch_name: string, customer_name: string|null, status: string, amount: float}> $rows */
+        $rows = match ($sourceType) {
             'booking' => Booking::query()
                 ->whereIn('branch_id', $branchIds)
                 ->whereIn('status', ['confirmed', 'converted', 'completed'])
@@ -373,8 +376,8 @@ class TransactionDocumentController extends Controller
                     'source_id' => (int) $booking->id,
                     'reference' => (string) $booking->booking_number,
                     'branch_id' => (int) $booking->branch_id,
-                    'branch_code' => (string) ($booking->branch?->code ?? ''),
-                    'branch_name' => (string) ($booking->branch?->name ?? ''),
+                    'branch_code' => (string) (data_get($booking->branch, 'code', '')),
+                    'branch_name' => (string) (data_get($booking->branch, 'name', '')),
                     'customer_name' => $booking->customer?->name,
                     'status' => (string) $booking->status,
                     'amount' => (float) $booking->total_amount,
@@ -406,8 +409,8 @@ class TransactionDocumentController extends Controller
                     'source_id' => (int) $rental->id,
                     'reference' => (string) $rental->rental_number,
                     'branch_id' => (int) $rental->branch_id,
-                    'branch_code' => (string) ($rental->branch?->code ?? ''),
-                    'branch_name' => (string) ($rental->branch?->name ?? ''),
+                    'branch_code' => (string) (data_get($rental->branch, 'code', '')),
+                    'branch_name' => (string) (data_get($rental->branch, 'name', '')),
                     'customer_name' => $rental->customer?->name,
                     'status' => (string) $rental->status,
                     'amount' => (float) $rental->total_amount,
@@ -441,14 +444,44 @@ class TransactionDocumentController extends Controller
                     'source_id' => (int) $payment->id,
                     'reference' => (string) $payment->payment_number,
                     'branch_id' => (int) $payment->branch_id,
-                    'branch_code' => (string) ($payment->branch?->code ?? ''),
-                    'branch_name' => (string) ($payment->branch?->name ?? ''),
+                    'branch_code' => (string) (data_get($payment->branch, 'code', '')),
+                    'branch_name' => (string) (data_get($payment->branch, 'name', '')),
                     'customer_name' => $payment->customer?->name,
                     'status' => (string) $payment->status,
                     'amount' => (float) $payment->amount,
                 ]),
             default => collect(),
         };
+
+        // Materialize each source variant into one explicitly typed list.
+        // Array value types are covariant, unlike Collection's TValue.
+        /** @var list<array{
+         *     source_id: int,
+         *     reference: string,
+         *     branch_id: int,
+         *     branch_code: string,
+         *     branch_name: string,
+         *     customer_name: string|null,
+         *     status: string,
+         *     amount: float
+         * }> $normalizedRows
+         */
+        $normalizedRows = [];
+
+        foreach ($rows as $row) {
+            $normalizedRows[] = [
+                'source_id' => (int) $row['source_id'],
+                'reference' => (string) $row['reference'],
+                'branch_id' => (int) $row['branch_id'],
+                'branch_code' => (string) $row['branch_code'],
+                'branch_name' => (string) $row['branch_name'],
+                'customer_name' => $row['customer_name'] === null ? null : (string) $row['customer_name'],
+                'status' => (string) $row['status'],
+                'amount' => (float) $row['amount'],
+            ];
+        }
+
+        return $normalizedRows;
     }
 
     private function sourceUrl(TransactionDocument $document): ?string

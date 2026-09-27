@@ -139,6 +139,7 @@ class AuditReceivablesAsOf extends Command
             'category_id' => null,
             'search' => '',
         ]);
+        /** @var array{rows: list<array<string, mixed>>} $data */
         /** @var Collection<string, array<string, mixed>> $reported */
         $reported = collect($data['rows'])->keyBy('id');
         $paymentByRental = $payments->groupBy('rental_id');

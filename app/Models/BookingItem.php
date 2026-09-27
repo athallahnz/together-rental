@@ -7,6 +7,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
+/** @property array<string, mixed>|null $stock_requirements */
 #[Fillable([
     'booking_id', 'product_id', 'package_id', 'description', 'quantity',
     'unit_rate', 'additional_amount', 'discount_amount', 'total_amount', 'stock_requirements',

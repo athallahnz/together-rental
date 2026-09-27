@@ -427,7 +427,7 @@ class IntegratedReportService
         // refunds on the same source payment. Security deposits never settle rental fees.
         // Aggregate in one query instead of calling settlement->summary() per booking.
         $rentalPaidByBooking = $this->bookingRentalPaidById(
-            $bookingRecords->pluck('id')->map(static fn (mixed $id): int => (int) $id)->all(),
+            array_values($bookingRecords->pluck('id')->map(static fn (mixed $id): int => (int) $id)->all()),
         );
         $bookings = $bookingRecords->map(static function (stdClass $row) use ($rentalPaidByBooking): array {
             $rentalPaid = (float) ($rentalPaidByBooking[(int) $row->id] ?? 0.0);
@@ -802,7 +802,7 @@ class IntegratedReportService
     /**
      * @param  list<int>  $branchIds
      * @param  ReportFilters  $filters
-     * @return array{columns: list<array<string, mixed>>, rows: list<array<string, mixed>>}
+     * @return array{columns: list<array<string, mixed>>, rows: list<array<string, mixed>>, historyMeta?: array<string, mixed>, branch_totals?: array<int, float>}
      */
     private function receivableDataset(array $branchIds, array $filters): array
     {
