@@ -373,12 +373,25 @@ class RentalExtensionTest extends TestCase
             'checkout_condition' => 'good',
             'payment_amount' => 0,
             'deposit_paid' => 0,
+            // UAT-014: satisfy the mandatory direct-rental collateral contract.
+            'collaterals' => [[
+                'type' => 'Kartu Mahasiswa',
+                'number' => 'MHS-EXTENSION-FIXTURE-001',
+                'holder_name' => $customer->name,
+            ]],
         ])->assertSessionHasNoErrors()
             ->assertRedirect();
 
+        $rental = Rental::query()->with(['branch', 'items.assets.asset'])->firstOrFail();
+        // Extension tests are independent of collateral return obligations.
+        $this->actingAs($user)->post(route('rentals.collaterals.return', [
+            $rental,
+            $rental->collaterals()->firstOrFail(),
+        ]))->assertSessionHasNoErrors();
+
         return [
             $user,
-            Rental::query()->with(['branch', 'items.assets.asset'])->firstOrFail(),
+            $rental,
             $assets,
         ];
     }

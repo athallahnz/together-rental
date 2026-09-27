@@ -6,6 +6,7 @@ use App\Models\CustomerIdentity;
 use App\Models\Rental;
 use App\Models\RentalCollateral;
 use App\Models\User;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
@@ -45,7 +46,15 @@ class RentalCollateralManager
                 );
             }
 
-            return $this->createLocked($locked, $data, $actor, now());
+            $receivedAt = now();
+            $prepared = $this->prepareActiveCollateralInput(
+                $locked,
+                $data,
+                $actor,
+                $receivedAt,
+            );
+
+            return $this->createLocked($locked, $prepared, $actor, $receivedAt);
         }, 3);
     }
 
@@ -128,6 +137,141 @@ class RentalCollateralManager
         }, 3);
     }
 
+    /**
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    private function prepareActiveCollateralInput(
+        Rental $rental,
+        array $data,
+        User $actor,
+        mixed $receivedAt,
+    ): array {
+        $mode = (string) ($data['source_mode'] ?? '');
+
+        if ($mode === '') {
+            $mode = ((int) ($data['customer_identity_id'] ?? 0)) > 0
+                ? 'existing'
+                : 'manual';
+        }
+
+        if ($mode === 'existing') {
+            $data['customer_identity_id'] = (int) ($data['customer_identity_id'] ?? 0);
+
+            return $data;
+        }
+
+        if ($mode !== 'new') {
+            $data['customer_identity_id'] = null;
+
+            return $data;
+        }
+
+        $identityType = mb_strtolower(trim((string) ($data['identity_type'] ?? '')));
+        $identityNumber = mb_strtoupper(trim((string) ($data['identity_number'] ?? '')));
+        $identityName = $this->nullableString($data['identity_name_on_identity'] ?? null);
+        $expiresAt = $this->nullableString($data['identity_expires_at'] ?? null);
+        $saveToCustomer360 = (bool) ($data['save_to_customer360'] ?? false);
+
+        if ($identityType === '' || $identityNumber === '') {
+            throw ValidationException::withMessages([
+                'identity_number' => 'Jenis dan nomor identitas baru wajib diisi.',
+            ]);
+        }
+
+        if ($saveToCustomer360) {
+            if (! $actor->can('customers.update')) {
+                throw ValidationException::withMessages([
+                    'save_to_customer360' => 'Akun ini tidak memiliki izin untuk menyimpan identitas ke Customer360.',
+                ]);
+            }
+
+            $identity = $this->createCustomerIdentityLocked(
+                $rental,
+                [
+                    'type' => $identityType,
+                    'number' => $identityNumber,
+                    'name_on_identity' => $identityName,
+                    'expires_at' => $expiresAt,
+                    'is_primary' => (bool) ($data['identity_is_primary'] ?? false),
+                ],
+                $receivedAt,
+            );
+
+            $data['customer_identity_id'] = $identity->id;
+
+            return $data;
+        }
+
+        $transientIdentity = new CustomerIdentity([
+            'type' => $identityType,
+            'number' => $identityNumber,
+            'name_on_identity' => $identityName,
+            'expires_at' => $expiresAt,
+        ]);
+
+        $data['customer_identity_id'] = null;
+        $data['type'] = $transientIdentity->collateralType();
+        $data['number'] = $identityNumber;
+        $data['holder_name'] = $identityName;
+
+        return $data;
+    }
+
+    /**
+     * @param  array{type:string, number:string, name_on_identity:?string, expires_at:?string, is_primary:bool}  $data
+     */
+    private function createCustomerIdentityLocked(
+        Rental $rental,
+        array $data,
+        mixed $receivedAt,
+    ): CustomerIdentity {
+        $customer = $rental->customer()->lockForUpdate()->firstOrFail();
+
+        $duplicate = CustomerIdentity::query()
+            ->where('type', $data['type'])
+            ->where('number', $data['number'])
+            ->whereHas(
+                'customer',
+                fn ($query) => $query->where('company_id', $customer->company_id),
+            )
+            ->exists();
+
+        if ($duplicate) {
+            throw ValidationException::withMessages([
+                'identity_number' => 'Nomor identitas tersebut sudah terdaftar. Pilih identitas Customer360 yang sudah ada.',
+            ]);
+        }
+
+        if (
+            $data['expires_at'] !== null
+            && Carbon::parse($data['expires_at'])->startOfDay()->lt(
+                Carbon::parse((string) $receivedAt)->startOfDay(),
+            )
+        ) {
+            throw ValidationException::withMessages([
+                'identity_expires_at' => 'Identitas yang sudah kedaluwarsa tidak dapat diterima sebagai jaminan.',
+            ]);
+        }
+
+        $hasIdentity = $customer->identities()->exists();
+        $isPrimary = $data['is_primary'] || ! $hasIdentity;
+
+        if ($isPrimary) {
+            $customer->identities()->update(['is_primary' => false]);
+        }
+
+        return $customer->identities()->create([
+            'type' => $data['type'],
+            'number' => $data['number'],
+            'name_on_identity' => $data['name_on_identity'],
+            'expires_at' => $data['expires_at'],
+            'is_primary' => $isPrimary,
+            'verified_at' => null,
+            'verified_by' => null,
+        ]);
+    }
+
     /** @param array<string, mixed> $data */
     private function createLocked(
         Rental $rental,
@@ -156,8 +300,8 @@ class RentalCollateralManager
         }
 
         $type = $identity?->collateralType() ?? trim((string) ($data['type'] ?? ''));
-        $number = $identity?->number ?? trim((string) ($data['number'] ?? ''));
-        $holderName = $identity?->name_on_identity
+        $number = (string) (data_get($identity, 'number') ?? trim((string) ($data['number'] ?? '')));
+        $holderName = data_get($identity, 'name_on_identity')
             ?? $this->nullableString($data['holder_name'] ?? null);
 
         if ($type === '' || $number === '') {

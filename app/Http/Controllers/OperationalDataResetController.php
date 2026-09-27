@@ -72,10 +72,10 @@ class OperationalDataResetController extends Controller
 
         Inertia::flash('toast', [
             'type' => 'success',
-            'message' => 'Data operasional berhasil di-reset.',
+            'message' => __('uat035b_stage5.flash.operational_reset'),
             'description' => $branch === null
-                ? 'Seluruh cabang kembali ke baseline operasional tanpa menghapus master data.'
-                : "Cabang {$branch->code} kembali ke baseline operasional tanpa menghapus master data.",
+                ? __('uat035b_stage5.flash.operational_reset_all')
+                : __('uat035b_stage5.flash.operational_reset_branch', ['branch' => $branch->code]),
             'duration' => 7000,
         ]);
 

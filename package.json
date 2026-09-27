@@ -12,6 +12,8 @@
         "lint": "eslint . --fix",
         "lint:check": "eslint .",
         "types:check": "tsc --noEmit",
+        "i18n:check": "node scripts/check-i18n.mjs",
+        "i18n:test": "node scripts/test-i18n.mjs",
         "e2e:install": "playwright install chromium",
         "e2e:prepare": "herd php artisan --env=e2e e2e:prepare --force --no-interaction",
         "e2e:test": "npm run e2e:prepare && playwright test",

@@ -12,8 +12,16 @@ import {
     Trash2,
     Undo2,
 } from 'lucide-react';
-import type { FormEvent } from 'react';
+import type { FormEvent, ReactNode } from 'react';
 import { useState } from 'react';
+import {
+    stage5Choice,
+    stage5Display,
+    stage5RuleLabel,
+    Stage5Text,
+    stage5Translate,
+    stage5Date,
+} from '@/components/stage5-text';
 import InputError from '@/components/input-error';
 import { PaginationLinks } from '@/components/pagination-links';
 import { Badge } from '@/components/ui/badge';
@@ -29,6 +37,7 @@ import { Input } from '@/components/ui/input';
 import { FilterBar } from '@/components/ui/filter-bar';
 import { MetricCard } from '@/components/ui/metric-card';
 import { Label } from '@/components/ui/label';
+import { useAppLocale } from '@/lib/i18n';
 import {
     Select,
     SelectContent,
@@ -87,11 +96,6 @@ const severityLabels: Record<NotificationSeverity, string> = {
     critical: 'Kritis',
 };
 
-const dateTime = new Intl.DateTimeFormat('id-ID', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-});
-
 function severityVariant(severity: NotificationSeverity) {
     if (severity === 'critical') {
         return 'destructive' as const;
@@ -126,6 +130,7 @@ export default function NotificationCenter({
     rules,
     permissions,
 }: Props) {
+    const { locale: stage5Locale } = useAppLocale();
     const { auth } = usePage().props;
     const [tab, setTab] = useState<Tab>('inbox');
     const [search, setSearch] = useState(filters.search);
@@ -147,20 +152,20 @@ export default function NotificationCenter({
 
     return (
         <>
-            <Head title="Notification & Reminder Center" />
+            <Head
+                title={stage5Translate('stage5.ui.4907a6b6d8fc', stage5Locale)}
+            />
             <div className="space-y-6 p-4 md:p-6">
                 <div className="flex flex-wrap items-start justify-between gap-3">
                     <div>
                         <div className="flex items-center gap-2">
                             <BellRing className="size-6 text-primary" />
                             <h1 className="text-2xl font-semibold">
-                                Notification & Reminder Center
+                                <Stage5Text k="stage5.ui.4907a6b6d8fc" />
                             </h1>
                         </div>
                         <p className="mt-1 max-w-3xl text-sm text-muted-foreground">
-                            Reminder operasional lintas Booking, Rental,
-                            Finance, Transfer, Maintenance, dan Stock Opname
-                            dengan isolasi cabang.
+                            <Stage5Text k="stage5.ui.95714a80ed62" />
                         </p>
                     </div>
                     {permissions.manage && (
@@ -175,21 +180,39 @@ export default function NotificationCenter({
                             }
                         >
                             <RefreshCw className="size-4" />
-                            Jalankan pemindaian
+                            <Stage5Text k="stage5.ui.c5ae7dc003ee" />
                         </Button>
                     )}
                 </div>
 
                 <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4">
-                    <SummaryCard label="Inbox aktif" value={summary.total} />
-                    <SummaryCard label="Belum dibaca" value={summary.unread} />
                     <SummaryCard
-                        label="Peringatan kritis"
+                        label={stage5Translate(
+                            'stage5.ui.375d213b4a8b',
+                            stage5Locale,
+                        )}
+                        value={summary.total}
+                    />
+                    <SummaryCard
+                        label={stage5Translate(
+                            'stage5.ui.e5ae91935245',
+                            stage5Locale,
+                        )}
+                        value={summary.unread}
+                    />
+                    <SummaryCard
+                        label={stage5Translate(
+                            'stage5.ui.31e52fc1ccf5',
+                            stage5Locale,
+                        )}
                         value={summary.critical}
                         critical
                     />
                     <SummaryCard
-                        label="Sedang ditunda"
+                        label={stage5Translate(
+                            'stage5.ui.b6c1c8d3db49',
+                            stage5Locale,
+                        )}
                         value={summary.snoozed}
                     />
                 </div>
@@ -200,14 +223,14 @@ export default function NotificationCenter({
                         onClick={() => setTab('inbox')}
                         icon={BellRing}
                     >
-                        Inbox
+                        <Stage5Text k="stage5.ui.44caf74675ce" />
                     </TabButton>
                     <TabButton
                         active={tab === 'preferences'}
                         onClick={() => setTab('preferences')}
                         icon={Settings2}
                     >
-                        Preferensi Saya
+                        <Stage5Text k="stage5.ui.930ec77fa364" />
                     </TabButton>
                     {permissions.manage && (
                         <TabButton
@@ -215,7 +238,7 @@ export default function NotificationCenter({
                             onClick={() => setTab('rules')}
                             icon={SlidersHorizontal}
                         >
-                            Aturan Reminder
+                            <Stage5Text k="stage5.ui.bef9dbc92899" />
                         </TabButton>
                     )}
                 </div>
@@ -223,8 +246,14 @@ export default function NotificationCenter({
                 {tab === 'inbox' && (
                     <div className="space-y-4">
                         <FilterBar
-                            title="Filter inbox"
-                            description="Temukan reminder berdasarkan isi, kategori, prioritas, status, dan cabang."
+                            title={stage5Translate(
+                                'stage5.ui.3c66b920b3ff',
+                                stage5Locale,
+                            )}
+                            description={stage5Translate(
+                                'stage5.ui.9c0f6fcd4610',
+                                stage5Locale,
+                            )}
                             contentClassName="sm:grid-cols-2 xl:grid-cols-6"
                         >
                             <Input
@@ -237,15 +266,24 @@ export default function NotificationCenter({
                                         applyFilters({});
                                     }
                                 }}
-                                placeholder="Cari judul atau isi..."
+                                placeholder={stage5Translate(
+                                    'stage5.ui.f664ced63a69',
+                                    stage5Locale,
+                                )}
                                 className="xl:col-span-2"
                             />
                             <FilterSelect
                                 value={filters.category || 'all'}
-                                placeholder="Semua kategori"
+                                placeholder={stage5Translate(
+                                    'stage5.ui.3ee43aaffaaf',
+                                    stage5Locale,
+                                )}
                                 options={categories.map((category) => ({
                                     value: category,
-                                    label: categoryLabels[category],
+                                    label: stage5Display(
+                                        categoryLabels[category],
+                                        stage5Locale,
+                                    ),
                                 }))}
                                 onChange={(value) =>
                                     applyFilters({
@@ -255,10 +293,16 @@ export default function NotificationCenter({
                             />
                             <FilterSelect
                                 value={filters.severity || 'all'}
-                                placeholder="Semua prioritas"
+                                placeholder={stage5Translate(
+                                    'stage5.ui.6635e0faecfa',
+                                    stage5Locale,
+                                )}
                                 options={severities.map((severity) => ({
                                     value: severity,
-                                    label: severityLabels[severity],
+                                    label: stage5Display(
+                                        severityLabels[severity],
+                                        stage5Locale,
+                                    ),
                                 }))}
                                 onChange={(value) =>
                                     applyFilters({
@@ -268,20 +312,38 @@ export default function NotificationCenter({
                             />
                             <FilterSelect
                                 value={filters.state || 'all'}
-                                placeholder="Semua status"
+                                placeholder={stage5Translate(
+                                    'stage5.ui.baa2adda4148',
+                                    stage5Locale,
+                                )}
                                 options={[
                                     {
                                         value: 'unread',
-                                        label: 'Belum dibaca',
+                                        label: stage5Translate(
+                                            'stage5.ui.e5ae91935245',
+                                            stage5Locale,
+                                        ),
                                     },
                                     {
                                         value: 'read',
-                                        label: 'Sudah dibaca',
+                                        label: stage5Translate(
+                                            'stage5.ui.3b29ff9fdcce',
+                                            stage5Locale,
+                                        ),
                                     },
-                                    { value: 'snoozed', label: 'Ditunda' },
+                                    {
+                                        value: 'snoozed',
+                                        label: stage5Translate(
+                                            'stage5.ui.977c21bd43c8',
+                                            stage5Locale,
+                                        ),
+                                    },
                                     {
                                         value: 'dismissed',
-                                        label: 'Ditutup',
+                                        label: stage5Translate(
+                                            'stage5.ui.0e97e7214c08',
+                                            stage5Locale,
+                                        ),
                                     },
                                 ]}
                                 onChange={(value) =>
@@ -294,7 +356,10 @@ export default function NotificationCenter({
                                         ? 'all'
                                         : String(filters.branch_id)
                                 }
-                                placeholder="Semua cabang"
+                                placeholder={stage5Translate(
+                                    'stage5.ui.27d30aba48a4',
+                                    stage5Locale,
+                                )}
                                 options={auth.branches.map((branch) => ({
                                     value: String(branch.id),
                                     label: branch.code + ' · ' + branch.name,
@@ -321,7 +386,7 @@ export default function NotificationCenter({
                                     }
                                 >
                                     <CheckCheck className="size-4" />
-                                    Tandai semua dibaca
+                                    <Stage5Text k="stage5.ui.9e0e2358c834" />
                                 </Button>
                             </div>
                         )}
@@ -332,11 +397,10 @@ export default function NotificationCenter({
                                     <BellRing className="size-10 text-muted-foreground/50" />
                                     <div>
                                         <p className="font-medium">
-                                            Inbox notifikasi kosong
+                                            <Stage5Text k="stage5.ui.98f2e4187027" />
                                         </p>
                                         <p className="text-sm text-muted-foreground">
-                                            Tidak ada reminder yang sesuai
-                                            dengan filter saat ini.
+                                            <Stage5Text k="stage5.ui.22e432d869e6" />
                                         </p>
                                     </div>
                                 </CardContent>
@@ -386,6 +450,7 @@ export default function NotificationCenter({
 }
 
 function MessageCard({ message }: { message: NotificationItem }) {
+    const { locale: stage5Locale } = useAppLocale();
     const isUnread = message.read_at === null;
 
     return (
@@ -411,10 +476,13 @@ function MessageCard({ message }: { message: NotificationItem }) {
                                 <span className="size-2 rounded-full bg-primary" />
                             )}
                             <Badge variant={severityVariant(message.severity)}>
-                                {severityLabels[message.severity]}
+                                {stage5Display(message.severity, stage5Locale)}
                             </Badge>
                             <Badge variant="outline">
-                                {categoryLabels[message.category]}
+                                {stage5Display(
+                                    categoryLabels[message.category],
+                                    stage5Locale,
+                                )}
                             </Badge>
                             {message.branch && (
                                 <Badge variant="outline">
@@ -427,29 +495,36 @@ function MessageCard({ message }: { message: NotificationItem }) {
                         </p>
                         <div className="mt-3 flex flex-wrap gap-x-4 gap-y-1 text-xs text-muted-foreground">
                             <span>
-                                Diperbarui{' '}
-                                {dateTime.format(
+                                <Stage5Text k="stage5.ui.9d77dbd733a3" />{' '}
+                                {stage5Date(
                                     new Date(message.last_triggered_at),
+                                    stage5Locale,
                                 )}
                             </span>
                             {message.due_at && (
                                 <span>
-                                    Acuan waktu{' '}
-                                    {dateTime.format(new Date(message.due_at))}
+                                    <Stage5Text k="stage5.ui.50c63df51c98" />{' '}
+                                    {stage5Date(
+                                        new Date(message.due_at),
+                                        stage5Locale,
+                                    )}
                                 </span>
                             )}
                             {message.occurrences > 1 && (
                                 <span>
-                                    Diingatkan {message.occurrences} kali
+                                    <Stage5Text k="stage5.ui.e59d1ed21ba8" />{' '}
+                                    {message.occurrences}{' '}
+                                    <Stage5Text k="stage5.ui.e7e971e55af1" />
                                 </span>
                             )}
                             {message.snoozed_until &&
                                 new Date(message.snoozed_until) >
                                     new Date() && (
                                     <span>
-                                        Ditunda sampai{' '}
-                                        {dateTime.format(
+                                        <Stage5Text k="stage5.ui.e373b21adfb4" />{' '}
+                                        {stage5Date(
                                             new Date(message.snoozed_until),
+                                            stage5Locale,
                                         )}
                                     </span>
                                 )}
@@ -473,7 +548,7 @@ function MessageCard({ message }: { message: NotificationItem }) {
                                 }
                             >
                                 <ExternalLink className="size-3.5" />
-                                Buka sumber
+                                <Stage5Text k="stage5.ui.d33a5b9e6895" />
                             </Link>
                         </Button>
                     )}
@@ -490,7 +565,7 @@ function MessageCard({ message }: { message: NotificationItem }) {
                             }
                         >
                             <Check className="size-3.5" />
-                            Tandai dibaca
+                            <Stage5Text k="stage5.ui.77f0b190ab89" />
                         </Button>
                     ) : (
                         <Button
@@ -505,7 +580,7 @@ function MessageCard({ message }: { message: NotificationItem }) {
                             }
                         >
                             <Undo2 className="size-3.5" />
-                            Belum dibaca
+                            <Stage5Text k="stage5.ui.e5ae91935245" />
                         </Button>
                     )}
                     <Select
@@ -520,12 +595,23 @@ function MessageCard({ message }: { message: NotificationItem }) {
                     >
                         <SelectTrigger className="h-8 w-36 text-xs">
                             <Clock3 className="size-3.5" />
-                            <SelectValue placeholder="Tunda..." />
+                            <SelectValue
+                                placeholder={stage5Translate(
+                                    'stage5.ui.4e912cb03a60',
+                                    stage5Locale,
+                                )}
+                            />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="60">1 jam</SelectItem>
-                            <SelectItem value="1440">1 hari</SelectItem>
-                            <SelectItem value="10080">7 hari</SelectItem>
+                            <SelectItem value="60">
+                                <Stage5Text k="stage5.ui.8122b3bc2fe4" />
+                            </SelectItem>
+                            <SelectItem value="1440">
+                                <Stage5Text k="stage5.ui.4e32dc13c238" />
+                            </SelectItem>
+                            <SelectItem value="10080">
+                                <Stage5Text k="stage5.ui.7a462da65851" />
+                            </SelectItem>
                         </SelectContent>
                     </Select>
                     <Button
@@ -539,7 +625,7 @@ function MessageCard({ message }: { message: NotificationItem }) {
                         }
                     >
                         <Trash2 className="size-3.5" />
-                        Tutup
+                        <Stage5Text k="stage5.ui.06cde76b08c5" />
                     </Button>
                 </div>
             </CardContent>
@@ -556,6 +642,7 @@ function PreferencePanel({
     categories: NotificationCategory[];
     severities: NotificationSeverity[];
 }) {
+    const { locale: stage5Locale } = useAppLocale();
     const form = useForm({
         email_enabled: preference.email_enabled,
         email_min_severity: preference.email_min_severity,
@@ -583,11 +670,10 @@ function PreferencePanel({
             <CardHeader>
                 <CardTitle className="flex items-center gap-2">
                     <Mail className="size-5" />
-                    Preferensi Notifikasi Saya
+                    <Stage5Text k="stage5.ui.1ec647cb28dd" />
                 </CardTitle>
                 <CardDescription>
-                    Notifikasi in-app kritis tetap muncul. Email bersifat
-                    opsional dan dikirim melalui queue aplikasi.
+                    <Stage5Text k="stage5.ui.c33b9b05e588" />
                 </CardDescription>
             </CardHeader>
             <CardContent>
@@ -606,18 +692,19 @@ function PreferencePanel({
                         />
                         <span>
                             <span className="block text-sm font-medium">
-                                Aktifkan notifikasi email
+                                <Stage5Text k="stage5.ui.169158592b7d" />
                             </span>
                             <span className="block text-xs text-muted-foreground">
-                                Email hanya dikirim jika alamat sudah
-                                terverifikasi.
+                                <Stage5Text k="stage5.ui.04100b1e0712" />
                             </span>
                         </span>
                     </label>
 
                     <div className="grid gap-4 md:grid-cols-3">
                         <div className="space-y-2">
-                            <Label>Prioritas minimum email</Label>
+                            <Label>
+                                <Stage5Text k="stage5.ui.ad2cdff9957d" />
+                            </Label>
                             <Select
                                 value={form.data.email_min_severity}
                                 onValueChange={(value: NotificationSeverity) =>
@@ -633,7 +720,10 @@ function PreferencePanel({
                                             key={severity}
                                             value={severity}
                                         >
-                                            {severityLabels[severity]}
+                                            {stage5Display(
+                                                severityLabels[severity],
+                                                stage5Locale,
+                                            )}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
@@ -644,7 +734,7 @@ function PreferencePanel({
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="quiet-start">
-                                Waktu tenang mulai
+                                <Stage5Text k="stage5.ui.a926c6df289f" />
                             </Label>
                             <Input
                                 id="quiet-start"
@@ -663,7 +753,7 @@ function PreferencePanel({
                         </div>
                         <div className="space-y-2">
                             <Label htmlFor="quiet-end">
-                                Waktu tenang selesai
+                                <Stage5Text k="stage5.ui.a6fd7ff0a48a" />
                             </Label>
                             <Input
                                 id="quiet-end"
@@ -682,10 +772,11 @@ function PreferencePanel({
 
                     <div className="space-y-3">
                         <div>
-                            <Label>Kategori yang dibisukan</Label>
+                            <Label>
+                                <Stage5Text k="stage5.ui.b4d8c9a0d587" />
+                            </Label>
                             <p className="text-xs text-muted-foreground">
-                                Reminder kritis tidak ikut dibisukan untuk
-                                menjaga keselamatan operasional.
+                                <Stage5Text k="stage5.ui.88485d13bbef" />
                             </p>
                         </div>
                         <div className="grid gap-2 sm:grid-cols-2 lg:grid-cols-3">
@@ -705,7 +796,10 @@ function PreferencePanel({
                                                 toggleCategory(category)
                                             }
                                         />
-                                        {categoryLabels[category]}
+                                        {stage5Display(
+                                            categoryLabels[category],
+                                            stage5Locale,
+                                        )}
                                     </label>
                                 ))}
                         </div>
@@ -713,7 +807,17 @@ function PreferencePanel({
                     </div>
 
                     <Button type="submit" disabled={form.processing}>
-                        {form.processing ? 'Menyimpan...' : 'Simpan preferensi'}
+                        {form.processing
+                            ? stage5Choice(
+                                  'Menyimpan...',
+                                  'Saving...',
+                                  stage5Locale,
+                              )
+                            : stage5Choice(
+                                  'Simpan preferensi',
+                                  'Save preferences',
+                                  stage5Locale,
+                              )}
                     </Button>
                 </form>
             </CardContent>
@@ -728,6 +832,7 @@ function RuleEditor({
     rule: NotificationRule;
     severities: NotificationSeverity[];
 }) {
+    const { locale: stage5Locale } = useAppLocale();
     const form = useForm({
         is_enabled: rule.is_enabled,
         severity: rule.severity,
@@ -746,13 +851,28 @@ function RuleEditor({
                 <div className="flex items-start justify-between gap-3">
                     <div>
                         <div className="flex flex-wrap items-center gap-2">
-                            <CardTitle>{rule.name}</CardTitle>
+                            <CardTitle>
+                                {stage5RuleLabel(
+                                    rule.code,
+                                    rule.name,
+                                    'title',
+                                    stage5Locale,
+                                )}
+                            </CardTitle>
                             <Badge variant="outline">
-                                {categoryLabels[rule.category]}
+                                {stage5Display(
+                                    categoryLabels[rule.category],
+                                    stage5Locale,
+                                )}
                             </Badge>
                         </div>
                         <CardDescription className="mt-2">
-                            {rule.description}
+                            {stage5RuleLabel(
+                                rule.code,
+                                rule.description,
+                                'description',
+                                stage5Locale,
+                            )}
                         </CardDescription>
                     </div>
                     <label className="flex items-center gap-2 text-sm">
@@ -763,7 +883,7 @@ function RuleEditor({
                                 form.setData('is_enabled', event.target.checked)
                             }
                         />
-                        Aktif
+                        <Stage5Text k="stage5.ui.89f29d42adb5" />
                     </label>
                 </div>
             </CardHeader>
@@ -771,7 +891,9 @@ function RuleEditor({
                 <form className="space-y-4" onSubmit={submit}>
                     <div className="grid gap-3 sm:grid-cols-3">
                         <div className="space-y-2">
-                            <Label>Prioritas</Label>
+                            <Label>
+                                <Stage5Text k="stage5.ui.51cb5d20e6cb" />
+                            </Label>
                             <Select
                                 value={form.data.severity}
                                 onValueChange={(value: NotificationSeverity) =>
@@ -787,14 +909,19 @@ function RuleEditor({
                                             key={severity}
                                             value={severity}
                                         >
-                                            {severityLabels[severity]}
+                                            {stage5Display(
+                                                severityLabels[severity],
+                                                stage5Locale,
+                                            )}
                                         </SelectItem>
                                     ))}
                                 </SelectContent>
                             </Select>
                         </div>
                         <div className="space-y-2">
-                            <Label>Lead time (menit)</Label>
+                            <Label>
+                                <Stage5Text k="stage5.ui.3fb56e744bbd" />
+                            </Label>
                             <Input
                                 type="number"
                                 min={0}
@@ -809,7 +936,9 @@ function RuleEditor({
                             />
                         </div>
                         <div className="space-y-2">
-                            <Label>Ulangi setiap (menit)</Label>
+                            <Label>
+                                <Stage5Text k="stage5.ui.d5a816caf986" />
+                            </Label>
                             <Input
                                 type="number"
                                 min={5}
@@ -826,14 +955,25 @@ function RuleEditor({
                     </div>
                     <div className="flex flex-wrap items-center justify-between gap-3 border-t pt-4">
                         <p className="text-xs text-muted-foreground">
-                            Penerima: <code>{rule.recipient_permission}</code>
+                            <Stage5Text k="stage5.ui.d85617e54a61" />{' '}
+                            <code>{rule.recipient_permission}</code>
                         </p>
                         <Button
                             type="submit"
                             size="sm"
                             disabled={form.processing}
                         >
-                            {form.processing ? 'Menyimpan...' : 'Simpan aturan'}
+                            {form.processing
+                                ? stage5Choice(
+                                      'Menyimpan...',
+                                      'Saving...',
+                                      stage5Locale,
+                                  )
+                                : stage5Choice(
+                                      'Simpan aturan',
+                                      'Save rule',
+                                      stage5Locale,
+                                  )}
                         </Button>
                     </div>
                 </form>
@@ -870,7 +1010,7 @@ function TabButton({
     active: boolean;
     onClick: () => void;
     icon: typeof BellRing;
-    children: string;
+    children: ReactNode;
 }) {
     return (
         <Button

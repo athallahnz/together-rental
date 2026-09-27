@@ -94,7 +94,7 @@ class PooledStockManager
 
         // Imported/manual counters with no ledger remain blocked; never silently
         // reset them or assume those units can be promised to a customer.
-        $untrackedReserved = max(0, $inventory->quantity_reserved - QuantityTimeline::peak($reservationIntervals));
+        $untrackedReserved = max(0, $inventory->quantity_reserved - QuantityTimeline::peak(array_values($reservationIntervals)));
         $untrackedRented = max(0, $inventory->quantity_rented - $knownRented);
         $intervals = $reservations->reject(fn (BulkReservation $row): bool => $row->booking_id === $ignoreBookingId)
             ->map(fn (BulkReservation $row): array => [
@@ -102,7 +102,7 @@ class PooledStockManager
                 'end' => $row->ends_at->getTimestamp(),
                 'quantity' => $row->quantity,
             ])->values()->all();
-        $reservedPeak = QuantityTimeline::peak($intervals, $start, $end);
+        $reservedPeak = QuantityTimeline::peak(array_values($intervals), $start, $end);
         $rentalIntervals = [];
         foreach ($rented as $row) {
             if (in_array((int) $row->id, $ignoreRentalItemIds, true)) {
@@ -142,7 +142,7 @@ class PooledStockManager
         $inventory = $this->lock($booking->branch_id, $productId);
         $previousPeak = $this->reservedPeak($inventory);
         if ($quantity < 1 || $this->remaining(
-            $inventory, $booking->starts_at->getTimestamp(), $booking->ends_at->getTimestamp(),
+            $inventory, CarbonImmutable::parse((string) $booking->starts_at)->getTimestamp(), CarbonImmutable::parse((string) $booking->ends_at)->getTimestamp(),
         ) < $quantity) {
             throw ValidationException::withMessages([
                 "items.{$position}.quantity" => 'Stok Bulk tersedia tidak mencukupi pada periode yang dipilih.',
@@ -189,7 +189,7 @@ class PooledStockManager
             $start = $checkoutAt ?? CarbonImmutable::parse($booking->starts_at);
             $enoughPhysical = $inventory->quantity_on_hand - $inventory->quantity_rented
                 - $inventory->quantity_maintenance - $inventory->quantity_in_transfer;
-            if ($this->remaining($inventory, $start->getTimestamp(), $booking->ends_at->getTimestamp(), $booking->id) < $quantity
+            if ($this->remaining($inventory, $start->getTimestamp(), CarbonImmutable::parse((string) $booking->ends_at)->getTimestamp(), $booking->id) < $quantity
                 || ($checkoutAt !== null && ($enoughPhysical < $quantity || ! $start->lessThan($booking->ends_at)))) {
                 throw ValidationException::withMessages(['booking' => 'Stok Bulk tidak lagi mencukupi untuk booking ini. Periksa jadwal dan stok cabang.']);
             }
@@ -218,11 +218,11 @@ class PooledStockManager
 
     private function reservedPeak(BranchInventory $inventory): int
     {
-        return QuantityTimeline::peak($this->reservations($inventory)->map(fn (BulkReservation $row): array => [
+        return QuantityTimeline::peak(array_values($this->reservations($inventory)->map(fn (BulkReservation $row): array => [
             'start' => $row->starts_at->getTimestamp(),
             'end' => $row->ends_at->getTimestamp(),
             'quantity' => $row->quantity,
-        ])->values()->all());
+        ])->values()->all()));
     }
 
     private function syncReserved(BranchInventory $inventory, int $previousPeak): void

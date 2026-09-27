@@ -8,6 +8,11 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Carbon;
 
+/**
+ * @property Carbon|null $expires_at
+ * @property Carbon|null $verified_at
+ * @property array<string, mixed>|null $metadata
+ */
 #[Fillable([
     'customer_id',
     'type',

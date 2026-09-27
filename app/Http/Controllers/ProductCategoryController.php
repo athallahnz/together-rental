@@ -32,7 +32,7 @@ class ProductCategoryController extends Controller
 
         return back()->with('toast', [
             'type' => 'success',
-            'message' => "Kategori {$category->name} berhasil dibuat.",
+            'message' => __('uat035b_stage3.toast.productcategory_1', ['name' => $category->name]),
         ]);
     }
 
@@ -57,7 +57,7 @@ class ProductCategoryController extends Controller
 
         return back()->with('toast', [
             'type' => 'success',
-            'message' => "Kategori {$productCategory->name} berhasil diperbarui.",
+            'message' => __('uat035b_stage3.toast.productcategory_2', ['name' => $productCategory->name]),
         ]);
     }
 
@@ -87,7 +87,7 @@ class ProductCategoryController extends Controller
 
         return back()->with('toast', [
             'type' => 'success',
-            'message' => "Kategori {$productCategory->name} berhasil diarsipkan.",
+            'message' => __('uat035b_stage3.toast.productcategory_3', ['name' => $productCategory->name]),
         ]);
     }
 }

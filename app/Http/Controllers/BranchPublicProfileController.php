@@ -98,8 +98,8 @@ class BranchPublicProfileController extends Controller
         return back()->with('toast', [
             'type' => 'success',
             'message' => $validated['public_catalog_enabled']
-                ? "Katalog publik cabang {$branch->code} berhasil diaktifkan dan diperbarui."
-                : "Katalog publik cabang {$branch->code} berhasil dinonaktifkan.",
+                ? __('uat035b_stage3.toast.branch_public_enabled', ['code' => $branch->code])
+                : __('uat035b_stage3.toast.branch_public_disabled', ['code' => $branch->code]),
         ]);
     }
 

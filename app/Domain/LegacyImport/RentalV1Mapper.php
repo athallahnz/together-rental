@@ -79,7 +79,7 @@ final class RentalV1Mapper
                     $rows[] = $this->mapping(
                         $batch,
                         'rental_type',
-                        $legacyType,
+                        (string) $legacyType,
                         'rate_plans',
                         (int) $ratePlanId,
                         ['code' => $rateCode],

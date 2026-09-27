@@ -23,7 +23,7 @@ class PaymentMethodController extends Controller
 
         return back()->with('toast', [
             'type' => 'success',
-            'message' => "Metode pembayaran {$method->code} berhasil ditambahkan.",
+            'message' => __('uat035b_stage5.flash.method_added', ['reference' => $method->code]),
         ]);
     }
 
@@ -43,7 +43,7 @@ class PaymentMethodController extends Controller
 
         return back()->with('toast', [
             'type' => 'success',
-            'message' => "Metode pembayaran {$method->code} berhasil diperbarui.",
+            'message' => __('uat035b_stage5.flash.method_updated', ['reference' => $method->code]),
         ]);
     }
 
@@ -68,8 +68,7 @@ class PaymentMethodController extends Controller
 
         return back()->with('toast', [
             'type' => 'success',
-            'message' => "Metode pembayaran {$method->code} berhasil "
-                .($method->is_active ? 'diaktifkan.' : 'dinonaktifkan.'),
+            'message' => __($method->is_active ? 'uat035b_stage5.flash.method_activated' : 'uat035b_stage5.flash.method_deactivated', ['reference' => $method->code]),
         ]);
     }
 }

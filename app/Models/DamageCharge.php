@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 ])]
 class DamageCharge extends Model
 {
+    /** @return BelongsTo<RentalReturnItem, $this> */
     public function returnItem(): BelongsTo
     {
         return $this->belongsTo(RentalReturnItem::class, 'rental_return_item_id');

@@ -1,5 +1,8 @@
 import { CalendarDays, LoaderCircle, ShieldCheck } from 'lucide-react';
 import { useEffect, useState } from 'react';
+import { translateKey, useAppLocale } from '@/lib/i18n';
+import type { AppLocale } from '@/lib/i18n';
+import { publicAvailabilityLabel } from '@/lib/public-i18n';
 import {
     CalendarMonth,
     CalendarToolbar,
@@ -33,6 +36,8 @@ export default function PublicAssetCalendar({
     slug,
     productName,
 }: Props) {
+    const { locale, tr } = useAppLocale();
+
     const [month, setMonth] = useState(currentMonth());
     const [data, setData] = useState<PublicAssetCalendarPayload | null>(null);
     const [unitKey, setUnitKey] = useState<string>('unit-1');
@@ -56,7 +61,9 @@ export default function PublicAssetCalendar({
         )
             .then(async (response) => {
                 if (!response.ok) {
-                    throw new Error('Jadwal unit belum dapat ditampilkan.');
+                    throw new Error(
+                        translateKey('public.detail.calendar.failure', locale),
+                    );
                 }
 
                 const payload = (await response.json()) as {
@@ -84,7 +91,10 @@ export default function PublicAssetCalendar({
                 setError(
                     reason instanceof Error
                         ? reason.message
-                        : 'Jadwal unit belum dapat ditampilkan.',
+                        : translateKey(
+                              'public.detail.calendar.failure',
+                              locale,
+                          ),
                 );
             })
             .finally(() => {
@@ -94,7 +104,7 @@ export default function PublicAssetCalendar({
             });
 
         return () => controller.abort();
-    }, [branch.code, month, slug, unitKey]);
+    }, [branch.code, locale, month, slug, unitKey]);
 
     const selectedUnit = data?.selected_unit ?? null;
 
@@ -106,16 +116,16 @@ export default function PublicAssetCalendar({
             <div className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                 <div>
                     <div className="flex items-center gap-2 text-xs font-semibold tracking-[0.14em] text-neutral-400 uppercase">
-                        <CalendarDays className="size-4" /> Smart availability
-                        calendar
+                        <CalendarDays className="size-4" />{' '}
+                        {tr('public.detail.calendar.eyebrow')}
                     </div>
                     <h2 className="mt-2 text-2xl font-semibold tracking-tight">
-                        Jadwal setiap unit {productName}
+                        {tr('public.detail.calendar.title', {
+                            name: productName,
+                        })}
                     </h2>
                     <p className="mt-2 max-w-2xl text-sm leading-6 text-neutral-500">
-                        Lihat kapan unit terbooking, tersewa, maintenance, atau
-                        sedang berpindah cabang sebelum menentukan tanggal
-                        rental.
+                        {tr('public.detail.calendar.description')}
                     </p>
                 </div>
                 <div className="w-full max-w-xs">
@@ -128,13 +138,17 @@ export default function PublicAssetCalendar({
                         }}
                     >
                         <SelectTrigger className="border-neutral-300 bg-white text-neutral-900">
-                            <SelectValue placeholder="Pilih unit" />
+                            <SelectValue
+                                placeholder={tr(
+                                    'public.detail.calendar.choose',
+                                )}
+                            />
                         </SelectTrigger>
                         <SelectContent>
                             {data?.units.map((unit) => (
                                 <SelectItem key={unit.key} value={unit.key}>
                                     {unit.label} ·{' '}
-                                    {statusLabel(unit.current_status)}
+                                    {statusLabel(unit.current_status, locale)}
                                 </SelectItem>
                             ))}
                         </SelectContent>
@@ -146,6 +160,7 @@ export default function PublicAssetCalendar({
                 <CalendarToolbar
                     month={month}
                     appearance="public"
+                    locale={locale}
                     onPrevious={() => {
                         setLoading(true);
                         setError(null);
@@ -162,20 +177,22 @@ export default function PublicAssetCalendar({
             {loading && (
                 <div className="flex min-h-72 items-center justify-center text-sm text-neutral-500">
                     <LoaderCircle className="mr-2 size-5 animate-spin" />
-                    Memuat kalender unit...
+                    {tr('public.detail.calendar.load')}
                 </div>
             )}
 
             {!loading && error && (
                 <Alert className="mt-5">
-                    <AlertTitle>Kalender belum tersedia</AlertTitle>
+                    <AlertTitle>
+                        {tr('public.detail.calendar.error')}
+                    </AlertTitle>
                     <AlertDescription>{error}</AlertDescription>
                 </Alert>
             )}
 
             {!loading && !error && data?.units.length === 0 && (
                 <div className="mt-5 rounded-2xl border border-dashed p-8 text-center text-sm text-neutral-500">
-                    Belum ada unit serialized aktif pada cabang ini.
+                    {tr('public.detail.calendar.empty')}
                 </div>
             )}
 
@@ -192,20 +209,22 @@ export default function PublicAssetCalendar({
                             variant="outline"
                             className="border-emerald-200 bg-emerald-50 text-emerald-700"
                         >
-                            Status saat ini:{' '}
-                            {statusLabel(selectedUnit.current_status)}
+                            {tr('public.detail.calendar.current')}{' '}
+                            {statusLabel(selectedUnit.current_status, locale)}
                         </Badge>
                         <Badge
                             variant="outline"
                             className="border-neutral-300 bg-neutral-50 text-neutral-700"
                         >
-                            Kondisi: {selectedUnit.condition}
+                            {tr('public.detail.calendar.condition')}{' '}
+                            {conditionLabel(selectedUnit.condition, locale)}
                         </Badge>
                     </div>
                     <CalendarMonth
                         month={month}
                         events={selectedUnit.events}
                         appearance="public"
+                        locale={locale}
                     />
                 </div>
             )}
@@ -213,22 +232,50 @@ export default function PublicAssetCalendar({
             {data?.privacy_note && (
                 <div className="mt-5 flex items-start gap-3 rounded-2xl bg-neutral-50 p-4 text-sm text-neutral-600">
                     <ShieldCheck className="mt-0.5 size-5 shrink-0" />
-                    <p className="leading-6">{data.privacy_note}</p>
+                    <p className="leading-6">
+                        {tr('public.detail.calendar.privacy')}
+                    </p>
                 </div>
             )}
         </section>
     );
 }
 
-function statusLabel(status: string) {
-    return (
-        {
-            available: 'Tersedia',
-            reserved: 'Terbooking',
-            rented: 'Tersewa',
-            maintenance: 'Maintenance',
-            in_transit: 'Dalam transfer',
-            lost: 'Hilang',
-        }[status] ?? status
-    );
+function statusLabel(status: string, locale: 'id' | 'en') {
+    const keys = {
+        reserved: 'public.detail.calendar.reserved',
+        rented: 'public.detail.calendar.rented',
+        maintenance: 'public.detail.calendar.maintenance',
+        lost: 'public.detail.calendar.lost',
+    } as const;
+
+    if (
+        status === 'available' ||
+        status === 'limited' ||
+        status === 'unavailable' ||
+        status === 'in_transit'
+    ) {
+        return publicAvailabilityLabel(status, locale);
+    }
+
+    const key = keys[status as keyof typeof keys];
+
+    return key ? translateKey(key, locale) : status;
+}
+
+/** Known asset conditions are system values; preserve unknown custom codes as supplied. */
+function conditionLabel(condition: string, locale: AppLocale): string {
+    const keys = {
+        excellent: 'public.detail.calendar.condition.excellent',
+        good: 'public.detail.calendar.condition.good',
+        fair: 'public.detail.calendar.condition.fair',
+        poor: 'public.detail.calendar.condition.poor',
+        damaged: 'public.detail.calendar.condition.damaged',
+        critical: 'public.detail.calendar.condition.critical',
+        lost: 'public.detail.calendar.condition.lost',
+        retired: 'public.detail.calendar.condition.retired',
+    } as const;
+    const key = keys[condition.toLowerCase() as keyof typeof keys];
+
+    return key ? translateKey(key, locale) : condition;
 }

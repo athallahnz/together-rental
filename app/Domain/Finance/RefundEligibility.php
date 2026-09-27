@@ -108,7 +108,9 @@ class RefundEligibility
         return [
             'approve' => $actor->can('refunds.approve')
                 && $refund->status === 'requested'
-                && $separatedApprover,
+                && $separatedApprover
+                && ($refund->purpose !== Refund::PURPOSE_BOOKING_CANCELLATION
+                    || $actor->can('bookings.cancel')),
             'reject' => $actor->can('refunds.approve')
                 && $refund->status === 'requested'
                 && $separatedApprover,

@@ -9,30 +9,36 @@ import {
     CardHeader,
     CardTitle,
 } from '@/components/ui/card';
+import { useAppLocale } from '@/lib/i18n';
 import { edit as editAppearance } from '@/routes/appearance';
 
 export default function Appearance() {
+    const { t } = useAppLocale();
+
     return (
         <>
-            <Head title="Pengaturan tampilan" />
+            <Head title={t('Pengaturan tampilan')} />
 
-            <h1 className="sr-only">Pengaturan tampilan</h1>
+            <h1 className="sr-only">{t('Pengaturan tampilan')}</h1>
 
             <div className="space-y-6">
                 <Heading
-                    title="Tampilan"
-                    description="Atur preferensi tema antarmuka untuk akun Anda."
+                    title={t('Tampilan')}
+                    description={t(
+                        'Atur preferensi tema antarmuka untuk akun Anda.',
+                    )}
                 />
 
                 <Card className="overflow-hidden">
                     <CardHeader className="border-b bg-muted/20">
                         <CardTitle className="flex items-center gap-2 text-base">
                             <Palette className="size-5" />
-                            Tema antarmuka
+                            {t('Tema antarmuka')}
                         </CardTitle>
                         <CardDescription>
-                            Pilihan ini hanya memengaruhi tampilan akun Anda dan
-                            tidak mengubah konfigurasi pengguna lain.
+                            {t(
+                                'Pilihan ini hanya memengaruhi tampilan akun Anda dan tidak mengubah konfigurasi pengguna lain.',
+                            )}
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="pt-6">

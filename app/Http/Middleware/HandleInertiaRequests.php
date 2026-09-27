@@ -42,12 +42,15 @@ class HandleInertiaRequests extends Middleware
         return [
             ...parent::share($request),
             'name' => config('app.name'),
+            'locale' => app()->getLocale() === 'en' ? 'en' : 'id',
             'auth' => [
                 'user' => $user,
                 'canResetOperations' => $user !== null
                     && app()->environment(['local', 'testing', 'staging'])
                     && app(UserAccessManager::class)->isSuperAdministrator($user),
                 'permissions' => $user === null ? [] : [
+                    'expenses.view' => $user->can('expenses.view'),
+                    'maintenance.view' => $user->can('maintenance.view'),
                     'company.view' => $user->can('company.view'),
                     'company.manage' => $user->can('company.manage'),
                     'branches.view' => $user->can('branches.view'),

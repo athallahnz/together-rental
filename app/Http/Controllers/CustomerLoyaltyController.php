@@ -49,7 +49,7 @@ class CustomerLoyaltyController extends Controller
 
         return back()->with('toast', [
             'type' => 'success',
-            'message' => "Transaksi loyalty {$transaction->points} poin berhasil disimpan.",
+            'message' => __('uat035b_stage3.toast.customerloyalty_1', ['points' => $transaction->points]),
         ]);
     }
 }

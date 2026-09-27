@@ -87,7 +87,7 @@ class RentalExtensionController extends Controller
 
         return to_route('rentals.show', $rental)->with('toast', [
             'type' => 'success',
-            'message' => "Perpanjangan {$extension->extension_number} berhasil disetujui.",
+            'message' => __('uat035b_stage4.flash.extension_approved', ['reference' => $extension->extension_number]),
         ]);
     }
 

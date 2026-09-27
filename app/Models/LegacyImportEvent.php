@@ -6,6 +6,9 @@ use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
+/**
+ * @property array<string, mixed>|null $context
+ */
 #[Fillable([
     'batch_id',
     'user_id',
@@ -19,6 +22,7 @@ class LegacyImportEvent extends Model
 {
     public const UPDATED_AT = null;
 
+    /** @return BelongsTo<LegacyImportBatch, $this> */
     public function batch(): BelongsTo
     {
         return $this->belongsTo(LegacyImportBatch::class, 'batch_id');

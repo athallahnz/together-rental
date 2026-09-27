@@ -30,7 +30,7 @@ class ProductRateController extends Controller
 
         return back()->with('toast', [
             'type' => 'success',
-            'message' => "Harga {$product->name} berhasil ditambahkan.",
+            'message' => __('uat035b_stage3.toast.productrate_1', ['name' => $product->name]),
         ]);
     }
 
@@ -52,7 +52,7 @@ class ProductRateController extends Controller
 
         return back()->with('toast', [
             'type' => 'success',
-            'message' => 'Harga produk berhasil diperbarui.',
+            'message' => __('uat035b_stage3.toast.productrate_2'),
         ]);
     }
 
@@ -81,7 +81,7 @@ class ProductRateController extends Controller
 
         return back()->with('toast', [
             'type' => 'success',
-            'message' => 'Harga produk berhasil dihapus.',
+            'message' => __('uat035b_stage3.toast.productrate_3'),
         ]);
     }
 }

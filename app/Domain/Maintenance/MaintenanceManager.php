@@ -15,7 +15,8 @@ class MaintenanceManager
     public function create(array $data, User $actor): MaintenanceOrder
     {
         return DB::transaction(function () use ($data, $actor): MaintenanceOrder {
-            $asset = Asset::query()->lockForUpdate()->findOrFail($data['asset_id']);
+            /** @var Asset $asset */
+            $asset = Asset::query()->lockForUpdate()->findOrFail((int) $data['asset_id']);
             $this->guardBranch($asset, $actor);
 
             if (in_array($asset->status, ['rented', 'reserved', 'in_transit', 'lost', 'retired'], true)) {

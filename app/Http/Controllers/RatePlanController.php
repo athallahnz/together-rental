@@ -29,7 +29,7 @@ class RatePlanController extends Controller
 
         return back()->with('toast', [
             'type' => 'success',
-            'message' => "Rate plan {$ratePlan->name} berhasil dibuat.",
+            'message' => __('uat035b_stage3.toast.rateplan_1', ['name' => $ratePlan->name]),
         ]);
     }
 
@@ -65,7 +65,7 @@ class RatePlanController extends Controller
 
         return back()->with('toast', [
             'type' => 'success',
-            'message' => "Rate plan {$ratePlan->name} berhasil diperbarui.",
+            'message' => __('uat035b_stage3.toast.rateplan_2', ['name' => $ratePlan->name]),
         ]);
     }
 }

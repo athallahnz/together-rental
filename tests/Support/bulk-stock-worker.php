@@ -25,11 +25,23 @@ $app = require __DIR__.'/../../bootstrap/app.php';
 $app->make(Kernel::class)->bootstrap();
 config(['database.default' => 'mysql', 'database.connections.mysql' => $connection]);
 DB::purge('mysql');
+// Validate the live connection before any stock operation (not merely the JSON config).
+if ($app->environment() !== 'testing'
+    || DB::connection()->getDriverName() !== 'mysql'
+    || DB::connection()->getDatabaseName() !== 'together_rental_bulk_concurrency_test'
+    || DB::selectOne('SELECT DATABASE() AS db_name')->db_name !== 'together_rental_bulk_concurrency_test') {
+    fwrite(STDERR, 'Worker database safety verification failed.');
+    exit(2);
+}
 CarbonImmutable::setTestNow($input['now']);
 Carbon::setTestNow($input['now']);
+if (empty($input['ready']) || ! touch($input['ready'])) {
+    fwrite(STDERR, 'Could not publish worker READY marker.');
+    exit(2);
+}
 fwrite(STDOUT, "READY\n");
 fflush(STDOUT);
-$deadline = microtime(true) + 15;
+$deadline = microtime(true) + 120;
 while (! is_file($input['barrier'])) {
     if (microtime(true) >= $deadline) {
         fwrite(STDERR, 'Concurrency barrier timed out.');

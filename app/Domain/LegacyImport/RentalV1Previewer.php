@@ -36,17 +36,13 @@ final class RentalV1Previewer
                 DB::table('legacy_import_rows')->where('batch_id', $batch->id)->delete();
                 DB::table('legacy_import_tables')->where('batch_id', $batch->id)->delete();
 
+                /** @var list<array<string, mixed>> $buffer */
                 $buffer = [];
                 $chunkSize = max(50, (int) config('legacy-import.chunk_size', 500));
                 $now = now();
 
                 $flush = static function () use (&$buffer): void {
-                    if ($buffer === []) {
-                        return;
-                    }
-
-                    DB::table('legacy_import_rows')->insert($buffer);
-                    $buffer = [];
+                    self::flushRows($buffer);
                 };
 
                 $result = $this->parser->parse(
@@ -160,6 +156,17 @@ final class RentalV1Previewer
 
             throw $exception;
         }
+    }
+
+    /** @param list<array<string, mixed>> $buffer */
+    private static function flushRows(array &$buffer): void
+    {
+        if ($buffer === []) {
+            return;
+        }
+
+        DB::table('legacy_import_rows')->insert($buffer);
+        $buffer = [];
     }
 
     /** @param list<string> $allowed */

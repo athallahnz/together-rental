@@ -1,0 +1,9 @@
+{
+    "Profile updated.": "Profile updated.",
+    "Password updated.": "Password updated.",
+    "The given data was invalid.": "The provided data is invalid.",
+    "Unauthenticated.": "Your session has expired. Please sign in again.",
+    "Forbidden": "You do not have permission to perform this action.",
+    "Not Found": "The requested page or data could not be found.",
+    "Too Many Requests": "Too many requests. Please try again later."
+}

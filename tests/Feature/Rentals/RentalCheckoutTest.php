@@ -5,7 +5,9 @@ namespace Tests\Feature\Rentals;
 use App\Models\Asset;
 use App\Models\Booking;
 use App\Models\Branch;
+use App\Models\Company;
 use App\Models\Customer;
+use App\Models\CustomerIdentity;
 use App\Models\PaymentMethod;
 use App\Models\Product;
 use App\Models\ProductRate;
@@ -94,6 +96,11 @@ class RentalCheckoutTest extends TestCase
             'deposit_paid' => 0,
             'payment_method_id' => $method->id,
             'cash_session_id' => $session->id,
+            'collaterals' => [[
+                'type' => 'KTP',
+                'number' => 'DIRECT-REQUIRED-001',
+                'holder_name' => 'Pelanggan Direct',
+            ]],
         ])->assertSessionHasNoErrors()
             ->assertRedirect();
 
@@ -117,6 +124,12 @@ class RentalCheckoutTest extends TestCase
             'rental_id' => $rental->id,
             'to_status' => 'active',
         ]);
+        $this->assertDatabaseHas('rental_collaterals', [
+            'rental_id' => $rental->id,
+            'type' => 'KTP',
+            'number' => 'DIRECT-REQUIRED-001',
+            'status' => 'held',
+        ]);
     }
 
     public function test_direct_rental_copies_member_pricing_snapshot_from_internal_booking(): void
@@ -134,6 +147,11 @@ class RentalCheckoutTest extends TestCase
             'checkout_condition' => 'good',
             'payment_amount' => 0,
             'deposit_paid' => 0,
+            'collaterals' => [[
+                'type' => 'KTP',
+                'number' => 'DIRECT-MEMBER-001',
+                'holder_name' => 'Member Direct',
+            ]],
         ])->assertSessionHasNoErrors();
 
         $booking = Booking::query()->firstOrFail();
@@ -144,6 +162,255 @@ class RentalCheckoutTest extends TestCase
         $this->assertSame('135000.00', $rental->total_amount);
         $this->assertSame($booking->pricing_snapshot, $rental->pricing_snapshot);
         $this->assertSame('membership', $rental->pricing_snapshot['discount_strategy']);
+    }
+
+    public function test_direct_rental_requires_physical_collateral_and_cannot_bypass_via_post(): void
+    {
+        [$user, $branch, $customer, $plan, $product, $asset] = $this->fixture();
+
+        $this->actingAs($user)->post(route('rentals.direct.store'), [
+            ...$this->bookingPayload($branch, $customer, $plan, $product),
+            'checked_out_at' => now()->format('Y-m-d H:i:s'),
+            'checkout_condition' => 'good',
+            'payment_amount' => 0,
+            'deposit_paid' => 0,
+            'collaterals' => [],
+        ])->assertSessionHasErrors([
+            'collaterals' => 'Minimal satu jaminan fisik/dokumen wajib diterima untuk Rental In Store.',
+        ]);
+
+        $this->assertDatabaseCount('bookings', 0);
+        $this->assertDatabaseCount('rentals', 0);
+        $this->assertDatabaseCount('rental_collaterals', 0);
+        $this->assertSame('available', $asset->fresh()->status);
+    }
+
+    public function test_direct_rental_customer360_lookup_prefers_eligible_verified_identity_and_never_exposes_file_path(): void
+    {
+        [$user, $branch, $customer] = $this->fixture();
+        $expired = CustomerIdentity::query()->create([
+            'customer_id' => $customer->id,
+            'type' => 'ktp',
+            'number' => 'EXPIRED-DIRECT-KTP',
+            'document_path' => 'private/never-expose-original-file.pdf',
+            'expires_at' => now()->subDay()->toDateString(),
+            'is_primary' => true,
+            'verified_at' => now()->subMonth(),
+            'verified_by' => $user->id,
+        ]);
+        $eligible = CustomerIdentity::query()->create([
+            'customer_id' => $customer->id,
+            'type' => 'sim',
+            'number' => 'SIM-DIRECT-VALID',
+            'name_on_identity' => 'Canonical Owner',
+            'expires_at' => now()->addYear()->toDateString(),
+            'verified_at' => now(),
+            'verified_by' => $user->id,
+        ]);
+
+        $this->actingAs($user)->getJson(route('rentals.direct.customer-identities', [
+            'customer_id' => $customer->id,
+            'branch_id' => $branch->id,
+        ]))->assertOk()
+            ->assertJsonPath('data.0.id', $expired->id)
+            ->assertJsonPath('data.0.is_expired', true)
+            ->assertJsonPath('data.0.is_default', false)
+            ->assertJsonPath('data.1.id', $eligible->id)
+            ->assertJsonPath('data.1.collateral_type', 'SIM')
+            ->assertJsonPath('data.1.is_default', true)
+            ->assertJsonPath('data.0.document_present', true)
+            ->assertDontSee('private/never-expose-original-file.pdf');
+
+        $this->assertDatabaseCount('rentals', 0);
+        $this->assertDatabaseCount('rental_collaterals', 0);
+    }
+
+    public function test_direct_rental_customer360_lookup_reflects_identities_added_after_initial_lookup(): void
+    {
+        [$user, $branch, $customer] = $this->fixture();
+        $url = route('rentals.direct.customer-identities', [
+            'customer_id' => $customer->id,
+            'branch_id' => $branch->id,
+        ]);
+
+        $this->actingAs($user)->getJson($url)
+            ->assertOk()
+            ->assertJsonCount(0, 'data');
+
+        $identity = CustomerIdentity::query()->create([
+            'customer_id' => $customer->id,
+            'type' => 'ktp',
+            'number' => 'KTP-ADDED-AFTER-LOOKUP',
+            'is_primary' => true,
+        ]);
+
+        $this->actingAs($user)->getJson($url)
+            ->assertOk()
+            ->assertJsonCount(1, 'data')
+            ->assertJsonPath('data.0.id', $identity->id)
+            ->assertJsonPath('data.0.is_default', true);
+    }
+
+    public function test_direct_rental_customer360_lookup_requires_rental_create_permission(): void
+    {
+        [$user, $branch, $customer] = $this->fixture();
+        $unprivileged = User::factory()->create([
+            'company_id' => $branch->company_id,
+            'current_branch_id' => $branch->id,
+            'status' => 'active',
+            'email_verified_at' => now(),
+        ]);
+        $unprivileged->branches()->attach($branch->id, [
+            'is_default' => true,
+            'is_active' => true,
+        ]);
+
+        $this->actingAs($unprivileged)->getJson(route('rentals.direct.customer-identities', [
+            'customer_id' => $customer->id,
+            'branch_id' => $branch->id,
+        ]))->assertForbidden();
+    }
+
+    public function test_direct_rental_customer360_lookup_is_branch_and_company_scoped(): void
+    {
+        [$user, $branch] = $this->fixture();
+        $otherCompany = Company::query()->create([
+            'code' => 'OTHER',
+            'name' => 'Other Company',
+        ]);
+        $otherCustomer = Customer::query()->create([
+            'company_id' => $otherCompany->id,
+            'customer_number' => 'OTHER-CUS-0001',
+            'name' => 'Confidential Customer',
+            'status' => 'active',
+        ]);
+
+        $this->actingAs($user)->getJson(route('rentals.direct.customer-identities', [
+            'customer_id' => $otherCustomer->id,
+            'branch_id' => $branch->id,
+        ]))->assertNotFound();
+        $this->actingAs($user)->getJson(route('rentals.direct.customer-identities', [
+            'customer_id' => $otherCustomer->id,
+            'branch_id' => 999999,
+        ]))->assertNotFound();
+        $this->assertDatabaseCount('rental_collaterals', 0);
+    }
+
+    public function test_direct_rental_customer360_lookup_blocks_other_accessible_company_branches(): void
+    {
+        [, $branch, $customer] = $this->fixture();
+        $other = Branch::query()->create([
+            'company_id' => $branch->company_id,
+            'code' => 'MDO',
+            'name' => 'Other Accessible Company Branch',
+            'timezone' => 'Asia/Jakarta',
+            'is_active' => true,
+        ]);
+        $operator = User::factory()->create([
+            'company_id' => $branch->company_id,
+            'current_branch_id' => $branch->id,
+            'status' => 'active',
+            'email_verified_at' => now(),
+        ]);
+        $role = Role::query()->where('slug', 'rental-operator')->firstOrFail();
+        $operator->branches()->attach($branch->id, [
+            'is_default' => true,
+            'is_active' => true,
+        ]);
+        $operator->roles()->attach($role->id, [
+            'branch_id' => $branch->id,
+            'assigned_at' => now(),
+        ]);
+
+        $this->actingAs($operator)->getJson(route('rentals.direct.customer-identities', [
+            'customer_id' => $customer->id,
+            'branch_id' => $other->id,
+        ]))->assertNotFound();
+        $this->actingAs($operator)->getJson(route('rentals.direct.customer-identities', [
+            'customer_id' => $customer->id,
+            'branch_id' => $branch->id,
+        ]))->assertOk();
+    }
+
+    public function test_direct_rental_customer360_identity_requires_physical_receipt_confirmation(): void
+    {
+        [$user, $branch, $customer, $plan, $product, $asset] = $this->fixture();
+        $identity = CustomerIdentity::query()->create([
+            'customer_id' => $customer->id,
+            'type' => 'ktp',
+            'number' => 'DIRECT-LINKED-KTP',
+            'name_on_identity' => 'Canonical Holder',
+            'is_primary' => true,
+            'verified_at' => now(),
+            'verified_by' => $user->id,
+        ]);
+        $payload = [
+            ...$this->bookingPayload($branch, $customer, $plan, $product),
+            'checked_out_at' => now()->format('Y-m-d H:i:s'),
+            'checkout_condition' => 'good',
+            'deposit_paid' => 0,
+            'collaterals' => [[
+                'customer_identity_id' => $identity->id,
+                'type' => 'SIM',
+                'number' => 'CLIENT-EDITED',
+                'holder_name' => 'Spoofed Name',
+            ]],
+        ];
+
+        $this->actingAs($user)->post(route('rentals.direct.store'), $payload)
+            ->assertSessionHasErrors('customer360_received_confirmed');
+        $this->assertDatabaseCount('bookings', 0);
+        $this->assertDatabaseCount('rentals', 0);
+        $this->assertSame('available', $asset->fresh()->status);
+
+        $this->actingAs($user)->post(route('rentals.direct.store'), [
+            ...$payload,
+            'customer360_received_confirmed' => true,
+        ])->assertSessionHasNoErrors()->assertRedirect();
+
+        $rental = Rental::query()->firstOrFail();
+        $collateral = $rental->collaterals()->firstOrFail();
+        $this->assertSame('active', $rental->status);
+        $this->assertSame('0.00', $rental->deposit_amount);
+        $this->assertSame('customer_identity', $collateral->source_type);
+        $this->assertSame($identity->id, $collateral->customer_identity_id);
+        $this->assertSame('KTP', $collateral->type);
+        $this->assertSame('DIRECT-LINKED-KTP', $collateral->number);
+        $this->assertSame('Canonical Holder', $collateral->holder_name);
+        $this->assertSame($identity->id, $collateral->identity_snapshot['customer_identity_id']);
+    }
+
+    public function test_direct_rental_rejects_customer360_identity_from_another_customer(): void
+    {
+        [$user, $branch, $customer, $plan, $product, $asset] = $this->fixture();
+        $other = Customer::query()->create([
+            'company_id' => $branch->company_id,
+            'registered_branch_id' => $branch->id,
+            'customer_number' => 'PNG-CUS-DIRECT-OTHER',
+            'name' => 'Different Customer',
+            'status' => 'active',
+        ]);
+        $identity = CustomerIdentity::query()->create([
+            'customer_id' => $other->id,
+            'type' => 'ktp',
+            'number' => 'OTHER-DIRECT-IDENTITY',
+        ]);
+        $this->actingAs($user)->post(route('rentals.direct.store'), [
+            ...$this->bookingPayload($branch, $customer, $plan, $product),
+            'checked_out_at' => now()->format('Y-m-d H:i:s'),
+            'checkout_condition' => 'good',
+            'customer360_received_confirmed' => true,
+            'collaterals' => [[
+                'customer_identity_id' => $identity->id,
+                'type' => 'KTP',
+                'number' => 'OTHER-DIRECT-IDENTITY',
+            ]],
+        ])->assertSessionHasErrors('collaterals');
+
+        $this->assertDatabaseCount('bookings', 0);
+        $this->assertDatabaseCount('rentals', 0);
+        $this->assertDatabaseCount('rental_collaterals', 0);
+        $this->assertSame('available', $asset->fresh()->status);
     }
 
     public function test_booking_payments_are_carried_into_rental_balance(): void

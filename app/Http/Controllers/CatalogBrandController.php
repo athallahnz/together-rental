@@ -27,6 +27,9 @@ class CatalogBrandController extends Controller
 
         if ($request->hasFile('logo')) {
             $newLogoPath = $request->file('logo')->store('catalog/brands', 'public');
+            if ($newLogoPath === false) {
+                throw new \RuntimeException('Gagal menyimpan logo katalog.');
+            }
         }
 
         try {
@@ -42,7 +45,7 @@ class CatalogBrandController extends Controller
             throw $exception;
         }
 
-        if ($newLogoPath !== null && $oldLogoPath !== null && $oldLogoPath !== $newLogoPath) {
+        if ($newLogoPath !== null && is_string($oldLogoPath) && $oldLogoPath !== $newLogoPath) {
             Storage::disk('public')->delete($oldLogoPath);
         }
 

@@ -42,7 +42,7 @@ class CustomerAddressController extends Controller
 
         return back()->with('toast', [
             'type' => 'success',
-            'message' => 'Alamat pelanggan berhasil ditambahkan.',
+            'message' => __('uat035b_stage3.toast.customeraddress_1'),
         ]);
     }
 
@@ -86,7 +86,7 @@ class CustomerAddressController extends Controller
 
         return back()->with('toast', [
             'type' => 'success',
-            'message' => 'Alamat pelanggan berhasil diperbarui.',
+            'message' => __('uat035b_stage3.toast.customeraddress_2'),
         ]);
     }
 
@@ -127,7 +127,7 @@ class CustomerAddressController extends Controller
 
         return back()->with('toast', [
             'type' => 'success',
-            'message' => 'Alamat pelanggan berhasil dihapus.',
+            'message' => __('uat035b_stage3.toast.customeraddress_3'),
         ]);
     }
 

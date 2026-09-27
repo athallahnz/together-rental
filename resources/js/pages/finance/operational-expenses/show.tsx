@@ -10,6 +10,13 @@ import {
 } from 'lucide-react';
 import type { FormEvent, ReactNode } from 'react';
 import { useMemo, useState } from 'react';
+import {
+    Stage5Text,
+    stage5Translate,
+    stage5Date,
+    stage5Money,
+    stage5Display,
+} from '@/components/stage5-text';
 import InputError from '@/components/input-error';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -26,6 +33,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RupiahInput } from '@/components/ui/rupiah-input';
+import { useAppLocale } from '@/lib/i18n';
 import {
     Select,
     SelectContent,
@@ -106,15 +114,7 @@ type PayForm = {
     notes: string;
 };
 
-const money = new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    maximumFractionDigits: 0,
-});
-const dateTime = new Intl.DateTimeFormat('id-ID', {
-    dateStyle: 'long',
-    timeStyle: 'short',
-});
+const money = { format: stage5Money };
 
 function localDateTime(value: string | Date): string {
     const date = value instanceof Date ? value : new Date(value);
@@ -132,6 +132,7 @@ export default function OperationalExpenseShow({
     openCashSessions,
     permissions,
 }: Props) {
+    const { locale: stage5Locale } = useAppLocale();
     const [payOpen, setPayOpen] = useState(false);
     const [voidOpen, setVoidOpen] = useState(false);
     const activeCategories = categories.filter(
@@ -194,13 +195,16 @@ export default function OperationalExpenseShow({
 
     return (
         <>
-            <Head title={`Expense ${expense.expense_number}`} />
+            <Head
+                title={`${stage5Display('Expense', stage5Locale)} ${expense.expense_number}`}
+            />
             <div className="space-y-6 p-4 md:p-6">
                 <header className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
                     <div>
                         <Button variant="ghost" asChild className="mb-2 -ml-3">
                             <Link href="/finance/expenses">
-                                <ArrowLeft /> Expense & Cash Center
+                                <ArrowLeft />{' '}
+                                <Stage5Text k="stage5.ui.18927b067117" />
                             </Link>
                         </Button>
                         <h1 className="flex items-center gap-2 text-2xl font-semibold">
@@ -210,7 +214,10 @@ export default function OperationalExpenseShow({
                         <p className="mt-1 text-sm text-muted-foreground">
                             {expense.branch.code} ·{' '}
                             {expense.financial_category.name} ·{' '}
-                            {dateTime.format(new Date(expense.incurred_at))}
+                            {stage5Date(
+                                new Date(expense.incurred_at),
+                                stage5Locale,
+                            )}
                         </p>
                     </div>
                     <div className="flex flex-wrap gap-2">
@@ -219,7 +226,8 @@ export default function OperationalExpenseShow({
                                 type="button"
                                 onClick={() => setPayOpen(true)}
                             >
-                                <WalletCards /> Bayar expense
+                                <WalletCards />{' '}
+                                <Stage5Text k="stage5.ui.c2493c0bae46" />
                             </Button>
                         )}
                         {expense.status !== 'void' && permissions.void && (
@@ -228,7 +236,8 @@ export default function OperationalExpenseShow({
                                 variant="destructive"
                                 onClick={() => setVoidOpen(true)}
                             >
-                                <Ban /> Void
+                                <Ban />{' '}
+                                <Stage5Text k="stage5.ui.207c7c00630b" />
                             </Button>
                         )}
                     </div>
@@ -237,19 +246,22 @@ export default function OperationalExpenseShow({
                 {expense.status === 'recorded' && (
                     <Alert>
                         <WalletCards />
-                        <AlertTitle>Belum memengaruhi kas</AlertTitle>
+                        <AlertTitle>
+                            <Stage5Text k="stage5.ui.55a29d40d62c" />
+                        </AlertTitle>
                         <AlertDescription>
-                            Expense masih recorded. Saldo kas dan Finance
-                            Dashboard baru berubah saat payment berhasil dibuat.
+                            <Stage5Text k="stage5.ui.c9d1efd3a450" />
                         </AlertDescription>
                     </Alert>
                 )}
                 {expense.status === 'void' && (
                     <Alert variant="destructive">
                         <Ban />
-                        <AlertTitle>Expense telah di-void</AlertTitle>
+                        <AlertTitle>
+                            <Stage5Text k="stage5.ui.da0bf9ad8769" />
+                        </AlertTitle>
                         <AlertDescription>
-                            Histori tidak dihapus.{' '}
+                            <Stage5Text k="stage5.ui.5d34a26816f9" />{' '}
                             {expense.void_reason
                                 ? `Alasan: ${expense.void_reason}`
                                 : ''}
@@ -260,52 +272,115 @@ export default function OperationalExpenseShow({
                 <section className="grid gap-4 lg:grid-cols-3">
                     <Card className="lg:col-span-2">
                         <CardHeader>
-                            <CardTitle>Detail pengeluaran</CardTitle>
+                            <CardTitle>
+                                <Stage5Text k="stage5.ui.0660664934cc" />
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="grid gap-4 sm:grid-cols-2">
-                            <Info label="Status">
+                            <Info
+                                label={stage5Translate(
+                                    'stage5.ui.bae7d5be7082',
+                                    stage5Locale,
+                                )}
+                            >
                                 <StatusBadge status={expense.status} />
                             </Info>
-                            <Info label="Nominal">
+                            <Info
+                                label={stage5Translate(
+                                    'stage5.ui.1795d163388f',
+                                    stage5Locale,
+                                )}
+                            >
                                 <strong>
                                     {money.format(Number(expense.amount))}
                                 </strong>
                             </Info>
-                            <Info label="Vendor / penerima">
+                            <Info
+                                label={stage5Translate(
+                                    'stage5.ui.e3f18544463f',
+                                    stage5Locale,
+                                )}
+                            >
                                 {expense.vendor_name ?? '—'}
                             </Info>
-                            <Info label="Referensi">
+                            <Info
+                                label={stage5Translate(
+                                    'stage5.ui.3166201d7baf',
+                                    stage5Locale,
+                                )}
+                            >
                                 {expense.external_reference ?? '—'}
                             </Info>
-                            <Info label="Kategori">
+                            <Info
+                                label={stage5Translate(
+                                    'stage5.ui.b7964404a785',
+                                    stage5Locale,
+                                )}
+                            >
                                 {expense.financial_category.code} ·{' '}
                                 {expense.financial_category.name}
                             </Info>
-                            <Info label="Cabang">
+                            <Info
+                                label={stage5Translate(
+                                    'stage5.ui.1387475bd674',
+                                    stage5Locale,
+                                )}
+                            >
                                 {expense.branch.code} · {expense.branch.name}
                             </Info>
-                            <Info label="Dibuat oleh">
+                            <Info
+                                label={stage5Translate(
+                                    'stage5.ui.1216355f2efb',
+                                    stage5Locale,
+                                )}
+                            >
                                 {expense.creator?.name ?? '—'}
                             </Info>
-                            <Info label="Dibayar oleh">
+                            <Info
+                                label={stage5Translate(
+                                    'stage5.ui.e74fdd23a4cc',
+                                    stage5Locale,
+                                )}
+                            >
                                 {expense.payer?.name ?? '—'}
                             </Info>
-                            <Info label="Tanggal bayar">
+                            <Info
+                                label={stage5Translate(
+                                    'stage5.ui.33da3f80c25b',
+                                    stage5Locale,
+                                )}
+                            >
                                 {expense.paid_at
-                                    ? dateTime.format(new Date(expense.paid_at))
+                                    ? stage5Date(
+                                          new Date(expense.paid_at),
+                                          stage5Locale,
+                                      )
                                     : '—'}
                             </Info>
-                            <Info label="Metode bayar">
+                            <Info
+                                label={stage5Translate(
+                                    'stage5.ui.85de16445a90',
+                                    stage5Locale,
+                                )}
+                            >
                                 {expense.payment_method?.name ?? '—'}
                             </Info>
-                            <Info label="Catatan" className="sm:col-span-2">
+                            <Info
+                                label={stage5Translate(
+                                    'stage5.ui.9f09aefd0dd4',
+                                    stage5Locale,
+                                )}
+                                className="sm:col-span-2"
+                            >
                                 {expense.notes ?? '—'}
                             </Info>
                         </CardContent>
                     </Card>
                     <Card>
                         <CardHeader>
-                            <CardTitle>Dokumen & payment</CardTitle>
+                            <CardTitle>
+                                <Stage5Text k="stage5.ui.80e39e6fbaa8" />
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-3">
                             {hasProof ? (
@@ -324,7 +399,7 @@ export default function OperationalExpenseShow({
                                 </Button>
                             ) : (
                                 <p className="text-sm text-muted-foreground">
-                                    Tidak ada bukti terlampir.
+                                    <Stage5Text k="stage5.ui.3c96cc261314" />
                                 </p>
                             )}
                             {expense.payment ? (
@@ -342,12 +417,13 @@ export default function OperationalExpenseShow({
                                 </Button>
                             ) : (
                                 <p className="text-sm text-muted-foreground">
-                                    Belum ada payment.
+                                    <Stage5Text k="stage5.ui.4cfb8063343c" />
                                 </p>
                             )}
                             {expense.cash_session?.register && (
                                 <p className="rounded-md border p-3 text-xs text-muted-foreground">
-                                    Sesi kas #{expense.cash_session.id} ·{' '}
+                                    <Stage5Text k="stage5.ui.ad2a6ab5762c" />
+                                    {expense.cash_session.id} ·{' '}
                                     {expense.cash_session.register.code}{' '}
                                     {expense.cash_session.register.name}
                                 </p>
@@ -359,7 +435,9 @@ export default function OperationalExpenseShow({
                 {expense.status === 'recorded' && permissions.manage && (
                     <Card>
                         <CardHeader>
-                            <CardTitle>Edit expense recorded</CardTitle>
+                            <CardTitle>
+                                <Stage5Text k="stage5.ui.de87a51461ff" />
+                            </CardTitle>
                         </CardHeader>
                         <CardContent>
                             <form
@@ -367,7 +445,10 @@ export default function OperationalExpenseShow({
                                 onSubmit={updateExpense}
                             >
                                 <Field
-                                    label="Kategori"
+                                    label={stage5Translate(
+                                        'stage5.ui.b7964404a785',
+                                        stage5Locale,
+                                    )}
                                     error={
                                         editForm.errors.financial_category_id
                                     }
@@ -404,7 +485,10 @@ export default function OperationalExpenseShow({
                                     </Select>
                                 </Field>
                                 <Field
-                                    label="Nominal"
+                                    label={stage5Translate(
+                                        'stage5.ui.1795d163388f',
+                                        stage5Locale,
+                                    )}
                                     error={editForm.errors.amount}
                                 >
                                     <RupiahInput
@@ -415,7 +499,10 @@ export default function OperationalExpenseShow({
                                     />
                                 </Field>
                                 <Field
-                                    label="Tanggal kejadian"
+                                    label={stage5Translate(
+                                        'stage5.ui.08206fcf8a87',
+                                        stage5Locale,
+                                    )}
                                     error={editForm.errors.incurred_at}
                                 >
                                     <Input
@@ -430,7 +517,10 @@ export default function OperationalExpenseShow({
                                     />
                                 </Field>
                                 <Field
-                                    label="Vendor / penerima"
+                                    label={stage5Translate(
+                                        'stage5.ui.e3f18544463f',
+                                        stage5Locale,
+                                    )}
                                     error={editForm.errors.vendor_name}
                                 >
                                     <Input
@@ -444,7 +534,10 @@ export default function OperationalExpenseShow({
                                     />
                                 </Field>
                                 <Field
-                                    label="Referensi"
+                                    label={stage5Translate(
+                                        'stage5.ui.3166201d7baf',
+                                        stage5Locale,
+                                    )}
                                     error={editForm.errors.external_reference}
                                 >
                                     <Input
@@ -458,7 +551,10 @@ export default function OperationalExpenseShow({
                                     />
                                 </Field>
                                 <Field
-                                    label="Ganti bukti"
+                                    label={stage5Translate(
+                                        'stage5.ui.f5af564bd34a',
+                                        stage5Locale,
+                                    )}
                                     error={editForm.errors.proof}
                                 >
                                     <Input
@@ -473,7 +569,10 @@ export default function OperationalExpenseShow({
                                     />
                                 </Field>
                                 <Field
-                                    label="Catatan"
+                                    label={stage5Translate(
+                                        'stage5.ui.9f09aefd0dd4',
+                                        stage5Locale,
+                                    )}
                                     error={editForm.errors.notes}
                                 >
                                     <Input
@@ -491,7 +590,8 @@ export default function OperationalExpenseShow({
                                         type="submit"
                                         disabled={editForm.processing}
                                     >
-                                        <Save /> Simpan perubahan
+                                        <Save />{' '}
+                                        <Stage5Text k="stage5.ui.099b36f6ccbb" />
                                     </Button>
                                 </div>
                             </form>
@@ -501,7 +601,9 @@ export default function OperationalExpenseShow({
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>Audit timeline</CardTitle>
+                        <CardTitle>
+                            <Stage5Text k="stage5.ui.e2a0860210b2" />
+                        </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-3">
                         {activities.map((activity) => (
@@ -514,8 +616,9 @@ export default function OperationalExpenseShow({
                                         {activity.event}
                                     </strong>
                                     <span className="text-xs text-muted-foreground">
-                                        {dateTime.format(
+                                        {stage5Date(
                                             new Date(activity.created_at),
+                                            stage5Locale,
                                         )}
                                     </span>
                                 </div>
@@ -529,7 +632,7 @@ export default function OperationalExpenseShow({
                         ))}
                         {activities.length === 0 && (
                             <p className="text-sm text-muted-foreground">
-                                Belum ada activity log.
+                                <Stage5Text k="stage5.ui.e40a3353a009" />
                             </p>
                         )}
                     </CardContent>
@@ -540,17 +643,21 @@ export default function OperationalExpenseShow({
                 <DialogContent>
                     <DialogHeader>
                         <DialogTitle>
-                            Bayar {expense.expense_number}
+                            <Stage5Text k="stage5.ui.6290c54f33d8" />{' '}
+                            {expense.expense_number}
                         </DialogTitle>
                         <DialogDescription>
-                            Payment OUT sebesar{' '}
-                            {money.format(Number(expense.amount))} akan dibuat.
-                            Metode CASH juga menulis satu baris cash ledger OUT.
+                            <Stage5Text k="stage5.ui.ad2e4eed4cbd" />{' '}
+                            {money.format(Number(expense.amount))}{' '}
+                            <Stage5Text k="stage5.ui.3e46a43dcfbb" />
                         </DialogDescription>
                     </DialogHeader>
                     <form className="space-y-4" onSubmit={payExpense}>
                         <Field
-                            label="Metode pembayaran"
+                            label={stage5Translate(
+                                'stage5.ui.53eb1a623ade',
+                                stage5Locale,
+                            )}
                             error={payForm.errors.payment_method_id}
                         >
                             <Select
@@ -577,7 +684,12 @@ export default function OperationalExpenseShow({
                                 }}
                             >
                                 <SelectTrigger>
-                                    <SelectValue placeholder="Pilih metode" />
+                                    <SelectValue
+                                        placeholder={stage5Translate(
+                                            'stage5.ui.cfabec6a6763',
+                                            stage5Locale,
+                                        )}
+                                    />
                                 </SelectTrigger>
                                 <SelectContent>
                                     {paymentMethods.map((method) => (
@@ -593,7 +705,10 @@ export default function OperationalExpenseShow({
                         </Field>
                         {selectedMethod?.type === 'cash' && (
                             <Field
-                                label="Sesi kas aktif"
+                                label={stage5Translate(
+                                    'stage5.ui.bdf75fb65c7f',
+                                    stage5Locale,
+                                )}
                                 error={payForm.errors.cash_session_id}
                             >
                                 <Select
@@ -612,7 +727,12 @@ export default function OperationalExpenseShow({
                                     }
                                 >
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Pilih sesi kas" />
+                                        <SelectValue
+                                            placeholder={stage5Translate(
+                                                'stage5.ui.cfde4a0267a8',
+                                                stage5Locale,
+                                            )}
+                                        />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {availableCashSessions.map(
@@ -631,14 +751,16 @@ export default function OperationalExpenseShow({
                                 </Select>
                                 {availableCashSessions.length === 0 && (
                                     <p className="text-xs text-destructive">
-                                        Belum ada sesi kas aktif untuk cabang
-                                        ini.
+                                        <Stage5Text k="stage5.ui.cb53e0d48f57" />
                                     </p>
                                 )}
                             </Field>
                         )}
                         <Field
-                            label="Tanggal bayar"
+                            label={stage5Translate(
+                                'stage5.ui.33da3f80c25b',
+                                stage5Locale,
+                            )}
                             error={payForm.errors.paid_at}
                         >
                             <Input
@@ -653,7 +775,10 @@ export default function OperationalExpenseShow({
                             />
                         </Field>
                         <Field
-                            label="Referensi pembayaran"
+                            label={stage5Translate(
+                                'stage5.ui.7f2cc58cb31e',
+                                stage5Locale,
+                            )}
                             error={payForm.errors.payment_reference}
                         >
                             <Input
@@ -672,7 +797,10 @@ export default function OperationalExpenseShow({
                             />
                         </Field>
                         <Field
-                            label="Catatan payment"
+                            label={stage5Translate(
+                                'stage5.ui.3be039f9f735',
+                                stage5Locale,
+                            )}
                             error={payForm.errors.notes}
                         >
                             <Input
@@ -688,10 +816,10 @@ export default function OperationalExpenseShow({
                                 variant="outline"
                                 onClick={() => setPayOpen(false)}
                             >
-                                Batal
+                                <Stage5Text k="stage5.ui.1433539c3b8f" />
                             </Button>
                             <Button type="submit" disabled={payForm.processing}>
-                                Bayar expense
+                                <Stage5Text k="stage5.ui.c2493c0bae46" />
                             </Button>
                         </DialogFooter>
                     </form>
@@ -701,16 +829,20 @@ export default function OperationalExpenseShow({
             <Dialog open={voidOpen} onOpenChange={setVoidOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Void {expense.expense_number}</DialogTitle>
+                        <DialogTitle>
+                            <Stage5Text k="stage5.ui.207c7c00630b" />{' '}
+                            {expense.expense_number}
+                        </DialogTitle>
                         <DialogDescription>
-                            Histori tidak akan dihapus. Expense paid akan
-                            me-void Payment; jika tunai, ledger membuat reversal
-                            append-only pada sesi kas yang masih open.
+                            <Stage5Text k="stage5.ui.169b524a288c" />
                         </DialogDescription>
                     </DialogHeader>
                     <form className="space-y-4" onSubmit={voidExpense}>
                         <Field
-                            label="Alasan void"
+                            label={stage5Translate(
+                                'stage5.ui.c2a53eee88e3',
+                                stage5Locale,
+                            )}
                             error={voidForm.errors.reason}
                         >
                             <Input
@@ -721,7 +853,10 @@ export default function OperationalExpenseShow({
                                         event.target.value,
                                     )
                                 }
-                                placeholder="Minimal 10 karakter"
+                                placeholder={stage5Translate(
+                                    'stage5.ui.24e468e21005',
+                                    stage5Locale,
+                                )}
                             />
                         </Field>
                         <DialogFooter>
@@ -730,14 +865,15 @@ export default function OperationalExpenseShow({
                                 variant="outline"
                                 onClick={() => setVoidOpen(false)}
                             >
-                                Batal
+                                <Stage5Text k="stage5.ui.1433539c3b8f" />
                             </Button>
                             <Button
                                 type="submit"
                                 variant="destructive"
                                 disabled={voidForm.processing}
                             >
-                                <Ban /> Void expense
+                                <Ban />{' '}
+                                <Stage5Text k="stage5.ui.92afd25a7c3b" />
                             </Button>
                         </DialogFooter>
                     </form>

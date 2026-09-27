@@ -2,6 +2,7 @@ import { Form, Head } from '@inertiajs/react';
 import { KeyRound, LockKeyhole, ShieldCheck } from 'lucide-react';
 import type { ReactNode } from 'react';
 import { useRef } from 'react';
+import { useAppLocale } from '@/lib/i18n';
 import SecurityController from '@/actions/App/Http/Controllers/Settings/SecurityController';
 import Heading from '@/components/heading';
 import InputError from '@/components/input-error';
@@ -31,41 +32,46 @@ type Props = {
     ManageTwoFactorProps /* @end-chisel-2fa */;
 
 export default function Security(props: Props) {
+    const { tr } = useAppLocale();
     const passwordInput = useRef<HTMLInputElement>(null);
     const currentPasswordInput = useRef<HTMLInputElement>(null);
     const passkeys = props.passkeys ?? [];
 
     return (
         <>
-            <Head title="Pengaturan keamanan" />
+            <Head title={tr('settings.security.page')} />
 
-            <h1 className="sr-only">Pengaturan keamanan</h1>
+            <h1 className="sr-only">{tr('settings.security.page')}</h1>
 
             <div className="space-y-6">
                 <Heading
-                    title="Keamanan akun"
-                    description="Kelola password, autentikasi dua faktor, dan passkey dalam satu area keamanan."
+                    title={tr('settings.security.title')}
+                    description={tr('settings.security.description')}
                 />
 
                 <div className="grid gap-4 sm:grid-cols-3">
                     <SecuritySummary
                         icon={<LockKeyhole className="size-4" />}
-                        label="Password"
-                        value="Aktif"
+                        label={tr('settings.security.passwordLabel')}
+                        value={tr('settings.security.active')}
                     />
                     {/* @chisel-2fa */}
                     <SecuritySummary
                         icon={<ShieldCheck className="size-4" />}
-                        label="Two-factor"
-                        value={props.twoFactorEnabled ? 'Aktif' : 'Belum aktif'}
+                        label={tr('settings.security.twoFactorLabel')}
+                        value={
+                            props.twoFactorEnabled
+                                ? tr('settings.security.active')
+                                : tr('settings.security.inactive')
+                        }
                         muted={!props.twoFactorEnabled}
                     />
                     {/* @end-chisel-2fa */}
                     {/* @chisel-passkeys */}
                     <SecuritySummary
                         icon={<KeyRound className="size-4" />}
-                        label="Passkey"
-                        value={`${passkeys.length} tersimpan`}
+                        label={tr('settings.security.passkeyLabel')}
+                        value={`${passkeys.length} ${tr('settings.security.stored')}`}
                         muted={passkeys.length === 0}
                     />
                     {/* @end-chisel-passkeys */}
@@ -75,11 +81,10 @@ export default function Security(props: Props) {
                     <CardHeader className="border-b bg-muted/20">
                         <CardTitle className="flex items-center gap-2 text-base">
                             <LockKeyhole className="size-5" />
-                            Ubah password
+                            {tr('settings.security.change')}
                         </CardTitle>
                         <CardDescription>
-                            Gunakan password yang panjang dan unik untuk menjaga
-                            keamanan akun.
+                            {tr('settings.security.passwordHint')}
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="pt-6">
@@ -110,7 +115,9 @@ export default function Security(props: Props) {
                                     <div className="grid gap-5 xl:grid-cols-3">
                                         <div className="grid gap-2">
                                             <Label htmlFor="current_password">
-                                                Password saat ini
+                                                {tr(
+                                                    'settings.security.current',
+                                                )}
                                             </Label>
 
                                             <PasswordInput
@@ -118,7 +125,9 @@ export default function Security(props: Props) {
                                                 ref={currentPasswordInput}
                                                 name="current_password"
                                                 autoComplete="current-password"
-                                                placeholder="Password saat ini"
+                                                placeholder={tr(
+                                                    'settings.security.current',
+                                                )}
                                             />
 
                                             <InputError
@@ -130,7 +139,7 @@ export default function Security(props: Props) {
 
                                         <div className="grid gap-2">
                                             <Label htmlFor="password">
-                                                Password baru
+                                                {tr('settings.security.new')}
                                             </Label>
 
                                             <PasswordInput
@@ -138,7 +147,9 @@ export default function Security(props: Props) {
                                                 ref={passwordInput}
                                                 name="password"
                                                 autoComplete="new-password"
-                                                placeholder="Password baru"
+                                                placeholder={tr(
+                                                    'settings.security.new',
+                                                )}
                                                 passwordrules={
                                                     props.passwordRules
                                                 }
@@ -151,14 +162,18 @@ export default function Security(props: Props) {
 
                                         <div className="grid gap-2">
                                             <Label htmlFor="password_confirmation">
-                                                Konfirmasi password
+                                                {tr(
+                                                    'settings.security.confirm',
+                                                )}
                                             </Label>
 
                                             <PasswordInput
                                                 id="password_confirmation"
                                                 name="password_confirmation"
                                                 autoComplete="new-password"
-                                                placeholder="Ulangi password baru"
+                                                placeholder={tr(
+                                                    'settings.security.repeat',
+                                                )}
                                                 passwordrules={
                                                     props.passwordRules
                                                 }
@@ -178,8 +193,8 @@ export default function Security(props: Props) {
                                             data-test="update-password-button"
                                         >
                                             {processing
-                                                ? 'Menyimpan...'
-                                                : 'Simpan password'}
+                                                ? tr('settings.security.saving')
+                                                : tr('settings.security.save')}
                                         </Button>
                                     </div>
                                 </>

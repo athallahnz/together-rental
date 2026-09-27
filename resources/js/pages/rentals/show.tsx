@@ -9,14 +9,29 @@ import {
     ShieldCheck,
 } from 'lucide-react';
 import type { FormEvent } from 'react';
+import {
+    Stage4Text,
+    stage4Translate,
+    stage4TranslateDynamic,
+    stage4FormatDateTime,
+} from '@/components/stage4-text';
+import { useAppLocale } from '@/lib/i18n';
 import { TransactionDocumentActions } from '@/components/documents/transaction-document-actions';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
+import { Checkbox } from '@/components/ui/checkbox';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { RupiahInput } from '@/components/ui/rupiah-input';
+import {
+    Select,
+    SelectContent,
+    SelectItem,
+    SelectTrigger,
+    SelectValue,
+} from '@/components/ui/select';
 
 type Rental = {
     id: number;
@@ -147,14 +162,30 @@ type Rental = {
         finalizer?: { name: string } | null;
     }>;
 };
+type CustomerIdentityOption = {
+    id: number;
+    type: string;
+    collateral_type: string;
+    number: string;
+    name_on_identity: string | null;
+    expires_at: string | null;
+    is_primary: boolean;
+    verified_at: string | null;
+    document_present: boolean;
+    is_expired: boolean;
+    is_default: boolean;
+};
+
 type Props = {
     rental: Rental;
+    customerIdentities: CustomerIdentityOption[];
     permissions: {
         update: boolean;
         extend: boolean;
         return: boolean;
         correctCompleted: boolean;
         reopenReturn: boolean;
+        updateCustomer: boolean;
     };
 };
 const money = new Intl.NumberFormat('id-ID', {
@@ -163,7 +194,20 @@ const money = new Intl.NumberFormat('id-ID', {
     maximumFractionDigits: 0,
 });
 
-export default function RentalShow({ rental, permissions }: Props) {
+export default function RentalShow({
+    rental,
+    customerIdentities,
+    permissions,
+}: Props) {
+    const { locale: stage4Locale } = useAppLocale();
+
+    const eligibleIdentities = customerIdentities.filter(
+        (identity) => !identity.is_expired,
+    );
+    const defaultIdentity =
+        eligibleIdentities.find((identity) => identity.is_default) ??
+        eligibleIdentities[0] ??
+        null;
     const correction = useForm<{
         component: string;
         direction: string;
@@ -188,16 +232,34 @@ export default function RentalShow({ rental, permissions }: Props) {
         reason: '',
     });
     const collateral = useForm<{
+        source_mode: 'existing' | 'new' | 'manual';
+        customer_identity_id: number | null;
+        identity_type: string;
+        identity_number: string;
+        identity_name_on_identity: string;
+        identity_expires_at: string;
+        identity_is_primary: boolean;
+        save_to_customer360: boolean;
         type: string;
         number: string;
         holder_name: string;
         notes: string;
+        physical_received: boolean;
         document: File | null;
     }>({
+        source_mode: defaultIdentity ? 'existing' : 'manual',
+        customer_identity_id: defaultIdentity?.id ?? null,
+        identity_type: 'ktp',
+        identity_number: '',
+        identity_name_on_identity: rental.customer.name,
+        identity_expires_at: '',
+        identity_is_primary: customerIdentities.length === 0,
+        save_to_customer360: permissions.updateCustomer,
         type: 'KTP',
         number: '',
         holder_name: rental.customer.name,
         notes: '',
+        physical_received: false,
         document: null,
     });
     const collateralReturn = useForm<{ returned_at: string }>({
@@ -208,7 +270,16 @@ export default function RentalShow({ rental, permissions }: Props) {
         collateral.post(`/rentals/${rental.id}/collaterals`, {
             preserveScroll: true,
             forceFormData: true,
-            onSuccess: () => collateral.reset('number', 'notes', 'document'),
+            onSuccess: () => {
+                collateral.reset(
+                    'identity_number',
+                    'identity_expires_at',
+                    'number',
+                    'notes',
+                    'physical_received',
+                    'document',
+                );
+            },
         });
     };
     const returnCollateral = (collateralId: number) => {
@@ -239,7 +310,7 @@ export default function RentalShow({ rental, permissions }: Props) {
                     <Button variant="ghost" size="sm" asChild>
                         <Link href="/rentals">
                             <ArrowLeft />
-                            Daftar rental
+                            <Stage4Text k="stage4.ui.e40979f5591c" />
                         </Link>
                     </Button>
                     <div className="mt-3 flex flex-wrap items-center justify-between gap-3">
@@ -247,7 +318,12 @@ export default function RentalShow({ rental, permissions }: Props) {
                             <h1 className="text-2xl font-semibold">
                                 {rental.rental_number}
                             </h1>
-                            <Badge>{rental.status}</Badge>
+                            <Badge>
+                                {stage4TranslateDynamic(
+                                    rental.status,
+                                    stage4Locale,
+                                )}
+                            </Badge>
                         </div>
                         <div className="flex flex-wrap gap-2">
                             {permissions.extend &&
@@ -259,7 +335,7 @@ export default function RentalShow({ rental, permissions }: Props) {
                                             href={`/rentals/${rental.id}/extend`}
                                         >
                                             <CalendarPlus />
-                                            Perpanjang
+                                            <Stage4Text k="stage4.ui.cd1752d1c785" />
                                         </Link>
                                     </Button>
                                 )}
@@ -274,27 +350,31 @@ export default function RentalShow({ rental, permissions }: Props) {
                                             href={`/rentals/${rental.id}/return`}
                                         >
                                             <PackageCheck />
-                                            Proses pengembalian
+                                            <Stage4Text k="stage4.ui.f59b32920284" />
                                         </Link>
                                     </Button>
                                 )}
                         </div>
                     </div>
                     <p className="mt-1 text-sm text-muted-foreground">
-                        {rental.customer.name} Â· {rental.branch.name}
+                        {rental.customer.name}
+                        <Stage4Text k="stage4.ui.e21a079b3a50" />{' '}
+                        {rental.branch.name}
                     </p>
                 </header>
 
-                <TransactionDocumentActions sourceType="rental" sourceReference={rental.rental_number} />
+                <TransactionDocumentActions
+                    sourceType="rental"
+                    sourceReference={rental.rental_number}
+                />
                 {overdue && (
                     <Alert variant="destructive">
                         <AlertTriangle className="size-4" />
-                        <AlertTitle>Rental melewati jatuh tempo</AlertTitle>
+                        <AlertTitle>
+                            <Stage4Text k="stage4.ui.2bef74ec5e5c" />
+                        </AlertTitle>
                         <AlertDescription>
-                            Unit masih tercatat berada pada pelanggan setelah
-                            batas kembali. Prioritaskan konfirmasi pengembalian
-                            sebelum unit dianggap siap untuk transaksi
-                            berikutnya.
+                            <Stage4Text k="stage4.ui.ab3a886750dd" />
                         </AlertDescription>
                     </Alert>
                 )}
@@ -302,57 +382,83 @@ export default function RentalShow({ rental, permissions }: Props) {
                 <section className="grid gap-4 lg:grid-cols-3">
                     <Card>
                         <CardHeader>
-                            <CardTitle>Jadwal</CardTitle>
+                            <CardTitle>
+                                <Stage4Text k="stage4.ui.92d937165b09" />
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-2 text-sm">
                             <p>
-                                <b>Checkout:</b>{' '}
-                                {new Date(rental.checked_out_at).toLocaleString(
-                                    'id-ID',
+                                <b>
+                                    <Stage4Text k="stage4.ui.1d7cb6dac73c" />
+                                </b>{' '}
+                                {stage4FormatDateTime(
+                                    rental.checked_out_at,
+                                    stage4Locale,
                                 )}
                             </p>
                             <p>
-                                <b>Batas kembali:</b>{' '}
-                                {new Date(rental.due_at).toLocaleString(
-                                    'id-ID',
+                                <b>
+                                    <Stage4Text k="stage4.ui.e9854f380b7f" />
+                                </b>{' '}
+                                {stage4FormatDateTime(
+                                    rental.due_at,
+                                    stage4Locale,
                                 )}
                             </p>
                             <p>
-                                <b>Rate:</b> {rental.rate_plan?.name ?? '-'}
+                                <b>
+                                    <Stage4Text k="stage4.ui.cf6b5fa84600" />
+                                </b>{' '}
+                                {rental.rate_plan?.name ?? '-'}
                             </p>
                         </CardContent>
                     </Card>
                     <Card>
                         <CardHeader>
-                            <CardTitle>Asal transaksi</CardTitle>
+                            <CardTitle>
+                                <Stage4Text k="stage4.ui.dccc0aa1d2b6" />
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-2 text-sm">
                             <p>
                                 {rental.booking?.source === 'direct'
-                                    ? 'Rental In Store'
-                                    : 'Checkout booking'}
+                                    ? stage4Translate(
+                                          'stage4.ui.fd25629b8a39',
+                                          stage4Locale,
+                                      )
+                                    : stage4Translate(
+                                          'stage4.ui.e52caf59c035',
+                                          stage4Locale,
+                                      )}
                             </p>
                             <p>{rental.booking?.booking_number}</p>
                             <p>
-                                {rental.customer.customer_number} Â·{' '}
+                                {rental.customer.customer_number}
+                                <Stage4Text k="stage4.ui.e21a079b3a50" />{' '}
                                 {rental.customer.phone ?? '-'}
                             </p>
                         </CardContent>
                     </Card>
                     <Card>
                         <CardHeader>
-                            <CardTitle>Pembayaran</CardTitle>
+                            <CardTitle>
+                                <Stage4Text k="stage4.ui.f0874594eb78" />
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-2 text-sm">
                             <p className="flex justify-between">
-                                <span>Total</span>
+                                <span>
+                                    <Stage4Text k="stage4.ui.b25928c69902" />
+                                </span>
                                 <b>
                                     {money.format(Number(rental.total_amount))}
                                 </b>
                             </p>
                             {Number(rental.discount_amount) > 0 && (
                                 <p className="flex justify-between text-emerald-600">
-                                    <span>Diskon akumulatif</span>
+                                    <span>
+                                        <Stage4Text k="stage4.ui.cc2aac6758fd" />
+                                    </span>
                                     <b>
                                         -
                                         {money.format(
@@ -363,18 +469,24 @@ export default function RentalShow({ rental, permissions }: Props) {
                             )}
                             {rental.promotion && (
                                 <p className="flex justify-between text-muted-foreground">
-                                    <span>Promo awal</span>
+                                    <span>
+                                        <Stage4Text k="stage4.ui.618ff494a852" />
+                                    </span>
                                     <b>{rental.promotion.code}</b>
                                 </p>
                             )}
                             <p className="flex justify-between">
-                                <span>Dibayar</span>
+                                <span>
+                                    <Stage4Text k="stage4.ui.42b86f7c1b0f" />
+                                </span>
                                 <b>
                                     {money.format(Number(rental.paid_amount))}
                                 </b>
                             </p>
                             <p className="flex justify-between">
-                                <span>Deposit</span>
+                                <span>
+                                    <Stage4Text k="stage4.ui.e7b0b317a6e8" />
+                                </span>
                                 <b>
                                     {money.format(
                                         Number(rental.deposit_amount),
@@ -384,8 +496,14 @@ export default function RentalShow({ rental, permissions }: Props) {
                             <p className="flex justify-between border-t pt-2">
                                 <span>
                                     {refundDue
-                                        ? 'Kelebihan bayar / refund'
-                                        : 'Sisa'}
+                                        ? stage4Translate(
+                                              'stage4.ui.d9e768aee9fe',
+                                              stage4Locale,
+                                          )
+                                        : stage4Translate(
+                                              'stage4.ui.861b9e39506d',
+                                              stage4Locale,
+                                          )}
                                 </span>
                                 <b>
                                     {money.format(
@@ -398,7 +516,9 @@ export default function RentalShow({ rental, permissions }: Props) {
                 </section>
                 <Card>
                     <CardHeader>
-                        <CardTitle>Unit yang dibawa</CardTitle>
+                        <CardTitle>
+                            <Stage4Text k="stage4.ui.7550abf6fc2d" />
+                        </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         {rental.items.map((item) => (
@@ -418,7 +538,14 @@ export default function RentalShow({ rental, permissions }: Props) {
                                 </div>
                                 <div className="mt-3 grid gap-2 md:grid-cols-2">
                                     {item.is_bulk && (
-                                        <p>Bulk · Keluar {item.quantity - item.returned_quantity} unit · Selesai {item.returned_quantity} unit</p>
+                                        <p>
+                                            <Stage4Text k="stage4.ui.9a9df57c80e0" />{' '}
+                                            {item.quantity -
+                                                item.returned_quantity}
+                                            <Stage4Text k="stage4.ui.40fb092e21fb" />{' '}
+                                            {item.returned_quantity}
+                                            <Stage4Text k="stage4.ui.0df9eea0bad5" />
+                                        </p>
                                     )}
                                     {item.assets.map((line) => (
                                         <div
@@ -429,10 +556,13 @@ export default function RentalShow({ rental, permissions }: Props) {
                                                 {line.asset.asset_code}
                                             </p>
                                             <p className="text-muted-foreground">
-                                                Kondisi{' '}
-                                                {line.checkout_condition}
+                                                <Stage4Text k="stage4.ui.b723bb628009" />{' '}
+                                                {stage4TranslateDynamic(
+                                                    line.checkout_condition,
+                                                    stage4Locale,
+                                                )}
                                                 {line.asset.serial_number
-                                                    ? ` Â· SN ${line.asset.serial_number}`
+                                                    ? ` · SN ${line.asset.serial_number}`
                                                     : ''}
                                             </p>
                                             {line.notes && <p>{line.notes}</p>}
@@ -445,14 +575,14 @@ export default function RentalShow({ rental, permissions }: Props) {
                 </Card>
                 <Card>
                     <CardHeader>
-                        <CardTitle>Jaminan fisik / dokumen</CardTitle>
+                        <CardTitle>
+                            <Stage4Text k="stage4.ui.bc6bef81de10" />
+                        </CardTitle>
                     </CardHeader>
                     <CardContent className="space-y-4">
                         {rental.collaterals.length === 0 ? (
                             <p className="text-sm text-muted-foreground">
-                                Tidak ada jaminan fisik yang tercatat pada
-                                rental ini. Deposit uang tetap berada pada
-                                ledger pembayaran dan tidak ditampilkan di sini.
+                                <Stage4Text k="stage4.ui.7c12a821f792" />
                             </p>
                         ) : (
                             <div className="space-y-3">
@@ -464,7 +594,9 @@ export default function RentalShow({ rental, permissions }: Props) {
                                         <div>
                                             <div className="flex flex-wrap items-center gap-2">
                                                 <p className="font-medium">
-                                                    {item.type} Â· {item.number}
+                                                    {item.type}
+                                                    <Stage4Text k="stage4.ui.e21a079b3a50" />{' '}
+                                                    {item.number}
                                                 </p>
                                                 <Badge
                                                     variant={
@@ -474,33 +606,43 @@ export default function RentalShow({ rental, permissions }: Props) {
                                                     }
                                                 >
                                                     {item.status === 'held'
-                                                        ? 'Ditahan'
-                                                        : 'Dikembalikan'}
+                                                        ? stage4Translate(
+                                                              'stage4.ui.6178dcdddcd7',
+                                                              stage4Locale,
+                                                          )
+                                                        : stage4Translate(
+                                                              'stage4.ui.573315eb2d15',
+                                                              stage4Locale,
+                                                          )}
                                                 </Badge>
                                                 {item.source_type ===
                                                     'customer_identity' && (
                                                     <Badge variant="outline">
-                                                        Customer360
+                                                        <Stage4Text k="stage4.ui.ef653211a5b4" />
                                                     </Badge>
                                                 )}
                                             </div>
                                             <p className="mt-1 text-sm text-muted-foreground">
-                                                Atas nama{' '}
+                                                <Stage4Text k="stage4.ui.b9f45b6b55d5" />{' '}
                                                 {item.holder_name ??
                                                     rental.customer.name}
                                             </p>
                                             <p className="mt-1 text-xs text-muted-foreground">
-                                                Diterima{' '}
+                                                <Stage4Text k="stage4.ui.64643bb547ae" />{' '}
                                                 {item.received_at
                                                     ? new Date(
                                                           item.received_at,
-                                                      ).toLocaleString('id-ID')
+                                                      ).toLocaleString(
+                                                          stage4Locale === 'en'
+                                                              ? 'en-GB'
+                                                              : 'id-ID',
+                                                      )
                                                     : '-'}
                                                 {item.receiver?.name
-                                                    ? ` Â· ${item.receiver.name}`
+                                                    ? ` · ${item.receiver.name}`
                                                     : ''}
                                                 {item.returned_at
-                                                    ? ` Â· Dikembalikan ${new Date(
+                                                    ? ` · Dikembalikan ${new Date(
                                                           item.returned_at,
                                                       ).toLocaleString(
                                                           'id-ID',
@@ -527,7 +669,7 @@ export default function RentalShow({ rental, permissions }: Props) {
                                                         href={`/rentals/${rental.id}/collaterals/${item.id}/document`}
                                                     >
                                                         <FileText />
-                                                        Dokumen
+                                                        <Stage4Text k="stage4.ui.a809e9504f2d" />
                                                     </a>
                                                 </Button>
                                             )}
@@ -546,7 +688,7 @@ export default function RentalShow({ rental, permissions }: Props) {
                                                         }
                                                     >
                                                         <ShieldCheck />
-                                                        Kembalikan jaminan
+                                                        <Stage4Text k="stage4.ui.0b189c8327e9" />
                                                     </Button>
                                                 )}
                                         </div>
@@ -563,56 +705,439 @@ export default function RentalShow({ rental, permissions }: Props) {
                                     className="grid gap-4 rounded-lg border border-dashed p-4 md:grid-cols-2 xl:grid-cols-4"
                                     onSubmit={submitCollateral}
                                 >
-                                    <div>
-                                        <Label>Jenis</Label>
-                                        <Input
-                                            value={collateral.data.type}
-                                            onChange={(event) =>
+                                    <div className="md:col-span-2 xl:col-span-4">
+                                        <Label>
+                                            <Stage4Text k="stage4.ui.ac060d458d63" />
+                                        </Label>
+                                        <Select
+                                            value={collateral.data.source_mode}
+                                            onValueChange={(value) => {
+                                                const mode = value as
+                                                    | 'existing'
+                                                    | 'new'
+                                                    | 'manual';
+
                                                 collateral.setData(
-                                                    'type',
-                                                    event.target.value,
-                                                )
-                                            }
-                                            placeholder="KTP / SIM / kartu lain"
-                                        />
-                                        {collateral.errors.type && (
-                                            <p className="mt-1 text-sm text-destructive">
-                                                {collateral.errors.type}
-                                            </p>
-                                        )}
+                                                    'source_mode',
+                                                    mode,
+                                                );
+
+                                                if (
+                                                    mode === 'existing' &&
+                                                    collateral.data
+                                                        .customer_identity_id ===
+                                                        null
+                                                ) {
+                                                    collateral.setData(
+                                                        'customer_identity_id',
+                                                        defaultIdentity?.id ??
+                                                            eligibleIdentities[0]
+                                                                ?.id ??
+                                                            null,
+                                                    );
+                                                }
+                                            }}
+                                        >
+                                            <SelectTrigger className="mt-2">
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                {eligibleIdentities.length >
+                                                    0 && (
+                                                    <SelectItem value="existing">
+                                                        <Stage4Text k="stage4.ui.a63a2b27dffa" />
+                                                    </SelectItem>
+                                                )}
+                                                <SelectItem value="new">
+                                                    <Stage4Text k="stage4.ui.8575a7da4327" />
+                                                </SelectItem>
+                                                <SelectItem value="manual">
+                                                    <Stage4Text k="stage4.ui.1d561d36b3f6" />
+                                                </SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <p className="mt-2 text-xs text-muted-foreground">
+                                            <Stage4Text k="stage4.ui.ee4fb51bc3a6" />
+                                        </p>
                                     </div>
-                                    <div>
-                                        <Label>Nomor</Label>
-                                        <Input
-                                            value={collateral.data.number}
-                                            onChange={(event) =>
-                                                collateral.setData(
-                                                    'number',
-                                                    event.target.value,
-                                                )
-                                            }
-                                            placeholder="Nomor identitas/barang"
-                                        />
-                                        {collateral.errors.number && (
-                                            <p className="mt-1 text-sm text-destructive">
-                                                {collateral.errors.number}
-                                            </p>
-                                        )}
-                                    </div>
-                                    <div>
-                                        <Label>Atas nama</Label>
-                                        <Input
-                                            value={collateral.data.holder_name}
-                                            onChange={(event) =>
-                                                collateral.setData(
-                                                    'holder_name',
-                                                    event.target.value,
-                                                )
-                                            }
-                                        />
-                                    </div>
-                                    <div>
-                                        <Label>Dokumen/foto</Label>
+
+                                    {collateral.data.source_mode ===
+                                        'existing' && (
+                                        <>
+                                            <div className="md:col-span-2 xl:col-span-4">
+                                                <Label>
+                                                    <Stage4Text k="stage4.ui.b5a3c6e91461" />
+                                                </Label>
+                                                <Select
+                                                    value={
+                                                        collateral.data
+                                                            .customer_identity_id
+                                                            ? String(
+                                                                  collateral
+                                                                      .data
+                                                                      .customer_identity_id,
+                                                              )
+                                                            : ''
+                                                    }
+                                                    onValueChange={(value) =>
+                                                        collateral.setData(
+                                                            'customer_identity_id',
+                                                            Number(value),
+                                                        )
+                                                    }
+                                                >
+                                                    <SelectTrigger className="mt-2">
+                                                        <SelectValue
+                                                            placeholder={stage4Translate(
+                                                                'stage4.ui.5a32acf1b0ad',
+                                                                stage4Locale,
+                                                            )}
+                                                        />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        {customerIdentities.map(
+                                                            (identity) => (
+                                                                <SelectItem
+                                                                    key={
+                                                                        identity.id
+                                                                    }
+                                                                    value={String(
+                                                                        identity.id,
+                                                                    )}
+                                                                    disabled={
+                                                                        identity.is_expired
+                                                                    }
+                                                                >
+                                                                    {
+                                                                        identity.collateral_type
+                                                                    }{' '}
+                                                                    ·{' '}
+                                                                    {
+                                                                        identity.number
+                                                                    }
+                                                                    {identity.is_primary
+                                                                        ? stage4Translate(
+                                                                              'stage4.ui.c73f51f254b4',
+                                                                              stage4Locale,
+                                                                          )
+                                                                        : ''}
+                                                                    {identity.verified_at
+                                                                        ? stage4Translate(
+                                                                              'stage4.ui.973da3a900f7',
+                                                                              stage4Locale,
+                                                                          )
+                                                                        : stage4Translate(
+                                                                              'stage4.ui.d948d2d59c8e',
+                                                                              stage4Locale,
+                                                                          )}
+                                                                    {identity.is_expired
+                                                                        ? stage4Translate(
+                                                                              'stage4.ui.2bb8fb66b3ac',
+                                                                              stage4Locale,
+                                                                          )
+                                                                        : ''}
+                                                                </SelectItem>
+                                                            ),
+                                                        )}
+                                                    </SelectContent>
+                                                </Select>
+                                                {collateral.errors
+                                                    .customer_identity_id && (
+                                                    <p className="mt-1 text-sm text-destructive">
+                                                        {
+                                                            collateral.errors
+                                                                .customer_identity_id
+                                                        }
+                                                    </p>
+                                                )}
+                                            </div>
+                                            {customerIdentities.length ===
+                                                0 && (
+                                                <p className="text-sm text-muted-foreground md:col-span-2 xl:col-span-4">
+                                                    <Stage4Text k="stage4.ui.81de49daef26" />
+                                                </p>
+                                            )}
+                                        </>
+                                    )}
+
+                                    {collateral.data.source_mode === 'new' && (
+                                        <>
+                                            <div>
+                                                <Label>
+                                                    <Stage4Text k="stage4.ui.f891f72ff159" />
+                                                </Label>
+                                                <Select
+                                                    value={
+                                                        collateral.data
+                                                            .identity_type
+                                                    }
+                                                    onValueChange={(value) =>
+                                                        collateral.setData(
+                                                            'identity_type',
+                                                            value,
+                                                        )
+                                                    }
+                                                >
+                                                    <SelectTrigger className="mt-2">
+                                                        <SelectValue />
+                                                    </SelectTrigger>
+                                                    <SelectContent>
+                                                        <SelectItem value="ktp">
+                                                            <Stage4Text k="stage4.ui.101c22b89e15" />
+                                                        </SelectItem>
+                                                        <SelectItem value="sim">
+                                                            <Stage4Text k="stage4.ui.9563e7496df3" />
+                                                        </SelectItem>
+                                                        <SelectItem value="passport">
+                                                            <Stage4Text k="stage4.ui.319536cdb788" />
+                                                        </SelectItem>
+                                                        <SelectItem value="student_card">
+                                                            <Stage4Text k="stage4.ui.16d3bb60398b" />
+                                                        </SelectItem>
+                                                        <SelectItem value="employee_card">
+                                                            <Stage4Text k="stage4.ui.1ef7d61f48d1" />
+                                                        </SelectItem>
+                                                        <SelectItem value="other">
+                                                            <Stage4Text k="stage4.ui.844f8a723473" />
+                                                        </SelectItem>
+                                                    </SelectContent>
+                                                </Select>
+                                                {collateral.errors
+                                                    .identity_type && (
+                                                    <p className="mt-1 text-sm text-destructive">
+                                                        {
+                                                            collateral.errors
+                                                                .identity_type
+                                                        }
+                                                    </p>
+                                                )}
+                                            </div>
+                                            <div>
+                                                <Label>
+                                                    <Stage4Text k="stage4.ui.54fdf9054ea7" />
+                                                </Label>
+                                                <Input
+                                                    value={
+                                                        collateral.data
+                                                            .identity_number
+                                                    }
+                                                    onChange={(event) =>
+                                                        collateral.setData(
+                                                            'identity_number',
+                                                            event.target.value,
+                                                        )
+                                                    }
+                                                    placeholder={stage4Translate(
+                                                        'stage4.ui.54fdf9054ea7',
+                                                        stage4Locale,
+                                                    )}
+                                                />
+                                                {collateral.errors
+                                                    .identity_number && (
+                                                    <p className="mt-1 text-sm text-destructive">
+                                                        {
+                                                            collateral.errors
+                                                                .identity_number
+                                                        }
+                                                    </p>
+                                                )}
+                                            </div>
+                                            <div>
+                                                <Label>
+                                                    <Stage4Text k="stage4.ui.a8a50b3df19b" />
+                                                </Label>
+                                                <Input
+                                                    value={
+                                                        collateral.data
+                                                            .identity_name_on_identity
+                                                    }
+                                                    onChange={(event) =>
+                                                        collateral.setData(
+                                                            'identity_name_on_identity',
+                                                            event.target.value,
+                                                        )
+                                                    }
+                                                />
+                                            </div>
+                                            <div>
+                                                <Label>
+                                                    <Stage4Text k="stage4.ui.8b9f470f992b" />
+                                                    <span className="ml-1 text-xs text-muted-foreground">
+                                                        <Stage4Text k="stage4.ui.95099252d186" />
+                                                    </span>
+                                                </Label>
+                                                <Input
+                                                    type="date"
+                                                    value={
+                                                        collateral.data
+                                                            .identity_expires_at
+                                                    }
+                                                    onChange={(event) =>
+                                                        collateral.setData(
+                                                            'identity_expires_at',
+                                                            event.target.value,
+                                                        )
+                                                    }
+                                                />
+                                                {collateral.errors
+                                                    .identity_expires_at && (
+                                                    <p className="mt-1 text-sm text-destructive">
+                                                        {
+                                                            collateral.errors
+                                                                .identity_expires_at
+                                                        }
+                                                    </p>
+                                                )}
+                                            </div>
+                                            <div className="flex items-start gap-3 md:col-span-2 xl:col-span-4">
+                                                <Checkbox
+                                                    id="save_to_customer360"
+                                                    checked={
+                                                        collateral.data
+                                                            .save_to_customer360
+                                                    }
+                                                    disabled={
+                                                        !permissions.updateCustomer
+                                                    }
+                                                    onCheckedChange={(
+                                                        checked,
+                                                    ) =>
+                                                        collateral.setData(
+                                                            'save_to_customer360',
+                                                            checked === true,
+                                                        )
+                                                    }
+                                                />
+                                                <div>
+                                                    <Label htmlFor="save_to_customer360">
+                                                        <Stage4Text k="stage4.ui.190f73e6be77" />
+                                                    </Label>
+                                                    <p className="text-xs text-muted-foreground">
+                                                        <Stage4Text k="stage4.ui.c0988ac9eb98" />
+                                                    </p>
+                                                    {!permissions.updateCustomer && (
+                                                        <p className="mt-1 text-xs text-amber-600">
+                                                            <Stage4Text k="stage4.ui.10fff5ae16a7" />
+                                                        </p>
+                                                    )}
+                                                    {collateral.errors
+                                                        .save_to_customer360 && (
+                                                        <p className="mt-1 text-sm text-destructive">
+                                                            {
+                                                                collateral
+                                                                    .errors
+                                                                    .save_to_customer360
+                                                            }
+                                                        </p>
+                                                    )}
+                                                </div>
+                                            </div>
+                                            {collateral.data
+                                                .save_to_customer360 &&
+                                                permissions.updateCustomer && (
+                                                    <div className="flex items-center gap-3 md:col-span-2 xl:col-span-4">
+                                                        <Checkbox
+                                                            id="identity_is_primary"
+                                                            checked={
+                                                                collateral.data
+                                                                    .identity_is_primary
+                                                            }
+                                                            onCheckedChange={(
+                                                                checked,
+                                                            ) =>
+                                                                collateral.setData(
+                                                                    'identity_is_primary',
+                                                                    checked ===
+                                                                        true,
+                                                                )
+                                                            }
+                                                        />
+                                                        <Label htmlFor="identity_is_primary">
+                                                            <Stage4Text k="stage4.ui.10074363ced4" />
+                                                        </Label>
+                                                    </div>
+                                                )}
+                                        </>
+                                    )}
+
+                                    {collateral.data.source_mode ===
+                                        'manual' && (
+                                        <>
+                                            <div>
+                                                <Label>
+                                                    <Stage4Text k="stage4.ui.fabb2b5c779a" />
+                                                </Label>
+                                                <Input
+                                                    value={collateral.data.type}
+                                                    onChange={(event) =>
+                                                        collateral.setData(
+                                                            'type',
+                                                            event.target.value,
+                                                        )
+                                                    }
+                                                    placeholder={stage4Translate(
+                                                        'stage4.ui.5ddd4a1ac042',
+                                                        stage4Locale,
+                                                    )}
+                                                />
+                                                {collateral.errors.type && (
+                                                    <p className="mt-1 text-sm text-destructive">
+                                                        {collateral.errors.type}
+                                                    </p>
+                                                )}
+                                            </div>
+                                            <div>
+                                                <Label>
+                                                    <Stage4Text k="stage4.ui.eddbb21dd281" />
+                                                </Label>
+                                                <Input
+                                                    value={
+                                                        collateral.data.number
+                                                    }
+                                                    onChange={(event) =>
+                                                        collateral.setData(
+                                                            'number',
+                                                            event.target.value,
+                                                        )
+                                                    }
+                                                    placeholder={stage4Translate(
+                                                        'stage4.ui.cefdf68cccee',
+                                                        stage4Locale,
+                                                    )}
+                                                />
+                                                {collateral.errors.number && (
+                                                    <p className="mt-1 text-sm text-destructive">
+                                                        {
+                                                            collateral.errors
+                                                                .number
+                                                        }
+                                                    </p>
+                                                )}
+                                            </div>
+                                            <div className="md:col-span-2">
+                                                <Label>
+                                                    <Stage4Text k="stage4.ui.b9f45b6b55d5" />
+                                                </Label>
+                                                <Input
+                                                    value={
+                                                        collateral.data
+                                                            .holder_name
+                                                    }
+                                                    onChange={(event) =>
+                                                        collateral.setData(
+                                                            'holder_name',
+                                                            event.target.value,
+                                                        )
+                                                    }
+                                                />
+                                            </div>
+                                        </>
+                                    )}
+
+                                    <div className="md:col-span-2">
+                                        <Label>
+                                            <Stage4Text k="stage4.ui.5b17c14f39b6" />
+                                        </Label>
                                         <Input
                                             type="file"
                                             accept="image/jpeg,image/png,image/webp,application/pdf"
@@ -625,8 +1150,10 @@ export default function RentalShow({ rental, permissions }: Props) {
                                             }
                                         />
                                     </div>
-                                    <div className="md:col-span-2 xl:col-span-3">
-                                        <Label>Catatan</Label>
+                                    <div className="md:col-span-2">
+                                        <Label>
+                                            <Stage4Text k="stage4.ui.9f09aefd0dd4" />
+                                        </Label>
                                         <Input
                                             value={collateral.data.notes}
                                             onChange={(event) =>
@@ -635,9 +1162,46 @@ export default function RentalShow({ rental, permissions }: Props) {
                                                     event.target.value,
                                                 )
                                             }
-                                            placeholder="Kondisi dan lokasi penyimpanan"
+                                            placeholder={stage4Translate(
+                                                'stage4.ui.33401e0a5903',
+                                                stage4Locale,
+                                            )}
                                         />
                                     </div>
+
+                                    <div className="flex items-start gap-3 md:col-span-2 xl:col-span-4">
+                                        <Checkbox
+                                            id="physical_received"
+                                            checked={
+                                                collateral.data
+                                                    .physical_received
+                                            }
+                                            onCheckedChange={(checked) =>
+                                                collateral.setData(
+                                                    'physical_received',
+                                                    checked === true,
+                                                )
+                                            }
+                                        />
+                                        <div>
+                                            <Label htmlFor="physical_received">
+                                                <Stage4Text k="stage4.ui.611656185a41" />
+                                            </Label>
+                                            <p className="text-xs text-muted-foreground">
+                                                <Stage4Text k="stage4.ui.51a1a65ee7cb" />
+                                            </p>
+                                            {collateral.errors
+                                                .physical_received && (
+                                                <p className="mt-1 text-sm text-destructive">
+                                                    {
+                                                        collateral.errors
+                                                            .physical_received
+                                                    }
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+
                                     {(
                                         collateral.errors as Record<
                                             string,
@@ -655,13 +1219,14 @@ export default function RentalShow({ rental, permissions }: Props) {
                                             }
                                         </p>
                                     )}
-                                    <div className="flex items-end">
+
+                                    <div className="flex items-end md:col-span-2 xl:col-span-4">
                                         <Button
                                             type="submit"
                                             disabled={collateral.processing}
                                         >
                                             <ShieldCheck />
-                                            Terima jaminan
+                                            <Stage4Text k="stage4.ui.00aeed7b2308" />
                                         </Button>
                                     </div>
                                 </form>
@@ -671,7 +1236,9 @@ export default function RentalShow({ rental, permissions }: Props) {
                 {rental.extensions.length > 0 && (
                     <Card>
                         <CardHeader>
-                            <CardTitle>Riwayat perpanjangan</CardTitle>
+                            <CardTitle>
+                                <Stage4Text k="stage4.ui.995f0683f4d8" />
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-3">
                             {rental.extensions.map((extension) => (
@@ -687,11 +1254,22 @@ export default function RentalShow({ rental, permissions }: Props) {
                                             <p className="text-sm text-muted-foreground">
                                                 {new Date(
                                                     extension.previous_due_at,
-                                                ).toLocaleString('id-ID')}
-                                                {' â†’ '}
+                                                ).toLocaleString(
+                                                    stage4Locale === 'en'
+                                                        ? 'en-GB'
+                                                        : 'id-ID',
+                                                )}
+                                                {stage4Translate(
+                                                    'stage4.ui.84fb07a3c1c3',
+                                                    stage4Locale,
+                                                )}
                                                 {new Date(
                                                     extension.extended_due_at,
-                                                ).toLocaleString('id-ID')}
+                                                ).toLocaleString(
+                                                    stage4Locale === 'en'
+                                                        ? 'en-GB'
+                                                        : 'id-ID',
+                                                )}
                                             </p>
                                         </div>
                                         <div className="text-right">
@@ -705,19 +1283,19 @@ export default function RentalShow({ rental, permissions }: Props) {
                                             {Number(extension.discount_amount) >
                                                 0 && (
                                                 <p className="text-xs text-emerald-600">
-                                                    Diskon{' '}
+                                                    <Stage4Text k="stage4.ui.6cc10ed56760" />{' '}
                                                     {money.format(
                                                         Number(
                                                             extension.discount_amount,
                                                         ),
                                                     )}
                                                     {extension.promotion
-                                                        ? ` Â· ${extension.promotion.code}`
+                                                        ? ` · ${extension.promotion.code}`
                                                         : ''}
                                                 </p>
                                             )}
                                             <p className="text-xs text-muted-foreground">
-                                                Dibayar{' '}
+                                                <Stage4Text k="stage4.ui.42b86f7c1b0f" />{' '}
                                                 {money.format(
                                                     Number(
                                                         extension.paid_amount,
@@ -737,21 +1315,27 @@ export default function RentalShow({ rental, permissions }: Props) {
                                                         item.rental_item
                                                             .description
                                                     }{' '}
-                                                    Â· {item.quantity} unit
+                                                    <Stage4Text k="stage4.ui.e21a079b3a50" />{' '}
+                                                    {item.quantity}
+                                                    <Stage4Text k="stage4.ui.0df9eea0bad5" />
                                                 </span>
                                                 <span>
                                                     {new Date(
                                                         item.extended_due_at,
-                                                    ).toLocaleString('id-ID')}
+                                                    ).toLocaleString(
+                                                        stage4Locale === 'en'
+                                                            ? 'en-GB'
+                                                            : 'id-ID',
+                                                    )}
                                                 </span>
                                             </div>
                                         ))}
                                     </div>
                                     <p className="mt-3 text-xs text-muted-foreground">
-                                        Disetujui oleh{' '}
+                                        <Stage4Text k="stage4.ui.59d6b5d8e131" />{' '}
                                         {extension.approver?.name ?? '-'}
                                         {extension.notes
-                                            ? ` Â· ${extension.notes}`
+                                            ? ` · ${extension.notes}`
                                             : ''}
                                     </p>
                                 </div>
@@ -762,7 +1346,9 @@ export default function RentalShow({ rental, permissions }: Props) {
                 {rental.returns.length > 0 && (
                     <Card>
                         <CardHeader>
-                            <CardTitle>Riwayat pengembalian</CardTitle>
+                            <CardTitle>
+                                <Stage4Text k="stage4.ui.86fb4e3d48c3" />
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-3">
                             {rental.returns.map((item) => (
@@ -775,10 +1361,19 @@ export default function RentalShow({ rental, permissions }: Props) {
                                             {item.return_number}
                                         </p>
                                         <p className="text-sm text-muted-foreground">
-                                            {item.type} Â·{' '}
-                                            {new Date(
+                                            {stage4TranslateDynamic(
+                                                item.type === 'partial'
+                                                    ? 'partial_return'
+                                                    : item.type === 'full'
+                                                      ? 'full_return'
+                                                      : item.type,
+                                                stage4Locale,
+                                            )}{' '}
+                                            {' · '}{' '}
+                                            {stage4FormatDateTime(
                                                 item.returned_at,
-                                            ).toLocaleString('id-ID')}
+                                                stage4Locale,
+                                            )}
                                         </p>
                                     </div>
                                     <div className="flex items-center gap-3">
@@ -790,7 +1385,10 @@ export default function RentalShow({ rental, permissions }: Props) {
                                             )}
                                         </b>
                                         <Badge variant="outline">
-                                            {item.status}
+                                            {stage4TranslateDynamic(
+                                                item.status,
+                                                stage4Locale,
+                                            )}
                                         </Badge>
                                     </div>
                                 </div>
@@ -801,7 +1399,9 @@ export default function RentalShow({ rental, permissions }: Props) {
                 {rental.operational_corrections.length > 0 && (
                     <Card>
                         <CardHeader>
-                            <CardTitle>Riwayat koreksi operasional</CardTitle>
+                            <CardTitle>
+                                <Stage4Text k="stage4.ui.c1ddf40384e3" />
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-3">
                             {rental.operational_corrections.map((item) => (
@@ -820,19 +1420,28 @@ export default function RentalShow({ rental, permissions }: Props) {
                                                         .return_number
                                                 }
                                                 {item.replacement_return
-                                                    ? ` â†’ ${item.replacement_return.return_number}`
-                                                    : ' â†’ menunggu finalisasi'}
+                                                    ? ` → ${item.replacement_return.return_number}`
+                                                    : stage4Translate(
+                                                          'stage4.ui.c5979fb31b35',
+                                                          stage4Locale,
+                                                      )}
                                             </p>
                                         </div>
-                                        <Badge>{item.status}</Badge>
+                                        <Badge>
+                                            {stage4TranslateDynamic(
+                                                item.status,
+                                                stage4Locale,
+                                            )}
+                                        </Badge>
                                     </div>
                                     <p className="mt-3 text-sm">
                                         {item.reason}
                                     </p>
                                     <p className="mt-2 text-xs text-muted-foreground">
-                                        Dibuka oleh {item.opener.name}
+                                        <Stage4Text k="stage4.ui.31e0a5724f12" />{' '}
+                                        {item.opener.name}
                                         {item.finalizer
-                                            ? ` Â· Difinalisasi oleh ${item.finalizer.name}`
+                                            ? ` · ${stage4Translate('stage4.ui.5b4f6e96b640', stage4Locale)} ${item.finalizer.name}`
                                             : ''}
                                     </p>
                                 </div>
@@ -847,20 +1456,17 @@ export default function RentalShow({ rental, permissions }: Props) {
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
                                     <RotateCcw className="size-5" />
-                                    Buka kembali pengembalian
+                                    <Stage4Text k="stage4.ui.e426bee464e1" />
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <Alert className="mb-5">
                                     <AlertTriangle />
                                     <AlertTitle>
-                                        Koreksi operasional terkontrol
+                                        <Stage4Text k="stage4.ui.24f2edd041bb" />
                                     </AlertTitle>
                                     <AlertDescription>
-                                        Digunakan untuk memperbaiki waktu,
-                                        kondisi, unit, catatan, atau inspeksi.
-                                        Nominal tetap dikelola melalui koreksi
-                                        keuangan.
+                                        <Stage4Text k="stage4.ui.47a91fa95bf8" />
                                     </AlertDescription>
                                 </Alert>
                                 <form
@@ -869,7 +1475,7 @@ export default function RentalShow({ rental, permissions }: Props) {
                                 >
                                     <div className="space-y-2">
                                         <Label htmlFor="rental_return_id">
-                                            Return yang dikoreksi
+                                            <Stage4Text k="stage4.ui.2486202a6a02" />
                                         </Label>
                                         <select
                                             id="rental_return_id"
@@ -912,7 +1518,7 @@ export default function RentalShow({ rental, permissions }: Props) {
                                     </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="operational_reason">
-                                            Alasan pembukaan kembali
+                                            <Stage4Text k="stage4.ui.520de3bd0bd8" />
                                         </Label>
                                         <textarea
                                             id="operational_reason"
@@ -924,7 +1530,10 @@ export default function RentalShow({ rental, permissions }: Props) {
                                                     event.target.value,
                                                 )
                                             }
-                                            placeholder="Wajib diisi minimal 10 karakter."
+                                            placeholder={stage4Translate(
+                                                'stage4.ui.84d5bd4e5ee6',
+                                                stage4Locale,
+                                            )}
                                         />
                                         {operational.errors.reason && (
                                             <p className="text-sm text-destructive">
@@ -945,7 +1554,7 @@ export default function RentalShow({ rental, permissions }: Props) {
                                             }
                                         >
                                             <RotateCcw />
-                                            Buka dan lanjutkan koreksi
+                                            <Stage4Text k="stage4.ui.b93aba98f10e" />
                                         </Button>
                                     </div>
                                 </form>
@@ -955,7 +1564,9 @@ export default function RentalShow({ rental, permissions }: Props) {
                 {rental.financial_adjustments.length > 0 && (
                     <Card>
                         <CardHeader>
-                            <CardTitle>Riwayat koreksi keuangan</CardTitle>
+                            <CardTitle>
+                                <Stage4Text k="stage4.ui.f02ebef19432" />
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-3">
                             {rental.financial_adjustments.map((item) => (
@@ -969,8 +1580,10 @@ export default function RentalShow({ rental, permissions }: Props) {
                                                 {item.adjustment_number}
                                             </p>
                                             <p className="text-sm text-muted-foreground">
-                                                {item.component} Â·{' '}
-                                                {item.direction} Â·{' '}
+                                                {item.component}
+                                                <Stage4Text k="stage4.ui.e21a079b3a50" />{' '}
+                                                {item.direction}
+                                                <Stage4Text k="stage4.ui.e21a079b3a50" />{' '}
                                                 {item.creator.name}
                                             </p>
                                         </div>
@@ -982,11 +1595,14 @@ export default function RentalShow({ rental, permissions }: Props) {
                                         {item.reason}
                                     </p>
                                     <p className="mt-2 text-xs text-muted-foreground">
-                                        Saldo{' '}
+                                        <Stage4Text k="stage4.ui.8b0fcd0c1f89" />{' '}
                                         {money.format(
                                             Number(item.balance_before),
                                         )}
-                                        {' â†’ '}
+                                        {stage4Translate(
+                                            'stage4.ui.84fb07a3c1c3',
+                                            stage4Locale,
+                                        )}
                                         {money.format(
                                             Number(item.balance_after),
                                         )}
@@ -1002,16 +1618,16 @@ export default function RentalShow({ rental, permissions }: Props) {
                             <CardHeader>
                                 <CardTitle className="flex items-center gap-2">
                                     <ShieldCheck className="size-5" />
-                                    Koreksi transaksi selesai
+                                    <Stage4Text k="stage4.ui.b88f17cd7aea" />
                                 </CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <Alert className="mb-5">
-                                    <AlertTitle>Koreksi terkontrol</AlertTitle>
+                                    <AlertTitle>
+                                        <Stage4Text k="stage4.ui.b23942884e46" />
+                                    </AlertTitle>
                                     <AlertDescription>
-                                        Histori pembayaran asli tidak berubah.
-                                        Setiap koreksi dicatat sebagai
-                                        adjustment ledger dan audit Super Admin.
+                                        <Stage4Text k="stage4.ui.0516d0a6c25f" />
                                     </AlertDescription>
                                 </Alert>
                                 <form
@@ -1020,7 +1636,7 @@ export default function RentalShow({ rental, permissions }: Props) {
                                 >
                                     <div className="space-y-2">
                                         <Label htmlFor="component">
-                                            Komponen
+                                            <Stage4Text k="stage4.ui.0750e291bd60" />
                                         </Label>
                                         <select
                                             id="component"
@@ -1034,13 +1650,13 @@ export default function RentalShow({ rental, permissions }: Props) {
                                             }
                                         >
                                             <option value="charge">
-                                                Tagihan / biaya
+                                                <Stage4Text k="stage4.ui.0129b86a0496" />
                                             </option>
                                             <option value="payment">
-                                                Pembayaran
+                                                <Stage4Text k="stage4.ui.f0874594eb78" />
                                             </option>
                                             <option value="deposit">
-                                                Deposit
+                                                <Stage4Text k="stage4.ui.e7b0b317a6e8" />
                                             </option>
                                         </select>
                                         {correction.errors.component && (
@@ -1051,7 +1667,7 @@ export default function RentalShow({ rental, permissions }: Props) {
                                     </div>
                                     <div className="space-y-2">
                                         <Label htmlFor="direction">
-                                            Perubahan
+                                            <Stage4Text k="stage4.ui.9083748eb607" />
                                         </Label>
                                         <select
                                             id="direction"
@@ -1065,10 +1681,10 @@ export default function RentalShow({ rental, permissions }: Props) {
                                             }
                                         >
                                             <option value="increase">
-                                                Tambah
+                                                <Stage4Text k="stage4.ui.a44eb3d1808f" />
                                             </option>
                                             <option value="decrease">
-                                                Kurangi
+                                                <Stage4Text k="stage4.ui.5589ac4ca19e" />
                                             </option>
                                         </select>
                                         {correction.errors.direction && (
@@ -1079,7 +1695,7 @@ export default function RentalShow({ rental, permissions }: Props) {
                                     </div>
                                     <div className="space-y-2 md:col-span-2">
                                         <Label htmlFor="amount">
-                                            Nominal koreksi
+                                            <Stage4Text k="stage4.ui.013340da8633" />
                                         </Label>
                                         <RupiahInput
                                             id="amount"
@@ -1100,7 +1716,7 @@ export default function RentalShow({ rental, permissions }: Props) {
                                     </div>
                                     <div className="space-y-2 md:col-span-2">
                                         <Label htmlFor="reason">
-                                            Alasan koreksi
+                                            <Stage4Text k="stage4.ui.0fd21bfb8d44" />
                                         </Label>
                                         <textarea
                                             id="reason"
@@ -1112,7 +1728,10 @@ export default function RentalShow({ rental, permissions }: Props) {
                                                     event.target.value,
                                                 )
                                             }
-                                            placeholder="Wajib diisi minimal 10 karakter."
+                                            placeholder={stage4Translate(
+                                                'stage4.ui.84d5bd4e5ee6',
+                                                stage4Locale,
+                                            )}
                                         />
                                         {correction.errors.reason && (
                                             <p className="text-sm text-destructive">
@@ -1122,7 +1741,7 @@ export default function RentalShow({ rental, permissions }: Props) {
                                     </div>
                                     <div className="space-y-2 md:col-span-2">
                                         <Label htmlFor="notes">
-                                            Catatan internal (opsional)
+                                            <Stage4Text k="stage4.ui.6ea7f8153fe1" />
                                         </Label>
                                         <Input
                                             id="notes"
@@ -1145,7 +1764,7 @@ export default function RentalShow({ rental, permissions }: Props) {
                                                     .length < 10
                                             }
                                         >
-                                            Simpan koreksi terkontrol
+                                            <Stage4Text k="stage4.ui.d4ead4b78da1" />
                                         </Button>
                                     </div>
                                 </form>

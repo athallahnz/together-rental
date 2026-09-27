@@ -15,6 +15,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 ])]
 class RentalReturn extends Model
 {
+    /** @return BelongsTo<Rental, $this> */
     public function rental(): BelongsTo
     {
         return $this->belongsTo(Rental::class);
@@ -26,6 +27,7 @@ class RentalReturn extends Model
         return $this->hasMany(RentalReturnItem::class);
     }
 
+    /** @return HasMany<RentalOperationalCorrection, $this> */
     public function operationalCorrection(): HasMany
     {
         return $this->hasMany(RentalOperationalCorrection::class, 'original_return_id');

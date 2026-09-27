@@ -10,6 +10,13 @@ import {
 } from 'lucide-react';
 import { useState } from 'react';
 import type { FormEvent, ReactNode } from 'react';
+import {
+    stage5Display,
+    Stage5Text,
+    stage5Translate,
+    stage5Date,
+    stage5Money,
+} from '@/components/stage5-text';
 import InputError from '@/components/input-error';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
@@ -32,6 +39,7 @@ import {
     SelectTrigger,
     SelectValue,
 } from '@/components/ui/select';
+import { useAppLocale } from '@/lib/i18n';
 import type { RefundCenterRefund, RefundStatus } from '@/types';
 
 type RefundDetail = RefundCenterRefund & {
@@ -116,22 +124,7 @@ type ReasonForm = {
     setData: (key: 'reason', value: string) => void;
 };
 
-const money = new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    maximumFractionDigits: 0,
-});
-const dateTime = new Intl.DateTimeFormat('id-ID', {
-    dateStyle: 'long',
-    timeStyle: 'short',
-});
-const statusLabels: Record<RefundStatus, string> = {
-    requested: 'Requested',
-    approved: 'Approved',
-    rejected: 'Rejected',
-    paid: 'Paid',
-    cancelled: 'Cancelled',
-};
+const money = { format: stage5Money };
 
 export default function RefundCenterShow({
     refund,
@@ -139,6 +132,7 @@ export default function RefundCenterShow({
     openCashSessions,
     permissions,
 }: Props) {
+    const { locale: stage5Locale } = useAppLocale();
     const [approveOpen, setApproveOpen] = useState(false);
     const [rejectOpen, setRejectOpen] = useState(false);
     const [processOpen, setProcessOpen] = useState(false);
@@ -207,7 +201,7 @@ export default function RefundCenterShow({
                         <Button variant="ghost" size="sm" asChild>
                             <Link href="/finance/refunds">
                                 <ArrowLeft className="size-4" />
-                                Refund Center
+                                <Stage5Text k="stage5.ui.81bd652019ba" />
                             </Link>
                         </Button>
                         <div className="mt-3 flex flex-wrap items-center gap-3">
@@ -218,17 +212,27 @@ export default function RefundCenterShow({
                             <Badge variant="outline" className="capitalize">
                                 {refund.refund_type}
                             </Badge>
+                            {refund.purpose && (
+                                <Badge variant="outline">
+                                    {refund.purpose === 'booking_cancellation'
+                                        ? 'Pembatalan Booking'
+                                        : 'Koreksi Pembayaran'}
+                                </Badge>
+                            )}
                         </div>
                         <p className="mt-2 text-sm text-muted-foreground">
                             {refund.branch.code} — {refund.branch.name} ·{' '}
-                            {dateTime.format(new Date(refund.created_at))}
+                            {stage5Date(
+                                new Date(refund.created_at),
+                                stage5Locale,
+                            )}
                         </p>
                     </div>
                     <div className="flex flex-wrap gap-2">
                         {permissions.approve && (
                             <Button onClick={() => setApproveOpen(true)}>
                                 <Check className="size-4" />
-                                Setujui
+                                <Stage5Text k="stage5.ui.1f9ce43818de" />
                             </Button>
                         )}
                         {permissions.reject && (
@@ -237,13 +241,13 @@ export default function RefundCenterShow({
                                 onClick={() => setRejectOpen(true)}
                             >
                                 <X className="size-4" />
-                                Tolak
+                                <Stage5Text k="stage5.ui.e2f73daf8ad0" />
                             </Button>
                         )}
                         {permissions.process && (
                             <Button onClick={() => setProcessOpen(true)}>
                                 <WalletCards className="size-4" />
-                                Bayar Refund
+                                <Stage5Text k="stage5.ui.cfe5f4063c3c" />
                             </Button>
                         )}
                         {permissions.cancel && (
@@ -252,7 +256,7 @@ export default function RefundCenterShow({
                                 onClick={() => setCancelOpen(true)}
                             >
                                 <Ban className="size-4" />
-                                Batalkan
+                                <Stage5Text k="stage5.ui.dbe47c83d4ca" />
                             </Button>
                         )}
                     </div>
@@ -263,32 +267,69 @@ export default function RefundCenterShow({
                 <section className="grid gap-6 lg:grid-cols-3">
                     <Card className="lg:col-span-2">
                         <CardHeader>
-                            <CardTitle>Detail Refund</CardTitle>
+                            <CardTitle>
+                                <Stage5Text k="stage5.ui.5c01e89d492e" />
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="grid gap-5 sm:grid-cols-2">
                             <Info
-                                label="Nominal refund"
+                                label={stage5Translate(
+                                    'stage5.ui.3b8f9bd8120d',
+                                    stage5Locale,
+                                )}
                                 value={money.format(Number(refund.amount))}
                                 emphasis
                             />
                             <Info
-                                label="Metode payout"
+                                label={stage5Translate(
+                                    'stage5.ui.06867a894580',
+                                    stage5Locale,
+                                )}
                                 value={`${refund.payment_method.name} (${refund.payment_method.code})`}
                             />
                             <Info
-                                label="Pengaju"
+                                label={stage5Translate(
+                                    'stage5.ui.6248898d670d',
+                                    stage5Locale,
+                                )}
+                                value={
+                                    refund.purpose === 'booking_cancellation'
+                                        ? 'Pembatalan Booking'
+                                        : refund.purpose ===
+                                            'payment_correction'
+                                          ? 'Koreksi Pembayaran'
+                                          : 'Legacy / tidak diklasifikasikan'
+                                }
+                            />
+                            <Info
+                                label={stage5Translate(
+                                    'stage5.ui.74e55868378d',
+                                    stage5Locale,
+                                )}
                                 value={refund.requester?.name ?? 'Sistem'}
                             />
                             <Info
-                                label="Referensi payout"
+                                label={stage5Translate(
+                                    'stage5.ui.fb188273559d',
+                                    stage5Locale,
+                                )}
                                 value={refund.external_reference ?? '—'}
                             />
                             <div className="sm:col-span-2">
-                                <Info label="Alasan" value={refund.reason} />
+                                <Info
+                                    label={stage5Translate(
+                                        'stage5.ui.3faa833b08be',
+                                        stage5Locale,
+                                    )}
+                                    value={refund.reason}
+                                />
                             </div>
                             <div className="sm:col-span-2">
                                 <Info
-                                    label="Catatan"
+                                    label={stage5Translate(
+                                        'stage5.ui.9f09aefd0dd4',
+                                        stage5Locale,
+                                    )}
                                     value={refund.notes ?? '—'}
                                 />
                             </div>
@@ -299,7 +340,7 @@ export default function RefundCenterShow({
                                             href={`/finance/refunds/${refund.id}/proof`}
                                         >
                                             <Download className="size-4" />
-                                            Unduh bukti payout
+                                            <Stage5Text k="stage5.ui.bf720fb72c8f" />
                                         </a>
                                     </Button>
                                     <p className="mt-2 text-xs text-muted-foreground">
@@ -313,28 +354,39 @@ export default function RefundCenterShow({
 
                     <Card>
                         <CardHeader>
-                            <CardTitle>Payment Sumber</CardTitle>
+                            <CardTitle>
+                                <Stage5Text k="stage5.ui.dee3788ad0d2" />
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             <Info
-                                label="Payment"
+                                label={stage5Translate(
+                                    'stage5.ui.b41a92bed032',
+                                    stage5Locale,
+                                )}
                                 value={refund.payment.payment_number}
                             />
                             <Info
-                                label="Nominal payment"
+                                label={stage5Translate(
+                                    'stage5.ui.0aa9fd910b79',
+                                    stage5Locale,
+                                )}
                                 value={money.format(
                                     Number(refund.payment.amount),
                                 )}
                             />
                             <Info
-                                label="Pelanggan"
+                                label={stage5Translate(
+                                    'stage5.ui.af0ab4433946',
+                                    stage5Locale,
+                                )}
                                 value={refund.payment.customer?.name ?? '—'}
                             />
                             <Button variant="outline" size="sm" asChild>
                                 <Link
                                     href={`/finance/payments/${refund.payment.id}`}
                                 >
-                                    Buka Payment
+                                    <Stage5Text k="stage5.ui.6a1ec440cc67" />
                                 </Link>
                             </Button>
                         </CardContent>
@@ -344,7 +396,9 @@ export default function RefundCenterShow({
                 <section className="grid gap-6 lg:grid-cols-2">
                     <Card>
                         <CardHeader>
-                            <CardTitle>Timeline Workflow</CardTitle>
+                            <CardTitle>
+                                <Stage5Text k="stage5.ui.7f09922cb63d" />
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
                             {timeline(refund).map((item) => (
@@ -361,7 +415,10 @@ export default function RefundCenterShow({
                                         </p>
                                         <p className="mt-1 text-xs text-muted-foreground">
                                             {item.actor} ·{' '}
-                                            {dateTime.format(new Date(item.at))}
+                                            {stage5Date(
+                                                new Date(item.at),
+                                                stage5Locale,
+                                            )}
                                         </p>
                                     </div>
                                 </div>
@@ -371,7 +428,9 @@ export default function RefundCenterShow({
 
                     <Card>
                         <CardHeader>
-                            <CardTitle>Cash Ledger & Audit</CardTitle>
+                            <CardTitle>
+                                <Stage5Text k="stage5.ui.09e6d3688124" />
+                            </CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-5">
                             {refund.cash_transactions.map((transaction) => (
@@ -391,7 +450,7 @@ export default function RefundCenterShow({
                                         </p>
                                     </div>
                                     <p className="mt-1 text-xs text-muted-foreground">
-                                        Saldo setelah transaksi:{' '}
+                                        <Stage5Text k="stage5.ui.74de293e54ec" />{' '}
                                         {money.format(
                                             Number(transaction.balance_after),
                                         )}
@@ -400,13 +459,12 @@ export default function RefundCenterShow({
                             ))}
                             {refund.cash_transactions.length === 0 && (
                                 <p className="text-sm text-muted-foreground">
-                                    Refund non-tunai tidak membentuk cash
-                                    ledger, atau payout belum diproses.
+                                    <Stage5Text k="stage5.ui.476cbfd4a75b" />
                                 </p>
                             )}
                             <div className="border-t pt-4">
                                 <p className="mb-3 text-sm font-medium">
-                                    Audit trail
+                                    <Stage5Text k="stage5.ui.33de865a8d82" />
                                 </p>
                                 <div className="space-y-3">
                                     {activities.map((activity) => (
@@ -418,10 +476,11 @@ export default function RefundCenterShow({
                                                 {activity.actor_name ??
                                                     'Sistem'}{' '}
                                                 ·{' '}
-                                                {dateTime.format(
+                                                {stage5Date(
                                                     new Date(
                                                         activity.created_at,
                                                     ),
+                                                    stage5Locale,
                                                 )}
                                             </p>
                                         </div>
@@ -436,26 +495,35 @@ export default function RefundCenterShow({
             <Dialog open={approveOpen} onOpenChange={setApproveOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Setujui refund?</DialogTitle>
+                        <DialogTitle>
+                            <Stage5Text k="stage5.ui.b288e5304669" />
+                        </DialogTitle>
                         <DialogDescription>
-                            Setelah disetujui, refund siap diproses oleh petugas
-                            payout. Pengaju dan penyetuju tercatat terpisah.
+                            {refund.purpose === 'booking_cancellation'
+                                ? 'Persetujuan ini langsung membatalkan Booking dan melepaskan reservasi stok. Payout belum dilakukan; DP dan security deposit yang belum direfund tetap menjadi kewajiban.'
+                                : 'Setelah disetujui, refund siap diproses oleh petugas payout. Pengaju dan penyetuju tercatat terpisah.'}
                         </DialogDescription>
                     </DialogHeader>
                     <form onSubmit={submitApprove}>
+                        <InputError
+                            message={Object.values(approveForm.errors).find(
+                                (error): error is string =>
+                                    typeof error === 'string',
+                            )}
+                        />
                         <DialogFooter>
                             <Button
                                 type="button"
                                 variant="outline"
                                 onClick={() => setApproveOpen(false)}
                             >
-                                Batal
+                                <Stage5Text k="stage5.ui.1433539c3b8f" />
                             </Button>
                             <Button
                                 type="submit"
                                 disabled={approveForm.processing}
                             >
-                                Konfirmasi Approval
+                                <Stage5Text k="stage5.ui.3f1d3685c698" />
                             </Button>
                         </DialogFooter>
                     </form>
@@ -465,8 +533,11 @@ export default function RefundCenterShow({
             <ReasonDialog
                 open={rejectOpen}
                 onOpenChange={setRejectOpen}
-                title="Tolak refund"
-                description="Penolakan melepaskan nominal yang sebelumnya direservasi."
+                title={stage5Translate('stage5.ui.ad78efded11f', stage5Locale)}
+                description={stage5Translate(
+                    'stage5.ui.52c3c813ed33',
+                    stage5Locale,
+                )}
                 form={rejectForm}
                 onSubmit={submitReject}
                 action="Konfirmasi Penolakan"
@@ -475,8 +546,11 @@ export default function RefundCenterShow({
             <ReasonDialog
                 open={cancelOpen}
                 onOpenChange={setCancelOpen}
-                title="Batalkan refund"
-                description="Refund requested atau approved akan dibatalkan tanpa menghapus histori."
+                title={stage5Translate('stage5.ui.cf902c834084', stage5Locale)}
+                description={stage5Translate(
+                    'stage5.ui.a23a6cc9e59b',
+                    stage5Locale,
+                )}
                 form={cancelForm}
                 onSubmit={submitCancel}
                 action="Konfirmasi Pembatalan"
@@ -485,7 +559,9 @@ export default function RefundCenterShow({
             <Dialog open={processOpen} onOpenChange={setProcessOpen}>
                 <DialogContent>
                     <DialogHeader>
-                        <DialogTitle>Bayar refund</DialogTitle>
+                        <DialogTitle>
+                            <Stage5Text k="stage5.ui.6d9ef647f176" />
+                        </DialogTitle>
                         <DialogDescription>
                             {cashRefund
                                 ? 'Payout tunai akan dicatat sebagai ledger keluar pada sesi kas aktif yang dipilih.'
@@ -495,7 +571,9 @@ export default function RefundCenterShow({
                     <form className="space-y-4" onSubmit={submitProcess}>
                         {cashRefund ? (
                             <div className="space-y-2">
-                                <Label>Sesi kas aktif</Label>
+                                <Label>
+                                    <Stage5Text k="stage5.ui.bdf75fb65c7f" />
+                                </Label>
                                 <Select
                                     value={processForm.data.cash_session_id}
                                     onValueChange={(value) =>
@@ -506,7 +584,12 @@ export default function RefundCenterShow({
                                     }
                                 >
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Pilih sesi kas" />
+                                        <SelectValue
+                                            placeholder={stage5Translate(
+                                                'stage5.ui.cfde4a0267a8',
+                                                stage5Locale,
+                                            )}
+                                        />
                                     </SelectTrigger>
                                     <SelectContent>
                                         {openCashSessions.map((session) => (
@@ -527,7 +610,7 @@ export default function RefundCenterShow({
                         ) : (
                             <div className="space-y-2">
                                 <Label htmlFor="refund-reference">
-                                    Referensi transaksi
+                                    <Stage5Text k="stage5.ui.69574bceb649" />
                                 </Label>
                                 <Input
                                     id="refund-reference"
@@ -539,7 +622,10 @@ export default function RefundCenterShow({
                                         )
                                     }
                                     maxLength={100}
-                                    placeholder="Nomor transfer / settlement"
+                                    placeholder={stage5Translate(
+                                        'stage5.ui.7d75ae9aa8c2',
+                                        stage5Locale,
+                                    )}
                                 />
                                 <InputError
                                     message={
@@ -549,7 +635,9 @@ export default function RefundCenterShow({
                             </div>
                         )}
                         <div className="space-y-2">
-                            <Label htmlFor="refund-proof">Bukti payout</Label>
+                            <Label htmlFor="refund-proof">
+                                <Stage5Text k="stage5.ui.15a56195e84d" />
+                            </Label>
                             <Input
                                 id="refund-proof"
                                 type="file"
@@ -564,7 +652,9 @@ export default function RefundCenterShow({
                             <InputError message={processForm.errors.proof} />
                         </div>
                         <div className="space-y-2">
-                            <Label htmlFor="refund-notes">Catatan payout</Label>
+                            <Label htmlFor="refund-notes">
+                                <Stage5Text k="stage5.ui.a4956ec48ff0" />
+                            </Label>
                             <textarea
                                 id="refund-notes"
                                 value={processForm.data.notes}
@@ -586,7 +676,7 @@ export default function RefundCenterShow({
                                 variant="outline"
                                 onClick={() => setProcessOpen(false)}
                             >
-                                Batal
+                                <Stage5Text k="stage5.ui.1433539c3b8f" />
                             </Button>
                             <Button
                                 type="submit"
@@ -613,11 +703,15 @@ export default function RefundCenterShow({
 }
 
 function StatusAlert({ refund }: { refund: RefundDetail }) {
+    const { locale: stage5Locale } = useAppLocale();
+
     if (refund.status === 'rejected') {
         return (
             <Alert variant="destructive">
                 <X className="size-4" />
-                <AlertTitle>Refund ditolak</AlertTitle>
+                <AlertTitle>
+                    <Stage5Text k="stage5.ui.91b8a88a6b7b" />
+                </AlertTitle>
                 <AlertDescription>
                     {refund.rejection_reason ?? 'Alasan tidak tersedia.'}
                 </AlertDescription>
@@ -629,9 +723,17 @@ function StatusAlert({ refund }: { refund: RefundDetail }) {
         return (
             <Alert>
                 <Ban className="size-4" />
-                <AlertTitle>Refund dibatalkan</AlertTitle>
+                <AlertTitle>
+                    <Stage5Text k="stage5.ui.dcfffb19d0b4" />
+                </AlertTitle>
                 <AlertDescription>
                     {refund.cancellation_reason ?? 'Alasan tidak tersedia.'}
+                    {refund.purpose === 'booking_cancellation' &&
+                        refund.booking?.status === 'cancelled' && (
+                            <span className="mt-2 block">
+                                <Stage5Text k="stage5.ui.c7149e8a0cfd" />
+                            </span>
+                        )}
                 </AlertDescription>
             </Alert>
         );
@@ -640,12 +742,16 @@ function StatusAlert({ refund }: { refund: RefundDetail }) {
     return (
         <Alert>
             <ReceiptText className="size-4" />
-            <AlertTitle>{statusLabels[refund.status]}</AlertTitle>
+            <AlertTitle>
+                {stage5Display(refund.status, stage5Locale)}
+            </AlertTitle>
             <AlertDescription>
                 {refund.status === 'requested'
                     ? 'Menunggu keputusan approver yang berbeda dari pengaju.'
                     : refund.status === 'approved'
-                      ? 'Refund siap dibayarkan melalui metode payout terpilih.'
+                      ? refund.purpose === 'booking_cancellation'
+                          ? 'Booking telah dibatalkan dan stok dilepas. Refund belum dibayarkan; selesaikan payout serta refund deposit terpisah bila ada.'
+                          : 'Refund siap dibayarkan melalui metode payout terpilih.'
                       : 'Payout telah tercatat dan histori refund dikunci.'}
             </AlertDescription>
         </Alert>
@@ -671,6 +777,8 @@ function ReasonDialog({
     action: string;
     destructive?: boolean;
 }) {
+    const { locale: stage5Locale } = useAppLocale();
+
     return (
         <Dialog open={open} onOpenChange={onOpenChange}>
             <DialogContent>
@@ -680,7 +788,9 @@ function ReasonDialog({
                 </DialogHeader>
                 <form className="space-y-4" onSubmit={onSubmit}>
                     <div className="space-y-2">
-                        <Label>Alasan</Label>
+                        <Label>
+                            <Stage5Text k="stage5.ui.3faa833b08be" />
+                        </Label>
                         <textarea
                             value={form.data.reason}
                             onChange={(event) =>
@@ -689,7 +799,10 @@ function ReasonDialog({
                             rows={4}
                             maxLength={1000}
                             className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-xs outline-none focus-visible:border-ring focus-visible:ring-2 focus-visible:ring-ring/50"
-                            placeholder="Jelaskan alasan (minimal 10 karakter)."
+                            placeholder={stage5Translate(
+                                'stage5.ui.3da9b0c182ad',
+                                stage5Locale,
+                            )}
                         />
                         <InputError message={form.errors.reason} />
                     </div>
@@ -699,7 +812,7 @@ function ReasonDialog({
                             variant="outline"
                             onClick={() => onOpenChange(false)}
                         >
-                            Kembali
+                            <Stage5Text k="stage5.ui.c43a6e25b712" />
                         </Button>
                         <Button
                             type="submit"
@@ -746,6 +859,7 @@ function Info({
 }
 
 function StatusBadge({ status }: { status: RefundStatus }) {
+    const { locale: stage5Locale } = useAppLocale();
     const variant =
         status === 'rejected'
             ? 'destructive'
@@ -755,13 +869,15 @@ function StatusBadge({ status }: { status: RefundStatus }) {
                 ? 'secondary'
                 : 'default';
 
-    return <Badge variant={variant}>{statusLabels[status]}</Badge>;
+    return (
+        <Badge variant={variant}>{stage5Display(status, stage5Locale)}</Badge>
+    );
 }
 
 function timeline(refund: RefundDetail) {
     const items = [
         {
-            label: 'Refund diajukan',
+            label: stage5Translate('stage5.ui.ecd3b4eee5d6'),
             actor: refund.requester?.name ?? 'Sistem',
             at: refund.created_at,
         },
@@ -769,7 +885,7 @@ function timeline(refund: RefundDetail) {
 
     if (refund.approved_at) {
         items.push({
-            label: 'Refund disetujui',
+            label: stage5Translate('stage5.ui.46b5a30fc1e1'),
             actor: refund.approver?.name ?? 'Sistem',
             at: refund.approved_at,
         });
@@ -777,7 +893,7 @@ function timeline(refund: RefundDetail) {
 
     if (refund.rejected_at) {
         items.push({
-            label: 'Refund ditolak',
+            label: stage5Translate('stage5.ui.91b8a88a6b7b'),
             actor: refund.rejecter?.name ?? 'Sistem',
             at: refund.rejected_at,
         });
@@ -785,7 +901,7 @@ function timeline(refund: RefundDetail) {
 
     if (refund.processed_at) {
         items.push({
-            label: 'Payout selesai',
+            label: stage5Translate('stage5.ui.64ef1e1f9e5d'),
             actor: refund.processor?.name ?? 'Sistem',
             at: refund.processed_at,
         });
@@ -793,7 +909,7 @@ function timeline(refund: RefundDetail) {
 
     if (refund.cancelled_at) {
         items.push({
-            label: 'Refund dibatalkan',
+            label: stage5Translate('stage5.ui.dcfffb19d0b4'),
             actor: refund.canceller?.name ?? 'Sistem',
             at: refund.cancelled_at,
         });

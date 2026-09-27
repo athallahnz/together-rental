@@ -34,6 +34,7 @@ class LoyaltyTransaction extends Model
         return $this->belongsTo(Branch::class);
     }
 
+    /** @return MorphTo<Model, $this> */
     public function source(): MorphTo
     {
         return $this->morphTo();

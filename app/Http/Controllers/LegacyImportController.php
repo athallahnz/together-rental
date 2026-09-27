@@ -83,7 +83,7 @@ class LegacyImportController extends Controller
                 : 'batch lama';
 
             throw ValidationException::withMessages([
-                'sql_file' => "File yang sama sudah terdaftar pada batch {$duplicate->id} untuk {$duplicateTarget}. Upload ulang tidak diperlukan.",
+                'sql_file' => __('uat035b_stage5.flash.import_duplicate', ['batch' => $duplicate->id, 'target' => $duplicateTarget]),
             ]);
         }
 
@@ -124,14 +124,16 @@ class LegacyImportController extends Controller
                 'import_prefix' => $prefix,
             ]);
         } catch (Throwable $exception) {
-            Storage::disk($disk)->delete($sourcePath);
+            if (is_string($sourcePath)) {
+                Storage::disk($disk)->delete($sourcePath);
+            }
 
             throw $exception;
         }
 
         return to_route('legacy-imports.show', $batch)->with('toast', [
             'type' => 'success',
-            'message' => "File SQL RentalV1 untuk {$sourceCity} ({$prefix}) berhasil diunggah dan siap dipreview.",
+            'message' => __('uat035b_stage5.flash.import_uploaded', ['city' => $sourceCity, 'prefix' => $prefix]),
         ]);
     }
 
@@ -216,8 +218,8 @@ class LegacyImportController extends Controller
 
         $reset = $beforeStatus !== 'uploaded' && $updated->status === 'uploaded';
         $message = $reset
-            ? 'Tujuan import berhasil diubah. Preview, validasi, dan mapping lama telah direset agar PREFIX baru diterapkan dengan aman.'
-            : "Tujuan import ditetapkan ke {$updated->source_city} dengan PREFIX {$updated->import_prefix}.";
+            ? __('uat035b_stage5.flash.import_target_reset')
+            : __('uat035b_stage5.flash.import_target_saved', ['city' => $updated->source_city, 'prefix' => $updated->import_prefix]);
 
         return back()->with('toast', [
             'type' => $reset ? 'warning' : 'success',
@@ -232,7 +234,7 @@ class LegacyImportController extends Controller
         $validated = $request->validate(['reason' => ['required', 'string', 'min:10', 'max:500']]);
         $count = $resolver->skipOrphanBookingDetails($legacyImport, $request->user()->id, $validated['reason']);
 
-        return back()->with('toast', ['type' => 'success', 'message' => "{$count} detail booking yatim telah ditandai skipped."]);
+        return back()->with('toast', ['type' => 'success', 'message' => __('uat035b_stage5.flash.import_orphans_skipped', ['count' => $count])]);
     }
 
     public function createMissingProductPlaceholder(Request $request, LegacyImportBatch $legacyImport, LegacyImportIssueResolver $resolver): RedirectResponse
@@ -242,7 +244,7 @@ class LegacyImportController extends Controller
         $validated = $request->validate(['reason' => ['required', 'string', 'min:10', 'max:500']]);
         $count = $resolver->createMissingProductPlaceholder($legacyImport, $request->user()->id, $validated['reason']);
 
-        return back()->with('toast', ['type' => 'success', 'message' => "{$count} produk placeholder nonaktif berhasil dibuat."]);
+        return back()->with('toast', ['type' => 'success', 'message' => __('uat035b_stage5.flash.import_placeholder_created', ['count' => $count])]);
     }
 
     public function preview(
@@ -344,7 +346,7 @@ class LegacyImportController extends Controller
         ) {
             return to_route('legacy-imports.show', $batch)->with('toast', [
                 'type' => 'error',
-                'message' => "Batch berstatus [{$batch->status}] tidak dapat menjalankan {$step}.",
+                'message' => __('uat035b_stage5.flash.import_invalid_step', ['status' => $batch->status, 'step' => $step]),
             ]);
         }
 
@@ -352,14 +354,14 @@ class LegacyImportController extends Controller
             if (! preg_match('/^[A-Z]{3}$/', (string) $batch->import_prefix) || trim((string) $batch->source_city) === '') {
                 return to_route('legacy-imports.show', $batch)->with('toast', [
                     'type' => 'error',
-                    'message' => 'Execute diblokir sampai kota/cabang dan PREFIX 3 huruf dikonfirmasi.',
+                    'message' => __('uat035b_stage5.flash.import_confirm_required'),
                 ]);
             }
 
             if (! $this->mappingMatchesTarget($batch)) {
                 return to_route('legacy-imports.show', $batch)->with('toast', [
                     'type' => 'error',
-                    'message' => 'Execute diblokir karena mapping belum memakai kota/PREFIX terbaru. Simpan tujuan import lalu ulangi Preview, Validasi, dan Mapping.',
+                    'message' => __('uat035b_stage5.flash.import_mapping_old'),
                 ]);
             }
         }
@@ -375,7 +377,7 @@ class LegacyImportController extends Controller
 
             return to_route('legacy-imports.show', $batch)->with('toast', [
                 'type' => 'success',
-                'message' => 'Proses masuk antrean dan akan berjalan di background.',
+                'message' => __('uat035b_stage5.flash.import_queued'),
             ]);
         } catch (Throwable $exception) {
             $recorder->fail($batch->fresh(), $step, $exception->getMessage(), $user->id);
@@ -383,7 +385,7 @@ class LegacyImportController extends Controller
 
             return to_route('legacy-imports.show', $batch)->with('toast', [
                 'type' => 'error',
-                'message' => 'Gagal memasukkan proses ke antrean: '.$exception->getMessage(),
+                'message' => __('uat035b_stage5.flash.import_enqueue_failed', ['error' => $exception->getMessage()]),
             ]);
         }
     }
@@ -409,7 +411,7 @@ class LegacyImportController extends Controller
 
             return to_route('legacy-imports.show', $batch)->with('toast', [
                 'type' => 'error',
-                'message' => 'Proses gagal: '.$exception->getMessage(),
+                'message' => __('uat035b_stage5.flash.import_process_failed', ['error' => $exception->getMessage()]),
             ]);
         }
     }
@@ -439,7 +441,8 @@ class LegacyImportController extends Controller
             ->unique('branch_id')
             ->keyBy('branch_id');
 
-        return $branches->map(function (Branch $branch) use ($establishedPrefixes): array {
+        /** @var Collection<int, array{id: int, code: string, name: string, city: string, suggested_prefix: string, prefix_locked: bool}> $options */
+        $options = $branches->map(function (Branch $branch) use ($establishedPrefixes): array {
             $established = $establishedPrefixes->get($branch->id)?->import_prefix;
             $letters = preg_replace('/[^A-Z]/', '', strtoupper(Str::ascii($branch->code))) ?? '';
             $suggested = is_string($established) && preg_match('/^[A-Z]{3}$/', $established)
@@ -456,6 +459,8 @@ class LegacyImportController extends Controller
                     && preg_match('/^[A-Z]{3}$/', $established) === 1,
             ];
         });
+
+        return $options;
     }
 
     /** @return Builder<Branch> */

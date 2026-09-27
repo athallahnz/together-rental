@@ -2,6 +2,7 @@
 
 namespace App\Domain\Bookings;
 
+use App\Domain\Finance\BookingPaymentSettlement;
 use App\Domain\Finance\PaymentManager;
 use App\Domain\Inventory\PooledStockManager;
 use App\Domain\Pricing\RentalPricingEngine;
@@ -30,6 +31,7 @@ class BookingManager
     public function __construct(
         private readonly BookingNumberGenerator $numbers,
         private readonly PaymentManager $payments,
+        private readonly BookingPaymentSettlement $settlement,
         private readonly RentalPricingEngine $pricing,
         private readonly PooledStockManager $pooled,
         private readonly RentalOvertimeCalculator $overtime,
@@ -103,16 +105,8 @@ class BookingManager
     {
         $rentalAmount = (float) ($data['payment_amount'] ?? 0);
         $depositAmount = (float) ($data['deposit_paid'] ?? 0);
-        $rentalPaid = (float) $booking->payments()
-            ->where('status', 'completed')
-            ->where('direction', 'in')
-            ->where('type', 'rental')
-            ->sum('amount');
-        $depositPaid = (float) $booking->payments()
-            ->where('status', 'completed')
-            ->where('direction', 'in')
-            ->where('type', 'deposit')
-            ->sum('amount');
+        $rentalPaid = $this->settlement->net($booking, 'rental');
+        $depositPaid = $this->settlement->net($booking, 'deposit');
 
         if ($rentalPaid + $rentalAmount > (float) $booking->total_amount) {
             throw ValidationException::withMessages([
@@ -445,7 +439,7 @@ class BookingManager
         return [$package->name, (float) $rate->amount, (float) $rate->deposit_amount, $requirements];
     }
 
-    /** @param Collection<int, array{product_id: int, quantity: int, tracking_type: string}> $requirements */
+    /** @param Collection<int, array{product_id: int, quantity: int, tracking_type: string, overtime_snapshot: array<string, mixed>}> $requirements */
     private function reserveRequirements(Booking $booking, BookingItem $item, Collection $requirements, int $position): void
     {
         foreach ($requirements as $requirement) {
@@ -508,7 +502,8 @@ class BookingManager
     private function assertReservationCompleteness(Booking $booking): void
     {
         foreach ($booking->items()->with(['reservations.asset', 'bulkReservations'])->get() as $item) {
-            $expected = collect($item->stock_requirements ?? []);
+            $storedRequirements = $item->stock_requirements;
+            $expected = collect(is_array($storedRequirements) ? $storedRequirements : []);
             if ($item->stock_requirements === null) {
                 // Compatibility for bookings made before this additive migration.
                 $expected = $item->product_id !== null
@@ -605,16 +600,8 @@ class BookingManager
 
     private function assertExistingPaymentsFitPricing(Booking $booking): void
     {
-        $rentalPaid = (float) $booking->payments()
-            ->where('status', 'completed')
-            ->where('direction', 'in')
-            ->where('type', 'rental')
-            ->sum('amount');
-        $depositPaid = (float) $booking->payments()
-            ->where('status', 'completed')
-            ->where('direction', 'in')
-            ->where('type', 'deposit')
-            ->sum('amount');
+        $rentalPaid = $this->settlement->net($booking, 'rental');
+        $depositPaid = $this->settlement->net($booking, 'deposit');
 
         if ($rentalPaid > (float) $booking->total_amount + 0.009) {
             throw ValidationException::withMessages([

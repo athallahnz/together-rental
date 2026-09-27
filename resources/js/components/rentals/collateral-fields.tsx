@@ -1,4 +1,6 @@
 import { Plus, Trash2 } from 'lucide-react';
+import { Stage4Text, stage4Translate } from '@/components/stage4-text';
+import { useAppLocale } from '@/lib/i18n';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
@@ -74,6 +76,8 @@ export function CollateralFields({
     errors?: Record<string, string>;
     identityOptions?: CollateralIdentityOption[];
 }) {
+    const { locale: stage4Locale } = useAppLocale();
+
     const update = (index: number, patch: Partial<CollateralInput>) =>
         onChange(
             value.map((item, position) =>
@@ -87,18 +91,31 @@ export function CollateralFields({
         );
     const chooseSource = (index: number, source: string) => {
         if (source === 'manual') {
-            update(index, { customer_identity_id: null });
+            const current = value[index];
+
+            // Switching away from Customer360 must not silently reuse its
+            // canonical ID/number as an unconfirmed manual receipt.
+            update(
+                index,
+                current?.customer_identity_id
+                    ? {
+                          ...emptyCollateral(),
+                          notes: current.notes,
+                          document: current.document,
+                      }
+                    : { customer_identity_id: null },
+            );
 
             return;
         }
 
-const identity = identityOptions.find(
-    (option) => option.id === Number(source),
-);
+        const identity = identityOptions.find(
+            (option) => option.id === Number(source),
+        );
 
-if (!identity || identity.is_expired) {
-    return;
-}
+        if (!identity || identity.is_expired) {
+            return;
+        }
 
         const current = value[index];
         update(index, {
@@ -112,18 +129,19 @@ if (!identity || identity.is_expired) {
         <div className="space-y-4">
             {value.length === 0 && (
                 <p className="text-sm text-muted-foreground">
-                    Tidak ada jaminan fisik. Deposit uang tetap dicatat terpisah
-                    pada bagian pembayaran.
+                    <Stage4Text k="stage4.ui.9de540e7b8d2" />
                 </p>
             )}
             {value.map((collateral, index) => (
                 <div key={index} className="rounded-lg border p-4">
                     <div className="mb-4 flex items-center justify-between gap-3">
                         <div>
-                            <p className="font-medium">Jaminan #{index + 1}</p>
+                            <p className="font-medium">
+                                <Stage4Text k="stage4.ui.39e0c3e56754" />
+                                {index + 1}
+                            </p>
                             <p className="text-xs text-muted-foreground">
-                                Barang/dokumen yang benar-benar diterima dan
-                                ditahan oleh petugas.
+                                <Stage4Text k="stage4.ui.d9849f2d0b86" />
                             </p>
                         </div>
                         <Button
@@ -143,11 +161,15 @@ if (!identity || identity.is_expired) {
                     </div>
                     {identityOptions.length > 0 && (
                         <div className="mb-4 rounded-md border bg-muted/30 p-3">
-                            <Label>Sumber jaminan</Label>
+                            <Label>
+                                <Stage4Text k="stage4.ui.ac060d458d63" />
+                            </Label>
                             <Select
                                 value={
                                     collateral.customer_identity_id
-                                        ? String(collateral.customer_identity_id)
+                                        ? String(
+                                              collateral.customer_identity_id,
+                                          )
                                         : 'manual'
                                 }
                                 onValueChange={(source) =>
@@ -159,7 +181,7 @@ if (!identity || identity.is_expired) {
                                 </SelectTrigger>
                                 <SelectContent>
                                     <SelectItem value="manual">
-                                        Input manual
+                                        <Stage4Text k="stage4.ui.e495a54aa028" />
                                     </SelectItem>
                                     {identityOptions.map((identity) => (
                                         <SelectItem
@@ -170,13 +192,25 @@ if (!identity || identity.is_expired) {
                                             {identity.collateral_type} ·{' '}
                                             {identity.number}
                                             {identity.is_primary
-                                                ? ' · Utama'
+                                                ? stage4Translate(
+                                                      'stage4.ui.c73f51f254b4',
+                                                      stage4Locale,
+                                                  )
                                                 : ''}
                                             {identity.verified_at
-                                                ? ' · Terverifikasi'
-                                                : ' · Belum diverifikasi'}
+                                                ? stage4Translate(
+                                                      'stage4.ui.973da3a900f7',
+                                                      stage4Locale,
+                                                  )
+                                                : stage4Translate(
+                                                      'stage4.ui.d948d2d59c8e',
+                                                      stage4Locale,
+                                                  )}
                                             {identity.is_expired
-                                                ? ' · Kedaluwarsa'
+                                                ? stage4Translate(
+                                                      'stage4.ui.2bb8fb66b3ac',
+                                                      stage4Locale,
+                                                  )
                                                 : ''}
                                         </SelectItem>
                                     ))}
@@ -184,10 +218,7 @@ if (!identity || identity.is_expired) {
                             </Select>
                             {linkedIdentity(collateral) && (
                                 <p className="mt-2 text-xs text-muted-foreground">
-                                    Diambil dari Customer360 dan disalin ke
-                                    snapshot rental saat checkout. Hapus atau
-                                    pilih input manual bila dokumen ini tidak
-                                    benar-benar ditahan.
+                                    <Stage4Text k="stage4.ui.bcbdb1df10ca" />
                                 </p>
                             )}
                             {errors[
@@ -205,10 +236,14 @@ if (!identity || identity.is_expired) {
                     )}
                     <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-4">
                         <div>
-                            <Label>Jenis</Label>
+                            <Label>
+                                <Stage4Text k="stage4.ui.fabb2b5c779a" />
+                            </Label>
                             <Select
                                 value={collateral.type}
-                                disabled={linkedIdentity(collateral) !== undefined}
+                                disabled={
+                                    linkedIdentity(collateral) !== undefined
+                                }
                                 onValueChange={(type) =>
                                     update(index, { type })
                                 }
@@ -231,16 +266,23 @@ if (!identity || identity.is_expired) {
                             )}
                         </div>
                         <div>
-                            <Label>Nomor / identitas barang</Label>
+                            <Label>
+                                <Stage4Text k="stage4.ui.4cc7e7c2b541" />
+                            </Label>
                             <Input
                                 value={collateral.number}
-                                readOnly={linkedIdentity(collateral) !== undefined}
+                                readOnly={
+                                    linkedIdentity(collateral) !== undefined
+                                }
                                 onChange={(event) =>
                                     update(index, {
                                         number: event.target.value,
                                     })
                                 }
-                                placeholder="NIK / nomor SIM / nomor kartu"
+                                placeholder={stage4Translate(
+                                    'stage4.ui.78c2ce2fb4eb',
+                                    stage4Locale,
+                                )}
                             />
                             {errors[`collaterals.${index}.number`] && (
                                 <p className="mt-1 text-sm text-destructive">
@@ -249,20 +291,29 @@ if (!identity || identity.is_expired) {
                             )}
                         </div>
                         <div>
-                            <Label>Atas nama</Label>
+                            <Label>
+                                <Stage4Text k="stage4.ui.b9f45b6b55d5" />
+                            </Label>
                             <Input
                                 value={collateral.holder_name}
-                                readOnly={linkedIdentity(collateral) !== undefined}
+                                readOnly={
+                                    linkedIdentity(collateral) !== undefined
+                                }
                                 onChange={(event) =>
                                     update(index, {
                                         holder_name: event.target.value,
                                     })
                                 }
-                                placeholder="Nama pemilik jaminan"
+                                placeholder={stage4Translate(
+                                    'stage4.ui.f02c0e4b0131',
+                                    stage4Locale,
+                                )}
                             />
                         </div>
                         <div>
-                            <Label>Dokumen/foto (opsional)</Label>
+                            <Label>
+                                <Stage4Text k="stage4.ui.7431175db613" />
+                            </Label>
                             <Input
                                 type="file"
                                 accept="image/jpeg,image/png,image/webp,application/pdf"
@@ -280,13 +331,18 @@ if (!identity || identity.is_expired) {
                             )}
                         </div>
                         <div className="md:col-span-2 xl:col-span-4">
-                            <Label>Catatan</Label>
+                            <Label>
+                                <Stage4Text k="stage4.ui.9f09aefd0dd4" />
+                            </Label>
                             <Input
                                 value={collateral.notes}
                                 onChange={(event) =>
                                     update(index, { notes: event.target.value })
                                 }
-                                placeholder="Kondisi fisik, tempat penyimpanan, atau catatan lain"
+                                placeholder={stage4Translate(
+                                    'stage4.ui.520abfec3a84',
+                                    stage4Locale,
+                                )}
                             />
                         </div>
                     </div>
@@ -299,7 +355,7 @@ if (!identity || identity.is_expired) {
                     onClick={() => onChange([...value, emptyCollateral()])}
                 >
                     <Plus />
-                    Tambah jaminan fisik
+                    <Stage4Text k="stage4.ui.f36d005ae4a4" />
                 </Button>
             )}
         </div>

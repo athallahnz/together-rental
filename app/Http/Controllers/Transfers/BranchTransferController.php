@@ -153,8 +153,8 @@ class BranchTransferController extends Controller
         return to_route('transfers.show', $transfer)->with('toast', [
             'type' => 'success',
             'message' => $submitted
-                ? 'Transfer berhasil diajukan dan persetujuan cabang aktif telah dicatat.'
-                : 'Draft transfer berhasil disimpan.',
+                ? __('uat035b_stage4.flash.transfer_submitted')
+                : __('uat035b_stage4.flash.transfer_draft_saved'),
         ]);
     }
 
@@ -282,7 +282,7 @@ class BranchTransferController extends Controller
 
         return to_route('transfers.show', $transfer)->with('toast', [
             'type' => 'success',
-            'message' => 'Transfer berhasil diperbarui.',
+            'message' => __('uat035b_stage4.flash.transfer_updated'),
         ]);
     }
 
@@ -326,7 +326,7 @@ class BranchTransferController extends Controller
 
         return back()->with('toast', [
             'type' => 'success',
-            'message' => 'Transfer diajukan dan persetujuan cabang aktif berhasil dicatat.',
+            'message' => __('uat035b_stage4.flash.transfer_submitted_again'),
         ]);
     }
 
@@ -344,7 +344,7 @@ class BranchTransferController extends Controller
             ['status' => $transfer->status->value, 'reason' => $request->validated('reason')],
             $request->user()->current_branch_id);
 
-        return back()->with('toast', ['type' => 'success', 'message' => 'Transfer dibatalkan dan hold aset dilepas.']);
+        return back()->with('toast', ['type' => 'success', 'message' => __('uat035b_stage4.flash.transfer_cancelled')]);
     }
 
     public function preflight(

@@ -326,6 +326,7 @@ class PublicCatalogContentController extends Controller
                 'is_featured' => $validated['is_featured'],
                 'public_sort_order' => $validated['public_sort_order'],
                 'short_description' => $validated['short_description'],
+                ...$this->optionalContent($validated, ['description', 'description_en', 'short_description_en', 'seo_title_en', 'seo_description_en']),
                 'seo_title' => $validated['seo_title'],
                 'seo_description' => $validated['seo_description'],
                 'primary_image_path' => $primary,
@@ -383,6 +384,10 @@ class PublicCatalogContentController extends Controller
             'primary_image_path',
             'seo_title',
             'seo_description',
+            'description',
+            'description_en',
+            'seo_title_en',
+            'seo_description_en',
         ]);
 
         $oldImage = $rentalPackage->primary_image_path;
@@ -405,6 +410,7 @@ class PublicCatalogContentController extends Controller
             'public_sort_order' => $validated['public_sort_order'],
             'seo_title' => $validated['seo_title'],
             'seo_description' => $validated['seo_description'],
+            ...$this->optionalContent($validated, ['description', 'description_en', 'seo_title_en', 'seo_description_en']),
             'primary_image_path' => $image,
         ]);
 
@@ -643,6 +649,9 @@ class PublicCatalogContentController extends Controller
             'is_featured' => $product->is_featured,
             'public_sort_order' => $product->public_sort_order,
             'short_description' => $product->short_description,
+            'description' => $product->description,
+            'description_en' => $product->description_en,
+            'short_description_en' => $product->short_description_en,
             'primary_image_path' => $product->primary_image_path,
             'image_url' => $this->mediaUrl(
                 $product->primary_image_path,
@@ -664,6 +673,8 @@ class PublicCatalogContentController extends Controller
 
             'seo_title' => $product->seo_title,
             'seo_description' => $product->seo_description,
+            'seo_title_en' => $product->seo_title_en,
+            'seo_description_en' => $product->seo_description_en,
             'category' => $this->productCategoryName($product),
             'brand' => $this->productBrandName($product),
 
@@ -715,6 +726,7 @@ class PublicCatalogContentController extends Controller
             'name' => $package->name,
             'slug' => $package->slug,
             'description' => $package->description,
+            'description_en' => $package->description_en,
             'is_active' => $package->is_active,
             'is_public' => $package->is_public,
             'is_featured' => $package->is_featured,
@@ -725,6 +737,8 @@ class PublicCatalogContentController extends Controller
             ),
             'seo_title' => $package->seo_title,
             'seo_description' => $package->seo_description,
+            'seo_title_en' => $package->seo_title_en,
+            'seo_description_en' => $package->seo_description_en,
             'branch' => $package->branch,
             'items_count' => (int) $package->items_count,
 
@@ -752,6 +766,11 @@ class PublicCatalogContentController extends Controller
             'is_featured',
             'public_sort_order',
             'short_description',
+            'short_description_en',
+            'description',
+            'description_en',
+            'seo_title_en',
+            'seo_description_en',
             'primary_image_path',
             'gallery',
             'seo_title',
@@ -815,5 +834,14 @@ class PublicCatalogContentController extends Controller
         $disk = Storage::disk('public');
 
         return $disk->url($path);
+    }
+
+    /** @param array<string, mixed> $validated
+     * @param  list<string>  $keys
+     * @return array<string, mixed>
+     */
+    private function optionalContent(array $validated, array $keys): array
+    {
+        return array_intersect_key($validated, array_flip($keys));
     }
 }

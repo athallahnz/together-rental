@@ -35,7 +35,7 @@ class RentalPackageController extends Controller
 
         return to_route('catalog.packages.show', $package)->with('toast', [
             'type' => 'success',
-            'message' => "Paket {$package->name} berhasil dibuat.",
+            'message' => __('uat035b_stage3.toast.rentalpackage_1', ['name' => $package->name]),
         ]);
     }
 
@@ -71,7 +71,7 @@ class RentalPackageController extends Controller
 
         return back()->with('toast', [
             'type' => 'success',
-            'message' => "Paket {$rentalPackage->name} berhasil diperbarui.",
+            'message' => __('uat035b_stage3.toast.rentalpackage_2', ['name' => $rentalPackage->name]),
         ]);
     }
 
@@ -113,7 +113,7 @@ class RentalPackageController extends Controller
 
         return to_route('catalog.index', ['section' => 'packages'])->with('toast', [
             'type' => 'success',
-            'message' => "Paket {$rentalPackage->name} berhasil diarsipkan.",
+            'message' => __('uat035b_stage3.toast.rentalpackage_3', ['name' => $rentalPackage->name]),
         ]);
     }
 }

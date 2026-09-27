@@ -13,16 +13,19 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 ])]
 class RentalReturnItem extends Model
 {
+    /** @return BelongsTo<RentalReturn, $this> */
     public function rentalReturn(): BelongsTo
     {
         return $this->belongsTo(RentalReturn::class);
     }
 
+    /** @return BelongsTo<RentalItem, $this> */
     public function rentalItem(): BelongsTo
     {
         return $this->belongsTo(RentalItem::class);
     }
 
+    /** @return BelongsTo<Asset, $this> */
     public function asset(): BelongsTo
     {
         return $this->belongsTo(Asset::class);

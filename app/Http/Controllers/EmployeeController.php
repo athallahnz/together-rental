@@ -115,7 +115,7 @@ class EmployeeController extends Controller
 
         return to_route('employees.index')->with('toast', [
             'type' => 'success',
-            'message' => "Karyawan {$employee->name} berhasil ditambahkan.",
+            'message' => __('uat035b_stage3.toast.employee_1', ['name' => $employee->name]),
         ]);
     }
 
@@ -146,7 +146,7 @@ class EmployeeController extends Controller
 
         return back()->with('toast', [
             'type' => 'success',
-            'message' => "Data karyawan {$employee->name} berhasil diperbarui.",
+            'message' => __('uat035b_stage3.toast.employee_2', ['name' => $employee->name]),
         ]);
     }
 
@@ -175,8 +175,7 @@ class EmployeeController extends Controller
 
         return back()->with('toast', [
             'type' => 'success',
-            'message' => "Karyawan {$employee->name} berhasil ".
-                ($newStatus === 'active' ? 'diaktifkan.' : 'dinonaktifkan.'),
+            'message' => ($newStatus === 'active' ? __('uat035b_stage3.toast.employee_3_on', ['name' => $employee->name]) : __('uat035b_stage3.toast.employee_3_off', ['name' => $employee->name])),
         ]);
     }
 

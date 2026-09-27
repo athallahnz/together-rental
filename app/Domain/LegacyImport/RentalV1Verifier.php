@@ -75,7 +75,7 @@ final class RentalV1Verifier
     /** @return list<array<string, mixed>> */
     private function tableCountChecks(LegacyImportBatch $batch): array
     {
-        return DB::table('legacy_import_tables')
+        return array_values(DB::table('legacy_import_tables')
             ->where('batch_id', $batch->id)
             ->whereNotNull('target_table')
             ->orderBy('id')
@@ -98,7 +98,7 @@ final class RentalV1Verifier
                 ];
             })
             ->values()
-            ->all();
+            ->all());
     }
 
     /** @return array<string, mixed> */

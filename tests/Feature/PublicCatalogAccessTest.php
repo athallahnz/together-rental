@@ -2,6 +2,7 @@
 
 namespace Tests\Feature;
 
+use App\Domain\PublicCatalog\PublicCatalogService;
 use App\Models\CatalogBrand;
 use App\Models\Product;
 use App\Models\ProductCategory;
@@ -171,6 +172,43 @@ class PublicCatalogAccessTest extends TestCase
                 ->missing('product.purchase_price')
                 ->missing('product.asset_code')
                 ->missing('product.serial_number'));
+    }
+
+    public function test_product_content_uses_locale_and_falls_back_field_by_field(): void
+    {
+        $this->product->update([
+            'short_description' => 'Ringkas ID',
+            'short_description_en' => 'Compact EN',
+            'description_en' => 'English full description',
+            'seo_title' => 'Judul SEO ID',
+            'seo_title_en' => 'English SEO title',
+            'seo_description' => 'SEO asli',
+            'seo_description_en' => null,
+        ]);
+
+        $catalog = app(PublicCatalogService::class);
+        app()->setLocale('id');
+        $original = $catalog->product($this->product->slug, 'PNG')['product'];
+        $this->assertSame('Ringkas ID', $original['short_description']);
+        $this->assertSame('Mirrorless ringkas untuk kebutuhan foto dan video.', $original['description']);
+        $this->assertSame('Judul SEO ID', $original['seo_title']);
+
+        app()->setLocale('en');
+        $english = $catalog->product($this->product->slug, 'PNG')['product'];
+        $this->assertSame('Compact EN', $english['short_description']);
+        $this->assertSame('English full description', $english['description']);
+        $this->assertSame('English SEO title', $english['seo_title']);
+        $this->assertSame('SEO asli', $english['seo_description']);
+
+        $this->product->update([
+            'short_description_en' => null,
+            'description_en' => null,
+            'seo_title_en' => null,
+        ]);
+        $legacy = $catalog->product($this->product->slug, 'PNG')['product'];
+        $this->assertSame('Ringkas ID', $legacy['short_description']);
+        $this->assertSame('Mirrorless ringkas untuk kebutuhan foto dan video.', $legacy['description']);
+        $this->assertSame('Judul SEO ID', $legacy['seo_title']);
     }
 
     public function test_non_public_product_returns_not_found(): void

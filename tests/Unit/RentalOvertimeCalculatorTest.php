@@ -11,7 +11,7 @@ class RentalOvertimeCalculatorTest extends TestCase
 {
     public function test_partial_hour_is_rounded_up_and_hours_one_to_five_use_hourly_penalty(): void
     {
-        $calculator = new RentalOvertimeCalculator();
+        $calculator = new RentalOvertimeCalculator;
         $dueAt = CarbonImmutable::parse('2026-09-23 10:00:00');
         $item = $this->item($dueAt, [
             'source' => 'booking_rate_snapshot',
@@ -31,7 +31,7 @@ class RentalOvertimeCalculatorTest extends TestCase
 
     public function test_six_hour_rate_is_used_as_a_block_and_repeats_for_later_blocks(): void
     {
-        $calculator = new RentalOvertimeCalculator();
+        $calculator = new RentalOvertimeCalculator;
         $dueAt = CarbonImmutable::parse('2026-09-23 10:00:00');
         $item = $this->item($dueAt, [
             'source' => 'booking_rate_snapshot',
@@ -55,7 +55,7 @@ class RentalOvertimeCalculatorTest extends TestCase
 
     public function test_missing_six_hour_rate_falls_back_to_ten_percent_for_every_hour(): void
     {
-        $calculator = new RentalOvertimeCalculator();
+        $calculator = new RentalOvertimeCalculator;
         $dueAt = CarbonImmutable::parse('2026-09-23 10:00:00');
         $item = new RentalItem([
             'id' => 10,
@@ -73,7 +73,7 @@ class RentalOvertimeCalculatorTest extends TestCase
 
     public function test_quantity_multiplies_charge_without_changing_unit_policy(): void
     {
-        $calculator = new RentalOvertimeCalculator();
+        $calculator = new RentalOvertimeCalculator;
         $dueAt = CarbonImmutable::parse('2026-09-23 10:00:00');
         $item = $this->item($dueAt, [
             'source' => 'booking_rate_snapshot',

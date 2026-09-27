@@ -27,7 +27,7 @@ class BranchTransferExpenseController extends Controller
             'actual_amount' => $expense->actual_amount,
         ], $expense->expense_branch_id);
 
-        return back()->with('toast', ['type' => 'success', 'message' => 'Biaya transfer berhasil dicatat.']);
+        return back()->with('toast', ['type' => 'success', 'message' => __('uat035b_stage4.flash.expense_recorded')]);
     }
 
     public function update(
@@ -43,7 +43,7 @@ class BranchTransferExpenseController extends Controller
             $expense->only(['status', 'estimated_amount', 'actual_amount']),
             $expense->expense_branch_id);
 
-        return back()->with('toast', ['type' => 'success', 'message' => 'Biaya transfer diperbarui.']);
+        return back()->with('toast', ['type' => 'success', 'message' => __('uat035b_stage4.flash.expense_updated')]);
     }
 
     public function pay(
@@ -60,7 +60,7 @@ class BranchTransferExpenseController extends Controller
             'actual_amount' => $expense->actual_amount,
         ], $expense->expense_branch_id);
 
-        return back()->with('toast', ['type' => 'success', 'message' => 'Pembayaran biaya transfer berhasil dicatat.']);
+        return back()->with('toast', ['type' => 'success', 'message' => __('uat035b_stage4.flash.expense_paid')]);
     }
 
     public function void(
@@ -76,6 +76,6 @@ class BranchTransferExpenseController extends Controller
             'reason' => $request->validated('reason'),
         ], $expense->expense_branch_id);
 
-        return back()->with('toast', ['type' => 'success', 'message' => 'Biaya transfer dibatalkan tanpa menghapus histori.']);
+        return back()->with('toast', ['type' => 'success', 'message' => __('uat035b_stage4.flash.expense_voided')]);
     }
 }

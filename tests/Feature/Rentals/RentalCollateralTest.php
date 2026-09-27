@@ -292,13 +292,15 @@ class RentalCollateralTest extends TestCase
         $rental = $this->createDirectRental($user, $branch, $customer, $plan, $product);
 
         $this->actingAs($user)->post(route('rentals.collaterals.store', $rental), [
+            'source_mode' => 'manual',
             'type' => 'KTP',
             'number' => 'KTP-PRIVATE-01',
             'holder_name' => $customer->name,
+            'physical_received' => true,
             'document' => UploadedFile::fake()->image('jaminan.jpg'),
         ])->assertSessionHasNoErrors();
 
-        $collateral = RentalCollateral::query()->firstOrFail();
+        $collateral = RentalCollateral::query()->where('number', 'KTP-PRIVATE-01')->firstOrFail();
         $this->actingAs($user)
             ->get(route('rentals.collaterals.document', [$rental, $collateral]))
             ->assertOk();
@@ -328,6 +330,152 @@ class RentalCollateralTest extends TestCase
         $this->actingAs($other)
             ->get(route('rentals.collaterals.document', [$rental, $collateral]))
             ->assertNotFound();
+    }
+
+    public function test_active_rental_page_exposes_customer360_identity_added_after_checkout(): void
+    {
+        [$user, $branch, $customer, $plan, $product] = $this->fixture();
+        $rental = $this->createDirectRental($user, $branch, $customer, $plan, $product);
+        $identity = CustomerIdentity::query()->create([
+            'customer_id' => $customer->id,
+            'type' => 'ktp',
+            'number' => 'POST-CHECKOUT-KTP-001',
+            'name_on_identity' => 'Identitas Setelah Checkout',
+            'expires_at' => now()->addYear()->toDateString(),
+            'is_primary' => true,
+            'verified_at' => now(),
+            'verified_by' => $user->id,
+        ]);
+
+        $this->actingAs($user)
+            ->get(route('rentals.show', $rental))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('rentals/show')
+                ->where('customerIdentities.0.id', $identity->id)
+                ->where('customerIdentities.0.number', 'POST-CHECKOUT-KTP-001')
+                ->where('customerIdentities.0.is_default', true)
+                ->where('permissions.updateCustomer', true));
+    }
+
+    public function test_active_rental_can_receive_existing_customer360_identity_added_after_checkout(): void
+    {
+        [$user, $branch, $customer, $plan, $product] = $this->fixture();
+        $rental = $this->createDirectRental($user, $branch, $customer, $plan, $product);
+        $identity = CustomerIdentity::query()->create([
+            'customer_id' => $customer->id,
+            'type' => 'sim',
+            'number' => 'POST-CHECKOUT-SIM-001',
+            'name_on_identity' => 'Nama Canonical Setelah Checkout',
+            'expires_at' => now()->addYear()->toDateString(),
+            'is_primary' => true,
+            'verified_at' => now(),
+            'verified_by' => $user->id,
+        ]);
+
+        $this->actingAs($user)->post(route('rentals.collaterals.store', $rental), [
+            'source_mode' => 'existing',
+            'customer_identity_id' => $identity->id,
+            'type' => 'KTP',
+            'number' => 'TAMPERED',
+            'holder_name' => 'Tampered Holder',
+            'physical_received' => true,
+        ])->assertSessionHasNoErrors()->assertRedirect();
+
+        $collateral = RentalCollateral::query()->latest('id')->firstOrFail();
+
+        $this->assertSame($identity->id, $collateral->customer_identity_id);
+        $this->assertSame('customer_identity', $collateral->source_type);
+        $this->assertSame('SIM', $collateral->type);
+        $this->assertSame('POST-CHECKOUT-SIM-001', $collateral->number);
+        $this->assertSame('Nama Canonical Setelah Checkout', $collateral->holder_name);
+        $this->assertSame($identity->id, $collateral->identity_snapshot['customer_identity_id']);
+        $this->assertSame('held', $collateral->status);
+        $this->assertSame(2, $rental->collaterals()->where('status', 'held')->count());
+    }
+
+    public function test_active_rental_can_create_customer360_identity_and_receive_it_atomically(): void
+    {
+        [$user, $branch, $customer, $plan, $product] = $this->fixture();
+        $rental = $this->createDirectRental($user, $branch, $customer, $plan, $product);
+
+        $this->actingAs($user)->post(route('rentals.collaterals.store', $rental), [
+            'source_mode' => 'new',
+            'identity_type' => 'ktp',
+            'identity_number' => '3502010101010777',
+            'identity_name_on_identity' => 'Identitas Baru Rental',
+            'identity_expires_at' => now()->addYears(2)->toDateString(),
+            'identity_is_primary' => true,
+            'save_to_customer360' => true,
+            'physical_received' => true,
+            'notes' => 'Dibuat saat rental aktif.',
+        ])->assertSessionHasNoErrors()->assertRedirect();
+
+        $identity = CustomerIdentity::query()->where('number', '3502010101010777')->firstOrFail();
+        $collateral = RentalCollateral::query()->latest('id')->firstOrFail();
+
+        $this->assertSame($customer->id, $identity->customer_id);
+        $this->assertTrue($identity->is_primary);
+        $this->assertNull($identity->verified_at);
+        $this->assertSame($identity->id, $collateral->customer_identity_id);
+        $this->assertSame('customer_identity', $collateral->source_type);
+        $this->assertSame('KTP', $collateral->type);
+        $this->assertSame('3502010101010777', $collateral->number);
+        $this->assertSame('held', $collateral->status);
+        $this->assertDatabaseHas('activity_logs', [
+            'event' => 'customer.identity_created',
+            'subject_id' => $identity->id,
+        ]);
+        $this->assertDatabaseHas('activity_logs', [
+            'event' => 'rental.collateral_received',
+            'subject_id' => $collateral->id,
+        ]);
+    }
+
+    public function test_new_identity_can_be_received_without_saving_to_customer360(): void
+    {
+        [$user, $branch, $customer, $plan, $product] = $this->fixture();
+        $rental = $this->createDirectRental($user, $branch, $customer, $plan, $product);
+
+        $this->actingAs($user)->post(route('rentals.collaterals.store', $rental), [
+            'source_mode' => 'new',
+            'identity_type' => 'passport',
+            'identity_number' => 'A12345678',
+            'identity_name_on_identity' => 'Passport Manual',
+            'save_to_customer360' => false,
+            'physical_received' => true,
+        ])->assertSessionHasNoErrors()->assertRedirect();
+
+        $collateral = RentalCollateral::query()->latest('id')->firstOrFail();
+
+        $this->assertDatabaseCount('customer_identities', 0);
+        $this->assertNull($collateral->customer_identity_id);
+        $this->assertSame('manual', $collateral->source_type);
+        $this->assertSame('Paspor', $collateral->type);
+        $this->assertSame('A12345678', $collateral->number);
+        $this->assertSame('Passport Manual', $collateral->holder_name);
+        $this->assertNull($collateral->identity_snapshot);
+    }
+
+    public function test_active_rental_collateral_requires_physical_received_confirmation(): void
+    {
+        [$user, $branch, $customer, $plan, $product] = $this->fixture();
+        $rental = $this->createDirectRental($user, $branch, $customer, $plan, $product);
+
+        $this->actingAs($user)->post(route('rentals.collaterals.store', $rental), [
+            'source_mode' => 'manual',
+            'type' => 'KTP',
+            'number' => 'KTP-NOT-RECEIVED',
+            'holder_name' => $customer->name,
+        ])->assertSessionHasErrors('physical_received');
+
+        // Direct Rental already has one mandatory initial collateral; the rejected
+        // second receipt must not create another record.
+        $this->assertDatabaseCount('rental_collaterals', 1);
+        $this->assertDatabaseMissing('rental_collaterals', [
+            'rental_id' => $rental->id,
+            'number' => 'KTP-NOT-RECEIVED',
+        ]);
     }
 
     public function test_final_return_is_atomic_until_all_held_collaterals_are_confirmed_returned(): void
@@ -583,13 +731,14 @@ class RentalCollateralTest extends TestCase
             $payload['cash_session_id'] = $session->id;
         }
 
-        if ($collateral) {
-            $payload['collaterals'] = [[
-                'type' => 'KTP',
-                'number' => 'KTP-HELD-001',
-                'holder_name' => $customer->name,
-            ]];
-        }
+        // UAT-014: Direct Rental always requires an initial physical collateral.
+        // Tests that add Customer360 identities later start with a distinct manual
+        // item, while the return tests retain their explicit KTP fixture.
+        $payload['collaterals'] = [[
+            'type' => $collateral ? 'KTP' : 'Kartu Mahasiswa',
+            'number' => $collateral ? 'KTP-HELD-001' : 'MHS-INITIAL-001',
+            'holder_name' => $customer->name,
+        ]];
 
         $this->actingAs($user)->post(route('rentals.direct.store'), $payload)
             ->assertSessionHasNoErrors()->assertRedirect();

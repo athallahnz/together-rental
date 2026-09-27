@@ -5,7 +5,14 @@ namespace App\Models;
 use Illuminate\Database\Eloquent\Attributes\Fillable;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use Illuminate\Support\Carbon;
 
+/**
+ * @property int $quantity
+ * @property Carbon $starts_at
+ * @property Carbon $ends_at
+ * @property Carbon|null $released_at
+ */
 #[Fillable([
     'branch_id', 'product_id', 'booking_id', 'booking_item_id', 'quantity',
     'starts_at', 'ends_at', 'status', 'released_at', 'released_by', 'release_reason',

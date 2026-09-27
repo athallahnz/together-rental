@@ -30,7 +30,7 @@ class BranchTransferDispatchController extends Controller
 
         return back()->with('toast', [
             'type' => 'success',
-            'message' => 'Dispatch berhasil dikonfirmasi. Aset tetap berstatus In Transit.',
+            'message' => __('uat035b_stage4.flash.dispatch_confirmed'),
         ]);
     }
 }

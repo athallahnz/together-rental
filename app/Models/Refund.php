@@ -10,6 +10,7 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 #[Fillable([
     'branch_id', 'payment_id', 'booking_id', 'rental_id', 'payment_method_id',
     'cash_session_id', 'refund_number', 'refund_type', 'amount', 'status',
+    'purpose',
     'reason', 'notes', 'requested_by', 'approved_by', 'rejected_by',
     'processed_by', 'cancelled_by', 'approved_at', 'rejected_at',
     'rejection_reason', 'processed_at', 'cancelled_at', 'cancellation_reason',
@@ -18,6 +19,12 @@ use Illuminate\Database\Eloquent\Relations\HasMany;
 ])]
 class Refund extends Model
 {
+    public const PURPOSE_BOOKING_CANCELLATION = 'booking_cancellation';
+
+    public const PURPOSE_PAYMENT_CORRECTION = 'payment_correction';
+
+    public const BOOKING_PURPOSES = [self::PURPOSE_BOOKING_CANCELLATION, self::PURPOSE_PAYMENT_CORRECTION];
+
     /** @return BelongsTo<Branch, $this> */
     public function branch(): BelongsTo
     {

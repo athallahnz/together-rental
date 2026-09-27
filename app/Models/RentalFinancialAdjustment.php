@@ -12,11 +12,13 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 ])]
 class RentalFinancialAdjustment extends Model
 {
+    /** @return BelongsTo<Rental, $this> */
     public function rental(): BelongsTo
     {
         return $this->belongsTo(Rental::class);
     }
 
+    /** @return BelongsTo<User, $this> */
     public function creator(): BelongsTo
     {
         return $this->belongsTo(User::class, 'created_by');

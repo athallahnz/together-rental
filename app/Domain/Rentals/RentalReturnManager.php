@@ -114,7 +114,8 @@ class RentalReturnManager
                 }
             }
 
-            $bulkInputs = collect($data['bulk_items'] ?? []);
+            $bulkRaw = $data['bulk_items'] ?? [];
+            $bulkInputs = collect(is_array($bulkRaw) ? $bulkRaw : []);
             if ($bulkInputs->isNotEmpty() && $correction !== null) {
                 throw ValidationException::withMessages(['bulk_items' => 'Koreksi operasional Bulk belum tersedia.']);
             }

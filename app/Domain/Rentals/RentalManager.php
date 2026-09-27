@@ -3,12 +3,14 @@
 namespace App\Domain\Rentals;
 
 use App\Domain\Bookings\BookingManager;
+use App\Domain\Finance\BookingPaymentSettlement;
 use App\Domain\Finance\PaymentManager;
 use App\Domain\Inventory\PooledStockManager;
 use App\Models\Asset;
 use App\Models\AssetInspection;
 use App\Models\AssetReservation;
 use App\Models\Booking;
+use App\Models\BookingItem;
 use App\Models\BulkReservation;
 use App\Models\Payment;
 use App\Models\Rental;
@@ -25,6 +27,7 @@ class RentalManager
         private readonly RentalNumberGenerator $numbers,
         private readonly BookingManager $bookings,
         private readonly PaymentManager $payments,
+        private readonly BookingPaymentSettlement $settlement,
         private readonly RentalCollateralManager $collaterals,
         private readonly PooledStockManager $pooled,
         private readonly RentalOvertimeCalculator $overtime,
@@ -115,16 +118,8 @@ class RentalManager
         $checkedOutAt = $data['checked_out_at'] ?? now();
         $rentalPayment = (float) ($data['payment_amount'] ?? 0);
         $depositPaid = (float) ($data['deposit_paid'] ?? 0);
-        $bookingRentalPaid = (float) $booking->payments()
-            ->where('status', 'completed')
-            ->where('direction', 'in')
-            ->where('type', 'rental')
-            ->sum('amount');
-        $bookingDepositPaid = (float) $booking->payments()
-            ->where('status', 'completed')
-            ->where('direction', 'in')
-            ->where('type', 'deposit')
-            ->sum('amount');
+        $bookingRentalPaid = $this->settlement->net($booking, 'rental');
+        $bookingDepositPaid = $this->settlement->net($booking, 'deposit');
         $remainingRental = max(0, (float) $booking->total_amount - $bookingRentalPaid);
         $remainingDeposit = max(0, (float) $booking->deposit_required - $bookingDepositPaid);
 
@@ -370,7 +365,7 @@ class RentalManager
 
     /** @return array<string, mixed>|null */
     private function bookingOvertimeSnapshot(
-        \App\Models\BookingItem $bookingItem,
+        BookingItem $bookingItem,
         int $productId,
     ): ?array {
         $requirements = $bookingItem->stock_requirements;

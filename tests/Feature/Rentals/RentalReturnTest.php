@@ -303,9 +303,23 @@ class RentalReturnTest extends TestCase
             'checkout_condition' => 'good',
             'payment_amount' => 0,
             'deposit_paid' => 0,
+            // UAT-014: direct rental requires a physically received collateral.
+            'collaterals' => [[
+                'type' => 'Kartu Mahasiswa',
+                'number' => 'MHS-RETURN-FIXTURE-001',
+                'holder_name' => $customer->name,
+            ]],
         ])->assertSessionHasNoErrors()
             ->assertRedirect();
 
-        return [$user, Rental::query()->with('items.assets.asset')->firstOrFail(), $assets[0]];
+        $rental = Rental::query()->with('items.assets.asset')->firstOrFail();
+        // These cases test return accounting, not the separate collateral lifecycle.
+        // Return the initial collateral through its real endpoint before each case.
+        $this->actingAs($user)->post(route('rentals.collaterals.return', [
+            $rental,
+            $rental->collaterals()->firstOrFail(),
+        ]))->assertSessionHasNoErrors();
+
+        return [$user, $rental, $assets[0]];
     }
 }

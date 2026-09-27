@@ -75,7 +75,7 @@ class RoleController extends Controller
 
         return to_route('roles.index')->with('toast', [
             'type' => 'success',
-            'message' => "Role {$role->name} berhasil dibuat.",
+            'message' => __('uat035b_stage3.toast.role_1', ['name' => $role->name]),
         ]);
     }
 
@@ -131,9 +131,7 @@ class RoleController extends Controller
 
         return back()->with('toast', [
             'type' => 'success',
-            'message' => $role->is_system
-                ? "Permission role sistem {$role->name} berhasil diperbarui."
-                : "Role {$role->name} berhasil diperbarui.",
+            'message' => ($role->is_system ? __('uat035b_stage3.toast.role_2_system', ['name' => $role->name]) : __('uat035b_stage3.toast.role_2', ['name' => $role->name])),
         ]);
     }
 
@@ -151,11 +149,13 @@ class RoleController extends Controller
             ->where('slug', 'branches.switch')
             ->value('id');
 
-        return collect($permissionIds)
+        $normalized = collect($permissionIds)
             ->when($switchPermissionId !== null, fn ($ids) => $ids->push((int) $switchPermissionId))
             ->unique()
             ->values()
             ->all();
+
+        return array_values($normalized);
     }
 
     private function guardRoleBelongsToActorCompany(Request $request, Role $role): void

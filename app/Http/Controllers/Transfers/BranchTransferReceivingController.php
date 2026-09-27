@@ -33,8 +33,8 @@ class BranchTransferReceivingController extends Controller
         return back()->with('toast', [
             'type' => 'success',
             'message' => $transfer->status->value === 'completed'
-                ? 'Seluruh item berhasil diterima dan transfer selesai.'
-                : 'Penerimaan tersimpan. Item tersisa atau discrepancy masih perlu ditindaklanjuti.',
+                ? __('uat035b_stage4.flash.receiving_completed')
+                : __('uat035b_stage4.flash.receiving_partial'),
         ]);
     }
 
@@ -61,7 +61,7 @@ class BranchTransferReceivingController extends Controller
 
         return back()->with('toast', [
             'type' => 'success',
-            'message' => 'Discrepancy berhasil diselesaikan.',
+            'message' => __('uat035b_stage4.flash.discrepancy_resolved'),
         ]);
     }
 }

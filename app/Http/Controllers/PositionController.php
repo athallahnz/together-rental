@@ -30,7 +30,7 @@ class PositionController extends Controller
 
         return back()->with('toast', [
             'type' => 'success',
-            'message' => "Jabatan {$position->name} berhasil ditambahkan.",
+            'message' => __('uat035b_stage3.toast.position_1', ['name' => $position->name]),
         ]);
     }
 
@@ -52,7 +52,7 @@ class PositionController extends Controller
 
         return back()->with('toast', [
             'type' => 'success',
-            'message' => "Jabatan {$position->name} berhasil diperbarui.",
+            'message' => __('uat035b_stage3.toast.position_2', ['name' => $position->name]),
         ]);
     }
 
@@ -82,7 +82,7 @@ class PositionController extends Controller
 
         return back()->with('toast', [
             'type' => 'success',
-            'message' => "Status jabatan {$position->name} berhasil diperbarui.",
+            'message' => __('uat035b_stage3.toast.position_3', ['name' => $position->name]),
         ]);
     }
 

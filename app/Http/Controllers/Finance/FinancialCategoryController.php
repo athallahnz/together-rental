@@ -23,7 +23,7 @@ class FinancialCategoryController extends Controller
 
         return back()->with('toast', [
             'type' => 'success',
-            'message' => "Kategori keuangan {$category->code} berhasil ditambahkan.",
+            'message' => __('uat035b_stage5.flash.category_added', ['reference' => $category->code]),
         ]);
     }
 
@@ -43,7 +43,7 @@ class FinancialCategoryController extends Controller
 
         return back()->with('toast', [
             'type' => 'success',
-            'message' => "Kategori keuangan {$category->code} berhasil diperbarui.",
+            'message' => __('uat035b_stage5.flash.category_updated', ['reference' => $category->code]),
         ]);
     }
 
@@ -68,8 +68,7 @@ class FinancialCategoryController extends Controller
 
         return back()->with('toast', [
             'type' => 'success',
-            'message' => "Kategori keuangan {$category->code} berhasil "
-                .($category->is_active ? 'diaktifkan.' : 'dinonaktifkan.'),
+            'message' => __($category->is_active ? 'uat035b_stage5.flash.category_activated' : 'uat035b_stage5.flash.category_deactivated', ['reference' => $category->code]),
         ]);
     }
 }

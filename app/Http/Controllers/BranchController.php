@@ -160,7 +160,7 @@ class BranchController extends Controller
 
         return to_route('branches.index')->with('toast', [
             'type' => 'success',
-            'message' => "Cabang {$branch->code} berhasil dibuat dan diprovisikan.",
+            'message' => __('uat035b_stage3.toast.branch_1', ['code' => $branch->code]),
         ]);
     }
 
@@ -213,7 +213,7 @@ class BranchController extends Controller
 
         return back()->with('toast', [
             'type' => 'success',
-            'message' => "Data cabang {$branch->code} berhasil diperbarui.",
+            'message' => __('uat035b_stage3.toast.branch_2', ['code' => $branch->code]),
         ]);
     }
 
@@ -242,8 +242,7 @@ class BranchController extends Controller
 
         return back()->with('toast', [
             'type' => 'success',
-            'message' => "Cabang {$branch->code} berhasil ".
-                ($activate ? 'diaktifkan.' : 'dinonaktifkan.'),
+            'message' => ($activate ? __('uat035b_stage3.toast.branch_3_on', ['code' => $branch->code]) : __('uat035b_stage3.toast.branch_3_off', ['code' => $branch->code])),
         ]);
     }
 
@@ -272,7 +271,7 @@ class BranchController extends Controller
 
         return back()->with('toast', [
             'type' => 'success',
-            'message' => "Cabang aktif diubah ke {$branch->code} · {$branch->name}.",
+            'message' => __('uat035b_stage3.toast.branch_4', ['code' => $branch->code, 'name' => $branch->name]),
         ]);
     }
 

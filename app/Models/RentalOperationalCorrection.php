@@ -23,26 +23,31 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 ])]
 class RentalOperationalCorrection extends Model
 {
+    /** @return BelongsTo<Rental, $this> */
     public function rental(): BelongsTo
     {
         return $this->belongsTo(Rental::class);
     }
 
+    /** @return BelongsTo<RentalReturn, $this> */
     public function originalReturn(): BelongsTo
     {
         return $this->belongsTo(RentalReturn::class, 'original_return_id');
     }
 
+    /** @return BelongsTo<RentalReturn, $this> */
     public function replacementReturn(): BelongsTo
     {
         return $this->belongsTo(RentalReturn::class, 'replacement_return_id');
     }
 
+    /** @return BelongsTo<User, $this> */
     public function opener(): BelongsTo
     {
         return $this->belongsTo(User::class, 'opened_by');
     }
 
+    /** @return BelongsTo<User, $this> */
     public function finalizer(): BelongsTo
     {
         return $this->belongsTo(User::class, 'finalized_by');

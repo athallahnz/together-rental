@@ -1,6 +1,14 @@
 import { Head, Link, router } from '@inertiajs/react';
 import { RefreshCcw, RotateCcw, Search } from 'lucide-react';
 import { useState } from 'react';
+import {
+    stage5Choice,
+    stage5Display,
+    Stage5Text,
+    stage5Translate,
+    stage5Date,
+    stage5Money,
+} from '@/components/stage5-text';
 import { PaginationLinks } from '@/components/pagination-links';
 import { MetricCard } from '@/components/ui/metric-card';
 import { Badge } from '@/components/ui/badge';
@@ -9,6 +17,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { FilterBar } from '@/components/ui/filter-bar';
+import { useAppLocale } from '@/lib/i18n';
 import {
     Select,
     SelectContent,
@@ -33,15 +42,8 @@ type Props = {
     filters: RefundCenterFilters;
 };
 
-const money = new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    maximumFractionDigits: 0,
-});
-const dateTime = new Intl.DateTimeFormat('id-ID', {
-    dateStyle: 'medium',
-    timeStyle: 'short',
-});
+const money = { format: stage5Money };
+
 const statusLabels: Record<RefundStatus, string> = {
     requested: 'Requested',
     approved: 'Approved',
@@ -57,6 +59,7 @@ export default function RefundCenterIndex({
     paymentMethods,
     filters,
 }: Props) {
+    const { locale: stage5Locale } = useAppLocale();
     const [search, setSearch] = useState(filters.search);
 
     const applyFilters = (changes: Partial<RefundCenterFilters> = {}) => {
@@ -77,54 +80,92 @@ export default function RefundCenterIndex({
 
     return (
         <>
-            <Head title="Refund Center" />
+            <Head
+                title={stage5Translate('stage5.ui.81bd652019ba', stage5Locale)}
+            />
             <div className="space-y-6 p-4 md:p-6">
                 <header>
                     <h1 className="flex items-center gap-2 text-2xl font-semibold">
                         <RotateCcw className="size-6 text-primary" />
-                        Refund Center
+                        <Stage5Text k="stage5.ui.81bd652019ba" />
                     </h1>
                     <p className="mt-1 text-sm text-muted-foreground">
-                        Kelola pengajuan, approval, dan pembayaran refund tanpa
-                        mengubah histori payment maupun sesi kas lama.
+                        <Stage5Text k="stage5.ui.e2093b521181" />
                     </p>
                 </header>
 
                 <section className="grid gap-3 sm:grid-cols-2 xl:grid-cols-5">
                     <SummaryCard
-                        title="Total pengajuan"
+                        title={stage5Translate(
+                            'stage5.ui.e2c758898156',
+                            stage5Locale,
+                        )}
                         value={String(summary.total_count)}
-                        description="Sesuai filter aktif"
+                        description={stage5Translate(
+                            'stage5.ui.f817d256981e',
+                            stage5Locale,
+                        )}
                     />
                     <SummaryCard
-                        title="Menunggu approval"
+                        title={stage5Translate(
+                            'stage5.ui.6618acf15388',
+                            stage5Locale,
+                        )}
                         value={String(summary.requested_count)}
-                        description="Status requested"
+                        description={stage5Translate(
+                            'stage5.ui.1c9437f1f921',
+                            stage5Locale,
+                        )}
                         tone="warning"
                     />
                     <SummaryCard
-                        title="Siap dibayar"
+                        title={stage5Translate(
+                            'stage5.ui.cfdc44a6e5cf',
+                            stage5Locale,
+                        )}
                         value={String(summary.approved_count)}
-                        description="Status approved"
+                        description={stage5Translate(
+                            'stage5.ui.af7171f8a532',
+                            stage5Locale,
+                        )}
                         tone="primary"
                     />
                     <SummaryCard
-                        title="Outstanding"
+                        title={stage5Translate(
+                            'stage5.ui.f8ee57ec8645',
+                            stage5Locale,
+                        )}
                         value={money.format(summary.outstanding_amount)}
-                        description="Requested + approved"
+                        description={stage5Translate(
+                            'stage5.ui.1a9b03355bdc',
+                            stage5Locale,
+                        )}
                         tone="warning"
                     />
                     <SummaryCard
-                        title="Sudah dibayar"
+                        title={stage5Translate(
+                            'stage5.ui.3c78f49c2760',
+                            stage5Locale,
+                        )}
                         value={money.format(summary.paid_amount)}
-                        description={`${summary.paid_count} refund paid`}
+                        description={stage5Choice(
+                            `${summary.paid_count} refund dibayar`,
+                            `${summary.paid_count} refunds paid`,
+                            stage5Locale,
+                        )}
                         tone="success"
                     />
                 </section>
 
                 <FilterBar
-                    title="Filter refund"
-                    description="Cari refund dan payment sumber lalu persempit berdasarkan status, cabang, metode, dan tanggal."
+                    title={stage5Translate(
+                        'stage5.ui.49ca00bd551e',
+                        stage5Locale,
+                    )}
+                    description={stage5Translate(
+                        'stage5.ui.561abf2da7e3',
+                        stage5Locale,
+                    )}
                     contentClassName="md:grid-cols-2 xl:grid-cols-4"
                 >
                     <div className="flex gap-2 md:col-span-2">
@@ -136,7 +177,10 @@ export default function RefundCenterIndex({
                                     applyFilters();
                                 }
                             }}
-                            placeholder="Refund, payment, pelanggan, referensi..."
+                            placeholder={stage5Translate(
+                                'stage5.ui.e3a505e8f23b',
+                                stage5Locale,
+                            )}
                         />
                         <Button
                             type="button"
@@ -144,7 +188,7 @@ export default function RefundCenterIndex({
                             onClick={() => applyFilters()}
                         >
                             <Search className="size-4" />
-                            Cari
+                            <Stage5Text k="stage5.ui.3f2275d79afb" />
                         </Button>
                     </div>
                     <Select
@@ -156,14 +200,21 @@ export default function RefundCenterIndex({
                         }
                     >
                         <SelectTrigger>
-                            <SelectValue placeholder="Semua status" />
+                            <SelectValue
+                                placeholder={stage5Translate(
+                                    'stage5.ui.baa2adda4148',
+                                    stage5Locale,
+                                )}
+                            />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="all">Semua status</SelectItem>
+                            <SelectItem value="all">
+                                <Stage5Text k="stage5.ui.baa2adda4148" />
+                            </SelectItem>
                             {Object.entries(statusLabels).map(
                                 ([value, label]) => (
                                     <SelectItem key={value} value={value}>
-                                        {label}
+                                        {stage5Display(label, stage5Locale)}
                                     </SelectItem>
                                 ),
                             )}
@@ -183,10 +234,17 @@ export default function RefundCenterIndex({
                         }
                     >
                         <SelectTrigger>
-                            <SelectValue placeholder="Semua cabang" />
+                            <SelectValue
+                                placeholder={stage5Translate(
+                                    'stage5.ui.27d30aba48a4',
+                                    stage5Locale,
+                                )}
+                            />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="all">Semua cabang</SelectItem>
+                            <SelectItem value="all">
+                                <Stage5Text k="stage5.ui.27d30aba48a4" />
+                            </SelectItem>
                             {branches.map((branch) => (
                                 <SelectItem
                                     key={branch.id}
@@ -211,10 +269,17 @@ export default function RefundCenterIndex({
                         }
                     >
                         <SelectTrigger>
-                            <SelectValue placeholder="Semua metode" />
+                            <SelectValue
+                                placeholder={stage5Translate(
+                                    'stage5.ui.816684ab79ec',
+                                    stage5Locale,
+                                )}
+                            />
                         </SelectTrigger>
                         <SelectContent>
-                            <SelectItem value="all">Semua metode</SelectItem>
+                            <SelectItem value="all">
+                                <Stage5Text k="stage5.ui.816684ab79ec" />
+                            </SelectItem>
                             {paymentMethods.map((method) => (
                                 <SelectItem
                                     key={method.id}
@@ -226,7 +291,9 @@ export default function RefundCenterIndex({
                         </SelectContent>
                     </Select>
                     <div className="space-y-1.5">
-                        <Label htmlFor="refund-date-from">Dari tanggal</Label>
+                        <Label htmlFor="refund-date-from">
+                            <Stage5Text k="stage5.ui.30b35bf928d5" />
+                        </Label>
                         <Input
                             id="refund-date-from"
                             type="date"
@@ -239,7 +306,9 @@ export default function RefundCenterIndex({
                         />
                     </div>
                     <div className="space-y-1.5">
-                        <Label htmlFor="refund-date-to">Sampai tanggal</Label>
+                        <Label htmlFor="refund-date-to">
+                            <Stage5Text k="stage5.ui.95b58818f0a3" />
+                        </Label>
                         <Input
                             id="refund-date-to"
                             type="date"
@@ -265,27 +334,41 @@ export default function RefundCenterIndex({
                         }}
                     >
                         <RefreshCcw className="size-4" />
-                        Reset filter
+                        <Stage5Text k="stage5.ui.9c4a6ab48318" />
                     </Button>
                 </FilterBar>
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>Daftar refund</CardTitle>
+                        <CardTitle>
+                            <Stage5Text k="stage5.ui.f3d663d22d8f" />
+                        </CardTitle>
                     </CardHeader>
                     <CardContent>
                         <div className="overflow-x-auto">
                             <table className="w-full min-w-[980px] text-sm">
                                 <thead className="border-b bg-muted/40 text-left text-muted-foreground">
                                     <tr>
-                                        <th className="px-3 py-3">Refund</th>
-                                        <th className="px-3 py-3">Payment</th>
-                                        <th className="px-3 py-3">Pelanggan</th>
-                                        <th className="px-3 py-3">Metode</th>
-                                        <th className="px-3 py-3">Cabang</th>
-                                        <th className="px-3 py-3">Status</th>
+                                        <th className="px-3 py-3">
+                                            <Stage5Text k="stage5.ui.e17c8ad0dc2e" />
+                                        </th>
+                                        <th className="px-3 py-3">
+                                            <Stage5Text k="stage5.ui.b41a92bed032" />
+                                        </th>
+                                        <th className="px-3 py-3">
+                                            <Stage5Text k="stage5.ui.af0ab4433946" />
+                                        </th>
+                                        <th className="px-3 py-3">
+                                            <Stage5Text k="stage5.ui.5ac33f2c588b" />
+                                        </th>
+                                        <th className="px-3 py-3">
+                                            <Stage5Text k="stage5.ui.1387475bd674" />
+                                        </th>
+                                        <th className="px-3 py-3">
+                                            <Stage5Text k="stage5.ui.bae7d5be7082" />
+                                        </th>
                                         <th className="px-3 py-3 text-right">
-                                            Nominal
+                                            <Stage5Text k="stage5.ui.1795d163388f" />
                                         </th>
                                     </tr>
                                 </thead>
@@ -303,10 +386,11 @@ export default function RefundCenterIndex({
                                                     {refund.refund_number}
                                                 </Link>
                                                 <p className="mt-1 text-xs text-muted-foreground">
-                                                    {dateTime.format(
+                                                    {stage5Date(
                                                         new Date(
                                                             refund.created_at,
                                                         ),
+                                                        stage5Locale,
                                                     )}
                                                 </p>
                                             </td>
@@ -352,7 +436,7 @@ export default function RefundCenterIndex({
                                                 colSpan={7}
                                                 className="py-12 text-center text-muted-foreground"
                                             >
-                                                Tidak ada refund sesuai filter.
+                                                <Stage5Text k="stage5.ui.0f3393b2758f" />
                                             </td>
                                         </tr>
                                     )}
@@ -395,6 +479,7 @@ function SummaryCard({
 }
 
 function StatusBadge({ status }: { status: RefundStatus }) {
+    const { locale: stage5Locale } = useAppLocale();
     const variant =
         status === 'rejected'
             ? 'destructive'
@@ -404,5 +489,7 @@ function StatusBadge({ status }: { status: RefundStatus }) {
                 ? 'secondary'
                 : 'default';
 
-    return <Badge variant={variant}>{statusLabels[status]}</Badge>;
+    return (
+        <Badge variant={variant}>{stage5Display(status, stage5Locale)}</Badge>
+    );
 }

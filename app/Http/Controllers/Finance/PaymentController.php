@@ -61,7 +61,7 @@ class PaymentController extends Controller
 
         if ($dateFrom !== '' && $dateTo !== '' && $dateTo < $dateFrom) {
             throw ValidationException::withMessages([
-                'date_to' => 'Tanggal akhir harus sama atau setelah tanggal mulai.',
+                'date_to' => __('uat035b_stage5.flash.date_order'),
             ]);
         }
 
@@ -273,7 +273,7 @@ class PaymentController extends Controller
 
         return back()->with('toast', [
             'type' => 'success',
-            'message' => "Payment {$voided->payment_number} berhasil di-void tanpa menghapus histori.",
+            'message' => __('uat035b_stage5.flash.payment_voided', ['reference' => $voided->payment_number]),
         ]);
     }
 

@@ -40,7 +40,7 @@ class BranchTransferSettingsController extends Controller
 
         return back()->with('toast', [
             'type' => 'success',
-            'message' => 'Pengaturan kamera dan dokumen transfer berhasil diperbarui.',
+            'message' => __('uat035b_stage4.flash.settings_updated'),
         ]);
     }
 }

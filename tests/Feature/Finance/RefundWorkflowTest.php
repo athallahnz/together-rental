@@ -61,7 +61,7 @@ class RefundWorkflowTest extends TestCase
         $this->actingAs($requester)
             ->get(route('finance.payments.show', $payment))
             ->assertOk()
-            ->assertInertia(fn(AssertableInertia $page) => $page
+            ->assertInertia(fn (AssertableInertia $page) => $page
                 ->where('refundEligibility.refundable_amount', 300000)
                 ->where('refundEligibility.reserved_refund_amount', 200000)
                 ->has('payment.refunds', 1));
@@ -286,7 +286,7 @@ class RefundWorkflowTest extends TestCase
         $this->actingAs($requester)
             ->get(route('finance.payments.show', $payment))
             ->assertOk()
-            ->assertInertia(fn(AssertableInertia $page) => $page
+            ->assertInertia(fn (AssertableInertia $page) => $page
                 ->where('refundEligibility.allowed', false)
                 ->where('refundEligibility.refundable_amount', 0)
                 ->where('refundEligibility.reason', 'Hanya payment completed yang dapat direfund.')
@@ -348,7 +348,7 @@ class RefundWorkflowTest extends TestCase
         $this->actingAs($requester)
             ->get(route('finance.refunds.index'))
             ->assertOk()
-            ->assertInertia(fn(AssertableInertia $page) => $page
+            ->assertInertia(fn (AssertableInertia $page) => $page
                 ->component('finance/refunds/index')
                 ->has('refunds.data', 1)
                 ->where('refunds.data.0.id', $refund->id));
