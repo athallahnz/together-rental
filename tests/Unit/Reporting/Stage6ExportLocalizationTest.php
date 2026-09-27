@@ -47,10 +47,34 @@ class Stage6ExportLocalizationTest extends TestCase
 
     public function test_canonical_statuses_have_localized_labels_without_changing_keys(): void
     {
-        foreach (['completed' => ['Selesai', 'Completed'], 'cancelled' => ['Dibatalkan', 'Cancelled'], 'converted' => ['Dikonversi', 'Converted'], 'lost' => ['Hilang', 'Lost'], 'good' => ['Baik', 'Good'], 'maintenance' => ['Pemeliharaan', 'Maintenance']] as $key => [$id, $en]) {
+        foreach (['completed' => ['Selesai', 'Completed'], 'cancelled' => ['Dibatalkan', 'Cancelled'], 'converted' => ['Dikonversi', 'Converted'], 'lost' => ['Hilang', 'Lost'], 'good' => ['Baik', 'Good'], 'maintenance' => ['Pemeliharaan', 'Maintenance'], 'partial_return' => ['Dikembalikan sebagian', 'Partially returned'], 'correction_pending' => ['Menunggu koreksi', 'Pending correction']] as $key => [$id, $en]) {
             self::assertSame($id, Stage6Presentation::status($key, 'id'));
             self::assertSame($en, Stage6Presentation::status($key, 'en'));
         }
+    }
+
+    public function test_partial_return_exports_translate_status_and_preserve_amount(): void
+    {
+        $document = $this->document();
+        $document['rows'][0]['values']['status'] = 'partial_return';
+        $spreadsheet = new SpreadsheetXmlExporter;
+        $idExcel = $spreadsheet->render($document, 'id');
+        $enExcel = $spreadsheet->render($document, 'en');
+        self::assertStringContainsString('ss:Type="String">Dikembalikan sebagian', $idExcel);
+        self::assertStringContainsString('ss:Type="String">Partially returned', $enExcel);
+        self::assertStringContainsString('ss:Type="Number">500000', $idExcel);
+        self::assertStringContainsString('ss:Type="Number">500000', $enExcel);
+
+        $exporter = new SimplePdfExporter('/nonexistent-stage6-logo.png');
+        $idPdf = $exporter->render($document, 'id');
+        $enPdf = $exporter->render($document, 'en');
+        self::assertStringContainsString('Dikembalikan', $idPdf);
+        self::assertStringContainsString('sebagian', $idPdf);
+        self::assertStringContainsString('Partially', $enPdf);
+        self::assertStringContainsString('returned', $enPdf);
+        self::assertStringNotContainsString('partial return', $idPdf);
+        self::assertStringContainsString('Rp 500.000', $idPdf);
+        self::assertStringContainsString('Rp 500.000', $enPdf);
     }
 
     public function test_indonesian_report_terms_are_localized_at_presentation_boundary(): void

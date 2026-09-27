@@ -72,6 +72,8 @@ const statusLabels: Record<string, string> = {
     lost: 'Hilang',
     maintenance: 'Pemeliharaan',
     open: 'Terbuka',
+    partial_return: 'Dikembalikan sebagian',
+    correction_pending: 'Menunggu koreksi',
     overdue: 'Terlambat',
     paid: 'Dibayar',
     pending: 'Menunggu',

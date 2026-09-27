@@ -206,6 +206,8 @@ const english: Record<string, string> = {
     Ditolak: 'Rejected',
     Diajukan: 'Requested',
     Dikembalikan: 'Returned',
+    'Dikembalikan sebagian': 'Partially returned',
+    'Menunggu koreksi': 'Pending correction',
     Dikirim: 'Submitted',
     'Pembayaran masuk': 'Incoming payments',
     'Pengembalian dana dibayar': 'Paid refunds',
