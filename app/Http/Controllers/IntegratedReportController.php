@@ -3,9 +3,9 @@
 namespace App\Http\Controllers;
 
 use App\Domain\Reporting\IntegratedReportService;
-use App\Domain\Reporting\Stage6Presentation;
 use App\Domain\Reporting\SimplePdfExporter;
 use App\Domain\Reporting\SpreadsheetXmlExporter;
+use App\Domain\Reporting\Stage6Presentation;
 use App\Http\Requests\IntegratedReportRequest;
 use Carbon\CarbonImmutable;
 use Illuminate\Pagination\LengthAwarePaginator;

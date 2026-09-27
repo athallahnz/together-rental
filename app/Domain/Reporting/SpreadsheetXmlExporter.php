@@ -5,6 +5,7 @@ namespace App\Domain\Reporting;
 class SpreadsheetXmlExporter
 {
     private string $locale = 'id';
+
     /**
      * @param array{
      *     title: string,
