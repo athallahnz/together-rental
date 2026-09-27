@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Domain\Reporting\IntegratedReportService;
+use App\Domain\Reporting\Stage6Presentation;
 use App\Domain\Reporting\SimplePdfExporter;
 use App\Domain\Reporting\SpreadsheetXmlExporter;
 use App\Http\Requests\IntegratedReportRequest;
@@ -31,12 +32,13 @@ class IntegratedReportController extends Controller
     public function index(
         IntegratedReportRequest $request,
         IntegratedReportService $reports,
+        Stage6Presentation $presentation,
     ): InertiaResponse {
         Gate::authorize('reports.view');
         $actor = $request->user();
         $branchIds = $this->branchIds($request);
         $filters = $this->filters($request, $branchIds);
-        $result = $reports->generate((int) $actor->company_id, $branchIds, $filters);
+        $result = $presentation->report($reports->generate((int) $actor->company_id, $branchIds, $filters));
         /** @var list<array<string, mixed>> $reportRows */
         $reportRows = $result['rows'];
         $rows = collect($reportRows);
@@ -74,7 +76,9 @@ class IntegratedReportController extends Controller
                 'export' => $actor->can('reports.export'),
             ],
             'generatedAt' => now()->toIso8601String(),
-            'tabs' => $this->tabs(),
+            'tabs' => array_map(static fn (array $tab): array => [
+                ...$tab, 'label' => $presentation->text($tab['label']),
+            ], $this->tabs()),
         ]);
     }
 
@@ -83,14 +87,15 @@ class IntegratedReportController extends Controller
         IntegratedReportService $reports,
         SpreadsheetXmlExporter $spreadsheet,
         SimplePdfExporter $pdf,
+        Stage6Presentation $presentation,
     ): Response {
         Gate::authorize('reports.export');
         $actor = $request->user();
         $branchIds = $this->branchIds($request);
         $filters = $this->filters($request, $branchIds);
-        $result = $reports->generate((int) $actor->company_id, $branchIds, $filters);
+        $result = $presentation->report($reports->generate((int) $actor->company_id, $branchIds, $filters));
         $branch = $filters['branch_id'] === null
-            ? 'Semua cabang dalam cakupan akses'
+            ? (app()->getLocale() === 'en' ? 'All accessible branches' : 'Semua cabang dalam cakupan akses')
             : (string) $actor->accessibleBranches()->whereKey($filters['branch_id'])->value('name');
         /**
          * @var array{
@@ -104,14 +109,16 @@ class IntegratedReportController extends Controller
         $document = [
             'title' => 'Together Kamera · '.$result['reportMeta']['label'],
             'subtitle' => sprintf(
-                'Periode %s s.d. %s · %s · Dibuat %s WIB%s',
+                app()->getLocale() === 'en' ? 'Period %s to %s · %s · Generated %s WIB%s' : 'Periode %s s.d. %s · %s · Dibuat %s WIB%s',
                 $filters['from']->format('d-m-Y'),
                 $filters['to']->format('d-m-Y'),
                 $branch,
                 now()->format('d-m-Y H:i'),
                 isset($result['historyMeta'])
                     ? sprintf(
-                        ' · POSISI HISTORIS: %d baris dapat direkonstruksi, %d belum dapat diverifikasi; subtotal hanya dari baris rekonstruksi',
+                        app()->getLocale() === 'en'
+                            ? ' · HISTORICAL POSITION: %d reconstructed rows, %d unverified; subtotal includes reconstructed rows only'
+                            : ' · POSISI HISTORIS: %d baris dapat direkonstruksi, %d belum dapat diverifikasi; subtotal hanya dari baris rekonstruksi',
                         $result['historyMeta']['verified_count'],
                         $result['historyMeta']['unverified_count'],
                     ) : '',
@@ -124,16 +131,16 @@ class IntegratedReportController extends Controller
         $period = $filters['from']->toDateString().'-'.$filters['to']->toDateString();
 
         if ($request->string('format')->toString() === 'pdf') {
-            return response($pdf->render($document), 200, [
+            return response($pdf->render($document, app()->getLocale()), 200, [
                 'Content-Type' => 'application/pdf',
-                'Content-Disposition' => sprintf('attachment; filename="laporan-%s-%s.pdf"', $slug, $period),
+                'Content-Disposition' => sprintf('attachment; filename="%s-%s-%s.pdf"', app()->getLocale() === 'en' ? 'report' : 'laporan', $slug, $period),
                 'X-Content-Type-Options' => 'nosniff',
             ]);
         }
 
-        return response($spreadsheet->render($document), 200, [
+        return response($spreadsheet->render($document, app()->getLocale()), 200, [
             'Content-Type' => 'application/vnd.ms-excel; charset=UTF-8',
-            'Content-Disposition' => sprintf('attachment; filename="laporan-%s-%s.xls"', $slug, $period),
+            'Content-Disposition' => sprintf('attachment; filename="%s-%s-%s.xls"', app()->getLocale() === 'en' ? 'report' : 'laporan', $slug, $period),
             'X-Content-Type-Options' => 'nosniff',
         ]);
     }

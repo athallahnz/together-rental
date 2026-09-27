@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Domain\Analytics\AssetAnalyticsService;
+use App\Domain\Reporting\Stage6Presentation;
 use App\Http\Requests\AssetAnalyticsRequest;
 use Carbon\CarbonImmutable;
 use Illuminate\Pagination\LengthAwarePaginator;
@@ -17,6 +18,7 @@ class AssetAnalyticsController extends Controller
     public function index(
         AssetAnalyticsRequest $request,
         AssetAnalyticsService $analytics,
+        Stage6Presentation $presentation,
     ): Response {
         Gate::authorize('reports.view');
         $actor = $request->user();
@@ -27,7 +29,7 @@ class AssetAnalyticsController extends Controller
             ->values()
             ->all();
         $filters = $this->filters($request, $branchIds);
-        $result = $analytics->analyze((int) $actor->company_id, $branchIds, $filters);
+        $result = $presentation->analytics($analytics->analyze((int) $actor->company_id, $branchIds, $filters));
         $page = max($request->integer('page', 1), 1);
         $perPage = 25;
         /** @var list<array<string, mixed>> $assetRows */
@@ -73,11 +75,11 @@ class AssetAnalyticsController extends Controller
                 'export' => $actor->can('reports.export'),
             ],
             'methodology' => [
-                'revenue' => 'ROI dan BEP memakai rental returned serta perpanjangan completed. Nilai active/approved ditampilkan terpisah sebagai pendapatan berjalan.',
-                'roi' => '(Pendapatan - maintenance - harga beli) ÷ harga beli × 100%. Angka bersifat sementara selama harga beli seluruh aset belum lengkap.',
-                'bep' => '(Pendapatan - maintenance) ÷ harga beli × 100%. Progress memakai investasi yang sudah tercatat.',
-                'utilization' => 'Jam disewa ÷ jam operasional aset aktif. Interval return tidak valid memakai due_at; rental legacy aktif memakai due_at agar tidak dihitung tanpa batas.',
-                'recommendation' => 'Aset sehat, tindakan operasional, pemantauan, dan keputusan yang ditunda dipisahkan. Histori menjadi blocker bila interval fallback mencapai 10% atau rental aktif kedaluwarsa sedikitnya 3 dan mencapai 10% histori unit.',
+                'revenue' => __('uat035b_stage6.revenue'),
+                'roi' => __('uat035b_stage6.roi'),
+                'bep' => __('uat035b_stage6.bep'),
+                'utilization' => __('uat035b_stage6.utilization'),
+                'recommendation' => __('uat035b_stage6.recommendation'),
             ],
         ]);
     }
@@ -85,6 +87,7 @@ class AssetAnalyticsController extends Controller
     public function export(
         AssetAnalyticsRequest $request,
         AssetAnalyticsService $analytics,
+        Stage6Presentation $presentation,
     ): StreamedResponse {
         Gate::authorize('reports.export');
         $actor = $request->user();
@@ -95,14 +98,14 @@ class AssetAnalyticsController extends Controller
             ->values()
             ->all();
         $filters = $this->filters($request, $branchIds);
-        $result = $analytics->analyze((int) $actor->company_id, $branchIds, $filters);
+        $result = $presentation->analytics($analytics->analyze((int) $actor->company_id, $branchIds, $filters));
         $filename = sprintf(
-            'analitik-aset-%s-sampai-%s.csv',
+            app()->getLocale() === 'en' ? 'asset-analytics-%s-to-%s.csv' : 'analitik-aset-%s-sampai-%s.csv',
             $filters['from']->toDateString(),
             $filters['to']->toDateString(),
         );
 
-        return response()->streamDownload(function () use ($result): void {
+        return response()->streamDownload(function () use ($result, $presentation): void {
             $stream = fopen('php://output', 'wb');
 
             if ($stream === false) {
@@ -110,7 +113,7 @@ class AssetAnalyticsController extends Controller
             }
 
             fwrite($stream, "\xEF\xBB\xBF");
-            fputcsv($stream, [
+            $headers = [
                 'Kode Aset',
                 'Produk',
                 'Cabang',
@@ -140,15 +143,16 @@ class AssetAnalyticsController extends Controller
                 'Estimasi Bulan BEP',
                 'Rekomendasi Bisnis',
                 'Keyakinan Rekomendasi',
-            ]);
+            ];
+            fputcsv($stream, array_map($presentation->text(...), $headers));
 
             foreach ($result['assets'] as $row) {
                 fputcsv($stream, [
                     $row['asset_code'],
                     $row['product']['name'],
                     $row['branch']['name'],
-                    $row['status'],
-                    $row['condition'],
+                    Stage6Presentation::status((string) $row['status'], app()->getLocale()),
+                    Stage6Presentation::status((string) $row['condition'], app()->getLocale()),
                     $row['purchase_price'],
                     $row['lifetime_revenue'],
                     $row['period_revenue'],
@@ -165,10 +169,10 @@ class AssetAnalyticsController extends Controller
                     $row['open_rental_count'],
                     $row['invalid_interval_count'],
                     $row['stale_active_rental_count'],
-                    $row['purchase_price_suspicious'] ? 'Ya' : 'Tidak',
+                    $presentation->text($row['purchase_price_suspicious'] ? 'Ya' : 'Tidak'),
                     $row['data_quality']['score'],
                     $row['data_quality']['confidence_label'],
-                    $row['data_quality']['has_blocker'] ? 'Ya' : 'Tidak',
+                    $presentation->text($row['data_quality']['has_blocker'] ? 'Ya' : 'Tidak'),
                     collect((array) $row['data_quality']['issues'])
                         ->map(static fn (array $issue): string => sprintf(
                             '%s (%d)',

@@ -267,6 +267,52 @@ class IntegratedReportingCenterTest extends TestCase
         $this->assertStringEndsWith('%%EOF', $pdf->getContent());
     }
 
+    public function test_report_ui_and_downloads_follow_saved_language_without_changing_values(): void
+    {
+        $this->travelTo(CarbonImmutable::parse('2026-08-09 12:00:00'));
+        [$manager, $branch, $customer] = $this->fixture('branch-manager');
+        $this->rental($branch, $customer, 500000, 150000, 'PNG-RNT-STAGE6');
+        $query = ['report' => 'operational', 'from' => '2026-08-01', 'to' => '2026-08-09'];
+
+        $manager->forceFill(['locale' => 'en'])->save();
+        $this->actingAs($manager)->get(route('reports.index', $query))
+            ->assertOk()
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->where('summary.0.label', 'Recorded rentals')
+                ->where('summary.1.value', 500000)
+                ->where('columns.0.label', 'Type')
+                ->where('statusOptions.5.label', 'Completed')
+                ->where('reportMeta.label', 'Bookings, Rentals & Returns')
+                ->etc());
+
+        $englishExcel = $this->get(route('reports.export', [...$query, 'format' => 'excel']));
+        $englishExcel->assertOk();
+        $this->assertStringContainsString('ss:Name="Report"', $englishExcel->getContent());
+        $this->assertStringContainsString('Recorded rentals', $englishExcel->getContent());
+        $this->assertStringContainsString('500000', $englishExcel->getContent());
+        $englishPdf = $this->get(route('reports.export', [...$query, 'format' => 'pdf']));
+        $englishPdf->assertOk();
+        $this->assertStringContainsString('PAGE 1 / 1', $englishPdf->getContent());
+        $this->assertStringContainsString('TRANSACTION DETAILS', $englishPdf->getContent());
+        $this->assertStringContainsString('ROW', $englishPdf->getContent());
+        $this->assertStringContainsString('INTEGRATED REPORT', $englishPdf->getContent());
+
+        $manager->forceFill(['locale' => 'id'])->save();
+        $this->get(route('reports.index', $query))
+            ->assertOk()
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->where('summary.0.label', 'Penyewaan tercatat')
+                ->where('summary.1.value', 500000)
+                ->where('statusOptions.5.label', 'Selesai')
+                ->where('reportMeta.label', 'Pemesanan, Penyewaan & Pengembalian')
+                ->etc());
+        $indonesianExcel = $this->get(route('reports.export', [...$query, 'format' => 'excel']));
+        $indonesianExcel->assertOk();
+        $this->assertStringContainsString('ss:Name="Laporan"', $indonesianExcel->getContent());
+        $this->assertStringContainsString('500000', $indonesianExcel->getContent());
+        $this->assertStringContainsString('Penyewaan tercatat', $indonesianExcel->getContent());
+    }
+
     public function test_view_and_export_permissions_remain_separate(): void
     {
         [, $branch] = $this->fixture('branch-manager');

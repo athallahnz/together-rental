@@ -16,6 +16,12 @@ import {
 } from 'lucide-react';
 import type { LucideIcon } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import {
+    Stage6Text,
+    stage6Display,
+    useStage6Numbers,
+} from '@/components/stage6-text';
+import { useAppLocale } from '@/lib/i18n';
 import { PaginationLinks } from '@/components/pagination-links';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -46,30 +52,6 @@ import type {
     ReportValue,
 } from '@/types';
 
-const money = new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    maximumFractionDigits: 0,
-});
-
-const number = new Intl.NumberFormat('id-ID', {
-    maximumFractionDigits: 0,
-});
-
-const date = new Intl.DateTimeFormat('id-ID', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-});
-
-const dateTime = new Intl.DateTimeFormat('id-ID', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit',
-});
-
 const statusLabels: Record<string, string> = {
     active: 'Aktif',
     approved: 'Disetujui',
@@ -78,17 +60,23 @@ const statusLabels: Record<string, string> = {
     closed: 'Ditutup',
     completed: 'Selesai',
     confirmed: 'Dikonfirmasi',
+    converted: 'Dikonversi',
     damaged: 'Rusak',
-    draft: 'Draft',
+    draft: 'Draf',
+    expired: 'Kedaluwarsa',
+    failed: 'Gagal',
     fair: 'Cukup',
     good: 'Baik',
-    in_transit: 'Dalam Perjalanan',
+    in_progress: 'Sedang diproses',
+    in_transit: 'Dalam perjalanan',
     lost: 'Hilang',
-    maintenance: 'Maintenance',
+    maintenance: 'Pemeliharaan',
     open: 'Terbuka',
     overdue: 'Terlambat',
     paid: 'Dibayar',
+    pending: 'Menunggu',
     poor: 'Buruk',
+    posted: 'Dibukukan',
     received: 'Diterima',
     rejected: 'Ditolak',
     rented: 'Disewa',
@@ -96,7 +84,8 @@ const statusLabels: Record<string, string> = {
     reserved: 'Direservasi',
     retired: 'Pensiun',
     returned: 'Dikembalikan',
-    void: 'Void',
+    submitted: 'Dikirim',
+    void: 'Dibatalkan',
 };
 
 function statusClass(value: string) {
@@ -138,7 +127,26 @@ function statusClass(value: string) {
     return 'border-border bg-muted text-muted-foreground';
 }
 
-function formatDate(value: ReportValue, withTime: boolean) {
+function formatDate(
+    value: ReportValue,
+    withTime: boolean,
+    locale: 'id' | 'en',
+) {
+    const { date, dateTime } = {
+        date: new Intl.DateTimeFormat(locale === 'en' ? 'en-US' : 'id-ID', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+        }),
+        dateTime: new Intl.DateTimeFormat(locale === 'en' ? 'en-US' : 'id-ID', {
+            day: '2-digit',
+            month: 'short',
+            year: 'numeric',
+            hour: '2-digit',
+            minute: '2-digit',
+        }),
+    };
+
     if (value === null || value === '') {
         return '—';
     }
@@ -157,6 +165,9 @@ function CellValue({
     column: ReportColumn;
     value: ReportValue;
 }) {
+    const { locale } = useAppLocale();
+    const { money, number } = useStage6Numbers();
+
     if (value === null || value === '') {
         return <span className="text-muted-foreground">—</span>;
     }
@@ -180,7 +191,7 @@ function CellValue({
     if (column.type === 'date' || column.type === 'datetime') {
         return (
             <span className="whitespace-nowrap">
-                {formatDate(value, column.type === 'datetime')}
+                {formatDate(value, column.type === 'datetime', locale)}
             </span>
         );
     }
@@ -190,7 +201,10 @@ function CellValue({
 
         return (
             <Badge variant="outline" className={statusClass(status)}>
-                {statusLabels[status] ?? status.replaceAll('_', ' ')}
+                {stage6Display(
+                    statusLabels[status] ?? status.replaceAll('_', ' '),
+                    locale,
+                )}
             </Badge>
         );
     }
@@ -217,7 +231,7 @@ function CellValue({
                           : 'border-amber-500/30 bg-amber-500/10 text-amber-700 dark:text-amber-300'
                 }
             >
-                {label ?? direction}
+                {stage6Display(label ?? direction, locale)}
             </Badge>
         );
     }
@@ -243,6 +257,8 @@ function SummaryCard({
     card: ReportSummaryCard;
     icon: LucideIcon;
 }) {
+    const { money, number } = useStage6Numbers();
+
     return (
         <MetricCard
             label={card.label}
@@ -260,6 +276,8 @@ function SummaryCard({
 }
 
 function TrendChart({ data }: { data: ReportTrendPoint[] }) {
+    const { locale } = useAppLocale();
+    const { money } = useStage6Numbers();
     const width = 980;
     const height = 300;
     const padding = 46;
@@ -291,15 +309,15 @@ function TrendChart({ data }: { data: ReportTrendPoint[] }) {
             <div className="flex flex-wrap gap-x-5 gap-y-2 text-xs text-muted-foreground">
                 <span className="flex items-center gap-2">
                     <span className="size-2.5 rounded-full bg-violet-500" />
-                    Nilai rental
+                    {<Stage6Text text="Nilai penyewaan" />}
                 </span>
                 <span className="flex items-center gap-2">
                     <span className="size-2.5 rounded-full bg-emerald-500" />
-                    Payment masuk
+                    {<Stage6Text text="Pembayaran masuk" />}
                 </span>
                 <span className="flex items-center gap-2">
                     <span className="size-2.5 rounded-full bg-primary" />
-                    Arus kas bersih
+                    {<Stage6Text text="Arus kas bersih" />}
                 </span>
             </div>
 
@@ -308,7 +326,10 @@ function TrendChart({ data }: { data: ReportTrendPoint[] }) {
                     viewBox={`0 0 ${width} ${height}`}
                     className="min-w-[760px]"
                     role="img"
-                    aria-label="Tren nilai rental, payment masuk, dan arus kas bersih"
+                    aria-label={stage6Display(
+                        'Tren nilai rental, payment masuk, dan arus kas bersih',
+                        locale,
+                    )}
                 >
                     {[0, 0.25, 0.5, 0.75, 1].map((ratio) => {
                         const value = minValue + range * ratio;
@@ -401,7 +422,7 @@ function ReportTable({
                             </th>
                         ))}
                         <th className="px-4 py-3 text-right font-medium">
-                            Aksi
+                            {<Stage6Text text="Aksi" />}
                         </th>
                     </tr>
                 </thead>
@@ -424,7 +445,9 @@ function ReportTable({
                             ))}
                             <td className="px-4 py-3 text-right align-top">
                                 <Button variant="outline" size="sm" asChild>
-                                    <Link href={row.href}>Detail</Link>
+                                    <Link href={row.href}>
+                                        {<Stage6Text text="Detail" />}
+                                    </Link>
                                 </Button>
                             </td>
                         </tr>
@@ -436,11 +459,14 @@ function ReportTable({
                                 className="px-6 py-14 text-center"
                             >
                                 <p className="font-medium">
-                                    Tidak ada data laporan
+                                    {
+                                        <Stage6Text text="Tidak ada data laporan" />
+                                    }
                                 </p>
                                 <p className="mt-1 text-xs text-muted-foreground">
-                                    Ubah periode atau filter untuk melihat data
-                                    lainnya.
+                                    {
+                                        <Stage6Text text="Ubah periode atau filter untuk melihat data lainnya." />
+                                    }
                                 </p>
                             </td>
                         </tr>
@@ -468,6 +494,8 @@ export default function IntegratedReportingCenter({
     generatedAt,
     tabs,
 }: IntegratedReportingPageProps) {
+    const { locale } = useAppLocale();
+    const { money, number, dateTime } = useStage6Numbers();
     const [from, setFrom] = useState(filters.from);
     const [to, setTo] = useState(filters.to);
     const [branchId, setBranchId] = useState(
@@ -542,21 +570,23 @@ export default function IntegratedReportingCenter({
 
     return (
         <>
-            <Head title="Integrated Reporting Center" />
+            <Head title={stage6Display('Pusat Laporan Terintegrasi', locale)} />
 
             <div className="flex h-full flex-1 flex-col gap-6 overflow-x-auto rounded-xl p-4 md:p-6">
                 <header className="flex flex-col gap-4 lg:flex-row lg:items-end lg:justify-between">
                     <div>
                         <p className="text-sm font-medium text-primary">
-                            Management Reporting
+                            {<Stage6Text text="Laporan Manajemen" />}
                         </p>
                         <h1 className="mt-1 text-2xl font-semibold tracking-tight">
-                            Integrated Reporting & Export Center
+                            {
+                                <Stage6Text text="Pusat Laporan dan Ekspor Terintegrasi" />
+                            }
                         </h1>
                         <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-                            Laporan formal operasional, keuangan, kas, aset, dan
-                            transfer antar-cabang dari satu sumber data yang
-                            dapat ditelusuri kembali ke transaksi asal.
+                            {
+                                <Stage6Text text="Laporan formal operasional, keuangan, kas, aset, dan transfer antar-cabang dari satu sumber data yang dapat ditelusuri kembali ke transaksi asal." />
+                            }
                         </p>
                     </div>
 
@@ -564,7 +594,7 @@ export default function IntegratedReportingCenter({
                         <Button variant="outline" asChild>
                             <Link href="/reports/asset-analytics">
                                 <BarChart3 className="size-4" />
-                                Analitik ROI/BEP
+                                {<Stage6Text text="Analitik ROI/BEP" />}
                             </Link>
                         </Button>
                         {permissions.export && (
@@ -591,12 +621,15 @@ export default function IntegratedReportingCenter({
                 </header>
 
                 <FilterBar
-                    title="Filter laporan"
-                    description="Rentang maksimal 367 hari. Filter cabang mengikuti hak akses pengguna."
+                    title={stage6Display('Filter laporan', locale)}
+                    description={stage6Display(
+                        'Rentang maksimal 367 hari. Filter cabang mengikuti hak akses pengguna.',
+                        locale,
+                    )}
                     contentClassName="md:grid-cols-2 xl:grid-cols-4"
                 >
                     <label className="space-y-1.5 text-xs font-medium">
-                        Dari tanggal
+                        {<Stage6Text text="Dari tanggal" />}
                         <Input
                             type="date"
                             value={from}
@@ -604,7 +637,7 @@ export default function IntegratedReportingCenter({
                         />
                     </label>
                     <label className="space-y-1.5 text-xs font-medium">
-                        Sampai tanggal
+                        {<Stage6Text text="Sampai tanggal" />}
                         <Input
                             type="date"
                             value={to}
@@ -612,14 +645,19 @@ export default function IntegratedReportingCenter({
                         />
                     </label>
                     <label className="space-y-1.5 text-xs font-medium">
-                        Cabang
+                        {<Stage6Text text="Cabang" />}
                         <Select value={branchId} onValueChange={setBranchId}>
                             <SelectTrigger>
-                                <SelectValue placeholder="Semua cabang" />
+                                <SelectValue
+                                    placeholder={stage6Display(
+                                        'Semua cabang',
+                                        locale,
+                                    )}
+                                />
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">
-                                    Semua cabang
+                                    {<Stage6Text text="Semua cabang" />}
                                 </SelectItem>
                                 {branches.map((branch) => (
                                     <SelectItem
@@ -633,14 +671,19 @@ export default function IntegratedReportingCenter({
                         </Select>
                     </label>
                     <label className="space-y-1.5 text-xs font-medium">
-                        Status
+                        {<Stage6Text text="Status" />}
                         <Select value={status} onValueChange={setStatus}>
                             <SelectTrigger>
-                                <SelectValue placeholder="Semua status" />
+                                <SelectValue
+                                    placeholder={stage6Display(
+                                        'Semua status',
+                                        locale,
+                                    )}
+                                />
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">
-                                    Semua status
+                                    {<Stage6Text text="Semua status" />}
                                 </SelectItem>
                                 {statusOptions.map((option) => (
                                     <SelectItem
@@ -656,17 +699,22 @@ export default function IntegratedReportingCenter({
                     {showFinanceFilters && (
                         <>
                             <label className="space-y-1.5 text-xs font-medium">
-                                Metode pembayaran
+                                {<Stage6Text text="Metode pembayaran" />}
                                 <Select
                                     value={paymentMethodId}
                                     onValueChange={setPaymentMethodId}
                                 >
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Semua metode" />
+                                        <SelectValue
+                                            placeholder={stage6Display(
+                                                'Semua metode',
+                                                locale,
+                                            )}
+                                        />
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="all">
-                                            Semua metode
+                                            {<Stage6Text text="Semua metode" />}
                                         </SelectItem>
                                         {paymentMethods.map((method) => (
                                             <SelectItem
@@ -680,17 +728,24 @@ export default function IntegratedReportingCenter({
                                 </Select>
                             </label>
                             <label className="space-y-1.5 text-xs font-medium">
-                                Kategori keuangan
+                                {<Stage6Text text="Kategori keuangan" />}
                                 <Select
                                     value={categoryId}
                                     onValueChange={setCategoryId}
                                 >
                                     <SelectTrigger>
-                                        <SelectValue placeholder="Semua kategori" />
+                                        <SelectValue
+                                            placeholder={stage6Display(
+                                                'Semua kategori',
+                                                locale,
+                                            )}
+                                        />
                                     </SelectTrigger>
                                     <SelectContent>
                                         <SelectItem value="all">
-                                            Semua kategori
+                                            {
+                                                <Stage6Text text="Semua kategori" />
+                                            }
                                         </SelectItem>
                                         {financialCategories.map((category) => (
                                             <SelectItem
@@ -706,7 +761,7 @@ export default function IntegratedReportingCenter({
                         </>
                     )}
                     <label className="space-y-1.5 text-xs font-medium xl:col-span-2">
-                        Pencarian
+                        {<Stage6Text text="Pencarian" />}
                         <div className="relative">
                             <Search className="absolute top-1/2 left-3 size-4 -translate-y-1/2 text-muted-foreground" />
                             <Input
@@ -720,15 +775,20 @@ export default function IntegratedReportingCenter({
                                     }
                                 }}
                                 className="pl-9"
-                                placeholder="Nomor transaksi, pelanggan, aset, register..."
+                                placeholder={stage6Display(
+                                    'Nomor transaksi, pelanggan, aset, register...',
+                                    locale,
+                                )}
                             />
                         </div>
                     </label>
                     <div className="flex items-end gap-2 xl:col-span-4">
-                        <Button onClick={applyFilters}>Terapkan filter</Button>
+                        <Button onClick={applyFilters}>
+                            {<Stage6Text text="Terapkan filter" />}
+                        </Button>
                         <Button variant="outline" onClick={resetFilters}>
                             <RotateCcw className="size-4" />
-                            Reset
+                            {<Stage6Text text="Atur ulang" />}
                         </Button>
                     </div>
                 </FilterBar>
@@ -746,11 +806,12 @@ export default function IntegratedReportingCenter({
                 <Card>
                     <CardHeader>
                         <CardTitle className="text-base">
-                            Tren lintas modul
+                            {<Stage6Text text="Tren lintas modul" />}
                         </CardTitle>
                         <CardDescription>
-                            Nilai kontrak rental dibandingkan dengan payment
-                            masuk dan arus kas bersih.
+                            {
+                                <Stage6Text text="Nilai kontrak rental dibandingkan dengan payment masuk dan arus kas bersih." />
+                            }
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -761,11 +822,12 @@ export default function IntegratedReportingCenter({
                 <Card>
                     <CardHeader>
                         <CardTitle className="text-base">
-                            Performa cabang
+                            {<Stage6Text text="Performa cabang" />}
                         </CardTitle>
                         <CardDescription>
-                            Ringkasan nilai rental, kas bersih, piutang, dan
-                            biaya maintenance per cabang.
+                            {
+                                <Stage6Text text="Ringkasan nilai rental, kas bersih, piutang, dan biaya maintenance per cabang." />
+                            }
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="overflow-x-auto">
@@ -773,28 +835,28 @@ export default function IntegratedReportingCenter({
                             <thead className="border-b text-left text-xs text-muted-foreground uppercase">
                                 <tr>
                                     <th className="py-3 pr-4 font-medium">
-                                        Cabang
+                                        {<Stage6Text text="Cabang" />}
                                     </th>
                                     <th className="px-4 py-3 text-right font-medium">
-                                        Rental
+                                        {<Stage6Text text="Penyewaan" />}
                                     </th>
                                     <th className="px-4 py-3 text-right font-medium">
-                                        Nilai rental
+                                        {<Stage6Text text="Nilai penyewaan" />}
                                     </th>
                                     <th className="px-4 py-3 text-right font-medium">
-                                        Payment masuk
+                                        {<Stage6Text text="Pembayaran masuk" />}
                                     </th>
                                     <th className="px-4 py-3 text-right font-medium">
-                                        Keluar
+                                        {<Stage6Text text="Keluar" />}
                                     </th>
                                     <th className="px-4 py-3 text-right font-medium">
-                                        Kas bersih
+                                        {<Stage6Text text="Kas bersih" />}
                                     </th>
                                     <th className="px-4 py-3 text-right font-medium">
-                                        Piutang
+                                        {<Stage6Text text="Piutang" />}
                                     </th>
                                     <th className="py-3 pl-4 text-right font-medium">
-                                        Maintenance
+                                        {<Stage6Text text="Pemeliharaan" />}
                                     </th>
                                 </tr>
                             </thead>
@@ -872,7 +934,8 @@ export default function IntegratedReportingCenter({
                                 </CardDescription>
                             </div>
                             <Badge variant="outline">
-                                {number.format(reportMeta.row_count)} baris
+                                {number.format(reportMeta.row_count)}{' '}
+                                {stage6Display('baris', locale)}
                             </Badge>
                         </CardHeader>
                         <CardContent className="space-y-4">
@@ -891,12 +954,15 @@ export default function IntegratedReportingCenter({
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2 text-base">
                             <Info className="size-4 text-primary" />
-                            Metodologi & jejak audit
+                            {<Stage6Text text="Metodologi & jejak audit" />}
                         </CardTitle>
                         <CardDescription>
-                            Dibuat {dateTime.format(new Date(generatedAt))}.
-                            Setiap baris memiliki tautan detail ke transaksi
-                            sumber.
+                            {stage6Display('Dibuat ', locale)}
+                            {dateTime.format(new Date(generatedAt))}.{' '}
+                            {stage6Display(
+                                'Setiap baris memiliki tautan detail ke transaksi sumber.',
+                                locale,
+                            )}
                         </CardDescription>
                     </CardHeader>
                     <CardContent className="grid gap-3 text-xs leading-5 text-muted-foreground md:grid-cols-2">

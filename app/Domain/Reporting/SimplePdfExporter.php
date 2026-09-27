@@ -26,6 +26,8 @@ class SimplePdfExporter
 
     private const CELL_PADDING = 5.0;
 
+    private string $locale = 'id';
+
     private bool $logoAttempted = false;
 
     private ?string $logoImage = null;
@@ -37,8 +39,9 @@ class SimplePdfExporter
     public function __construct(private readonly ?string $logoPath = null) {}
 
     /** @param PdfDocument $document */
-    public function render(array $document): string
+    public function render(array $document, string $locale = 'id'): string
     {
+        $this->locale = $locale === 'en' ? 'en' : 'id';
         // Wide datasets such as operational and stock-opname reports remain legible on A3.
         [$pageWidth, $pageHeight] = count($document['columns']) >= 11
             ? self::A3_LANDSCAPE
@@ -59,7 +62,7 @@ class SimplePdfExporter
 
         if ($document['rows'] === []) {
             $this->rect($stream, self::MARGIN, $cursor - 56, $pageWidth - 2 * self::MARGIN, 50, '#F1F5F9');
-            $this->text($stream, 'Tidak ada data untuk filter yang dipilih.', self::MARGIN + 17, $cursor - 33, 10, '#64748B');
+            $this->text($stream, $this->locale === 'en' ? 'No data for the selected filters.' : 'Tidak ada data untuk filter yang dipilih.', self::MARGIN + 17, $cursor - 33, 10, '#64748B');
         }
 
         $cellFontSize = $pageWidth > 900 ? 8.0 : 7.2;
@@ -229,10 +232,10 @@ class SimplePdfExporter
             $this->rect($stream, self::MARGIN, $pageHeight - 39, 3, 18, '#2DD4BF');
         }
         $this->text($stream, 'TOGETHER KAMERA', $brandX, $pageHeight - 29, 13, '#FFFFFF', 'F2');
-        $this->text($stream, 'RENTAL OPERATIONS', $brandX, $pageHeight - 43, 7.2, '#B7C7F2', 'F2');
+        $this->text($stream, $this->locale === 'en' ? 'RENTAL OPERATIONS' : 'OPERASIONAL PENYEWAAN', $brandX, $pageHeight - 43, 7.2, '#B7C7F2', 'F2');
         $this->text(
             $stream,
-            'REPORTING CENTER  /  '.($first ? 'EXPORT PDF' : 'LANJUTAN'),
+            ($this->locale === 'en' ? 'REPORTING CENTER' : 'PUSAT LAPORAN').'  /  '.($first ? ($this->locale === 'en' ? 'PDF EXPORT' : 'EKSPOR PDF') : ($this->locale === 'en' ? 'CONTINUED' : 'LANJUTAN')),
             $pageWidth - self::MARGIN,
             $pageHeight - 28,
             8,
@@ -245,7 +248,7 @@ class SimplePdfExporter
         $titleLines = $this->wrap($reportTitle, $pageWidth - self::MARGIN - $titleX - 20, $first ? 19 : 14, 0.58);
         $this->text(
             $stream,
-            $titleLines[0] ?? 'Laporan',
+            $titleLines[0] ?? ($this->locale === 'en' ? 'Report' : 'Laporan'),
             $titleX,
             $pageHeight - ($first ? 80 : 65),
             $first ? 19 : 14,
@@ -259,22 +262,22 @@ class SimplePdfExporter
         $metaTop = $pageHeight - $headerHeight - 12;
         $this->rect($stream, self::MARGIN, $metaTop - $metaHeight, $pageWidth - 2 * self::MARGIN, $metaHeight, '#F1F5FB');
         $this->rect($stream, self::MARGIN, $metaTop - $metaHeight, 3, $metaHeight, '#14B8A6');
-        $this->text($stream, 'PERIODE  /  CAKUPAN  /  WAKTU CETAK', self::MARGIN + 13, $metaTop - 12, 6.8, '#64748B', 'F2');
+        $this->text($stream, $this->locale === 'en' ? 'PERIOD  /  SCOPE  /  GENERATED' : 'PERIODE  /  CAKUPAN  /  WAKTU CETAK', self::MARGIN + 13, $metaTop - 12, 6.8, '#64748B', 'F2');
         foreach ($metaLines as $index => $line) {
             $this->text($stream, $line, self::MARGIN + 13, $metaTop - 25 - $index * 12, 8.4, '#1E293B');
         }
         $cursor = $metaTop - $metaHeight - 18;
 
         if ($first && $document['summary'] !== []) {
-            $this->text($stream, 'RINGKASAN PERIODE', self::MARGIN, $cursor, 9, '#334155', 'F2');
+            $this->text($stream, $this->locale === 'en' ? 'PERIOD SUMMARY' : 'RINGKASAN PERIODE', self::MARGIN, $cursor, 9, '#334155', 'F2');
             $cursor -= 16;
             $this->summaryCards($stream, $document['summary'], $cursor, $pageWidth);
         }
 
-        $this->text($stream, 'RINCIAN TRANSAKSI', self::MARGIN, $cursor, 9, '#334155', 'F2');
+        $this->text($stream, $this->locale === 'en' ? 'TRANSACTION DETAILS' : 'RINCIAN TRANSAKSI', self::MARGIN, $cursor, 9, '#334155', 'F2');
         $this->text(
             $stream,
-            number_format(count($document['rows']), 0, ',', '.').' BARIS',
+            number_format(count($document['rows']), 0, ',', '.').($this->locale === 'en' ? (count($document['rows']) === 1 ? ' ROW' : ' ROWS') : ' BARIS'),
             $pageWidth - self::MARGIN,
             $cursor,
             8,
@@ -349,12 +352,13 @@ class SimplePdfExporter
             'money' => 'Rp '.number_format((float) $value, 0, ',', '.'),
             'number' => number_format((float) $value, 0, ',', '.'),
             'direction' => match ((string) $value) {
-                'in' => 'Masuk',
-                'out' => 'Keluar',
-                'increase' => 'Penambah',
-                'decrease' => 'Pengurang',
+                'in' => $this->locale === 'en' ? 'In' : 'Masuk',
+                'out' => $this->locale === 'en' ? 'Out' : 'Keluar',
+                'increase' => $this->locale === 'en' ? 'Increase' : 'Penambah',
+                'decrease' => $this->locale === 'en' ? 'Decrease' : 'Pengurang',
                 default => (string) $value,
             },
+            'status' => Stage6Presentation::status((string) $value, $this->locale),
             default => (string) $value,
         };
     }
@@ -453,10 +457,10 @@ class SimplePdfExporter
             $contentObject = $pageObject + 1;
             $pageReferences[] = $pageObject.' 0 R';
             $this->line($pageStream, self::MARGIN, self::FOOTER_RULE_Y, $pageWidth - self::MARGIN, self::FOOTER_RULE_Y, '#CBD5E1', 0.7);
-            $this->text($pageStream, 'TOGETHER KAMERA   /   LAPORAN TERINTEGRASI', self::MARGIN, 25, 7, '#64748B', 'F2');
+            $this->text($pageStream, $this->locale === 'en' ? 'TOGETHER KAMERA   /   INTEGRATED REPORT' : 'TOGETHER KAMERA   /   LAPORAN TERINTEGRASI', self::MARGIN, 25, 7, '#64748B', 'F2');
             $this->text(
                 $pageStream,
-                sprintf('HALAMAN %d / %d', $index + 1, $totalPages),
+                sprintf($this->locale === 'en' ? 'PAGE %d / %d' : 'HALAMAN %d / %d', $index + 1, $totalPages),
                 $pageWidth - self::MARGIN,
                 25,
                 7,

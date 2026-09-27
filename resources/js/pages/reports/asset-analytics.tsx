@@ -18,6 +18,12 @@ import {
     Wrench,
 } from 'lucide-react';
 import { useMemo, useState } from 'react';
+import {
+    Stage6Text,
+    stage6Display,
+    useStage6Numbers,
+} from '@/components/stage6-text';
+import { useAppLocale } from '@/lib/i18n';
 import { PaginationLinks } from '@/components/pagination-links';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -45,40 +51,20 @@ import type {
     AssetRecommendation,
 } from '@/types';
 
-const money = new Intl.NumberFormat('id-ID', {
-    style: 'currency',
-    currency: 'IDR',
-    maximumFractionDigits: 0,
-});
-
-const number = new Intl.NumberFormat('id-ID', {
-    maximumFractionDigits: 1,
-});
-
-const date = new Intl.DateTimeFormat('id-ID', {
-    day: '2-digit',
-    month: 'short',
-    year: 'numeric',
-});
-
-function percent(value: number | null) {
-    return value === null ? '—' : `${number.format(value)}%`;
-}
-
-function statusLabel(value: string) {
+function statusLabel(value: string, locale: 'id' | 'en') {
     const labels: Record<string, string> = {
         available: 'Tersedia',
         reserved: 'Direservasi',
         rented: 'Disewa',
-        maintenance: 'Maintenance',
+        maintenance: 'Pemeliharaan',
         retired: 'Pensiun',
         lost: 'Hilang',
     };
 
-    return labels[value] ?? value;
+    return stage6Display(labels[value] ?? value, locale);
 }
 
-function conditionLabel(value: string) {
+function conditionLabel(value: string, locale: 'id' | 'en') {
     const labels: Record<string, string> = {
         good: 'Baik',
         fair: 'Cukup',
@@ -87,7 +73,7 @@ function conditionLabel(value: string) {
         critical: 'Kritis',
     };
 
-    return labels[value] ?? value;
+    return stage6Display(labels[value] ?? value, locale);
 }
 
 function recommendationClass(tone: AssetRecommendation['tone']) {
@@ -126,6 +112,8 @@ function metricDirection(value: number | null) {
 }
 
 function TrendChart({ data }: { data: AssetAnalyticsTrendPoint[] }) {
+    const { locale } = useAppLocale();
+    const { money } = useStage6Numbers(1);
     const width = 960;
     const height = 280;
     const padding = 36;
@@ -158,7 +146,10 @@ function TrendChart({ data }: { data: AssetAnalyticsTrendPoint[] }) {
                 viewBox={`0 0 ${width} ${height}`}
                 className="min-w-[720px]"
                 role="img"
-                aria-label="Grafik pendapatan terealisasi dan maintenance aset"
+                aria-label={stage6Display(
+                    'Grafik pendapatan terealisasi dan maintenance aset',
+                    locale,
+                )}
             >
                 {[0, 0.25, 0.5, 0.75, 1].map((ratio) => {
                     const lineY = y(maxValue * ratio);
@@ -239,7 +230,9 @@ function InsightCard({
             <CardHeader className="pb-3">
                 <CardDescription>{title}</CardDescription>
                 <CardTitle className="text-lg">
-                    {asset?.product.name ?? 'Belum ada data'}
+                    {asset?.product.name ?? (
+                        <Stage6Text text="Belum ada data" />
+                    )}
                 </CardTitle>
             </CardHeader>
             <CardContent>
@@ -266,6 +259,10 @@ export default function AssetAnalytics({
     permissions,
     methodology,
 }: AssetAnalyticsPageProps) {
+    const { locale } = useAppLocale();
+    const { money, number, date } = useStage6Numbers(1);
+    const percent = (value: number | null) =>
+        value === null ? '—' : `${number.format(value)}%`;
     const [search, setSearch] = useState(filters.search);
     const [from, setFrom] = useState(filters.from);
     const [to, setTo] = useState(filters.to);
@@ -317,75 +314,78 @@ export default function AssetAnalytics({
 
     const kpis = [
         {
-            label: 'Investasi tercatat',
+            label: stage6Display('Investasi tercatat', locale),
             value: money.format(summary.total_investment),
-            note: `${summary.priced_asset_count} dari ${summary.asset_count} aset · ${percent(summary.investment_coverage_percent)} cakupan`,
+            note: `${summary.priced_asset_count} ${stage6Display('dari', locale)} ${summary.asset_count} ${stage6Display('aset ·', locale)} ${percent(summary.investment_coverage_percent)} ${stage6Display('cakupan', locale)}`,
             icon: WalletCards,
         },
         {
-            label: 'Pendapatan terealisasi',
+            label: stage6Display('Pendapatan terealisasi', locale),
             value: money.format(summary.lifetime_revenue),
-            note: `${money.format(summary.period_revenue)} periode · ${money.format(summary.open_lifetime_revenue)} berjalan`,
+            note: `${money.format(summary.period_revenue)} ${stage6Display('periode ·', locale)} ${money.format(summary.open_lifetime_revenue)} ${stage6Display('berjalan', locale)}`,
             icon: CircleDollarSign,
         },
         {
-            label: 'Kontribusi bersih',
+            label: stage6Display('Kontribusi bersih', locale),
             value: money.format(summary.net_contribution),
-            note: `Maintenance ${money.format(summary.maintenance_cost)}`,
+            note: `${stage6Display('Pemeliharaan', locale)} ${money.format(summary.maintenance_cost)}`,
             icon: TrendingUp,
         },
         {
-            label: 'Progress BEP',
+            label: stage6Display('Progress BEP', locale),
             value: percent(summary.bep_progress_percent),
-            note: `${summary.investment_is_complete ? '' : 'Estimasi sementara · '}${summary.bep_asset_count} unit sudah BEP`,
+            note: `${summary.investment_is_complete ? '' : stage6Display('Estimasi sementara · ', locale)}${summary.bep_asset_count} ${stage6Display('unit sudah BEP', locale)}`,
             icon: Target,
         },
         {
-            label: 'ROI keseluruhan',
+            label: stage6Display('ROI keseluruhan', locale),
             value: percent(summary.roi_percent),
-            note: `${summary.investment_is_complete ? '' : 'Estimasi sementara · '}Profit bersih ${money.format(summary.net_profit)}`,
+            note: `${summary.investment_is_complete ? '' : stage6Display('Estimasi sementara · ', locale)}${stage6Display('Laba bersih ', locale)}${money.format(summary.net_profit)}`,
             icon: BarChart3,
         },
         {
-            label: 'Utilisasi periode',
+            label: stage6Display('Utilisasi periode', locale),
             value: percent(summary.utilization_percent),
-            note: `${summary.active_asset_count} unit aktif`,
+            note: `${summary.active_asset_count} ${stage6Display('unit aktif', locale)}`,
             icon: Gauge,
         },
     ];
 
     return (
         <>
-            <Head title="Analitik Aset, ROI & BEP" />
+            <Head title={stage6Display('Analitik Aset, ROI & BEP', locale)} />
 
             <div className="flex h-full flex-1 flex-col gap-6 overflow-x-auto rounded-xl p-4 md:p-6">
                 <header className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
                     <div>
                         <p className="text-sm font-medium text-primary">
-                            Modul 7 · Business Intelligence
+                            {<Stage6Text text="Modul 7 · Intelijen Bisnis" />}
                         </p>
                         <h1 className="mt-1 text-2xl font-semibold tracking-tight">
-                            Analitik Aset, ROI & BEP
+                            {<Stage6Text text="Analitik Aset, ROI & BEP" />}
                         </h1>
                         <p className="mt-2 max-w-3xl text-sm leading-6 text-muted-foreground">
-                            Ukur produktivitas unit, progres balik modal,
-                            utilisasi, biaya maintenance, dan rekomendasi
-                            tindakan per cabang.
+                            {
+                                <Stage6Text text="Ukur produktivitas unit, progres balik modal, utilisasi, biaya maintenance, dan rekomendasi tindakan per cabang." />
+                            }
                         </p>
                     </div>
                     {permissions.export && (
                         <Button asChild variant="outline">
                             <a href={exportUrl}>
                                 <Download />
-                                Export CSV
+                                {<Stage6Text text="Ekspor CSV" />}
                             </a>
                         </Button>
                     )}
                 </header>
 
                 <FilterBar
-                    title="Filter analitik"
-                    description="Periode memengaruhi pendapatan, tren, utilisasi, dan estimasi BEP; ROI serta BEP memakai data lifetime."
+                    title={stage6Display('Filter analitik', locale)}
+                    description={stage6Display(
+                        'Periode memengaruhi pendapatan, tren, utilisasi, dan estimasi BEP; ROI serta BEP memakai data lifetime.',
+                        locale,
+                    )}
                     contentClassName="grid-cols-1"
                 >
                     <div className="grid gap-3 sm:grid-cols-2 xl:grid-cols-4 2xl:grid-cols-[minmax(220px,1.35fr)_minmax(155px,0.85fr)_minmax(155px,0.85fr)_minmax(240px,1.25fr)_minmax(180px,1fr)_minmax(155px,0.8fr)_minmax(155px,0.8fr)]">
@@ -393,7 +393,10 @@ export default function AssetAnalytics({
                             className="min-w-0"
                             value={search}
                             onChange={(event) => setSearch(event.target.value)}
-                            placeholder="Cari aset atau produk"
+                            placeholder={stage6Display(
+                                'Cari aset atau produk',
+                                locale,
+                            )}
                             onKeyDown={(event) => {
                                 if (event.key === 'Enter') {
                                     applyFilters();
@@ -414,11 +417,16 @@ export default function AssetAnalytics({
                         />
                         <Select value={branchId} onValueChange={setBranchId}>
                             <SelectTrigger className="w-full min-w-0">
-                                <SelectValue placeholder="Semua cabang" />
+                                <SelectValue
+                                    placeholder={stage6Display(
+                                        'Semua cabang',
+                                        locale,
+                                    )}
+                                />
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">
-                                    Semua cabang
+                                    {<Stage6Text text="Semua cabang" />}
                                 </SelectItem>
                                 {branches.map((branch) => (
                                     <SelectItem
@@ -435,11 +443,16 @@ export default function AssetAnalytics({
                             onValueChange={setCategoryId}
                         >
                             <SelectTrigger className="w-full min-w-0">
-                                <SelectValue placeholder="Semua kategori" />
+                                <SelectValue
+                                    placeholder={stage6Display(
+                                        'Semua kategori',
+                                        locale,
+                                    )}
+                                />
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">
-                                    Semua kategori
+                                    {<Stage6Text text="Semua kategori" />}
                                 </SelectItem>
                                 {categories.map((category) => (
                                     <SelectItem
@@ -453,39 +466,65 @@ export default function AssetAnalytics({
                         </Select>
                         <Select value={status} onValueChange={setStatus}>
                             <SelectTrigger className="w-full min-w-0">
-                                <SelectValue placeholder="Semua status" />
+                                <SelectValue
+                                    placeholder={stage6Display(
+                                        'Semua status',
+                                        locale,
+                                    )}
+                                />
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">
-                                    Semua status
+                                    {<Stage6Text text="Semua status" />}
                                 </SelectItem>
                                 <SelectItem value="available">
-                                    Tersedia
+                                    {<Stage6Text text="Tersedia" />}
                                 </SelectItem>
                                 <SelectItem value="reserved">
-                                    Direservasi
+                                    {<Stage6Text text="Direservasi" />}
                                 </SelectItem>
-                                <SelectItem value="rented">Disewa</SelectItem>
+                                <SelectItem value="rented">
+                                    {<Stage6Text text="Disewa" />}
+                                </SelectItem>
                                 <SelectItem value="maintenance">
-                                    Maintenance
+                                    {<Stage6Text text="Pemeliharaan" />}
                                 </SelectItem>
-                                <SelectItem value="retired">Pensiun</SelectItem>
-                                <SelectItem value="lost">Hilang</SelectItem>
+                                <SelectItem value="retired">
+                                    {<Stage6Text text="Pensiun" />}
+                                </SelectItem>
+                                <SelectItem value="lost">
+                                    {<Stage6Text text="Hilang" />}
+                                </SelectItem>
                             </SelectContent>
                         </Select>
                         <Select value={condition} onValueChange={setCondition}>
                             <SelectTrigger className="w-full min-w-0">
-                                <SelectValue placeholder="Semua kondisi" />
+                                <SelectValue
+                                    placeholder={stage6Display(
+                                        'Semua kondisi',
+                                        locale,
+                                    )}
+                                />
                             </SelectTrigger>
                             <SelectContent>
                                 <SelectItem value="all">
-                                    Semua kondisi
+                                    {<Stage6Text text="Semua kondisi" />}
                                 </SelectItem>
-                                <SelectItem value="good">Baik</SelectItem>
-                                <SelectItem value="fair">Cukup</SelectItem>
-                                <SelectItem value="poor">Buruk</SelectItem>
-                                <SelectItem value="damaged">Rusak</SelectItem>
-                                <SelectItem value="critical">Kritis</SelectItem>
+                                <SelectItem value="good">
+                                    {<Stage6Text text="Baik" />}
+                                </SelectItem>
+                                <SelectItem value="fair">
+                                    {<Stage6Text text="Cukup" />}
+                                </SelectItem>
+                                <SelectItem value="poor">
+                                    {<Stage6Text text="Buruk" />}
+                                </SelectItem>
+                                <SelectItem value="damaged">
+                                    {<Stage6Text text="Rusak" />}
+                                </SelectItem>
+                                <SelectItem value="critical">
+                                    {<Stage6Text text="Kritis" />}
+                                </SelectItem>
                             </SelectContent>
                         </Select>
                     </div>
@@ -497,19 +536,19 @@ export default function AssetAnalytics({
                             onClick={resetFilters}
                         >
                             <RotateCcw />
-                            Reset
+                            {<Stage6Text text="Atur ulang" />}
                         </Button>
                         <Button
                             className="w-full sm:w-auto"
                             onClick={applyFilters}
                         >
                             <Search />
-                            Terapkan
+                            {<Stage6Text text="Terapkan" />}
                         </Button>
                     </div>
                 </FilterBar>
 
-                <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
+                <section className="grid gap-4 sm:grid-cols-2 xl:grid-cols-3">
                     {kpis.map((item) => {
                         const Icon = item.icon;
                         const Direction =
@@ -536,7 +575,9 @@ export default function AssetAnalytics({
                                                         : 'text-destructive'
                                                 }`}
                                             />
-                                            Arah ROI keseluruhan
+                                            {
+                                                <Stage6Text text="Arah ROI keseluruhan" />
+                                            }
                                         </span>
                                     ) : undefined
                                 }
@@ -549,21 +590,27 @@ export default function AssetAnalytics({
                     <Card>
                         <CardHeader className="flex-row items-start justify-between gap-4">
                             <div>
-                                <CardTitle>Pendapatan vs maintenance</CardTitle>
+                                <CardTitle>
+                                    {
+                                        <Stage6Text text="Pendapatan vs maintenance" />
+                                    }
+                                </CardTitle>
                                 <CardDescription>
-                                    Tren bulanan berdasarkan tanggal checkout,
-                                    approval perpanjangan, dan penyelesaian
-                                    maintenance.
+                                    {
+                                        <Stage6Text text="Tren bulanan berdasarkan tanggal checkout, approval perpanjangan, dan penyelesaian maintenance." />
+                                    }
                                 </CardDescription>
                             </div>
                             <div className="flex flex-col gap-2 text-xs">
                                 <span className="flex items-center gap-2">
                                     <span className="size-2 rounded-full bg-primary" />
-                                    Pendapatan terealisasi
+                                    {
+                                        <Stage6Text text="Pendapatan terealisasi" />
+                                    }
                                 </span>
                                 <span className="flex items-center gap-2">
                                     <span className="size-2 rounded-full bg-destructive" />
-                                    Maintenance
+                                    {<Stage6Text text="Pemeliharaan" />}
                                 </span>
                             </div>
                         </CardHeader>
@@ -575,36 +622,60 @@ export default function AssetAnalytics({
                     <div className="grid content-start gap-4">
                         <Card>
                             <CardHeader className="pb-3">
-                                <CardTitle>Keputusan Portofolio</CardTitle>
+                                <CardTitle>
+                                    {<Stage6Text text="Keputusan Portofolio" />}
+                                </CardTitle>
                                 <CardDescription>
-                                    Bedakan aset sehat, tindakan nyata,
-                                    pemantauan, dan keputusan yang ditunda.
+                                    {
+                                        <Stage6Text text="Bedakan aset sehat, tindakan nyata, pemantauan, dan keputusan yang ditunda." />
+                                    }
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
                                 {[
                                     {
-                                        label: 'Perlu tindakan operasional',
+                                        label: stage6Display(
+                                            'Perlu tindakan operasional',
+                                            locale,
+                                        ),
                                         value: insights.business_action_count,
-                                        note: `${insights.high_confidence_action_count} keyakinan tinggi`,
+                                        note: `${insights.high_confidence_action_count} ${stage6Display('keyakinan tinggi', locale)}`,
                                         icon: Activity,
                                     },
                                     {
-                                        label: 'Aset sehat / pertahankan',
+                                        label: stage6Display(
+                                            'Aset sehat / pertahankan',
+                                            locale,
+                                        ),
                                         value: insights.healthy_asset_count,
-                                        note: 'telah melewati BEP',
+                                        note: stage6Display(
+                                            'telah melewati BEP',
+                                            locale,
+                                        ),
                                         icon: ShieldCheck,
                                     },
                                     {
-                                        label: 'Pantau menuju BEP',
+                                        label: stage6Display(
+                                            'Pantau menuju BEP',
+                                            locale,
+                                        ),
                                         value: insights.monitor_asset_count,
-                                        note: 'belum perlu intervensi',
+                                        note: stage6Display(
+                                            'belum perlu intervensi',
+                                            locale,
+                                        ),
                                         icon: Target,
                                     },
                                     {
-                                        label: 'Keputusan ditunda',
+                                        label: stage6Display(
+                                            'Keputusan ditunda',
+                                            locale,
+                                        ),
                                         value: insights.deferred_decision_count,
-                                        note: 'menunggu validasi investasi',
+                                        note: stage6Display(
+                                            'menunggu validasi investasi',
+                                            locale,
+                                        ),
                                         icon: Info,
                                     },
                                 ].map((item) => {
@@ -637,36 +708,63 @@ export default function AssetAnalytics({
 
                         <Card>
                             <CardHeader className="pb-3">
-                                <CardTitle>Rincian tindakan</CardTitle>
+                                <CardTitle>
+                                    {<Stage6Text text="Rincian tindakan" />}
+                                </CardTitle>
                                 <CardDescription>
-                                    Hanya intervensi yang benar-benar perlu
-                                    dikerjakan.
+                                    {
+                                        <Stage6Text text="Hanya intervensi yang benar-benar perlu dikerjakan." />
+                                    }
                                 </CardDescription>
                             </CardHeader>
                             <CardContent className="grid gap-3 sm:grid-cols-2 xl:grid-cols-1">
                                 {[
                                     {
-                                        label: 'Tambah kapasitas',
+                                        label: stage6Display(
+                                            'Tambah kapasitas',
+                                            locale,
+                                        ),
                                         value: insights.add_capacity_count,
-                                        note: 'permintaan kuat',
+                                        note: stage6Display(
+                                            'permintaan kuat',
+                                            locale,
+                                        ),
                                         icon: TrendingUp,
                                     },
                                     {
-                                        label: 'Promosikan aset',
+                                        label: stage6Display(
+                                            'Promosikan aset',
+                                            locale,
+                                        ),
                                         value: insights.promote_count,
-                                        note: 'utilisasi periode rendah',
+                                        note: stage6Display(
+                                            'utilisasi periode rendah',
+                                            locale,
+                                        ),
                                         icon: Activity,
                                     },
                                     {
-                                        label: 'Evaluasi penjualan',
+                                        label: stage6Display(
+                                            'Evaluasi penjualan',
+                                            locale,
+                                        ),
                                         value: insights.review_disposal_count,
-                                        note: 'usia dan BEP kurang sehat',
+                                        note: stage6Display(
+                                            'usia dan BEP kurang sehat',
+                                            locale,
+                                        ),
                                         icon: Boxes,
                                     },
                                     {
-                                        label: 'Evaluasi servis',
+                                        label: stage6Display(
+                                            'Evaluasi servis',
+                                            locale,
+                                        ),
                                         value: insights.service_review_count,
-                                        note: 'kondisi atau biaya',
+                                        note: stage6Display(
+                                            'kondisi atau biaya',
+                                            locale,
+                                        ),
                                         icon: Wrench,
                                     },
                                 ].map((item) => {
@@ -701,53 +799,83 @@ export default function AssetAnalytics({
 
                 <Card>
                     <CardHeader className="pb-3">
-                        <CardTitle>Kualitas data</CardTitle>
+                        <CardTitle>
+                            {<Stage6Text text="Kualitas data" />}
+                        </CardTitle>
                         <CardDescription>
-                            Catatan audit ditampilkan terpisah dan tidak
-                            menggantikan rekomendasi bisnis.
+                            {
+                                <Stage6Text text="Catatan audit ditampilkan terpisah dan tidak menggantikan rekomendasi bisnis." />
+                            }
                         </CardDescription>
                     </CardHeader>
-                    <CardContent className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3 2xl:grid-cols-6">
+                    <CardContent className="grid gap-3 sm:grid-cols-2 xl:grid-cols-3">
                         {[
                             {
-                                label: 'Aset dengan blocker',
+                                label: stage6Display(
+                                    'Aset dengan blocker',
+                                    locale,
+                                ),
                                 value: insights.data_quality_blocker_asset_count,
-                                note: `${insights.data_quality_issue_asset_count} aset punya catatan`,
+                                note: `${insights.data_quality_issue_asset_count} ${stage6Display('aset punya catatan', locale)}`,
                                 icon: Info,
                             },
                             {
-                                label: 'Kualitas tinggi',
+                                label: stage6Display('Kualitas tinggi', locale),
                                 value: insights.high_quality_asset_count,
-                                note: 'siap untuk keputusan',
+                                note: stage6Display(
+                                    'siap untuk keputusan',
+                                    locale,
+                                ),
                                 icon: ShieldCheck,
                             },
                             {
-                                label: 'Interval memakai fallback',
+                                label: stage6Display(
+                                    'Interval memakai fallback',
+                                    locale,
+                                ),
                                 value: insights.invalid_interval_count,
-                                note: 'assignment memakai due date',
+                                note: stage6Display(
+                                    'assignment memakai due date',
+                                    locale,
+                                ),
                                 icon: Activity,
                             },
                             {
-                                label: 'Rental legacy kedaluwarsa',
+                                label: stage6Display(
+                                    'Rental legacy kedaluwarsa',
+                                    locale,
+                                ),
                                 value: insights.stale_active_rental_count,
-                                note: 'masih berstatus aktif',
+                                note: stage6Display(
+                                    'masih berstatus aktif',
+                                    locale,
+                                ),
                                 icon: Activity,
                             },
                             {
-                                label: 'Harga beli bermasalah',
+                                label: stage6Display(
+                                    'Harga beli bermasalah',
+                                    locale,
+                                ),
                                 value:
                                     insights.missing_purchase_price_count +
                                     insights.suspicious_purchase_price_count,
-                                note: `${insights.missing_purchase_price_count} kosong · ${insights.suspicious_purchase_price_count} perlu validasi`,
+                                note: `${insights.missing_purchase_price_count} ${stage6Display('kosong ·', locale)} ${insights.suspicious_purchase_price_count} ${stage6Display('perlu validasi', locale)}`,
                                 icon: WalletCards,
                             },
                             {
-                                label: 'Riwayat maintenance',
+                                label: stage6Display(
+                                    'Riwayat maintenance',
+                                    locale,
+                                ),
                                 value:
                                     insights.maintenance_record_count > 0
                                         ? insights.maintenance_record_count
-                                        : 'Belum ada',
-                                note: 'data biaya teknis',
+                                        : stage6Display('Belum ada', locale),
+                                note: stage6Display(
+                                    'data biaya teknis',
+                                    locale,
+                                ),
                                 icon: Boxes,
                             },
                         ].map((item) => {
@@ -761,7 +889,7 @@ export default function AssetAnalytics({
                                     <div className="flex min-w-0 items-center gap-3">
                                         <Icon className="size-4 shrink-0 text-muted-foreground" />
                                         <div className="min-w-0">
-                                            <p className="truncate text-sm">
+                                            <p className="text-sm break-words">
                                                 {item.label}
                                             </p>
                                             <p className="text-xs text-muted-foreground">
@@ -780,7 +908,10 @@ export default function AssetAnalytics({
 
                 <section className="grid gap-4 lg:grid-cols-3">
                     <InsightCard
-                        title="Pendapatan periode tertinggi"
+                        title={stage6Display(
+                            'Pendapatan periode tertinggi',
+                            locale,
+                        )}
                         asset={insights.top_revenue}
                         value={
                             insights.top_revenue
@@ -789,10 +920,13 @@ export default function AssetAnalytics({
                                   )
                                 : '—'
                         }
-                        description="pendapatan pada periode terpilih"
+                        description={stage6Display(
+                            'pendapatan pada periode terpilih',
+                            locale,
+                        )}
                     />
                     <InsightCard
-                        title="Utilisasi tertinggi"
+                        title={stage6Display('Utilisasi tertinggi', locale)}
                         asset={insights.top_utilization}
                         value={
                             insights.top_utilization
@@ -802,10 +936,16 @@ export default function AssetAnalytics({
                                   )
                                 : '—'
                         }
-                        description="pemakaian valid terhadap jam operasional aset aktif"
+                        description={stage6Display(
+                            'pemakaian valid terhadap jam operasional aset aktif',
+                            locale,
+                        )}
                     />
                     <InsightCard
-                        title="Biaya maintenance tertinggi"
+                        title={stage6Display(
+                            'Biaya maintenance tertinggi',
+                            locale,
+                        )}
                         asset={insights.highest_maintenance}
                         value={
                             insights.highest_maintenance
@@ -817,8 +957,14 @@ export default function AssetAnalytics({
                         }
                         description={
                             insights.highest_maintenance
-                                ? 'biaya maintenance lifetime'
-                                : 'belum ada maintenance selesai yang tercatat'
+                                ? stage6Display(
+                                      'biaya maintenance lifetime',
+                                      locale,
+                                  )
+                                : stage6Display(
+                                      'belum ada maintenance selesai yang tercatat',
+                                      locale,
+                                  )
                         }
                     />
                 </section>
@@ -826,11 +972,13 @@ export default function AssetAnalytics({
                 {branchPerformance.length > 0 && (
                     <Card>
                         <CardHeader>
-                            <CardTitle>Performa per cabang</CardTitle>
+                            <CardTitle>
+                                {<Stage6Text text="Performa per cabang" />}
+                            </CardTitle>
                             <CardDescription>
-                                Perbandingan investasi, kontribusi bersih,
-                                progres BEP, dan utilisasi unit berdasarkan
-                                cabang saat ini.
+                                {
+                                    <Stage6Text text="Perbandingan investasi, kontribusi bersih, progres BEP, dan utilisasi unit berdasarkan cabang saat ini." />
+                                }
                             </CardDescription>
                         </CardHeader>
                         <CardContent className="overflow-x-auto">
@@ -838,22 +986,22 @@ export default function AssetAnalytics({
                                 <thead>
                                     <tr className="border-b text-left text-xs text-muted-foreground">
                                         <th className="pb-3 font-medium">
-                                            Cabang
+                                            {<Stage6Text text="Cabang" />}
                                         </th>
                                         <th className="pb-3 text-right font-medium">
-                                            Aset
+                                            {<Stage6Text text="Aset" />}
                                         </th>
                                         <th className="pb-3 text-right font-medium">
-                                            Investasi
+                                            {<Stage6Text text="Investasi" />}
                                         </th>
                                         <th className="pb-3 text-right font-medium">
-                                            Kontribusi
+                                            {<Stage6Text text="Kontribusi" />}
                                         </th>
                                         <th className="pb-3 text-right font-medium">
-                                            BEP
+                                            {<Stage6Text text="BEP" />}
                                         </th>
                                         <th className="pb-3 text-right font-medium">
-                                            Utilisasi
+                                            {<Stage6Text text="Utilisasi" />}
                                         </th>
                                     </tr>
                                 </thead>
@@ -886,7 +1034,7 @@ export default function AssetAnalytics({
                                                 </p>
                                                 {item.open_revenue > 0 && (
                                                     <p className="text-xs text-muted-foreground">
-                                                        Berjalan{' '}
+                                                        <Stage6Text text="Berjalan" />{' '}
                                                         {money.format(
                                                             item.open_revenue,
                                                         )}
@@ -913,12 +1061,13 @@ export default function AssetAnalytics({
 
                 <Card>
                     <CardHeader>
-                        <CardTitle>ROI & BEP per aset</CardTitle>
+                        <CardTitle>
+                            {<Stage6Text text="ROI & BEP per aset" />}
+                        </CardTitle>
                         <CardDescription>
-                            Pisahkan kelayakan data dari tindakan bisnis agar
-                            prioritas tidak tertutup oleh catatan legacy minor.
-                            Kolom aset tetap terlihat saat tabel digeser
-                            horizontal.
+                            {
+                                <Stage6Text text="Pisahkan kelayakan data dari tindakan bisnis agar prioritas tidak tertutup oleh catatan legacy minor. Kolom aset tetap terlihat saat tabel digeser horizontal." />
+                            }
                         </CardDescription>
                     </CardHeader>
                     <CardContent>
@@ -927,40 +1076,46 @@ export default function AssetAnalytics({
                                 <thead>
                                     <tr className="text-left text-xs text-muted-foreground">
                                         <th className="sticky left-0 z-20 min-w-[250px] border-r border-b bg-card px-3 pb-3 font-medium">
-                                            Aset
+                                            {<Stage6Text text="Aset" />}
                                         </th>
                                         <th className="min-w-[180px] border-b px-3 pb-3 font-medium">
-                                            Cabang
+                                            {<Stage6Text text="Cabang" />}
                                         </th>
                                         <th className="min-w-[130px] border-b px-3 pb-3 font-medium">
-                                            Status
+                                            {<Stage6Text text="Status" />}
                                         </th>
                                         <th className="min-w-[150px] border-b px-3 pb-3 text-right font-medium">
-                                            Investasi
+                                            {<Stage6Text text="Investasi" />}
                                         </th>
                                         <th className="min-w-[185px] border-b px-3 pb-3 text-right font-medium">
-                                            Pendapatan terealisasi
+                                            {
+                                                <Stage6Text text="Pendapatan terealisasi" />
+                                            }
                                         </th>
                                         <th className="min-w-[135px] border-b px-3 pb-3 text-right font-medium">
-                                            Maintenance
+                                            {<Stage6Text text="Pemeliharaan" />}
                                         </th>
                                         <th className="min-w-[90px] border-b px-3 pb-3 text-right font-medium">
-                                            ROI
+                                            {<Stage6Text text="ROI" />}
                                         </th>
                                         <th className="min-w-[110px] border-b px-3 pb-3 text-right font-medium">
-                                            BEP
+                                            {<Stage6Text text="BEP" />}
                                         </th>
                                         <th className="min-w-[180px] border-b px-3 pb-3 text-right font-medium">
-                                            Utilisasi
+                                            {<Stage6Text text="Utilisasi" />}
                                         </th>
                                         <th className="min-w-[135px] border-b px-3 pb-3 text-right font-medium whitespace-nowrap">
-                                            Estimasi BEP
+                                            {<Stage6Text text="Estimasi BEP" />}
                                         </th>
                                         <th className="min-w-[290px] border-b px-4 pb-3 font-medium whitespace-nowrap">
-                                            Kualitas data
+                                            {
+                                                <Stage6Text text="Kualitas data" />
+                                            }
                                         </th>
                                         <th className="min-w-[300px] border-b px-4 pb-3 font-medium whitespace-nowrap">
-                                            Rekomendasi bisnis
+                                            {
+                                                <Stage6Text text="Rekomendasi bisnis" />
+                                            }
                                         </th>
                                     </tr>
                                 </thead>
@@ -980,7 +1135,7 @@ export default function AssetAnalytics({
                                                 </p>
                                                 {asset.purchase_date && (
                                                     <p className="mt-1 text-xs text-muted-foreground">
-                                                        Beli{' '}
+                                                        <Stage6Text text="Beli" />{' '}
                                                         {date.format(
                                                             new Date(
                                                                 asset.purchase_date,
@@ -1000,11 +1155,13 @@ export default function AssetAnalytics({
                                                     <Badge variant="outline">
                                                         {statusLabel(
                                                             asset.status,
+                                                            locale,
                                                         )}
                                                     </Badge>
                                                     <span className="text-xs text-muted-foreground">
                                                         {conditionLabel(
                                                             asset.condition,
+                                                            locale,
                                                         )}
                                                     </span>
                                                 </div>
@@ -1017,7 +1174,7 @@ export default function AssetAnalytics({
                                                 </p>
                                                 {asset.purchase_price_suspicious && (
                                                     <p className="mt-1 text-xs text-amber-600 dark:text-amber-400">
-                                                        Lebih rendah dari tarif{' '}
+                                                        <Stage6Text text="Lebih rendah dari tarif" />{' '}
                                                         {money.format(
                                                             asset.max_rental_rate,
                                                         )}
@@ -1031,7 +1188,7 @@ export default function AssetAnalytics({
                                                     )}
                                                 </p>
                                                 <p className="text-xs text-muted-foreground">
-                                                    Periode{' '}
+                                                    <Stage6Text text="Periode" />{' '}
                                                     {money.format(
                                                         asset.period_revenue,
                                                     )}
@@ -1039,7 +1196,7 @@ export default function AssetAnalytics({
                                                 {asset.open_lifetime_revenue >
                                                     0 && (
                                                     <p className="text-xs text-amber-600 dark:text-amber-400">
-                                                        Berjalan{' '}
+                                                        <Stage6Text text="Berjalan" />{' '}
                                                         {money.format(
                                                             asset.open_lifetime_revenue,
                                                         )}
@@ -1061,7 +1218,7 @@ export default function AssetAnalytics({
                                                     )}
                                                 </p>
                                                 <p className="text-xs text-muted-foreground">
-                                                    Sisa{' '}
+                                                    <Stage6Text text="Sisa" />{' '}
                                                     {money.format(
                                                         asset.remaining_to_bep,
                                                     )}
@@ -1077,23 +1234,29 @@ export default function AssetAnalytics({
                                                     {number.format(
                                                         asset.rented_hours,
                                                     )}{' '}
-                                                    jam ·{' '}
+                                                    <Stage6Text text="jam ·" />{' '}
                                                     {
                                                         asset.realized_rental_count
                                                     }{' '}
-                                                    selesai
+                                                    <Stage6Text text="selesai" />
                                                     {asset.open_rental_count > 0
-                                                        ? ` · ${asset.open_rental_count} berjalan`
+                                                        ? ` · ${asset.open_rental_count} ${stage6Display('berjalan', locale)}`
                                                         : ''}
                                                 </p>
                                             </td>
                                             <td className="border-b px-3 py-4 text-right">
                                                 {asset.remaining_to_bep <= 0
-                                                    ? 'Sudah BEP'
+                                                    ? stage6Display(
+                                                          'Sudah BEP',
+                                                          locale,
+                                                      )
                                                     : asset.estimated_bep_months ===
                                                         null
-                                                      ? 'Belum terproyeksi'
-                                                      : `${number.format(asset.estimated_bep_months)} bulan`}
+                                                      ? stage6Display(
+                                                            'Belum terproyeksi',
+                                                            locale,
+                                                        )
+                                                      : `${number.format(asset.estimated_bep_months)} ${stage6Display('bulan', locale)}`}
                                             </td>
                                             <td className="border-b px-4 py-4">
                                                 <div
@@ -1103,7 +1266,7 @@ export default function AssetAnalytics({
                                                 >
                                                     <div className="flex items-center justify-between gap-2">
                                                         <p className="text-xs font-semibold">
-                                                            Skor{' '}
+                                                            <Stage6Text text="Skor" />{' '}
                                                             {
                                                                 asset
                                                                     .data_quality
@@ -1129,8 +1292,9 @@ export default function AssetAnalytics({
                                                     {asset.data_quality.issues
                                                         .length === 0 ? (
                                                         <p className="mt-2 text-[11px] leading-4 text-emerald-700 dark:text-emerald-300">
-                                                            Data siap digunakan
-                                                            untuk keputusan.
+                                                            {
+                                                                <Stage6Text text="Data siap digunakan untuk keputusan." />
+                                                            }
                                                         </p>
                                                     ) : (
                                                         <div className="mt-2 space-y-1">
@@ -1164,7 +1328,7 @@ export default function AssetAnalytics({
                                                                         .issues
                                                                         .length -
                                                                         2}{' '}
-                                                                    catatan lain
+                                                                    <Stage6Text text="catatan lain" />
                                                                 </p>
                                                             )}
                                                         </div>
@@ -1219,11 +1383,14 @@ export default function AssetAnalytics({
                             <div className="flex flex-col items-center justify-center py-16 text-center">
                                 <Boxes className="size-10 text-muted-foreground" />
                                 <p className="mt-4 font-medium">
-                                    Tidak ada aset pada filter ini
+                                    {
+                                        <Stage6Text text="Tidak ada aset pada filter ini" />
+                                    }
                                 </p>
                                 <p className="mt-1 text-sm text-muted-foreground">
-                                    Ubah periode, cabang, kategori, status, atau
-                                    kata pencarian.
+                                    {
+                                        <Stage6Text text="Ubah periode, cabang, kategori, status, atau kata pencarian." />
+                                    }
                                 </p>
                             </div>
                         )}
@@ -1241,33 +1408,37 @@ export default function AssetAnalytics({
                     <CardHeader>
                         <CardTitle className="flex items-center gap-2 text-base">
                             <Info className="size-4" />
-                            Metodologi perhitungan
+                            {<Stage6Text text="Metodologi perhitungan" />}
                         </CardTitle>
                     </CardHeader>
                     <CardContent className="grid gap-4 text-sm text-muted-foreground md:grid-cols-2 xl:grid-cols-5">
                         <p>
                             <strong className="text-foreground">
-                                Pendapatan:
+                                {<Stage6Text text="Pendapatan:" />}
                             </strong>{' '}
                             {methodology.revenue}
                         </p>
                         <p>
-                            <strong className="text-foreground">ROI:</strong>{' '}
+                            <strong className="text-foreground">
+                                {<Stage6Text text="ROI:" />}
+                            </strong>{' '}
                             {methodology.roi}
                         </p>
                         <p>
-                            <strong className="text-foreground">BEP:</strong>{' '}
+                            <strong className="text-foreground">
+                                {<Stage6Text text="BEP:" />}
+                            </strong>{' '}
                             {methodology.bep}
                         </p>
                         <p>
                             <strong className="text-foreground">
-                                Utilisasi:
+                                {<Stage6Text text="Utilisasi:" />}
                             </strong>{' '}
                             {methodology.utilization}
                         </p>
                         <p>
                             <strong className="text-foreground">
-                                Rekomendasi:
+                                {<Stage6Text text="Rekomendasi:" />}
                             </strong>{' '}
                             {methodology.recommendation}
                         </p>

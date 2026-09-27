@@ -4,6 +4,7 @@ namespace App\Domain\Reporting;
 
 class SpreadsheetXmlExporter
 {
+    private string $locale = 'id';
     /**
      * @param array{
      *     title: string,
@@ -13,8 +14,9 @@ class SpreadsheetXmlExporter
      *     rows: list<array{id: string, href: string, values: array<string, mixed>}>
      * } $document
      */
-    public function render(array $document): string
+    public function render(array $document, string $locale = 'id'): string
     {
+        $this->locale = $locale === 'en' ? 'en' : 'id';
         $rows = [];
         $rows[] = $this->row([
             $this->cell((string) $document['title'], 'String', 'Title'),
@@ -77,7 +79,7 @@ class SpreadsheetXmlExporter
             .'<Style ss:ID="Number"><NumberFormat ss:Format="#,##0"/></Style>'
             .'<Style ss:ID="Text"><Alignment ss:WrapText="1"/></Style>'
             .'</Styles>'
-            .'<Worksheet ss:Name="Laporan"><Table>'.$columnXml.implode('', $rows).'</Table>'
+            .'<Worksheet ss:Name="'.($this->locale === 'en' ? 'Report' : 'Laporan').'"><Table>'.$columnXml.implode('', $rows).'</Table>'
             .'<WorksheetOptions xmlns="urn:schemas-microsoft-com:office:excel"><FreezePanes/><FrozenNoSplit/><SplitHorizontal>12</SplitHorizontal><TopRowBottomPane>12</TopRowBottomPane><ProtectObjects>False</ProtectObjects><ProtectScenarios>False</ProtectScenarios></WorksheetOptions>'
             .'</Worksheet></Workbook>';
     }
@@ -105,6 +107,18 @@ class SpreadsheetXmlExporter
         if (in_array($type, ['money', 'number'], true)) {
             return $this->cell((string) $value, 'Number', $style);
         }
+
+        $value = match ($type) {
+            'status' => Stage6Presentation::status((string) $value, $this->locale),
+            'direction' => match ((string) $value) {
+                'in' => $this->locale === 'en' ? 'In' : 'Masuk',
+                'out' => $this->locale === 'en' ? 'Out' : 'Keluar',
+                'increase' => $this->locale === 'en' ? 'Increase' : 'Penambah',
+                'decrease' => $this->locale === 'en' ? 'Decrease' : 'Pengurang',
+                default => $value,
+            },
+            default => $value,
+        };
 
         return $this->cell((string) $value, 'String', $style);
     }
