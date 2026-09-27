@@ -81,6 +81,40 @@ class Stage6ExportLocalizationTest extends TestCase
         self::assertStringNotContainsString('80 BARIS', $pdf);
     }
 
+    public function test_indonesian_operational_pdf_keeps_type_and_status_as_whole_words(): void
+    {
+        $columns = [
+            ['key' => 'kind', 'label' => 'Jenis', 'type' => 'text', 'export_width' => 10],
+            ['key' => 'number', 'label' => 'Nomor', 'type' => 'text', 'export_width' => 17],
+            ['key' => 'reference', 'label' => 'Referensi', 'type' => 'text', 'export_width' => 16],
+            ['key' => 'customer', 'label' => 'Pelanggan', 'type' => 'text', 'export_width' => 18],
+            ['key' => 'branch', 'label' => 'Cabang', 'type' => 'text', 'export_width' => 10],
+            ['key' => 'status', 'label' => 'Status', 'type' => 'status', 'export_width' => 11],
+            ['key' => 'occurred_at', 'label' => 'Waktu Transaksi', 'type' => 'datetime', 'export_width' => 17],
+            ['key' => 'starts_at', 'label' => 'Mulai/Tempo', 'type' => 'datetime', 'export_width' => 16],
+            ['key' => 'ends_at', 'label' => 'Selesai/Kembali', 'type' => 'datetime', 'export_width' => 16],
+            ['key' => 'total_amount', 'label' => 'Nilai', 'type' => 'money', 'export_width' => 14],
+            ['key' => 'charges', 'label' => 'Denda/Biaya', 'type' => 'money', 'export_width' => 13],
+            ['key' => 'paid_amount', 'label' => 'Terbayar', 'type' => 'money', 'export_width' => 13],
+            ['key' => 'balance_due', 'label' => 'Saldo', 'type' => 'money', 'export_width' => 13],
+        ];
+        $document = [
+            'title' => 'Visual check',
+            'subtitle' => 'Periode 01-09-2026 s.d. 27-09-2026',
+            'summary' => [],
+            'columns' => $columns,
+            'rows' => [['id' => 'return-1', 'href' => '/returns/1', 'values' => [
+                'kind' => 'Pengembalian', 'status' => 'confirmed', 'total_amount' => 500000,
+            ]]],
+        ];
+
+        $pdf = (new SimplePdfExporter('/nonexistent-stage6-logo.png'))->render($document, 'id');
+
+        self::assertStringContainsString('(Pengembalian) Tj', $pdf);
+        self::assertStringContainsString('(Dikonfirmasi) Tj', $pdf);
+        self::assertStringContainsString('(Rp 500.000) Tj', $pdf);
+    }
+
     /** @return array<string, mixed> */
     private function document(): array
     {

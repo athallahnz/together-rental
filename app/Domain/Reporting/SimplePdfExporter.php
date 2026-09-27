@@ -177,6 +177,16 @@ class SimplePdfExporter
             static fn (array $column): int => max(8, (int) $column['export_width']),
             $columns,
         );
+        // Indonesian operational labels need room for whole words on A3 pages.
+        if ($this->locale === 'id' && $availableWidth > 1000) {
+            foreach ($columns as $index => $column) {
+                $weights[$index] = match ($column['key']) {
+                    'kind' => max($weights[$index], 12),
+                    'status' => max($weights[$index], 13),
+                    default => $weights[$index],
+                };
+            }
+        }
         $weightTotal = array_sum($weights);
         $widths = [];
         $assigned = 0.0;
