@@ -46,7 +46,6 @@ import type {
 } from '@/types';
 
 type PaymentDetail = PaymentCenterPayment & {
-    proof_path: string | null;
     financial_category: {
         id: number;
         code: string;
@@ -105,6 +104,7 @@ type Activity = {
 
 type Props = {
     payment: PaymentDetail;
+    hasPaymentProof: boolean;
     activities: Activity[];
     voidEligibility: {
         allowed: boolean;
@@ -143,6 +143,7 @@ const typeLabels: Record<string, string> = {
 
 export default function PaymentCenterShow({
     payment,
+    hasPaymentProof,
     activities,
     voidEligibility,
     refundEligibility,
@@ -340,6 +341,16 @@ export default function PaymentCenterShow({
                                 )}
                                 value={payment.external_reference ?? '—'}
                             />
+                            {hasPaymentProof && (
+                                <a
+                                    href={`/finance/payments/${payment.id}/proof`}
+                                    className="text-sm font-medium text-primary underline"
+                                >
+                                    {stage5Locale === 'en'
+                                        ? 'Download payment proof'
+                                        : 'Unduh bukti pembayaran'}
+                                </a>
+                            )}
                             <Info
                                 label={stage5Translate(
                                     'stage5.ui.3d4782fa2f70',

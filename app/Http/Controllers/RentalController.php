@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Domain\Access\ActivityRecorder;
 use App\Domain\Finance\BookingPaymentSettlement;
+use App\Domain\Finance\PaymentEvidenceStorage;
 use App\Domain\Rentals\RentalCollateralDocumentStorage;
 use App\Domain\Rentals\RentalFinancialCorrectionManager;
 use App\Domain\Rentals\RentalManager;
@@ -221,16 +222,18 @@ class RentalController extends Controller
         StoreDirectRentalRequest $request,
         RentalManager $manager,
         RentalCollateralDocumentStorage $documents,
+        PaymentEvidenceStorage $evidence,
         ActivityRecorder $recorder,
     ): RedirectResponse {
-        $prepared = $documents->prepareCheckoutPayload($request->validated());
-
-        try {
-            $rental = $manager->createDirect($prepared['payload'], $request->user());
-        } catch (Throwable $exception) {
-            $documents->cleanup($prepared['paths']);
-            throw $exception;
-        }
+        $rental = $evidence->run($request->validated(), function (array $data) use ($documents, $manager, $request): Rental {
+            $prepared = $documents->prepareCheckoutPayload($data);
+            try {
+                return $manager->createDirect($prepared['payload'], $request->user());
+            } catch (Throwable $exception) {
+                $documents->cleanup($prepared['paths']);
+                throw $exception;
+            }
+        });
 
         $recorder->record(
             $request,
@@ -296,17 +299,19 @@ class RentalController extends Controller
         Booking $booking,
         RentalManager $manager,
         RentalCollateralDocumentStorage $documents,
+        PaymentEvidenceStorage $evidence,
         ActivityRecorder $recorder,
     ): RedirectResponse {
         $this->guardBookingAccess($request, $booking);
-        $prepared = $documents->prepareCheckoutPayload($request->validated());
-
-        try {
-            $rental = $manager->checkout($booking, $prepared['payload'], $request->user());
-        } catch (Throwable $exception) {
-            $documents->cleanup($prepared['paths']);
-            throw $exception;
-        }
+        $rental = $evidence->run($request->validated(), function (array $data) use ($documents, $manager, $booking, $request): Rental {
+            $prepared = $documents->prepareCheckoutPayload($data);
+            try {
+                return $manager->checkout($booking, $prepared['payload'], $request->user());
+            } catch (Throwable $exception) {
+                $documents->cleanup($prepared['paths']);
+                throw $exception;
+            }
+        });
 
         $recorder->record(
             $request,
@@ -507,6 +512,7 @@ class RentalController extends Controller
         StoreRentalReturnRequest $request,
         Rental $rental,
         RentalReturnManager $manager,
+        PaymentEvidenceStorage $evidence,
         ActivityRecorder $recorder,
     ): RedirectResponse {
         $this->guardRentalAccess($request, $rental);
@@ -526,7 +532,7 @@ class RentalController extends Controller
             ->whereIn('id', $collateralIds)
             ->get()
             ->keyBy('id');
-        $return = $manager->process($rental, $validated, $request->user());
+        $return = $evidence->run($validated, fn (array $data) => $manager->process($rental, $data, $request->user()));
         $recorder->record(
             $request,
             $wasOperationalCorrection

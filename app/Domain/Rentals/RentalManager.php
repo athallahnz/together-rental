@@ -424,6 +424,7 @@ class RentalManager
                 'amount' => $entry['amount'],
                 'paid_at' => $rental->checked_out_at,
                 'external_reference' => $data['payment_reference'] ?? null,
+                'proof_path' => $data['proof_path'] ?? null,
                 'notes' => $data['payment_notes'] ?? null,
             ], $actor);
         }

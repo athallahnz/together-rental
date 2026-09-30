@@ -58,6 +58,7 @@ class RefundBookingIntegrationTest extends TestCase
             'deposit_paid' => 0,
             'payment_method_id' => $method->id,
             'payment_reference' => 'TRX-DP-REPAID-001',
+            'payment_proof' => UploadedFile::fake()->image('transfer.jpg'),
         ])->assertSessionHasNoErrors();
         $this->assertDatabaseCount('payments', 3);
         $this->actingAs($user)->get(route('bookings.show', $booking))
@@ -89,6 +90,7 @@ class RefundBookingIntegrationTest extends TestCase
             'deposit_paid' => 350000,
             'payment_method_id' => $method->id,
             'payment_reference' => 'TRX-DEPOSIT-REPAID-001',
+            'payment_proof' => UploadedFile::fake()->image('transfer.jpg'),
         ])->assertSessionHasNoErrors();
         $this->assertSame('500000.00', $booking->fresh()->deposit_paid);
     }
@@ -511,6 +513,7 @@ class RefundBookingIntegrationTest extends TestCase
             'deposit_paid' => 200000,
             'payment_method_id' => $method->id,
             'payment_reference' => 'TRX-BOOKING-REFUND-SOURCE',
+            'payment_proof' => UploadedFile::fake()->image('transfer.jpg'),
         ])->assertSessionHasNoErrors();
 
         return Booking::query()->firstOrFail();

@@ -10,6 +10,7 @@ import { useAppLocale } from '@/lib/i18n';
 import { SearchPickerDialog } from '@/components/bookings/search-picker-dialog';
 import type { BookingSearchOption } from '@/components/bookings/search-picker-dialog';
 import { CashSessionSelect } from '@/components/finance/cash-session-select';
+import { PaymentEvidenceFields } from '@/components/finance/payment-evidence-fields';
 import {
     CollateralFields,
     collateralFromIdentity,
@@ -69,6 +70,7 @@ type FormData = {
     payment_method_id: number;
     cash_session_id: number | null;
     payment_reference: string;
+    payment_proof: File | null;
     collaterals: CollateralInput[];
     customer360_received_confirmed: boolean;
 };
@@ -190,6 +192,7 @@ export default function BookingForm({
         payment_method_id: 0,
         cash_session_id: null,
         payment_reference: '',
+        payment_proof: null,
         collaterals: direct ? [emptyCollateral()] : [],
         customer360_received_confirmed: false,
     });
@@ -911,11 +914,13 @@ export default function BookingForm({
                                     form.data.payment_method_id || '',
                                 )}
                                 onValueChange={(value) => {
-                                    form.setData(
-                                        'payment_method_id',
-                                        Number(value),
-                                    );
-                                    form.setData('cash_session_id', null);
+                                    form.setData((current) => ({
+                                        ...current,
+                                        payment_method_id: Number(value),
+                                        cash_session_id: null,
+                                        payment_proof: null,
+                                        payment_reference: '',
+                                    }));
                                 }}
                             >
                                 <SelectTrigger>
@@ -977,27 +982,23 @@ export default function BookingForm({
                                 }
                             />
                         </Field>
-                        <Field
-                            label={stage4Translate(
-                                'stage4.ui.7f2cc58cb31e',
-                                stage4Locale,
-                            )}
-                            error={form.errors.payment_reference}
-                        >
-                            <Input
-                                value={form.data.payment_reference}
-                                onChange={(event) =>
-                                    form.setData(
-                                        'payment_reference',
-                                        event.target.value,
-                                    )
-                                }
-                                placeholder={stage4Translate(
-                                    'stage4.ui.942ab3e55971',
-                                    stage4Locale,
-                                )}
-                            />
-                        </Field>
+                        <PaymentEvidenceFields
+                            methods={paymentMethods}
+                            methodId={form.data.payment_method_id}
+                            amount={
+                                form.data.payment_amount +
+                                form.data.deposit_paid
+                            }
+                            reference={form.data.payment_reference}
+                            onReferenceChange={(value) =>
+                                form.setData('payment_reference', value)
+                            }
+                            onProofChange={(file) =>
+                                form.setData('payment_proof', file)
+                            }
+                            referenceError={form.errors.payment_reference}
+                            proofError={form.errors.payment_proof}
+                        />
                         {direct && (
                             <div className="md:col-span-2 xl:col-span-3">
                                 <Label>

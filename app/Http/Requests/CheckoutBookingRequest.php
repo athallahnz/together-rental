@@ -47,6 +47,7 @@ class CheckoutBookingRequest extends FormRequest
             'payment_method_id' => ['nullable', 'integer', 'min:1'],
             'cash_session_id' => ['nullable', 'integer'],
             'payment_reference' => ['nullable', 'string', 'max:100'],
+            'payment_proof' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:5120'],
             'payment_notes' => ['nullable', 'string', 'max:1000'],
         ];
     }
@@ -68,6 +69,7 @@ class CheckoutBookingRequest extends FormRequest
                         $validator,
                         $this->float('payment_amount') + $this->float('deposit_paid'),
                         $booking->branch_id,
+                        true,
                     );
 
                     if ($validator->errors()->has('checked_out_at')) {

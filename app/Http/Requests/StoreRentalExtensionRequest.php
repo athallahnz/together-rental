@@ -28,6 +28,7 @@ class StoreRentalExtensionRequest extends FormRequest
             'payment_method_id' => ['nullable', 'integer'],
             'cash_session_id' => ['nullable', 'integer'],
             'payment_reference' => ['nullable', 'string', 'max:100'],
+            'payment_proof' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:5120'],
             'payment_notes' => ['nullable', 'string', 'max:1000'],
             'promotion_code' => ['nullable', 'string', 'max:40'],
             'notes' => ['nullable', 'string', 'max:3000'],
@@ -68,6 +69,7 @@ class StoreRentalExtensionRequest extends FormRequest
                     $validator,
                     $this->float('payment_amount'),
                     $rental->branch_id,
+                    true,
                 );
             },
         ];

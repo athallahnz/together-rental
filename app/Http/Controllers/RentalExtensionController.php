@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Domain\Access\ActivityRecorder;
+use App\Domain\Finance\PaymentEvidenceStorage;
 use App\Domain\Rentals\RentalExtensionManager;
 use App\Http\Requests\StoreRentalExtensionRequest;
 use App\Models\PaymentMethod;
@@ -44,13 +45,14 @@ class RentalExtensionController extends Controller
         StoreRentalExtensionRequest $request,
         Rental $rental,
         RentalExtensionManager $manager,
+        PaymentEvidenceStorage $evidence,
         ActivityRecorder $recorder,
     ): RedirectResponse {
         $this->guardAccess($request, $rental);
         $before = $rental->only([
             'due_at', 'subtotal', 'total_amount', 'paid_amount', 'balance_due',
         ]);
-        $extension = $manager->extend($rental, $request->validated(), $request->user());
+        $extension = $evidence->run($request->validated(), fn (array $data) => $manager->extend($rental, $data, $request->user()));
         $fresh = $rental->fresh();
         $pricingSnapshot = $extension->getAttribute('pricing_snapshot');
         $promotionSnapshot = is_array($pricingSnapshot)

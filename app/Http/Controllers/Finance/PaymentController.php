@@ -15,10 +15,12 @@ use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Gate;
+use Illuminate\Support\Facades\Storage;
 use Illuminate\Validation\Rule;
 use Illuminate\Validation\ValidationException;
 use Inertia\Inertia;
 use Inertia\Response;
+use Symfony\Component\HttpFoundation\StreamedResponse;
 
 class PaymentController extends Controller
 {
@@ -226,7 +228,8 @@ class PaymentController extends Controller
             ]);
 
         return Inertia::render('finance/payments/show', [
-            'payment' => $payment,
+            'payment' => $payment->makeHidden('proof_path'),
+            'hasPaymentProof' => is_string($payment->proof_path) && $payment->proof_path !== '',
             'activities' => $activities,
             'voidEligibility' => $eligibility,
             'refundEligibility' => $refund,
@@ -243,6 +246,26 @@ class PaymentController extends Controller
                     && $refund['allowed'],
             ],
         ]);
+    }
+
+    public function proof(Request $request, Payment $payment): StreamedResponse
+    {
+        Gate::authorize('payments.view');
+        $this->guardAccess($request, $payment);
+        abort_unless(
+            is_string($payment->proof_path)
+                && $payment->proof_path !== ''
+                && Storage::disk('local')->exists($payment->proof_path),
+            404,
+        );
+
+        $extension = strtolower(pathinfo($payment->proof_path, PATHINFO_EXTENSION));
+        abort_unless(in_array($extension, ['jpg', 'jpeg', 'png', 'webp', 'pdf'], true), 404);
+
+        return Storage::disk('local')->download(
+            $payment->proof_path,
+            'payment-'.$payment->payment_number.'.'.$extension,
+        );
     }
 
     public function void(

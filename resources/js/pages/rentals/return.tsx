@@ -4,6 +4,7 @@ import type { FormEvent, ReactNode } from 'react';
 import { Stage4Text, stage4Translate } from '@/components/stage4-text';
 import { useAppLocale } from '@/lib/i18n';
 import { CashSessionSelect } from '@/components/finance/cash-session-select';
+import { PaymentEvidenceFields } from '@/components/finance/payment-evidence-fields';
 import type {
     CashSessionOption,
     PaymentMethodOption,
@@ -116,6 +117,7 @@ type FormData = {
     payment_method_id: string | null;
     cash_session_id: number | null;
     payment_reference: string;
+    payment_proof: File | null;
     returned_collateral_ids: number[];
     items: ReturnLine[];
     bulk_items: BulkReturnLine[];
@@ -173,6 +175,7 @@ export default function RentalReturn({
         payment_method_id: '',
         cash_session_id: null,
         payment_reference: '',
+        payment_proof: null,
         returned_collateral_ids: [],
         bulk_items: bulkItems.map((item) => ({
             rental_item_id: item.id,
@@ -911,14 +914,13 @@ export default function RentalReturn({
                                                 ''
                                             }
                                             onValueChange={(value) => {
-                                                form.setData(
-                                                    'payment_method_id',
-                                                    value,
-                                                );
-                                                form.setData(
-                                                    'cash_session_id',
-                                                    null,
-                                                );
+                                                form.setData((current) => ({
+                                                    ...current,
+                                                    payment_method_id: value,
+                                                    cash_session_id: null,
+                                                    payment_proof: null,
+                                                    payment_reference: '',
+                                                }));
                                             }}
                                         >
                                             <SelectTrigger>
@@ -967,21 +969,32 @@ export default function RentalReturn({
                                         error={form.errors.cash_session_id}
                                     />
                                     <div className="sm:col-span-2">
-                                        <Label>
-                                            <Stage4Text k="stage4.ui.7f2cc58cb31e" />
-                                        </Label>
-                                        <Input
-                                            value={form.data.payment_reference}
-                                            onChange={(event) =>
+                                        <PaymentEvidenceFields
+                                            methods={paymentMethods}
+                                            methodId={
+                                                form.data.payment_method_id
+                                            }
+                                            amount={form.data.payment_amount}
+                                            reference={
+                                                form.data.payment_reference
+                                            }
+                                            onReferenceChange={(value) =>
                                                 form.setData(
                                                     'payment_reference',
-                                                    event.target.value,
+                                                    value,
                                                 )
                                             }
-                                        />
-                                        <InputError
-                                            message={
+                                            onProofChange={(file) =>
+                                                form.setData(
+                                                    'payment_proof',
+                                                    file,
+                                                )
+                                            }
+                                            referenceError={
                                                 form.errors.payment_reference
+                                            }
+                                            proofError={
+                                                form.errors.payment_proof
                                             }
                                         />
                                     </div>

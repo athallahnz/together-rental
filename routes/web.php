@@ -128,6 +128,8 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
             ->middleware('can:payments.view')->name('payments.index');
         Route::get('/payments/{payment}', [PaymentController::class, 'show'])
             ->middleware('can:payments.view')->name('payments.show');
+        Route::get('/payments/{payment}/proof', [PaymentController::class, 'proof'])
+            ->middleware('can:payments.view')->name('payments.proof');
         Route::post('/payments/{payment}/refunds', [RefundController::class, 'store'])
             ->middleware('can:refunds.request')->name('payments.refunds.store');
         Route::get('/refunds', [RefundController::class, 'index'])

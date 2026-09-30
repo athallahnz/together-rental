@@ -146,6 +146,7 @@ class BookingManager
                 'amount' => $entry['amount'],
                 'paid_at' => now(),
                 'external_reference' => $data['payment_reference'] ?? null,
+                'proof_path' => $data['proof_path'] ?? null,
                 'notes' => $data['payment_notes']
                     ?? 'Pembayaran diterima pada booking.',
             ], $actor);

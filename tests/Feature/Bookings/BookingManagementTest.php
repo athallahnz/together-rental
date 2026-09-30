@@ -14,6 +14,7 @@ use App\Models\Role;
 use App\Models\User;
 use Database\Seeders\RentalFoundationSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
 use Tests\Feature\InteractsWithFinance;
 use Tests\TestCase;
 
@@ -94,6 +95,7 @@ class BookingManagementTest extends TestCase
             'deposit_paid' => 0,
             'payment_method_id' => $method->id,
             'payment_reference' => 'TRX-OVERPAYMENT-TEST',
+            'payment_proof' => UploadedFile::fake()->image('overpayment.jpg'),
         ])->assertSessionHasErrors('payment_amount');
 
         $this->assertDatabaseCount('payments', 0);

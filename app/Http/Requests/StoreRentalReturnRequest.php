@@ -32,6 +32,7 @@ class StoreRentalReturnRequest extends FormRequest
             'payment_method_id' => ['nullable', 'integer'],
             'cash_session_id' => ['nullable', 'integer'],
             'payment_reference' => ['nullable', 'string', 'max:100'],
+            'payment_proof' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:5120'],
             'items' => ['required_without:bulk_items', 'array'],
             'items.*.rental_item_asset_id' => ['required', 'integer', 'distinct'],
             'items.*.replacement_asset_id' => ['nullable', 'integer', 'distinct', 'exists:assets,id'],
@@ -66,6 +67,7 @@ class StoreRentalReturnRequest extends FormRequest
                         $validator,
                         $payment,
                         $rental->branch_id,
+                        true,
                     );
 
                     $submitted = $this->input('returned_at');

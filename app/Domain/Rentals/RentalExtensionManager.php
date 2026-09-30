@@ -266,6 +266,7 @@ class RentalExtensionManager
                     'amount' => $paymentAmount,
                     'paid_at' => now(),
                     'external_reference' => $data['payment_reference'] ?? null,
+                    'proof_path' => $data['proof_path'] ?? null,
                     'notes' => $data['payment_notes']
                         ?? "Pembayaran perpanjangan {$extension->extension_number}.",
                 ], $actor);

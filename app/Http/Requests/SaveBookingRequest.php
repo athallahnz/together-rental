@@ -48,6 +48,7 @@ class SaveBookingRequest extends FormRequest
             'payment_method_id' => ['nullable', 'integer'],
             'cash_session_id' => ['nullable', 'integer'],
             'payment_reference' => ['nullable', 'string', 'max:100'],
+            'payment_proof' => ['nullable', 'file', 'mimes:jpg,jpeg,png,webp,pdf', 'max:5120'],
         ];
     }
 
@@ -94,6 +95,7 @@ class SaveBookingRequest extends FormRequest
                     $validator,
                     $paymentAmount + $depositPaid,
                     $this->integer('branch_id'),
+                    true,
                 );
             },
         ];

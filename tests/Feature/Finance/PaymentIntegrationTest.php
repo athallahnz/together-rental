@@ -16,6 +16,9 @@ use App\Models\Role;
 use App\Models\User;
 use Database\Seeders\RentalFoundationSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
+use Inertia\Testing\AssertableInertia;
 use Tests\Feature\InteractsWithFinance;
 use Tests\TestCase;
 
@@ -64,6 +67,7 @@ class PaymentIntegrationTest extends TestCase
 
     public function test_noncash_payment_does_not_require_or_write_cash_session(): void
     {
+        Storage::fake('local');
         [$user, $branch, $customer, $plan, $product] = $this->fixture();
         $method = PaymentMethod::query()->where('code', 'TRANSFER')->firstOrFail();
 
@@ -75,7 +79,7 @@ class PaymentIntegrationTest extends TestCase
             [
                 'payment_amount' => 50000,
                 'payment_method_id' => $method->id,
-                'payment_reference' => 'TRX-BANK-001',
+                'payment_proof' => UploadedFile::fake()->image('transfer.jpg'),
             ],
         ))->assertSessionHasNoErrors();
 
@@ -86,6 +90,95 @@ class PaymentIntegrationTest extends TestCase
             'amount' => 50000,
         ]);
         $this->assertDatabaseCount('cash_transactions', 0);
+        $payment = Payment::query()->firstOrFail();
+        $this->assertNull($payment->external_reference);
+        Storage::disk('local')->assertExists((string) $payment->proof_path);
+        $this->actingAs($user)->get(route('finance.payments.proof', $payment))->assertOk();
+        $this->actingAs($user)->get(route('finance.payments.show', $payment))
+            ->assertInertia(fn (AssertableInertia $page) => $page
+                ->where('hasPaymentProof', true)
+                ->missing('payment.proof_path'));
+
+        $otherBranch = Branch::query()->create([
+            'company_id' => $branch->company_id,
+            'code' => 'MDN',
+            'name' => 'Madiun',
+            'timezone' => 'Asia/Jakarta',
+            'is_active' => true,
+        ]);
+        $otherUser = User::factory()->create([
+            'company_id' => $branch->company_id,
+            'current_branch_id' => $otherBranch->id,
+            'status' => 'active',
+            'email_verified_at' => now(),
+        ]);
+        $otherUser->branches()->attach($otherBranch->id, [
+            'is_default' => true,
+            'is_active' => true,
+        ]);
+        $otherUser->roles()->attach(
+            Role::query()->where('slug', 'branch-manager')->firstOrFail()->id,
+            ['branch_id' => $otherBranch->id, 'assigned_at' => now()],
+        );
+        $this->actingAs($otherUser)->get(route('finance.payments.proof', $payment))
+            ->assertNotFound();
+    }
+
+    public function test_qris_reference_alone_is_rejected_and_one_proof_covers_split_booking_payments(): void
+    {
+        Storage::fake('local');
+        [$user, $branch, $customer, $plan, $product] = $this->fixture();
+        $method = PaymentMethod::query()->where('code', 'QRIS')->firstOrFail();
+        $payload = $this->payload($branch, $customer, $plan, $product, [
+            'payment_amount' => 50000,
+            'deposit_paid' => 200000,
+            'payment_method_id' => $method->id,
+            'payment_reference' => 'OLD-REFERENCE',
+        ]);
+
+        $this->actingAs($user)->post(route('bookings.store'), $payload)
+            ->assertSessionHasErrors('payment_proof');
+        $this->assertDatabaseCount('payments', 0);
+
+        unset($payload['payment_reference']);
+        $payload['payment_proof'] = UploadedFile::fake()->image('qris.png');
+        $this->actingAs($user)->post(route('bookings.store'), $payload)
+            ->assertSessionHasNoErrors();
+
+        $payments = Payment::query()->orderBy('id')->get();
+        $this->assertCount(2, $payments);
+        $this->assertSame($payments[0]->proof_path, $payments[1]->proof_path);
+        $this->assertSame('50000.00', $payments[0]->amount);
+        $this->assertSame('200000.00', $payments[1]->amount);
+        Storage::disk('local')->assertExists((string) $payments[0]->proof_path);
+        $this->actingAs($user)->get(route('finance.payments.proof', $payments[1]))->assertOk();
+        Storage::disk('local')->delete((string) $payments[0]->proof_path);
+        $this->actingAs($user)->get(route('finance.payments.proof', $payments[0]))->assertNotFound();
+    }
+
+    public function test_failed_payment_rolls_back_private_file_and_invalid_upload_is_rejected(): void
+    {
+        Storage::fake('local');
+        [$user, $branch, $customer, $plan, $product] = $this->fixture();
+        $method = PaymentMethod::query()->where('code', 'TRANSFER')->firstOrFail();
+        $payload = $this->payload($branch, $customer, $plan, $product, [
+            'payment_amount' => 500000,
+            'payment_method_id' => $method->id,
+            'payment_proof' => UploadedFile::fake()->create('script.txt', 1, 'text/plain'),
+        ]);
+        $this->actingAs($user)->post(route('bookings.store'), $payload)
+            ->assertSessionHasErrors('payment_proof');
+        $this->assertDatabaseCount('bookings', 0);
+
+        $payload['payment_proof'] = UploadedFile::fake()->create('oversize.pdf', 5121, 'application/pdf');
+        $this->actingAs($user)->post(route('bookings.store'), $payload)
+            ->assertSessionHasErrors('payment_proof');
+
+        $payload['payment_proof'] = UploadedFile::fake()->image('transfer.jpg');
+        $this->actingAs($user)->post(route('bookings.store'), $payload)
+            ->assertSessionHasErrors('payment_amount');
+        $this->assertDatabaseCount('payments', 0);
+        $this->assertSame([], Storage::disk('local')->allFiles('finance/payments'));
     }
 
     public function test_cash_session_from_another_branch_is_rejected(): void

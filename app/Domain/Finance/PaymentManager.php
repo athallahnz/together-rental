@@ -53,7 +53,13 @@ class PaymentManager
             }
 
             $externalReference = $this->nullableString($data['external_reference'] ?? null);
-            if ($method->requires_reference && $externalReference === null) {
+            $proofPath = $this->nullableString($data['proof_path'] ?? null);
+
+            // Preserve existing internal imports; HTTP booking/rental requests
+            // require a file for transfer/QRIS at the request boundary.
+            if ($method->requires_reference
+                && $externalReference === null
+                && (! in_array($method->type, ['bank_transfer', 'qris'], true) || $proofPath === null)) {
                 throw ValidationException::withMessages([
                     'payment_reference' => 'Referensi pembayaran wajib diisi.',
                 ]);
@@ -106,7 +112,7 @@ class PaymentManager
                 'amount' => $amount,
                 'paid_at' => $data['paid_at'] ?? now(),
                 'external_reference' => $externalReference,
-                'proof_path' => $data['proof_path'] ?? null,
+                'proof_path' => $proofPath,
                 'notes' => $this->nullableString($data['notes'] ?? null),
                 'received_by' => $actor->id,
             ]);

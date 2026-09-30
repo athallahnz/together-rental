@@ -614,6 +614,7 @@ class RentalReturnManager
                 'amount' => $payment,
                 'paid_at' => $return->returned_at,
                 'external_reference' => $data['payment_reference'] ?? null,
+                'proof_path' => $data['proof_path'] ?? null,
                 'notes' => "Pembayaran saat pengembalian {$return->return_number}.",
             ], $actor);
         }

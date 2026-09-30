@@ -8,6 +8,7 @@ import {
 } from '@/components/stage4-text';
 import { useAppLocale } from '@/lib/i18n';
 import { CashSessionSelect } from '@/components/finance/cash-session-select';
+import { PaymentEvidenceFields } from '@/components/finance/payment-evidence-fields';
 import type {
     CashSessionOption,
     PaymentMethodOption,
@@ -92,12 +93,10 @@ export default function RentalExtensionCreate({
         payment_method_id: 0,
         cash_session_id: null as number | null,
         payment_reference: '',
+        payment_proof: null as File | null,
         payment_notes: '',
         notes: '',
     });
-    const selectedMethod = paymentMethods.find(
-        (method) => method.id === form.data.payment_method_id,
-    );
     const selectedItems = items.filter((item) =>
         form.data.item_ids.includes(item.id),
     );
@@ -314,11 +313,13 @@ export default function RentalExtensionCreate({
                                     form.data.payment_method_id || '',
                                 )}
                                 onValueChange={(value) => {
-                                    form.setData(
-                                        'payment_method_id',
-                                        Number(value),
-                                    );
-                                    form.setData('cash_session_id', null);
+                                    form.setData((current) => ({
+                                        ...current,
+                                        payment_method_id: Number(value),
+                                        cash_session_id: null,
+                                        payment_proof: null,
+                                        payment_reference: '',
+                                    }));
                                 }}
                             >
                                 <SelectTrigger>
@@ -354,26 +355,20 @@ export default function RentalExtensionCreate({
                                 }
                                 error={form.errors.cash_session_id}
                             />
-                            {selectedMethod?.requires_reference && (
-                                <div className="space-y-2">
-                                    <Label htmlFor="payment_reference">
-                                        <Stage4Text k="stage4.ui.7f2cc58cb31e" />
-                                    </Label>
-                                    <Input
-                                        id="payment_reference"
-                                        value={form.data.payment_reference}
-                                        onChange={(event) =>
-                                            form.setData(
-                                                'payment_reference',
-                                                event.target.value,
-                                            )
-                                        }
-                                    />
-                                    <InputError
-                                        message={form.errors.payment_reference}
-                                    />
-                                </div>
-                            )}
+                            <PaymentEvidenceFields
+                                methods={paymentMethods}
+                                methodId={form.data.payment_method_id}
+                                amount={form.data.payment_amount}
+                                reference={form.data.payment_reference}
+                                onReferenceChange={(value) =>
+                                    form.setData('payment_reference', value)
+                                }
+                                onProofChange={(file) =>
+                                    form.setData('payment_proof', file)
+                                }
+                                referenceError={form.errors.payment_reference}
+                                proofError={form.errors.payment_proof}
+                            />
                         </CardContent>
                     </Card>
                 </section>

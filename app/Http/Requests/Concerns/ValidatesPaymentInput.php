@@ -15,8 +15,13 @@ trait ValidatesPaymentInput
         Validator $validator,
         float $amount,
         int $branchId,
+        bool $requireTransferProof = false,
     ): void {
         if ($amount <= 0) {
+            if ($requireTransferProof && $this->hasFile('payment_proof')) {
+                $validator->errors()->add('payment_proof', 'Bukti hanya dapat diunggah bersama pembayaran.');
+            }
+
             return;
         }
         if (! $this->filled('payment_method_id')) {
@@ -34,8 +39,14 @@ trait ValidatesPaymentInput
 
             return;
         }
-        if ($method->requires_reference && ! $this->filled('payment_reference')) {
+        if ($requireTransferProof && in_array($method->type, ['bank_transfer', 'qris'], true) && ! $this->hasFile('payment_proof')) {
+            $validator->errors()->add('payment_proof', 'Bukti transfer atau QRIS wajib diunggah.');
+        } elseif ($method->requires_reference && (! $requireTransferProof || ! in_array($method->type, ['bank_transfer', 'qris'], true)) && ! $this->filled('payment_reference')) {
             $validator->errors()->add('payment_reference', 'Referensi pembayaran wajib diisi.');
+        }
+
+        if ($requireTransferProof && $this->hasFile('payment_proof') && ! in_array($method->type, ['bank_transfer', 'qris'], true)) {
+            $validator->errors()->add('payment_proof', 'Bukti ini hanya untuk transfer atau QRIS.');
         }
         if ($method->type !== 'cash') {
             return;

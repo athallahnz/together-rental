@@ -5,6 +5,7 @@ namespace App\Http\Controllers;
 use App\Domain\Access\ActivityRecorder;
 use App\Domain\Bookings\BookingManager;
 use App\Domain\Finance\BookingPaymentSettlement;
+use App\Domain\Finance\PaymentEvidenceStorage;
 use App\Http\Requests\BookingAvailabilityRequest;
 use App\Http\Requests\CancelBookingRequest;
 use App\Http\Requests\SaveBookingRequest;
@@ -267,9 +268,10 @@ class BookingController extends Controller
     public function store(
         SaveBookingRequest $request,
         BookingManager $manager,
+        PaymentEvidenceStorage $evidence,
         ActivityRecorder $recorder,
     ): RedirectResponse {
-        $booking = $manager->create($request->validated(), $request->user());
+        $booking = $evidence->run($request->validated(), fn (array $data) => $manager->create($data, $request->user()));
         $recorder->record($request, 'booking.created', $booking, null, $this->audit($booking), $booking->branch_id);
 
         return to_route('bookings.show', $booking)->with('toast', [
@@ -295,8 +297,13 @@ class BookingController extends Controller
             'payments.refunds:id,payment_id,status,refund_number,amount,processed_at',
         ]);
 
+        $paymentProofIds = $request->user()->can('payments.view')
+            ? $booking->payments()->whereNotNull('proof_path')->where('proof_path', '!=', '')->pluck('id')->all()
+            : [];
+
         return Inertia::render('bookings/show', [
             'booking' => $booking,
+            'paymentProofIds' => $paymentProofIds,
             'permissions' => $this->permissions($request->user()),
             'financialSummary' => $settlement->summary($booking),
             'paymentMethods' => PaymentMethod::query()
@@ -357,10 +364,11 @@ class BookingController extends Controller
         StoreBookingPaymentRequest $request,
         Booking $booking,
         BookingManager $manager,
+        PaymentEvidenceStorage $evidence,
         ActivityRecorder $recorder,
     ): RedirectResponse {
         $this->guardAccess($request, $booking);
-        $updated = $manager->receivePayment($booking, $request->validated(), $request->user());
+        $updated = $evidence->run($request->validated(), fn (array $data) => $manager->receivePayment($booking, $data, $request->user()));
         $recorder->record(
             $request,
             'booking.payment_received',

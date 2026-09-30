@@ -10,6 +10,7 @@ import {
 import { useAppLocale } from '@/lib/i18n';
 import { TransactionDocumentActions } from '@/components/documents/transaction-document-actions';
 import { CashSessionSelect } from '@/components/finance/cash-session-select';
+import { PaymentEvidenceFields } from '@/components/finance/payment-evidence-fields';
 import type {
     CashSessionOption,
     PaymentMethodOption,
@@ -18,7 +19,6 @@ import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
-import { Input } from '@/components/ui/input';
 import { RupiahInput } from '@/components/ui/rupiah-input';
 import {
     Select,
@@ -31,6 +31,7 @@ import type { Booking } from '@/types';
 
 type Props = {
     booking: Booking;
+    paymentProofIds: number[];
     permissions: {
         create: boolean;
         update: boolean;
@@ -55,6 +56,7 @@ const money = new Intl.NumberFormat('id-ID', {
 
 export default function BookingShow({
     booking,
+    paymentProofIds,
     permissions,
     financialSummary,
     paymentMethods,
@@ -71,6 +73,7 @@ export default function BookingShow({
         payment_method_id: 0,
         cash_session_id: null as number | null,
         payment_reference: '',
+        payment_proof: null as File | null,
         payment_notes: '',
     });
     const balanceDue = Math.max(
@@ -415,6 +418,18 @@ export default function BookingShow({
                                                 {payment.payment_method?.name ??
                                                     '-'}
                                             </p>
+                                            {paymentProofIds.includes(
+                                                payment.id,
+                                            ) && (
+                                                <a
+                                                    href={`/finance/payments/${payment.id}/proof`}
+                                                    className="text-xs font-medium text-primary underline"
+                                                >
+                                                    {stage4Locale === 'en'
+                                                        ? 'Download payment proof'
+                                                        : 'Unduh bukti pembayaran'}
+                                                </a>
+                                            )}
                                         </div>
                                         <div className="text-right">
                                             <b>
@@ -508,12 +523,14 @@ export default function BookingShow({
                                             )}
                                             onValueChange={(value) => {
                                                 paymentForm.setData(
-                                                    'payment_method_id',
-                                                    Number(value),
-                                                );
-                                                paymentForm.setData(
-                                                    'cash_session_id',
-                                                    null,
+                                                    (current) => ({
+                                                        ...current,
+                                                        payment_method_id:
+                                                            Number(value),
+                                                        cash_session_id: null,
+                                                        payment_proof: null,
+                                                        payment_reference: '',
+                                                    }),
                                                 );
                                             }}
                                         >
@@ -562,20 +579,39 @@ export default function BookingShow({
                                                     .cash_session_id
                                             }
                                         />
-                                        <Input
-                                            placeholder={stage4Translate(
-                                                'stage4.ui.e657fd4a7334',
-                                                stage4Locale,
-                                            )}
-                                            value={
+                                        <PaymentEvidenceFields
+                                            methods={paymentMethods}
+                                            methodId={
+                                                paymentForm.data
+                                                    .payment_method_id
+                                            }
+                                            amount={
+                                                paymentForm.data
+                                                    .payment_amount +
+                                                paymentForm.data.deposit_paid
+                                            }
+                                            reference={
                                                 paymentForm.data
                                                     .payment_reference
                                             }
-                                            onChange={(event) =>
+                                            onReferenceChange={(value) =>
                                                 paymentForm.setData(
                                                     'payment_reference',
-                                                    event.target.value,
+                                                    value,
                                                 )
+                                            }
+                                            onProofChange={(file) =>
+                                                paymentForm.setData(
+                                                    'payment_proof',
+                                                    file,
+                                                )
+                                            }
+                                            referenceError={
+                                                paymentForm.errors
+                                                    .payment_reference
+                                            }
+                                            proofError={
+                                                paymentForm.errors.payment_proof
                                             }
                                         />
                                         <Button
