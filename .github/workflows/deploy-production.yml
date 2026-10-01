@@ -1,0 +1,91 @@
+name: deploy-production
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_sha:
+        description: Full 40-character SHA already deployed and accepted on staging
+        required: true
+        type: string
+      confirmation:
+        description: Type PROMOTE_TO_PRODUCTION to confirm the production cutover
+        required: true
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: together-rental-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    if: ${{ github.ref == 'refs/heads/main' && vars.PRODUCTION_DEPLOY_ENABLED == 'true' }}
+    runs-on: ubuntu-latest
+    environment: production
+    env:
+      RELEASE_SHA: ${{ inputs.release_sha }}
+      CONFIRMATION: ${{ inputs.confirmation }}
+
+    steps:
+      - name: Verify explicit release selection
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          [[ "$RELEASE_SHA" =~ ^[0-9a-f]{40}$ ]]
+          test "$CONFIRMATION" = PROMOTE_TO_PRODUCTION
+          current=$(curl -fsSL --retry 3 \
+            -H "Authorization: Bearer $GH_TOKEN" \
+            -H 'Accept: application/vnd.github+json' \
+            "https://api.github.com/repos/$GITHUB_REPOSITORY/git/ref/heads/main" | jq -r '.object.sha')
+          test "$current" = "$RELEASE_SHA" || {
+            echo "Selected release is no longer main: $RELEASE_SHA versus $current" >&2
+            exit 1
+          }
+
+      - name: Checkout verified main
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ inputs.release_sha }}
+          persist-credentials: false
+
+      - name: Promote accepted staging release
+        env:
+          PROD_SSH_HOST: ${{ secrets.PROD_SSH_HOST }}
+          PROD_SSH_USER: ${{ secrets.PROD_SSH_USER }}
+          PROD_SSH_KEY: ${{ secrets.PROD_SSH_KEY }}
+          PROD_SSH_KNOWN_HOSTS: ${{ secrets.PROD_SSH_KNOWN_HOSTS }}
+          PROD_SSH_PORT: ${{ vars.PROD_SSH_PORT }}
+          PRODUCTION_DB_NAME: ${{ vars.PRODUCTION_DB_NAME }}
+        run: |
+          set -euo pipefail
+          : "${PROD_SSH_HOST:?Missing production SSH host}"
+          : "${PROD_SSH_USER:?Missing production SSH user}"
+          : "${PROD_SSH_KEY:?Missing production SSH key}"
+          : "${PROD_SSH_KNOWN_HOSTS:?Missing verified production host key}"
+          : "${PRODUCTION_DB_NAME:?Missing production database name}"
+          [[ "$PRODUCTION_DB_NAME" =~ ^[A-Za-z0-9_]+$ ]]
+          port="${PROD_SSH_PORT:-22}"
+          [[ "$port" =~ ^[0-9]{1,5}$ ]]
+
+          install -m 700 -d "$HOME/.ssh"
+          printf '%s\n' "$PROD_SSH_KEY" > "$HOME/.ssh/id_ed25519"
+          printf '%s\n' "$PROD_SSH_KNOWN_HOSTS" > "$HOME/.ssh/known_hosts"
+          chmod 600 "$HOME/.ssh/id_ed25519" "$HOME/.ssh/known_hosts"
+          ssh-keygen -y -f "$HOME/.ssh/id_ed25519" > /dev/null
+          unset PROD_SSH_KEY PROD_SSH_KNOWN_HOSTS
+          ssh_args=(-i "$HOME/.ssh/id_ed25519" -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=yes -p "$port")
+          target="$PROD_SSH_USER@$PROD_SSH_HOST"
+
+          ssh "${ssh_args[@]}" "$target" 'mkdir -p "$HOME/tr-production-incoming"'
+          scp -i "$HOME/.ssh/id_ed25519" -o IdentitiesOnly=yes -o BatchMode=yes -o StrictHostKeyChecking=yes \
+            -P "$port" scripts/deploy-production-release.sh scripts/production-cron.sh \
+            "$target:tr-production-incoming/"
+          ssh "${ssh_args[@]}" "$target" \
+            "bash tr-production-incoming/deploy-production-release.sh '$RELEASE_SHA' prepare '$PRODUCTION_DB_NAME'"
+          ssh "${ssh_args[@]}" "$target" \
+            "bash tr-production-incoming/deploy-production-release.sh '$RELEASE_SHA' check '$PRODUCTION_DB_NAME'"
+          ssh "${ssh_args[@]}" "$target" \
+            "bash tr-production-incoming/deploy-production-release.sh '$RELEASE_SHA' apply '$PRODUCTION_DB_NAME'"
