@@ -13,6 +13,7 @@ import {
 import type { FormEvent, ReactNode } from 'react';
 import { useMemo, useState } from 'react';
 import InputError from '@/components/input-error';
+import { CatalogImageField } from '@/components/catalog/catalog-image-field';
 import { PaginationLinks } from '@/components/pagination-links';
 import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
@@ -675,19 +676,20 @@ function ProductContentDialog({
                                 }
                             />
                         </div>
-                        <div className="grid gap-2">
-                            <Label>Foto utama</Label>
-                            <Input
-                                type="file"
-                                accept="image/png,image/jpeg,image/webp"
-                                onChange={(e) =>
-                                    form.setData(
-                                        'primary_image',
-                                        e.target.files?.[0] ?? null,
-                                    )
-                                }
-                            />
-                        </div>
+                        <CatalogImageField
+                            id="product-primary-image"
+                            label="Foto utama"
+                            files={
+                                form.data.primary_image
+                                    ? [form.data.primary_image]
+                                    : []
+                            }
+                            onFilesChange={(files) =>
+                                form.setData('primary_image', files[0] ?? null)
+                            }
+                            filenamePrefix="product-photo"
+                            error={form.errors.primary_image}
+                        />
                     </div>
                     <div className="grid gap-2">
                         <Label>Deskripsi singkat (Indonesia)</Label>
@@ -744,20 +746,23 @@ function ProductContentDialog({
                         />
                         <InputError message={form.errors.description_en} />
                     </div>
-                    <div className="grid gap-2">
-                        <Label>Galeri tambahan (maks. 8)</Label>
-                        <Input
-                            type="file"
-                            multiple
-                            accept="image/png,image/jpeg,image/webp"
-                            onChange={(e) =>
-                                form.setData(
-                                    'gallery_images',
-                                    Array.from(e.target.files ?? []),
-                                )
-                            }
-                        />
-                    </div>
+                    <CatalogImageField
+                        id="product-gallery-images"
+                        label="Galeri tambahan (maks. 8)"
+                        files={form.data.gallery_images}
+                        onFilesChange={(files) =>
+                            form.setData('gallery_images', files)
+                        }
+                        filenamePrefix="product-gallery"
+                        maxFiles={Math.max(
+                            0,
+                            8 -
+                                (form.data.clear_gallery
+                                    ? 0
+                                    : (product?.gallery.length ?? 0)),
+                        )}
+                        error={form.errors.gallery_images}
+                    />
                     <div className="grid gap-4 sm:grid-cols-2">
                         <ToggleField
                             id="remove_primary"
@@ -771,7 +776,13 @@ function ProductContentDialog({
                             id="clear_gallery"
                             label="Kosongkan galeri lama"
                             checked={form.data.clear_gallery}
-                            onChange={(v) => form.setData('clear_gallery', v)}
+                            onChange={(v) => {
+                                form.setData({
+                                    ...form.data,
+                                    clear_gallery: v,
+                                    gallery_images: [],
+                                });
+                            }}
                         />
                     </div>
                     <div className="grid gap-2">
@@ -918,19 +929,20 @@ function PackageContentDialog({
                                 }
                             />
                         </div>
-                        <div className="grid gap-2">
-                            <Label>Foto utama</Label>
-                            <Input
-                                type="file"
-                                accept="image/png,image/jpeg,image/webp"
-                                onChange={(e) =>
-                                    form.setData(
-                                        'primary_image',
-                                        e.target.files?.[0] ?? null,
-                                    )
-                                }
-                            />
-                        </div>
+                        <CatalogImageField
+                            id="package-primary-image"
+                            label="Foto utama"
+                            files={
+                                form.data.primary_image
+                                    ? [form.data.primary_image]
+                                    : []
+                            }
+                            onFilesChange={(files) =>
+                                form.setData('primary_image', files[0] ?? null)
+                            }
+                            filenamePrefix="package-photo"
+                            error={form.errors.primary_image}
+                        />
                     </div>
                     <ToggleField
                         id="package_remove"
@@ -1096,19 +1108,16 @@ function CategoryContentDialog({
                             />
                         </div>
                     </div>
-                    <div className="grid gap-2">
-                        <Label>Foto kategori</Label>
-                        <Input
-                            type="file"
-                            accept="image/png,image/jpeg,image/webp"
-                            onChange={(e) =>
-                                form.setData(
-                                    'image',
-                                    e.target.files?.[0] ?? null,
-                                )
-                            }
-                        />
-                    </div>
+                    <CatalogImageField
+                        id="category-image"
+                        label="Foto kategori"
+                        files={form.data.image ? [form.data.image] : []}
+                        onFilesChange={(files) =>
+                            form.setData('image', files[0] ?? null)
+                        }
+                        filenamePrefix="category-photo"
+                        error={form.errors.image}
+                    />
                     <ToggleField
                         id="category_remove"
                         label="Hapus foto lama"
@@ -1199,19 +1208,17 @@ function BrandContentDialog({
                                 }
                             />
                         </div>
-                        <div className="grid gap-2">
-                            <Label>Logo</Label>
-                            <Input
-                                type="file"
-                                accept="image/png,image/jpeg,image/webp"
-                                onChange={(e) =>
-                                    form.setData(
-                                        'logo',
-                                        e.target.files?.[0] ?? null,
-                                    )
-                                }
-                            />
-                        </div>
+                        <CatalogImageField
+                            id="brand-logo"
+                            label="Logo"
+                            files={form.data.logo ? [form.data.logo] : []}
+                            onFilesChange={(files) =>
+                                form.setData('logo', files[0] ?? null)
+                            }
+                            filenamePrefix="brand-logo"
+                            maxBytes={2 * 1024 * 1024}
+                            error={form.errors.logo}
+                        />
                     </div>
                     <ToggleField
                         id="brand_remove"

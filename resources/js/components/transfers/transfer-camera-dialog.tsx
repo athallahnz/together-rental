@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { Camera, RefreshCcw } from 'lucide-react';
 import { Stage4Text } from '@/components/stage4-text';
 import { Button } from '@/components/ui/button';
+import { useGlobalLocale } from '@/lib/locale-store';
 import {
     Dialog,
     DialogContent,
@@ -23,6 +24,7 @@ export function TransferCameraDialog({
     onCapture,
     filenamePrefix = 'transfer-photo',
 }: Props) {
+    const english = useGlobalLocale() === 'en';
     const videoRef = useRef<HTMLVideoElement | null>(null);
     const streamRef = useRef<MediaStream | null>(null);
     const [error, setError] = useState<string | null>(null);
@@ -50,7 +52,9 @@ export function TransferCameraDialog({
             queueMicrotask(() => {
                 if (!cancelled) {
                     setError(
-                        'Browser ini tidak mendukung akses kamera realtime.',
+                        english
+                            ? 'This browser does not support live camera access.'
+                            : 'Browser ini tidak mendukung akses kamera realtime.',
                     );
                 }
             });
@@ -88,7 +92,9 @@ export function TransferCameraDialog({
             .catch(() => {
                 if (!cancelled) {
                     setError(
-                        'Kamera tidak dapat dibuka. Periksa izin kamera dan pastikan halaman menggunakan HTTPS atau localhost.',
+                        english
+                            ? 'Cannot open the camera. Check camera permission and use HTTPS or localhost.'
+                            : 'Kamera tidak dapat dibuka. Periksa izin kamera dan pastikan halaman menggunakan HTTPS atau localhost.',
                     );
                 }
             });
@@ -97,7 +103,7 @@ export function TransferCameraDialog({
             cancelled = true;
             stopStream();
         };
-    }, [facingMode, open, stopStream]);
+    }, [english, facingMode, open, stopStream]);
 
     const switchCamera = () => {
         stopStream();
@@ -112,7 +118,9 @@ export function TransferCameraDialog({
 
         if (!video || video.videoWidth === 0 || video.videoHeight === 0) {
             setError(
-                'Preview kamera belum siap. Tunggu sebentar lalu coba lagi.',
+                english
+                    ? 'Camera preview is not ready. Wait a moment and try again.'
+                    : 'Preview kamera belum siap. Tunggu sebentar lalu coba lagi.',
             );
 
             return;
@@ -126,7 +134,11 @@ export function TransferCameraDialog({
         const context = canvas.getContext('2d');
 
         if (!context) {
-            setError('Browser tidak dapat memproses gambar kamera.');
+            setError(
+                english
+                    ? 'The browser cannot process the camera image.'
+                    : 'Browser tidak dapat memproses gambar kamera.',
+            );
 
             return;
         }
@@ -136,7 +148,11 @@ export function TransferCameraDialog({
         canvas.toBlob(
             (blob) => {
                 if (!blob) {
-                    setError('Foto gagal diproses.');
+                    setError(
+                        english
+                            ? 'Could not process the photo.'
+                            : 'Foto gagal diproses.',
+                    );
 
                     return;
                 }
