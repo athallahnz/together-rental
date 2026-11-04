@@ -9,6 +9,7 @@ import {
     stage3DisposalMethod,
 } from '@/lib/stage3-display';
 import { Stage3Text, stage3Translate } from '@/components/stage3-text';
+import { LifecycleProductPicker } from '@/components/assets/lifecycle-product-picker';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import {
@@ -633,47 +634,20 @@ export default function AssetLifecycle({
                                     stage3Locale,
                                 )}
                             >
-                                <Select
+                                <LifecycleProductPicker
+                                    products={products}
                                     value={acquisitionForm.data.product_id}
-                                    onValueChange={(value) => {
-                                        acquisitionForm.setData(
-                                            'product_id',
-                                            value,
-                                        );
-                                        const product = products.find(
-                                            (item) =>
-                                                item.id.toString() === value,
-                                        );
-
-                                        if (product) {
-                                            acquisitionForm.setData(
-                                                'replacement_value',
-                                                Number(
-                                                    product.replacement_value,
-                                                ),
-                                            );
-                                        }
+                                    locale={stage3Locale}
+                                    onSelect={(product) => {
+                                        acquisitionForm.setData((data) => ({
+                                            ...data,
+                                            product_id: String(product.id),
+                                            replacement_value: Number(
+                                                product.replacement_value,
+                                            ),
+                                        }));
                                     }}
-                                >
-                                    <SelectTrigger>
-                                        <SelectValue
-                                            placeholder={stage3Translate(
-                                                'stage3.ui.pilih.produk.75abb',
-                                                stage3Locale,
-                                            )}
-                                        />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        {products.map((product) => (
-                                            <SelectItem
-                                                key={product.id}
-                                                value={product.id.toString()}
-                                            >
-                                                {product.sku} — {product.name}
-                                            </SelectItem>
-                                        ))}
-                                    </SelectContent>
-                                </Select>
+                                />
                                 <ErrorText
                                     value={acquisitionForm.errors.product_id}
                                 />

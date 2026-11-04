@@ -24,6 +24,7 @@ class StoreDirectRentalRequest extends SaveBookingRequest
         // tanpa minimal satu jaminan fisik/dokumen. Checkout booking biasa
         // tetap menggunakan kebijakan opsional dari CheckoutBookingRequest.
         $rules['collaterals'] = ['required', 'array', 'min:1', 'max:5'];
+        $rules['quote_token'] = ['nullable', 'string', 'max:12000'];
         $rules['customer360_received_confirmed'] = ['nullable', 'boolean'];
 
         return $rules;

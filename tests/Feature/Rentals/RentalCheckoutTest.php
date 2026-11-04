@@ -25,6 +25,68 @@ class RentalCheckoutTest extends TestCase
     use InteractsWithFinance;
     use RefreshDatabase;
 
+    public function test_direct_quote_is_read_only_and_matches_checkout_with_multipart_numeric_strings(): void
+    {
+        [$user, $branch, $customer, $plan, $product] = $this->fixture();
+        $payload = $this->bookingPayload($branch, $customer, $plan, $product);
+        $response = $this->actingAs($user)->postJson(route('rentals.direct.quote'), $payload)
+            ->assertOk()->assertJsonPath('data.total_amount', 150000);
+        foreach (['bookings', 'rentals', 'payments', 'asset_reservations', 'bulk_reservations', 'rental_collaterals'] as $table) {
+            $this->assertDatabaseCount($table, 0);
+        }
+        $payload['items'][0]['id'] = (string) $product->id;
+        $payload['items'][0]['quantity'] = '1';
+        $this->post(route('rentals.direct.store'), [
+            ...$payload, 'quote_token' => $response->json('token'),
+            'checked_out_at' => now()->format('Y-m-d H:i:s'),
+            'checkout_condition' => 'good',
+            'collaterals' => [['type' => 'KTP', 'number' => 'QUOTE-KTP', 'holder_name' => $customer->name]],
+        ])->assertSessionHasNoErrors()->assertRedirect();
+        $this->assertDatabaseHas('rentals', ['total_amount' => 150000]);
+    }
+
+    public function test_changed_rate_rejects_quote_without_creating_rental_or_payment(): void
+    {
+        [$user, $branch, $customer, $plan, $product, $asset] = $this->fixture();
+        $payload = $this->bookingPayload($branch, $customer, $plan, $product);
+        $response = $this->actingAs($user)->postJson(route('rentals.direct.quote'), $payload)->assertOk();
+        ProductRate::query()->where('product_id', $product->id)->update(['amount' => 175000]);
+        $this->post(route('rentals.direct.store'), [
+            ...$payload, 'quote_token' => $response->json('token'),
+            'checked_out_at' => now()->format('Y-m-d H:i:s'), 'checkout_condition' => 'good',
+            'collaterals' => [['type' => 'KTP', 'number' => 'QUOTE-KTP', 'holder_name' => $customer->name]],
+        ])->assertSessionHasErrors('quote_token');
+        $this->assertDatabaseCount('rentals', 0);
+        $this->assertDatabaseCount('bookings', 0);
+        $this->assertDatabaseCount('payments', 0);
+        $this->assertSame('available', $asset->fresh()->status);
+    }
+
+    public function test_expired_quote_cannot_be_checked_out(): void
+    {
+        [$user, $branch, $customer, $plan, $product] = $this->fixture();
+        $payload = $this->bookingPayload($branch, $customer, $plan, $product);
+        $response = $this->actingAs($user)->postJson(route('rentals.direct.quote'), $payload)->assertOk();
+        $this->travel(21)->minutes();
+        $this->post(route('rentals.direct.store'), [
+            ...$payload, 'quote_token' => $response->json('token'),
+            'checked_out_at' => now()->format('Y-m-d H:i:s'), 'checkout_condition' => 'good',
+            'collaterals' => [['type' => 'KTP', 'number' => 'QUOTE-KTP', 'holder_name' => $customer->name]],
+        ])->assertSessionHasErrors('quote_token');
+        $this->assertDatabaseCount('rentals', 0);
+        $this->assertDatabaseCount('payments', 0);
+    }
+
+    public function test_direct_quote_applies_membership_discount(): void
+    {
+        [$user, $branch, $customer, $plan, $product] = $this->fixture();
+        $customer->update(['is_member' => true, 'member_number' => 'QUOTE-MEMBER']);
+        $this->actingAs($user)->postJson(route('rentals.direct.quote'), $this->bookingPayload($branch, $customer, $plan, $product))
+            ->assertOk()->assertJsonPath('data.subtotal', 150000)
+            ->assertJsonPath('data.discount_amount', 15000)->assertJsonPath('data.total_amount', 135000);
+        $this->assertDatabaseCount('bookings', 0);
+    }
+
     public function test_confirmed_booking_is_checked_out_atomically(): void
     {
         [$user, $branch, $customer, $plan, $product, $asset] = $this->fixture();

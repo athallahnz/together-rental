@@ -37,6 +37,53 @@ class BookingManager
         private readonly RentalOvertimeCalculator $overtime,
     ) {}
 
+    /**
+     * Read-only quotation: no booking, reservation, payment or numbering is created.
+     *
+     * @param  array<string, mixed>  $data
+     * @return array<string, mixed>
+     */
+    public function quote(array $data, User $actor): array
+    {
+        return DB::transaction(function () use ($data, $actor): array {
+            $branch = Branch::query()->where('company_id', $actor->company_id)->whereKey($data['branch_id'])->firstOrFail();
+            abort_unless($actor->canAccessBranch($branch), 403);
+            $customer = Customer::query()->where('company_id', $actor->company_id)->where('status', 'active')->whereKey($data['customer_id'])->firstOrFail();
+            $promotion = $this->pricing->resolvePromotion($data['promotion_code'] ?? null, $branch, $customer);
+            $units = (int) $data['duration_units'];
+            [$plan, $startsAt, $endsAt] = $this->resolvePeriod($data, $actor, $branch, $units + $this->pricing->bonusDurationUnits($promotion));
+            $booking = new Booking(['branch_id' => $branch->id]);
+            $booking->setRelation('branch', $branch);
+            $subtotal = 0.0;
+            $deposit = 0.0;
+            $items = [];
+            foreach ($data['items'] as $payload) {
+                $quantity = (int) $payload['quantity'];
+                [$description, $rate, $depositRate, $requirements] = $payload['type'] === 'product'
+                    ? $this->productPricing($booking, $plan, (int) $payload['id'], $quantity)
+                    : $this->packagePricing($booking, $plan, (int) $payload['id'], $quantity);
+                if ($requirements->isEmpty()) {
+                    throw ValidationException::withMessages(['items' => 'Paket harus memiliki komponen wajib.']);
+                }
+                $total = $rate * $units * $quantity;
+                $items[] = ['description' => $description, 'quantity' => $quantity, 'unit_rate' => $rate, 'total_amount' => $total];
+                $subtotal += $total;
+                $deposit += $depositRate * $quantity;
+            }
+            $pricing = $this->pricing->price($subtotal, $units, $customer, $plan, $promotion);
+
+            return [
+                'branch_id' => $branch->id, 'customer_id' => $customer->id,
+                'rate_plan_id' => $plan->id, 'starts_at' => $startsAt->toIso8601String(),
+                'ends_at' => $endsAt->toIso8601String(), 'duration_units' => $units,
+                'requested_items' => array_map(static fn (array $item): array => ['type' => (string) $item['type'], 'id' => (int) $item['id'], 'quantity' => (int) $item['quantity']], $data['items']), 'promotion_code' => $data['promotion_code'] ?? null,
+                'items' => $items, 'subtotal' => $pricing['subtotal'],
+                'discount_amount' => $pricing['discount_amount'], 'tax_amount' => 0,
+                'total_amount' => $pricing['total_amount'], 'deposit_required' => $deposit,
+            ];
+        });
+    }
+
     /** @param array<string, mixed> $data */
     public function create(array $data, User $actor): Booking
     {

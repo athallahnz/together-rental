@@ -22,6 +22,7 @@ use App\Models\TransactionDocument;
 use App\Models\User;
 use Database\Seeders\RentalFoundationSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Validation\ValidationException;
 use Inertia\Testing\AssertableInertia;
 use Tests\TestCase;
 
@@ -215,6 +216,59 @@ class TransactionDocumentCenterTest extends TestCase
         $this->assertIsString($pdf);
         $this->assertStringContainsString('HAK DAN KEWAJIBAN PENYEWA', $pdf);
         $this->assertStringContainsString('KETENTUAN SEWA', $pdf);
+        $this->assertStringContainsString('/MediaBox [0 0 419.53 595.28]', $pdf);
+        $this->assertStringContainsString('/Count 1', $pdf);
+        $this->assertStringContainsString('INVOICE & PERJANJIAN SEWA', $pdf);
+    }
+
+    public function test_a5_layout_embeds_fonts_and_keeps_all_three_item_details(): void
+    {
+        [$user, $branch, $customer, $product] = $this->fixture();
+        $rental = $this->rental($user, $branch, $customer, $product, true);
+        $this->actingAs($user)->post(route('documents.issue'), [
+            'document_type' => 'agreement', 'source_type' => 'rental', 'source_reference' => $rental->rental_number,
+        ])->assertSessionHasNoErrors();
+        $document = TransactionDocument::query()->firstOrFail();
+        $snapshot = $this->documentSnapshot($document);
+        $item = $snapshot['items'][0];
+        $snapshot['items'] = [];
+        foreach (range(1, 3) as $index) {
+            $snapshot['items'][] = [...$item, 'description' => 'Layout Test '.$index];
+        }
+        $document->snapshot = $snapshot;
+        $hash = $document->content_hash;
+        foreach (['id', 'en'] as $locale) {
+            app()->setLocale($locale);
+            $pdf = app(TransactionDocumentPdfRenderer::class)->render($document);
+            $this->assertStringContainsString('/MediaBox [0 0 419.53 595.28]', $pdf);
+            $this->assertStringContainsString('/Count 1', $pdf);
+            $this->assertSame(2, substr_count($pdf, '/FontFile2 '));
+            $this->assertSame(2, substr_count($pdf, '/Subtype /TrueType'));
+            foreach (range(1, 3) as $index) {
+                $this->assertStringContainsString('Layout Test '.$index, $pdf);
+            }
+        }
+        $this->assertSame($hash, $document->fresh()?->content_hash);
+    }
+
+    public function test_oversized_a5_agreement_is_rejected_without_truncating_snapshot(): void
+    {
+        [$user, $branch, $customer, $product] = $this->fixture();
+        $rental = $this->rental($user, $branch, $customer, $product, true);
+        $this->actingAs($user)->post(route('documents.issue'), [
+            'document_type' => 'agreement', 'source_type' => 'rental', 'source_reference' => $rental->rental_number,
+        ])->assertSessionHasNoErrors();
+        $document = TransactionDocument::query()->firstOrFail();
+        $snapshot = $this->documentSnapshot($document);
+        $snapshot['items'] = array_fill(0, 100, $snapshot['items'][0]);
+        $document->snapshot = $snapshot;
+        try {
+            app(TransactionDocumentPdfRenderer::class)->render($document);
+            $this->fail('Oversized snapshot must not be silently clipped.');
+        } catch (ValidationException $exception) {
+            $this->assertArrayHasKey('document', $exception->errors());
+            $this->assertCount(100, $document->snapshot['items']);
+        }
     }
 
     public function test_pdf_is_valid_and_branch_isolation_blocks_foreign_document(): void
@@ -312,7 +366,9 @@ class TransactionDocumentCenterTest extends TestCase
             $this->assertStringContainsString('Late returns are charged', $enAgreement);
             $this->assertStringNotContainsString('Penyewa berhak bertanya', $enAgreement);
             $this->assertStringContainsString('Held', $enAgreement);
-            $this->assertStringContainsString('Page 2', $enAgreement);
+            $this->assertStringContainsString('Page 1 / 1 - A5', $enAgreement);
+            $this->assertStringContainsString('/MediaBox [0 0 419.53 595.28]', $enAgreement);
+            $this->assertStringContainsString('/Count 1', $enAgreement);
             $this->assertStringContainsString('Rp 150.000', $idReceipt);
             $this->assertStringContainsString('Rp 150.000', $enReceipt);
             $this->assertSame($receiptHash, $receipt->fresh()?->content_hash);

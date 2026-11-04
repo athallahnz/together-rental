@@ -46,10 +46,27 @@ class RentalManager
     public function createDirect(array $data, User $actor): Rental
     {
         return DB::transaction(function () use ($data, $actor): Rental {
+            if (isset($data['quote_token']) && is_string($data['quote_token'])) {
+                $quote = $this->bookings->quote($data, $actor);
+                app(DirectRentalQuote::class)->assertCurrent($data['quote_token'], $quote, $actor);
+            }
             $booking = $this->bookings->create([
                 ...$data,
                 'source' => 'direct',
             ], $actor);
+            if (isset($quote) && (
+                $booking->items->map(static fn (BookingItem $item): array => [
+                    'description' => $item->description, 'quantity' => (int) $item->quantity,
+                    'unit_rate' => (float) $item->unit_rate, 'total_amount' => (float) $item->total_amount,
+                ])->values()->all() != $quote['items']
+                || abs((float) $booking->subtotal - (float) $quote['subtotal']) > 0.009
+                || abs((float) $booking->discount_amount - (float) $quote['discount_amount']) > 0.009
+                || abs((float) $booking->total_amount - (float) $quote['total_amount']) > 0.009
+                || abs((float) $booking->deposit_required - (float) $quote['deposit_required']) > 0.009
+                || CarbonImmutable::parse($booking->ends_at)->toIso8601String() !== $quote['ends_at']
+            )) {
+                throw ValidationException::withMessages(['quote_token' => __('direct_rental.quote_changed')]);
+            }
             $this->bookings->confirm($booking, $actor);
 
             return $this->checkoutLocked($booking->id, $data, $actor);

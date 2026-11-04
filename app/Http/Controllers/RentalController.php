@@ -3,8 +3,10 @@
 namespace App\Http\Controllers;
 
 use App\Domain\Access\ActivityRecorder;
+use App\Domain\Bookings\BookingManager;
 use App\Domain\Finance\BookingPaymentSettlement;
 use App\Domain\Finance\PaymentEvidenceStorage;
+use App\Domain\Rentals\DirectRentalQuote;
 use App\Domain\Rentals\RentalCollateralDocumentStorage;
 use App\Domain\Rentals\RentalFinancialCorrectionManager;
 use App\Domain\Rentals\RentalManager;
@@ -12,6 +14,7 @@ use App\Domain\Rentals\RentalOperationalCorrectionManager;
 use App\Domain\Rentals\RentalOvertimeCalculator;
 use App\Domain\Rentals\RentalReturnManager;
 use App\Http\Requests\CheckoutBookingRequest;
+use App\Http\Requests\QuoteDirectRentalRequest;
 use App\Http\Requests\ReopenRentalReturnRequest;
 use App\Http\Requests\StoreDirectRentalRequest;
 use App\Http\Requests\StoreRentalFinancialAdjustmentRequest;
@@ -216,6 +219,13 @@ class RentalController extends Controller
         return response()->json([
             'data' => $this->customerIdentityOptions($customer->identities),
         ]);
+    }
+
+    public function quoteDirect(QuoteDirectRentalRequest $request, BookingManager $bookings, DirectRentalQuote $tokens): JsonResponse
+    {
+        $quote = $bookings->quote($request->validated(), $request->user());
+
+        return response()->json(['data' => $quote, 'token' => $tokens->issue($quote, $request->user())]);
     }
 
     public function storeDirect(

@@ -343,6 +343,8 @@ Route::middleware(['auth', 'active', 'verified'])->group(function () {
         Route::get('/direct/customer-identities', [RentalController::class, 'directCustomerIdentities'])
             ->middleware(['can:rentals.create', 'throttle:60,1'])
             ->name('direct.customer-identities');
+        Route::post('/direct/quote', [RentalController::class, 'quoteDirect'])
+            ->middleware(['can:rentals.create', 'throttle:60,1'])->name('direct.quote');
         Route::post('/direct', [RentalController::class, 'storeDirect'])
             ->middleware('can:rentals.create')->name('direct.store');
         Route::get('/checkout/{booking}', [RentalController::class, 'createCheckout'])

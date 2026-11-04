@@ -52,7 +52,26 @@ type Props = {
     paymentMethods?: PaymentMethodOption[];
     cashSessions?: CashSessionOption[];
 };
+type DirectQuoteItem = {
+    description: string;
+    quantity: number;
+    unit_rate: number;
+    total_amount: number;
+};
+type DirectQuote = {
+    items: DirectQuoteItem[];
+    subtotal: number;
+    discount_amount: number;
+    tax_amount: number;
+    total_amount: number;
+    deposit_required: number;
+    starts_at: string;
+    ends_at: string;
+};
+type QuoteResponse = { data: DirectQuote; token: string };
+type QuoteFailure = { message?: string; errors?: Record<string, string[]> };
 type FormData = {
+    quote_token: string;
     branch_id: number;
     customer_id: number;
     rate_plan_id: number;
@@ -145,6 +164,18 @@ export default function BookingForm({
     const { locale: stage4Locale } = useAppLocale();
 
     const direct = mode === 'direct';
+    const [directStep, setDirectStep] = useState<0 | 1 | 2>(0);
+    const [quote, setQuote] = useState<DirectQuote | null>(null);
+    const [quotedKey, setQuotedKey] = useState('');
+    const [quoting, setQuoting] = useState(false);
+    const [quoteError, setQuoteError] = useState('');
+    const en = stage4Locale === 'en';
+    const money = (value: number) =>
+        new Intl.NumberFormat(en ? 'en-ID' : 'id-ID', {
+            style: 'currency',
+            currency: 'IDR',
+            maximumFractionDigits: 0,
+        }).format(value);
     const [identityOptions, setIdentityOptions] = useState<
         CollateralIdentityOption[]
     >([]);
@@ -187,6 +218,7 @@ export default function BookingForm({
         ),
         checkout_condition: 'good',
         checkout_notes: '',
+        quote_token: '',
         payment_amount: 0,
         deposit_paid: 0,
         payment_method_id: 0,
@@ -340,10 +372,110 @@ export default function BookingForm({
         );
     };
 
+    const pricingInput = {
+        branch_id: form.data.branch_id,
+        customer_id: form.data.customer_id,
+        rate_plan_id: form.data.rate_plan_id,
+        starts_at: form.data.starts_at,
+        duration_units: form.data.duration_units,
+        promotion_code: form.data.promotion_code,
+        items: form.data.items,
+        source: form.data.source,
+    };
+    const pricingKey = JSON.stringify(pricingInput);
+    const currentQuote =
+        quote !== null &&
+        quotedKey === pricingKey &&
+        form.data.quote_token !== '';
+    const loadQuote = async () => {
+        if (quoting) {
+            return;
+        }
+
+        setQuoting(true);
+        setQuoteError('');
+        form.clearErrors();
+
+        try {
+            const csrf =
+                document.querySelector<HTMLMetaElement>(
+                    'meta[name="csrf-token"]',
+                )?.content ?? '';
+            const xsrf = document.cookie
+                .split('; ')
+                .find((part) => part.startsWith('XSRF-TOKEN='))
+                ?.slice('XSRF-TOKEN='.length);
+            const response = await fetch('/rentals/direct/quote', {
+                method: 'POST',
+                credentials: 'same-origin',
+                headers: {
+                    Accept: 'application/json',
+                    'Content-Type': 'application/json',
+                    'X-Requested-With': 'XMLHttpRequest',
+                    ...(xsrf
+                        ? { 'X-XSRF-TOKEN': decodeURIComponent(xsrf) }
+                        : { 'X-CSRF-TOKEN': csrf }),
+                },
+                body: pricingKey,
+            });
+
+            if (!response.ok) {
+                const failure = (await response.json()) as QuoteFailure;
+
+                for (const [key, messages] of Object.entries(
+                    failure.errors ?? {},
+                )) {
+                    form.setError(key as keyof FormData, messages[0]);
+                }
+
+                throw new Error(
+                    failure.message ??
+                        (en
+                            ? 'Unable to calculate pricing.'
+                            : 'Tidak dapat menghitung harga.'),
+                );
+            }
+
+            const result = (await response.json()) as QuoteResponse;
+            setQuote(result.data);
+            setQuotedKey(pricingKey);
+            form.setData('quote_token', result.token);
+            setDirectStep(1);
+        } catch (error) {
+            setQuoteError(
+                error instanceof Error
+                    ? error.message
+                    : en
+                      ? 'Unable to calculate pricing.'
+                      : 'Tidak dapat menghitung harga.',
+            );
+        } finally {
+            setQuoting(false);
+        }
+    };
+
     const submit = (event: React.FormEvent) => {
         event.preventDefault();
 
         if (direct) {
+            if (directStep === 0) {
+                void loadQuote();
+
+                return;
+            }
+
+            if (!currentQuote) {
+                setDirectStep(0);
+
+                return;
+            }
+
+            if (directStep === 1) {
+                setDirectStep(2);
+
+                return;
+            }
+
             if (identityLookup === 'loading') {
                 form.setError(
                     'collaterals',
@@ -377,7 +509,16 @@ export default function BookingForm({
             }
 
             form.clearErrors('collaterals');
-            form.post('/rentals/direct', { forceFormData: true });
+            form.post('/rentals/direct', {
+                forceFormData: true,
+                onError: (errors) => {
+                    if (errors.quote_token) {
+                        setDirectStep(0);
+                        setQuote(null);
+                        form.setData('quote_token', '');
+                    }
+                },
+            });
         } else if (booking) {
             form.put(`/bookings/${booking.id}`);
         } else {
@@ -442,630 +583,817 @@ export default function BookingForm({
                     <Button
                         type="submit"
                         disabled={
+                            quoting ||
                             form.processing ||
                             (direct && identityLookup === 'loading')
                         }
                     >
                         <Save />
                         {direct
-                            ? stage4Translate(
-                                  'stage4.ui.b9339faf8954',
-                                  stage4Locale,
-                              )
+                            ? quoting
+                                ? en
+                                    ? 'Calculating…'
+                                    : 'Menghitung…'
+                                : directStep === 0
+                                  ? en
+                                      ? 'Review total'
+                                      : 'Periksa total harga'
+                                  : directStep === 1
+                                    ? en
+                                        ? 'Confirm & continue to payment'
+                                        : 'Konfirmasi & lanjut pembayaran'
+                                    : en
+                                      ? 'Checkout rental'
+                                      : 'Checkout rental'
                             : stage4Translate(
                                   'stage4.ui.bdc335b94616',
                                   stage4Locale,
                               )}
                     </Button>
                 </header>
-                <Card>
-                    <CardHeader>
-                        <CardTitle>
-                            {direct
-                                ? stage4Translate(
-                                      'stage4.ui.820f5c238143',
-                                      stage4Locale,
-                                  )
-                                : stage4Translate(
-                                      'stage4.ui.5bd6fca1a763',
-                                      stage4Locale,
-                                  )}
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                        <Field
-                            label={stage4Translate(
-                                'stage4.ui.1387475bd674',
-                                stage4Locale,
-                            )}
-                            error={form.errors.branch_id}
-                        >
-                            <Select
-                                value={String(form.data.branch_id || '')}
-                                disabled={Boolean(booking)}
-                                onValueChange={(value) => {
-                                    form.setData('branch_id', Number(value));
-
-                                    if (direct) {
-                                        void loadCustomer360(
-                                            form.data.customer_id,
-                                            Number(value),
-                                        );
-                                    }
-
-                                    resetItemSelections();
-                                }}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue
-                                        placeholder={stage4Translate(
-                                            'stage4.ui.f53404d2ddcf',
-                                            stage4Locale,
-                                        )}
-                                    />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {branches.map((item) => (
-                                        <SelectItem
-                                            key={item.id}
-                                            value={String(item.id)}
-                                        >
-                                            {item.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </Field>
-                        <Field
-                            label={stage4Translate(
-                                'stage4.ui.af0ab4433946',
-                                stage4Locale,
-                            )}
-                            error={form.errors.customer_id}
-                        >
-                            <SearchPickerDialog
-                                type="customer"
-                                value={selectedCustomer}
-                                onSelect={(option) => {
-                                    if (
-                                        direct &&
-                                        option.id !== form.data.customer_id
-                                    ) {
-                                        void loadCustomer360(
-                                            option.id,
-                                            form.data.branch_id,
-                                        );
-                                    }
-
-                                    setSelectedCustomer(option);
-                                    form.setData('customer_id', option.id);
-                                }}
-                            />
-                        </Field>
-                        <Field
-                            label={stage4Translate(
-                                'stage4.ui.3d00cf0d363b',
-                                stage4Locale,
-                            )}
-                            error={form.errors.promotion_code}
-                        >
-                            <Input
-                                value={form.data.promotion_code}
-                                onChange={(event) =>
-                                    form.setData(
-                                        'promotion_code',
-                                        event.target.value.toUpperCase(),
-                                    )
-                                }
-                                placeholder={stage4Translate(
-                                    'stage4.ui.092902ea5dff',
-                                    stage4Locale,
-                                )}
-                            />
-                            <p className="text-xs text-muted-foreground">
-                                {selectedCustomer?.is_member
-                                    ? stage4Translate(
-                                          'stage4.ui.575164e1b40d',
-                                          stage4Locale,
-                                      )
-                                    : stage4Translate(
-                                          'stage4.ui.d61a19094b66',
-                                          stage4Locale,
-                                      )}
-                            </p>
-                        </Field>
-                        <Field
-                            label={stage4Translate(
-                                'stage4.ui.31b1ce48655c',
-                                stage4Locale,
-                            )}
-                            error={form.errors.rate_plan_id}
-                        >
-                            <Select
-                                value={String(form.data.rate_plan_id || '')}
-                                onValueChange={(value) => {
-                                    form.setData('rate_plan_id', Number(value));
-                                    form.setData('duration_units', 1);
-                                    resetItemSelections();
-                                }}
-                            >
-                                <SelectTrigger>
-                                    <SelectValue
-                                        placeholder={stage4Translate(
-                                            'stage4.ui.cc50ae030139',
-                                            stage4Locale,
-                                        )}
-                                    />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {ratePlans.map((item) => (
-                                        <SelectItem
-                                            key={item.id}
-                                            value={String(item.id)}
-                                        >
-                                            {item.name} ({item.duration_value}{' '}
-                                            {durationLabel(
-                                                {
-                                                    ...item,
-                                                    duration_value: 1,
-                                                },
-                                                stage4Locale,
-                                            )}
-                                            )
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </Field>
-                        <Field
-                            label={stage4Translate(
-                                'stage4.ui.fceb2d8f5369',
-                                stage4Locale,
-                            )}
-                            error={form.errors.starts_at}
-                        >
-                            <Input
-                                type="datetime-local"
-                                value={form.data.starts_at}
-                                onChange={(event) =>
-                                    form.setData(
-                                        'starts_at',
-                                        event.target.value,
-                                    )
-                                }
-                            />
-                        </Field>
-                        <Field
-                            label={`${stage4Translate('stage4.ui.0a31c6125219', stage4Locale)} (${durationLabel(selectedPlan, stage4Locale)})`}
-                            error={form.errors.duration_units}
-                        >
-                            <Input
-                                type="number"
-                                min={1}
-                                max={365}
-                                value={form.data.duration_units}
-                                onChange={(event) =>
-                                    form.setData(
-                                        'duration_units',
-                                        Math.max(1, Number(event.target.value)),
-                                    )
-                                }
-                            />
-                        </Field>
-                        <Field
-                            label={stage4Translate(
-                                'stage4.ui.2a6388bc0137',
-                                stage4Locale,
-                            )}
-                        >
-                            <Input
-                                readOnly
-                                value={calculatedEndsAt}
-                                placeholder={stage4Translate(
-                                    'stage4.ui.ee29932c3e6c',
-                                    stage4Locale,
-                                )}
-                                className="bg-muted"
-                            />
-                            <p className="text-xs text-muted-foreground">
-                                <Stage4Text k="stage4.ui.fa1324477477" />
-                            </p>
-                        </Field>
-                        <Field
-                            label={stage4Translate(
-                                'stage4.ui.ff648afc53ef',
-                                stage4Locale,
-                            )}
-                            error={form.errors.source}
-                        >
-                            <Select
-                                value={form.data.source}
-                                onValueChange={(value) =>
-                                    form.setData('source', value)
-                                }
-                            >
-                                <SelectTrigger>
-                                    <SelectValue />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {[
-                                        'counter',
-                                        'phone',
-                                        'whatsapp',
-                                        'website',
-                                        'other',
-                                    ].map((item) => (
-                                        <SelectItem key={item} value={item}>
-                                            {stage4TranslateDynamic(
-                                                item,
-                                                stage4Locale,
-                                            )}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </Field>
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader className="flex-row items-center justify-between">
-                        <CardTitle>
-                            <Stage4Text k="stage4.ui.db7bf83172f0" />
-                        </CardTitle>
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() =>
-                                form.setData('items', [
-                                    ...form.data.items,
-                                    { type: 'product', id: 0, quantity: 1 },
-                                ])
+                {direct && (
+                    <>
+                        <ol
+                            className="flex flex-wrap gap-3 text-sm"
+                            aria-label={
+                                en ? 'Rental steps' : 'Tahapan penyewaan'
                             }
                         >
-                            <Plus />
-                            <Stage4Text k="stage4.ui.9a69cafa8d15" />
-                        </Button>
-                    </CardHeader>
-                    <CardContent className="space-y-3">
-                        {form.data.items.map((line, index) => {
-                            return (
-                                <div
-                                    key={index}
-                                    className="grid gap-3 rounded-lg border p-3 md:grid-cols-[160px_1fr_120px_auto]"
+                            {[
+                                en
+                                    ? 'Customer & equipment'
+                                    : 'Pelanggan & alat',
+                                en ? 'Confirm total' : 'Konfirmasi total',
+                                en
+                                    ? 'Payment & checkout'
+                                    : 'Pembayaran & checkout',
+                            ].map((label, index) => (
+                                <li
+                                    key={label}
+                                    aria-current={
+                                        directStep === index
+                                            ? 'step'
+                                            : undefined
+                                    }
+                                    className={
+                                        directStep === index
+                                            ? 'font-semibold text-primary'
+                                            : 'text-muted-foreground'
+                                    }
                                 >
-                                    <Select
-                                        value={line.type}
-                                        onValueChange={(
-                                            value: 'product' | 'package',
-                                        ) =>
-                                            updateLine(index, {
-                                                type: value,
-                                                id: 0,
-                                            })
-                                        }
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="product">
-                                                <Stage4Text k="stage4.ui.869eb84eb3dc" />
-                                            </SelectItem>
-                                            <SelectItem value="package">
-                                                <Stage4Text k="stage4.ui.3c97ce060ce2" />
-                                            </SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                    <SearchPickerDialog
-                                        type={line.type}
-                                        value={selectedByLine[index]}
-                                        branchId={form.data.branch_id}
-                                        ratePlanId={form.data.rate_plan_id}
-                                        disabled={
-                                            !form.data.branch_id ||
-                                            !form.data.rate_plan_id
-                                        }
-                                        onSelect={(option) =>
-                                            selectItem(index, option)
-                                        }
-                                    />
-                                    <Input
-                                        type="number"
-                                        min={1}
-                                        value={line.quantity}
-                                        onChange={(event) =>
-                                            updateLine(index, {
-                                                quantity: Number(
-                                                    event.target.value,
-                                                ),
-                                            })
-                                        }
-                                    />
-                                    <Button
-                                        type="button"
-                                        size="icon"
-                                        variant="ghost"
-                                        disabled={form.data.items.length === 1}
-                                        onClick={() =>
-                                            form.setData(
-                                                'items',
-                                                form.data.items.filter(
-                                                    (_, position) =>
-                                                        position !== index,
-                                                ),
-                                            )
-                                        }
-                                    >
-                                        <Trash2 />
-                                    </Button>
-                                    {form.errors[
-                                        `items.${index}.quantity` as keyof typeof form.errors
-                                    ] && (
-                                        <p className="text-sm text-destructive md:col-span-4">
-                                            {
-                                                form.errors[
-                                                    `items.${index}.quantity` as keyof typeof form.errors
-                                                ]
-                                            }
-                                        </p>
-                                    )}
-                                    {form.errors[
-                                        `items.${index}.id` as keyof typeof form.errors
-                                    ] && (
-                                        <p className="text-sm text-destructive md:col-span-4">
-                                            {
-                                                form.errors[
-                                                    `items.${index}.id` as keyof typeof form.errors
-                                                ]
-                                            }
-                                        </p>
-                                    )}
-                                </div>
-                            );
-                        })}
-                        {typeof form.errors.items === 'string' && (
-                            <p className="text-sm text-destructive">
-                                {form.errors.items}
-                            </p>
+                                    {index + 1}. {label}
+                                </li>
+                            ))}
+                        </ol>
+                        {directStep > 0 && (
+                            <Button
+                                type="button"
+                                variant="outline"
+                                className="self-start"
+                                disabled={form.processing}
+                                onClick={() => {
+                                    setDirectStep(0);
+                                    setQuote(null);
+                                    form.setData('quote_token', '');
+                                }}
+                            >
+                                {' '}
+                                {en
+                                    ? 'Edit customer / equipment'
+                                    : 'Ubah pelanggan / alat'}{' '}
+                            </Button>
                         )}
-                    </CardContent>
-                </Card>
-                <Card>
-                    <CardHeader>
-                        <CardTitle>
-                            {direct
-                                ? stage4Translate(
-                                      'stage4.ui.bf47c3bc9bf5',
-                                      stage4Locale,
-                                  )
-                                : stage4Translate(
-                                      'stage4.ui.c474ac0f2d71',
-                                      stage4Locale,
-                                  )}
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
-                        {direct && (
-                            <>
-                                <Field
-                                    label={stage4Translate(
-                                        'stage4.ui.c7d851c67548',
-                                        stage4Locale,
-                                    )}
-                                    error={form.errors.checked_out_at}
-                                >
-                                    <Input
-                                        type="datetime-local"
-                                        value={form.data.checked_out_at}
-                                        onChange={(event) =>
-                                            form.setData(
-                                                'checked_out_at',
-                                                event.target.value,
-                                            )
-                                        }
-                                    />
-                                </Field>
-                                <Field
-                                    label={stage4Translate(
-                                        'stage4.ui.93621ca8fc63',
-                                        stage4Locale,
-                                    )}
-                                    error={form.errors.checkout_condition}
-                                >
-                                    <Select
-                                        value={form.data.checkout_condition}
-                                        onValueChange={(
-                                            value:
-                                                'excellent' | 'good' | 'fair',
-                                        ) =>
-                                            form.setData(
-                                                'checkout_condition',
-                                                value,
-                                            )
-                                        }
-                                    >
-                                        <SelectTrigger>
-                                            <SelectValue />
-                                        </SelectTrigger>
-                                        <SelectContent>
-                                            <SelectItem value="excellent">
-                                                <Stage4Text k="stage4.ui.e90dcd5d96b8" />
-                                            </SelectItem>
-                                            <SelectItem value="good">
-                                                <Stage4Text k="stage4.ui.04f5b5ce0518" />
-                                            </SelectItem>
-                                            <SelectItem value="fair">
-                                                <Stage4Text k="stage4.ui.e776a0660b3d" />
-                                            </SelectItem>
-                                        </SelectContent>
-                                    </Select>
-                                </Field>
-                            </>
-                        )}
-                        <Field
-                            label={stage4Translate(
-                                'stage4.ui.53eb1a623ade',
-                                stage4Locale,
-                            )}
-                            error={form.errors.payment_method_id}
-                        >
-                            <Select
-                                value={String(
-                                    form.data.payment_method_id || '',
-                                )}
-                                onValueChange={(value) => {
-                                    form.setData((current) => ({
-                                        ...current,
-                                        payment_method_id: Number(value),
-                                        cash_session_id: null,
-                                        payment_proof: null,
-                                        payment_reference: '',
-                                    }));
-                                }}
+                        {Object.keys(form.errors).length > 0 && (
+                            <div
+                                role="alert"
+                                className="rounded-md border border-destructive p-4 text-sm text-destructive"
                             >
-                                <SelectTrigger>
-                                    <SelectValue
-                                        placeholder={stage4Translate(
-                                            'stage4.ui.22cd7e4b4a0a',
-                                            stage4Locale,
-                                        )}
-                                    />
-                                </SelectTrigger>
-                                <SelectContent>
-                                    {paymentMethods.map((method) => (
-                                        <SelectItem
-                                            key={method.id}
-                                            value={String(method.id)}
-                                        >
-                                            {method.name}
-                                        </SelectItem>
-                                    ))}
-                                </SelectContent>
-                            </Select>
-                        </Field>
-                        <CashSessionSelect
-                            paymentMethods={paymentMethods}
-                            cashSessions={cashSessions}
-                            branchId={form.data.branch_id}
-                            paymentMethodId={form.data.payment_method_id}
-                            value={form.data.cash_session_id}
-                            onValueChange={(value) =>
-                                form.setData('cash_session_id', value)
-                            }
-                            error={form.errors.cash_session_id}
-                        />
-                        <Field
-                            label={stage4Translate(
-                                'stage4.ui.7afede4d7a6c',
-                                stage4Locale,
-                            )}
-                            error={form.errors.payment_amount}
-                        >
-                            <RupiahInput
-                                value={form.data.payment_amount}
-                                onValueChange={(value) =>
-                                    form.setData('payment_amount', value)
-                                }
-                            />
-                        </Field>
-                        <Field
-                            label={stage4Translate(
-                                'stage4.ui.6a6462650207',
-                                stage4Locale,
-                            )}
-                            error={form.errors.deposit_paid}
-                        >
-                            <RupiahInput
-                                value={form.data.deposit_paid}
-                                onValueChange={(value) =>
-                                    form.setData('deposit_paid', value)
-                                }
-                            />
-                        </Field>
-                        <PaymentEvidenceFields
-                            methods={paymentMethods}
-                            methodId={form.data.payment_method_id}
-                            amount={
-                                form.data.payment_amount +
-                                form.data.deposit_paid
-                            }
-                            reference={form.data.payment_reference}
-                            onReferenceChange={(value) =>
-                                form.setData('payment_reference', value)
-                            }
-                            onProofChange={(file) =>
-                                form.setData('payment_proof', file)
-                            }
-                            referenceError={form.errors.payment_reference}
-                            proofError={form.errors.payment_proof}
-                        />
-                        {direct && (
-                            <div className="md:col-span-2 xl:col-span-3">
-                                <Label>
-                                    <Stage4Text k="stage4.ui.28d33595e915" />
-                                </Label>
-                                <textarea
-                                    className="mt-2 min-h-24 w-full rounded-md border bg-transparent p-3 text-sm"
-                                    value={form.data.checkout_notes}
-                                    onChange={(event) =>
-                                        form.setData(
-                                            'checkout_notes',
-                                            event.target.value,
-                                        )
-                                    }
-                                    placeholder={stage4Translate(
-                                        'stage4.ui.5664a2e9edee',
-                                        stage4Locale,
-                                    )}
-                                />
+                                {Object.entries(form.errors).map(
+                                    ([key, error]) => (
+                                        <p key={key}>{error}</p>
+                                    ),
+                                )}
                             </div>
                         )}
-                    </CardContent>
-                </Card>
-                {direct && (
+                        {quoteError && (
+                            <p
+                                role="alert"
+                                className="text-sm text-destructive"
+                            >
+                                {quoteError}
+                            </p>
+                        )}
+                    </>
+                )}
+                <fieldset
+                    className={
+                        direct && directStep !== 0
+                            ? 'hidden'
+                            : 'grid min-w-0 gap-6'
+                    }
+                    disabled={quoting || form.processing}
+                >
                     <Card>
                         <CardHeader>
                             <CardTitle>
-                                <Stage4Text k="stage4.ui.404889fd0b06" />
+                                {direct
+                                    ? stage4Translate(
+                                          'stage4.ui.820f5c238143',
+                                          stage4Locale,
+                                      )
+                                    : stage4Translate(
+                                          'stage4.ui.5bd6fca1a763',
+                                          stage4Locale,
+                                      )}
                             </CardTitle>
-                            <p className="text-sm text-muted-foreground">
-                                <Stage4Text k="stage4.ui.62becb5ce129" />
-                            </p>
-                            {form.data.customer_id > 0 && (
-                                <Button
-                                    type="button"
-                                    variant="outline"
-                                    size="sm"
-                                    className="w-fit"
-                                    disabled={identityLookup === 'loading'}
-                                    onClick={() =>
-                                        void loadCustomer360(
-                                            form.data.customer_id,
-                                            form.data.branch_id,
+                        </CardHeader>
+                        <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                            <Field
+                                label={stage4Translate(
+                                    'stage4.ui.1387475bd674',
+                                    stage4Locale,
+                                )}
+                                error={form.errors.branch_id}
+                            >
+                                <Select
+                                    value={String(form.data.branch_id || '')}
+                                    disabled={Boolean(booking)}
+                                    onValueChange={(value) => {
+                                        form.setData(
+                                            'branch_id',
+                                            Number(value),
+                                        );
+
+                                        if (direct) {
+                                            void loadCustomer360(
+                                                form.data.customer_id,
+                                                Number(value),
+                                            );
+                                        }
+
+                                        resetItemSelections();
+                                    }}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue
+                                            placeholder={stage4Translate(
+                                                'stage4.ui.f53404d2ddcf',
+                                                stage4Locale,
+                                            )}
+                                        />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {branches.map((item) => (
+                                            <SelectItem
+                                                key={item.id}
+                                                value={String(item.id)}
+                                            >
+                                                {item.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </Field>
+                            <Field
+                                label={stage4Translate(
+                                    'stage4.ui.af0ab4433946',
+                                    stage4Locale,
+                                )}
+                                error={form.errors.customer_id}
+                            >
+                                <SearchPickerDialog
+                                    type="customer"
+                                    value={selectedCustomer}
+                                    onSelect={(option) => {
+                                        if (
+                                            direct &&
+                                            option.id !== form.data.customer_id
+                                        ) {
+                                            void loadCustomer360(
+                                                option.id,
+                                                form.data.branch_id,
+                                            );
+                                        }
+
+                                        setSelectedCustomer(option);
+                                        form.setData('customer_id', option.id);
+                                    }}
+                                />
+                            </Field>
+                            <Field
+                                label={stage4Translate(
+                                    'stage4.ui.3d00cf0d363b',
+                                    stage4Locale,
+                                )}
+                                error={form.errors.promotion_code}
+                            >
+                                <Input
+                                    value={form.data.promotion_code}
+                                    onChange={(event) =>
+                                        form.setData(
+                                            'promotion_code',
+                                            event.target.value.toUpperCase(),
                                         )
                                     }
+                                    placeholder={stage4Translate(
+                                        'stage4.ui.092902ea5dff',
+                                        stage4Locale,
+                                    )}
+                                />
+                                <p className="text-xs text-muted-foreground">
+                                    {selectedCustomer?.is_member
+                                        ? stage4Translate(
+                                              'stage4.ui.575164e1b40d',
+                                              stage4Locale,
+                                          )
+                                        : stage4Translate(
+                                              'stage4.ui.d61a19094b66',
+                                              stage4Locale,
+                                          )}
+                                </p>
+                            </Field>
+                            <Field
+                                label={stage4Translate(
+                                    'stage4.ui.31b1ce48655c',
+                                    stage4Locale,
+                                )}
+                                error={form.errors.rate_plan_id}
+                            >
+                                <Select
+                                    value={String(form.data.rate_plan_id || '')}
+                                    onValueChange={(value) => {
+                                        form.setData(
+                                            'rate_plan_id',
+                                            Number(value),
+                                        );
+                                        form.setData('duration_units', 1);
+                                        resetItemSelections();
+                                    }}
                                 >
-                                    <RefreshCw />
-                                    <Stage4Text k="stage4.ui.dd4425e113b9" />
-                                </Button>
-                            )}
+                                    <SelectTrigger>
+                                        <SelectValue
+                                            placeholder={stage4Translate(
+                                                'stage4.ui.cc50ae030139',
+                                                stage4Locale,
+                                            )}
+                                        />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {ratePlans.map((item) => (
+                                            <SelectItem
+                                                key={item.id}
+                                                value={String(item.id)}
+                                            >
+                                                {item.name} (
+                                                {item.duration_value}{' '}
+                                                {durationLabel(
+                                                    {
+                                                        ...item,
+                                                        duration_value: 1,
+                                                    },
+                                                    stage4Locale,
+                                                )}
+                                                )
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </Field>
+                            <Field
+                                label={stage4Translate(
+                                    'stage4.ui.fceb2d8f5369',
+                                    stage4Locale,
+                                )}
+                                error={form.errors.starts_at}
+                            >
+                                <Input
+                                    type="datetime-local"
+                                    value={form.data.starts_at}
+                                    onChange={(event) =>
+                                        form.setData(
+                                            'starts_at',
+                                            event.target.value,
+                                        )
+                                    }
+                                />
+                            </Field>
+                            <Field
+                                label={`${stage4Translate('stage4.ui.0a31c6125219', stage4Locale)} (${durationLabel(selectedPlan, stage4Locale)})`}
+                                error={form.errors.duration_units}
+                            >
+                                <Input
+                                    type="number"
+                                    min={1}
+                                    max={365}
+                                    value={form.data.duration_units}
+                                    onChange={(event) =>
+                                        form.setData(
+                                            'duration_units',
+                                            Math.max(
+                                                1,
+                                                Number(event.target.value),
+                                            ),
+                                        )
+                                    }
+                                />
+                            </Field>
+                            <Field
+                                label={stage4Translate(
+                                    'stage4.ui.2a6388bc0137',
+                                    stage4Locale,
+                                )}
+                            >
+                                <Input
+                                    readOnly
+                                    value={calculatedEndsAt}
+                                    placeholder={stage4Translate(
+                                        'stage4.ui.ee29932c3e6c',
+                                        stage4Locale,
+                                    )}
+                                    className="bg-muted"
+                                />
+                                <p className="text-xs text-muted-foreground">
+                                    <Stage4Text k="stage4.ui.fa1324477477" />
+                                </p>
+                            </Field>
+                            <Field
+                                label={stage4Translate(
+                                    'stage4.ui.ff648afc53ef',
+                                    stage4Locale,
+                                )}
+                                error={form.errors.source}
+                            >
+                                <Select
+                                    value={form.data.source}
+                                    onValueChange={(value) =>
+                                        form.setData('source', value)
+                                    }
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {[
+                                            'counter',
+                                            'phone',
+                                            'whatsapp',
+                                            'website',
+                                            'other',
+                                        ].map((item) => (
+                                            <SelectItem key={item} value={item}>
+                                                {stage4TranslateDynamic(
+                                                    item,
+                                                    stage4Locale,
+                                                )}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </Field>
+                        </CardContent>
+                    </Card>
+                    <Card>
+                        <CardHeader className="flex-row items-center justify-between">
+                            <CardTitle>
+                                <Stage4Text k="stage4.ui.db7bf83172f0" />
+                            </CardTitle>
+                            <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() =>
+                                    form.setData('items', [
+                                        ...form.data.items,
+                                        { type: 'product', id: 0, quantity: 1 },
+                                    ])
+                                }
+                            >
+                                <Plus />
+                                <Stage4Text k="stage4.ui.9a69cafa8d15" />
+                            </Button>
                         </CardHeader>
-                        <CardContent>
-                            {identityLookup === 'loading' && (
-                                <p
-                                    role="status"
-                                    className="mb-3 text-sm text-muted-foreground"
-                                >
-                                    <Stage4Text k="stage4.ui.889ec8f312f4" />
+                        <CardContent className="space-y-3">
+                            {form.data.items.map((line, index) => {
+                                return (
+                                    <div
+                                        key={index}
+                                        className="grid gap-3 rounded-lg border p-3 md:grid-cols-[160px_1fr_120px_auto]"
+                                    >
+                                        <Select
+                                            value={line.type}
+                                            onValueChange={(
+                                                value: 'product' | 'package',
+                                            ) =>
+                                                updateLine(index, {
+                                                    type: value,
+                                                    id: 0,
+                                                })
+                                            }
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="product">
+                                                    <Stage4Text k="stage4.ui.869eb84eb3dc" />
+                                                </SelectItem>
+                                                <SelectItem value="package">
+                                                    <Stage4Text k="stage4.ui.3c97ce060ce2" />
+                                                </SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                        <SearchPickerDialog
+                                            type={line.type}
+                                            value={selectedByLine[index]}
+                                            branchId={form.data.branch_id}
+                                            ratePlanId={form.data.rate_plan_id}
+                                            disabled={
+                                                !form.data.branch_id ||
+                                                !form.data.rate_plan_id
+                                            }
+                                            onSelect={(option) =>
+                                                selectItem(index, option)
+                                            }
+                                        />
+                                        <Input
+                                            type="number"
+                                            min={1}
+                                            value={line.quantity}
+                                            onChange={(event) =>
+                                                updateLine(index, {
+                                                    quantity: Number(
+                                                        event.target.value,
+                                                    ),
+                                                })
+                                            }
+                                        />
+                                        <Button
+                                            type="button"
+                                            size="icon"
+                                            variant="ghost"
+                                            disabled={
+                                                form.data.items.length === 1
+                                            }
+                                            onClick={() =>
+                                                form.setData(
+                                                    'items',
+                                                    form.data.items.filter(
+                                                        (_, position) =>
+                                                            position !== index,
+                                                    ),
+                                                )
+                                            }
+                                        >
+                                            <Trash2 />
+                                        </Button>
+                                        {form.errors[
+                                            `items.${index}.quantity` as keyof typeof form.errors
+                                        ] && (
+                                            <p className="text-sm text-destructive md:col-span-4">
+                                                {
+                                                    form.errors[
+                                                        `items.${index}.quantity` as keyof typeof form.errors
+                                                    ]
+                                                }
+                                            </p>
+                                        )}
+                                        {form.errors[
+                                            `items.${index}.id` as keyof typeof form.errors
+                                        ] && (
+                                            <p className="text-sm text-destructive md:col-span-4">
+                                                {
+                                                    form.errors[
+                                                        `items.${index}.id` as keyof typeof form.errors
+                                                    ]
+                                                }
+                                            </p>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                            {typeof form.errors.items === 'string' && (
+                                <p className="text-sm text-destructive">
+                                    {form.errors.items}
                                 </p>
                             )}
-                            {identityLookup === 'error' && (
-                                <div className="mb-3 flex flex-wrap items-center gap-2 rounded-md border border-amber-400/50 bg-amber-50 p-3 text-sm text-amber-950 dark:bg-amber-950/20 dark:text-amber-100">
-                                    <Stage4Text k="stage4.ui.190425aa06f4" />
+                        </CardContent>
+                    </Card>
+                </fieldset>
+                {direct && quote && directStep > 0 && (
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>
+                                {en
+                                    ? 'Rental price confirmation'
+                                    : 'Konfirmasi harga sewa'}
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="space-y-4">
+                            <p className="text-sm">
+                                {selectedCustomer?.name} ·{' '}
+                                {new Date(quote.starts_at).toLocaleString(
+                                    en ? 'en-GB' : 'id-ID',
+                                )}{' '}
+                                —{' '}
+                                {new Date(quote.ends_at).toLocaleString(
+                                    en ? 'en-GB' : 'id-ID',
+                                )}
+                            </p>
+                            <div className="overflow-x-auto">
+                                <table className="w-full text-left text-sm">
+                                    <thead>
+                                        <tr className="border-b">
+                                            <th className="p-2">
+                                                {en ? 'Equipment' : 'Alat'}
+                                            </th>
+                                            <th className="p-2">Qty</th>
+                                            <th className="p-2">
+                                                {en
+                                                    ? 'Rate / unit'
+                                                    : 'Tarif / unit'}
+                                            </th>
+                                            <th className="p-2 text-right">
+                                                Total
+                                            </th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {quote.items.map((item, index) => (
+                                            <tr
+                                                key={index}
+                                                className="border-b"
+                                            >
+                                                <td className="p-2">
+                                                    {item.description}
+                                                </td>
+                                                <td className="p-2">
+                                                    {item.quantity}
+                                                </td>
+                                                <td className="p-2">
+                                                    {money(item.unit_rate)}
+                                                </td>
+                                                <td className="p-2 text-right">
+                                                    {money(item.total_amount)}
+                                                </td>
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                            <dl className="ml-auto grid max-w-md grid-cols-2 gap-2 text-sm">
+                                <dt>Subtotal</dt>
+                                <dd className="text-right">
+                                    {money(quote.subtotal)}
+                                </dd>
+                                <dt>{en ? 'Discount' : 'Diskon'}</dt>
+                                <dd className="text-right">
+                                    −{money(quote.discount_amount)}
+                                </dd>
+                                <dt>{en ? 'Rental total' : 'Total sewa'}</dt>
+                                <dd className="text-right font-bold">
+                                    {money(quote.total_amount)}
+                                </dd>
+                                <dt>
+                                    {en
+                                        ? 'Security deposit (separate)'
+                                        : 'Deposit jaminan (terpisah)'}
+                                </dt>
+                                <dd className="text-right">
+                                    {money(quote.deposit_required)}
+                                </dd>
+                            </dl>
+                            <p className="text-xs text-muted-foreground">
+                                {en
+                                    ? 'Review the total before recording payment. Stock is checked and allocated at checkout. Price confirmation expires after 20 minutes.'
+                                    : 'Periksa total sebelum mencatat pembayaran. Stok diperiksa dan dialokasikan saat checkout. Konfirmasi harga berlaku 20 menit.'}
+                            </p>
+                            {directStep === 1 && (
+                                <Button type="submit">
+                                    {en
+                                        ? 'Confirm & continue to payment'
+                                        : 'Konfirmasi & lanjut pembayaran'}
+                                </Button>
+                            )}
+                        </CardContent>
+                    </Card>
+                )}
+                <fieldset
+                    className={
+                        direct && directStep !== 2
+                            ? 'hidden'
+                            : 'grid min-w-0 gap-6'
+                    }
+                    disabled={form.processing}
+                >
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>
+                                {direct
+                                    ? stage4Translate(
+                                          'stage4.ui.bf47c3bc9bf5',
+                                          stage4Locale,
+                                      )
+                                    : stage4Translate(
+                                          'stage4.ui.c474ac0f2d71',
+                                          stage4Locale,
+                                      )}
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent className="grid gap-4 md:grid-cols-2 xl:grid-cols-3">
+                            {direct && (
+                                <>
+                                    <Field
+                                        label={stage4Translate(
+                                            'stage4.ui.c7d851c67548',
+                                            stage4Locale,
+                                        )}
+                                        error={form.errors.checked_out_at}
+                                    >
+                                        <Input
+                                            type="datetime-local"
+                                            value={form.data.checked_out_at}
+                                            onChange={(event) =>
+                                                form.setData(
+                                                    'checked_out_at',
+                                                    event.target.value,
+                                                )
+                                            }
+                                        />
+                                    </Field>
+                                    <Field
+                                        label={stage4Translate(
+                                            'stage4.ui.93621ca8fc63',
+                                            stage4Locale,
+                                        )}
+                                        error={form.errors.checkout_condition}
+                                    >
+                                        <Select
+                                            value={form.data.checkout_condition}
+                                            onValueChange={(
+                                                value:
+                                                    | 'excellent'
+                                                    | 'good'
+                                                    | 'fair',
+                                            ) =>
+                                                form.setData(
+                                                    'checkout_condition',
+                                                    value,
+                                                )
+                                            }
+                                        >
+                                            <SelectTrigger>
+                                                <SelectValue />
+                                            </SelectTrigger>
+                                            <SelectContent>
+                                                <SelectItem value="excellent">
+                                                    <Stage4Text k="stage4.ui.e90dcd5d96b8" />
+                                                </SelectItem>
+                                                <SelectItem value="good">
+                                                    <Stage4Text k="stage4.ui.04f5b5ce0518" />
+                                                </SelectItem>
+                                                <SelectItem value="fair">
+                                                    <Stage4Text k="stage4.ui.e776a0660b3d" />
+                                                </SelectItem>
+                                            </SelectContent>
+                                        </Select>
+                                    </Field>
+                                </>
+                            )}
+                            <Field
+                                label={stage4Translate(
+                                    'stage4.ui.53eb1a623ade',
+                                    stage4Locale,
+                                )}
+                                error={form.errors.payment_method_id}
+                            >
+                                <Select
+                                    value={String(
+                                        form.data.payment_method_id || '',
+                                    )}
+                                    onValueChange={(value) => {
+                                        form.setData((current) => ({
+                                            ...current,
+                                            payment_method_id: Number(value),
+                                            cash_session_id: null,
+                                            payment_proof: null,
+                                            payment_reference: '',
+                                        }));
+                                    }}
+                                >
+                                    <SelectTrigger>
+                                        <SelectValue
+                                            placeholder={stage4Translate(
+                                                'stage4.ui.22cd7e4b4a0a',
+                                                stage4Locale,
+                                            )}
+                                        />
+                                    </SelectTrigger>
+                                    <SelectContent>
+                                        {paymentMethods.map((method) => (
+                                            <SelectItem
+                                                key={method.id}
+                                                value={String(method.id)}
+                                            >
+                                                {method.name}
+                                            </SelectItem>
+                                        ))}
+                                    </SelectContent>
+                                </Select>
+                            </Field>
+                            <CashSessionSelect
+                                paymentMethods={paymentMethods}
+                                cashSessions={cashSessions}
+                                branchId={form.data.branch_id}
+                                paymentMethodId={form.data.payment_method_id}
+                                value={form.data.cash_session_id}
+                                onValueChange={(value) =>
+                                    form.setData('cash_session_id', value)
+                                }
+                                error={form.errors.cash_session_id}
+                            />
+                            <Field
+                                label={stage4Translate(
+                                    'stage4.ui.7afede4d7a6c',
+                                    stage4Locale,
+                                )}
+                                error={form.errors.payment_amount}
+                            >
+                                <RupiahInput
+                                    value={form.data.payment_amount}
+                                    onValueChange={(value) =>
+                                        form.setData('payment_amount', value)
+                                    }
+                                />
+                            </Field>
+                            <Field
+                                label={stage4Translate(
+                                    'stage4.ui.6a6462650207',
+                                    stage4Locale,
+                                )}
+                                error={form.errors.deposit_paid}
+                            >
+                                <RupiahInput
+                                    value={form.data.deposit_paid}
+                                    onValueChange={(value) =>
+                                        form.setData('deposit_paid', value)
+                                    }
+                                />
+                            </Field>
+                            <PaymentEvidenceFields
+                                methods={paymentMethods}
+                                methodId={form.data.payment_method_id}
+                                amount={
+                                    form.data.payment_amount +
+                                    form.data.deposit_paid
+                                }
+                                reference={form.data.payment_reference}
+                                onReferenceChange={(value) =>
+                                    form.setData('payment_reference', value)
+                                }
+                                onProofChange={(file) =>
+                                    form.setData('payment_proof', file)
+                                }
+                                referenceError={form.errors.payment_reference}
+                                proofError={form.errors.payment_proof}
+                            />
+                            {direct && (
+                                <div className="md:col-span-2 xl:col-span-3">
+                                    <Label>
+                                        <Stage4Text k="stage4.ui.28d33595e915" />
+                                    </Label>
+                                    <textarea
+                                        className="mt-2 min-h-24 w-full rounded-md border bg-transparent p-3 text-sm"
+                                        value={form.data.checkout_notes}
+                                        onChange={(event) =>
+                                            form.setData(
+                                                'checkout_notes',
+                                                event.target.value,
+                                            )
+                                        }
+                                        placeholder={stage4Translate(
+                                            'stage4.ui.5664a2e9edee',
+                                            stage4Locale,
+                                        )}
+                                    />
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
+                    {direct && (
+                        <Card>
+                            <CardHeader>
+                                <CardTitle>
+                                    <Stage4Text k="stage4.ui.404889fd0b06" />
+                                </CardTitle>
+                                <p className="text-sm text-muted-foreground">
+                                    <Stage4Text k="stage4.ui.62becb5ce129" />
+                                </p>
+                                {form.data.customer_id > 0 && (
                                     <Button
                                         type="button"
                                         variant="outline"
                                         size="sm"
+                                        className="w-fit"
+                                        disabled={identityLookup === 'loading'}
                                         onClick={() =>
                                             void loadCustomer360(
                                                 form.data.customer_id,
@@ -1073,122 +1401,168 @@ export default function BookingForm({
                                             )
                                         }
                                     >
-                                        <Stage4Text k="stage4.ui.2b8b41244705" />
+                                        <RefreshCw />
+                                        <Stage4Text k="stage4.ui.dd4425e113b9" />
                                     </Button>
-                                </div>
-                            )}
-                            {identityLookup === 'ready' &&
-                                identityOptions.length === 0 && (
-                                    <p className="mb-3 text-sm text-muted-foreground">
-                                        <Stage4Text k="stage4.ui.2a7195d234b9" />
+                                )}
+                            </CardHeader>
+                            <CardContent>
+                                {identityLookup === 'loading' && (
+                                    <p
+                                        role="status"
+                                        className="mb-3 text-sm text-muted-foreground"
+                                    >
+                                        <Stage4Text k="stage4.ui.889ec8f312f4" />
                                     </p>
                                 )}
-                            {identityLookup === 'ready' &&
-                                identityOptions.length > 0 &&
-                                !identityOptions.some(
-                                    (item) => !item.is_expired,
-                                ) && (
-                                    <p className="mb-3 text-sm text-amber-700 dark:text-amber-300">
-                                        <Stage4Text k="stage4.ui.650fac4c51cc" />
-                                    </p>
-                                )}
-                            {identityLookup !== 'loading' && (
-                                <CollateralFields
-                                    value={form.data.collaterals}
-                                    onChange={(collaterals) => {
-                                        const before = form.data.collaterals
-                                            .map(
-                                                (item) =>
-                                                    item.customer_identity_id,
-                                            )
-                                            .join(',');
-                                        const after = collaterals
-                                            .map(
-                                                (item) =>
-                                                    item.customer_identity_id,
-                                            )
-                                            .join(',');
-                                        form.setData(
-                                            'collaterals',
-                                            collaterals,
-                                        );
-
-                                        if (before !== after) {
-                                            form.setData(
-                                                'customer360_received_confirmed',
-                                                false,
-                                            );
-                                        }
-                                    }}
-                                    errors={
-                                        form.errors as Record<string, string>
-                                    }
-                                    identityOptions={identityOptions}
-                                />
-                            )}
-                            {form.data.collaterals.some(
-                                (item) => item.customer_identity_id !== null,
-                            ) && (
-                                <div className="mt-4 flex items-start gap-3 rounded-md border p-3">
-                                    <Checkbox
-                                        id="direct-customer360-received"
-                                        checked={
-                                            form.data
-                                                .customer360_received_confirmed
-                                        }
-                                        onCheckedChange={(checked) => {
-                                            form.setData(
-                                                'customer360_received_confirmed',
-                                                checked === true,
-                                            );
-                                            form.clearErrors(
-                                                'customer360_received_confirmed',
-                                            );
-                                        }}
-                                    />
-                                    <div className="space-y-1">
-                                        <Label htmlFor="direct-customer360-received">
-                                            <Stage4Text k="stage4.ui.e275e2573e3c" />
-                                        </Label>
-                                        <p className="text-xs text-muted-foreground">
-                                            <Stage4Text k="stage4.ui.e71bf64ea2f3" />
-                                        </p>
-                                        {form.errors
-                                            .customer360_received_confirmed && (
-                                            <p className="text-sm text-destructive">
-                                                {
-                                                    form.errors
-                                                        .customer360_received_confirmed
-                                                }
-                                            </p>
-                                        )}
+                                {identityLookup === 'error' && (
+                                    <div className="mb-3 flex flex-wrap items-center gap-2 rounded-md border border-amber-400/50 bg-amber-50 p-3 text-sm text-amber-950 dark:bg-amber-950/20 dark:text-amber-100">
+                                        <Stage4Text k="stage4.ui.190425aa06f4" />
+                                        <Button
+                                            type="button"
+                                            variant="outline"
+                                            size="sm"
+                                            onClick={() =>
+                                                void loadCustomer360(
+                                                    form.data.customer_id,
+                                                    form.data.branch_id,
+                                                )
+                                            }
+                                        >
+                                            <Stage4Text k="stage4.ui.2b8b41244705" />
+                                        </Button>
                                     </div>
-                                </div>
-                            )}
-                            {form.errors.collaterals && (
-                                <p className="mt-2 text-sm text-destructive">
-                                    {form.errors.collaterals}
-                                </p>
-                            )}
+                                )}
+                                {identityLookup === 'ready' &&
+                                    identityOptions.length === 0 && (
+                                        <p className="mb-3 text-sm text-muted-foreground">
+                                            <Stage4Text k="stage4.ui.2a7195d234b9" />
+                                        </p>
+                                    )}
+                                {identityLookup === 'ready' &&
+                                    identityOptions.length > 0 &&
+                                    !identityOptions.some(
+                                        (item) => !item.is_expired,
+                                    ) && (
+                                        <p className="mb-3 text-sm text-amber-700 dark:text-amber-300">
+                                            <Stage4Text k="stage4.ui.650fac4c51cc" />
+                                        </p>
+                                    )}
+                                {identityLookup !== 'loading' && (
+                                    <CollateralFields
+                                        value={form.data.collaterals}
+                                        onChange={(collaterals) => {
+                                            const before = form.data.collaterals
+                                                .map(
+                                                    (item) =>
+                                                        item.customer_identity_id,
+                                                )
+                                                .join(',');
+                                            const after = collaterals
+                                                .map(
+                                                    (item) =>
+                                                        item.customer_identity_id,
+                                                )
+                                                .join(',');
+                                            form.setData(
+                                                'collaterals',
+                                                collaterals,
+                                            );
+
+                                            if (before !== after) {
+                                                form.setData(
+                                                    'customer360_received_confirmed',
+                                                    false,
+                                                );
+                                            }
+                                        }}
+                                        errors={
+                                            form.errors as Record<
+                                                string,
+                                                string
+                                            >
+                                        }
+                                        identityOptions={identityOptions}
+                                    />
+                                )}
+                                {form.data.collaterals.some(
+                                    (item) =>
+                                        item.customer_identity_id !== null,
+                                ) && (
+                                    <div className="mt-4 flex items-start gap-3 rounded-md border p-3">
+                                        <Checkbox
+                                            id="direct-customer360-received"
+                                            checked={
+                                                form.data
+                                                    .customer360_received_confirmed
+                                            }
+                                            onCheckedChange={(checked) => {
+                                                form.setData(
+                                                    'customer360_received_confirmed',
+                                                    checked === true,
+                                                );
+                                                form.clearErrors(
+                                                    'customer360_received_confirmed',
+                                                );
+                                            }}
+                                        />
+                                        <div className="space-y-1">
+                                            <Label htmlFor="direct-customer360-received">
+                                                <Stage4Text k="stage4.ui.e275e2573e3c" />
+                                            </Label>
+                                            <p className="text-xs text-muted-foreground">
+                                                <Stage4Text k="stage4.ui.e71bf64ea2f3" />
+                                            </p>
+                                            {form.errors
+                                                .customer360_received_confirmed && (
+                                                <p className="text-sm text-destructive">
+                                                    {
+                                                        form.errors
+                                                            .customer360_received_confirmed
+                                                    }
+                                                </p>
+                                            )}
+                                        </div>
+                                    </div>
+                                )}
+                                {form.errors.collaterals && (
+                                    <p className="mt-2 text-sm text-destructive">
+                                        {form.errors.collaterals}
+                                    </p>
+                                )}
+                            </CardContent>
+                        </Card>
+                    )}
+                    <Card>
+                        <CardHeader>
+                            <CardTitle>
+                                <Stage4Text k="stage4.ui.9f09aefd0dd4" />
+                            </CardTitle>
+                        </CardHeader>
+                        <CardContent>
+                            <textarea
+                                className="min-h-28 w-full rounded-md border bg-transparent p-3 text-sm"
+                                value={form.data.notes}
+                                onChange={(event) =>
+                                    form.setData('notes', event.target.value)
+                                }
+                            />
                         </CardContent>
                     </Card>
+                </fieldset>
+                {direct && directStep === 2 && (
+                    <Button
+                        type="submit"
+                        className="self-end"
+                        disabled={
+                            form.processing ||
+                            !currentQuote ||
+                            identityLookup === 'loading'
+                        }
+                    >
+                        {en ? 'Checkout rental' : 'Checkout rental'}
+                    </Button>
                 )}
-                <Card>
-                    <CardHeader>
-                        <CardTitle>
-                            <Stage4Text k="stage4.ui.9f09aefd0dd4" />
-                        </CardTitle>
-                    </CardHeader>
-                    <CardContent>
-                        <textarea
-                            className="min-h-28 w-full rounded-md border bg-transparent p-3 text-sm"
-                            value={form.data.notes}
-                            onChange={(event) =>
-                                form.setData('notes', event.target.value)
-                            }
-                        />
-                    </CardContent>
-                </Card>
             </form>
         </>
     );
