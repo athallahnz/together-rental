@@ -9,6 +9,7 @@ import {
     stage3DisposalMethod,
 } from '@/lib/stage3-display';
 import { Stage3Text, stage3Translate } from '@/components/stage3-text';
+import type { ProductAssetCounts } from '@/components/assets/lifecycle-product-picker';
 import { LifecycleProductPicker } from '@/components/assets/lifecycle-product-picker';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
@@ -104,6 +105,7 @@ type Props = {
     disposals: Disposal[];
     disposableAssets: Asset[];
     products: Product[];
+    productAssetCounts: ProductAssetCounts;
     branches: Branch[];
     filters: { search: string; branch_id: number | null };
     permissions: { manage: boolean; inspect: boolean };
@@ -123,6 +125,7 @@ export default function AssetLifecycle({
     disposals,
     disposableAssets,
     products,
+    productAssetCounts,
     branches,
     filters,
     permissions,
@@ -636,6 +639,9 @@ export default function AssetLifecycle({
                             >
                                 <LifecycleProductPicker
                                     products={products}
+                                    assetCounts={productAssetCounts}
+                                    branches={branches}
+                                    branchId={acquisitionForm.data.branch_id}
                                     value={acquisitionForm.data.product_id}
                                     locale={stage3Locale}
                                     onSelect={(product) => {

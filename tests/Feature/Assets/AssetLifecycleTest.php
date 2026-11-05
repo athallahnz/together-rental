@@ -64,6 +64,32 @@ class AssetLifecycleTest extends TestCase
         ]);
     }
 
+    public function test_product_asset_counts_use_current_branch_and_exclude_inactive_and_inaccessible_units(): void
+    {
+        $fixture = $this->fixture('branch-manager');
+        $asset = $this->acquiredAsset($fixture);
+        $foreign = $this->foreignBranch($fixture['branch']);
+        $asset->update(['status' => 'rented']);
+
+        $asset->replicate()->fill([
+            'asset_code' => 'COUNT-INACTIVE',
+            'is_active' => false,
+        ])->save();
+        $asset->replicate()->fill([
+            'asset_code' => 'COUNT-TRANSFERRED',
+            'current_branch_id' => $foreign->id,
+        ])->save();
+
+        $this->get(route('assets.lifecycle.index', ['branch_id' => $fixture['branch']->id]))
+            ->assertOk()
+            ->assertInertia(fn (Assert $page) => $page
+                ->component('assets/lifecycle')
+                ->where('productAssetCounts.'.$fixture['product']->id, [[
+                    'branch_id' => $fixture['branch']->id,
+                    'count' => 1,
+                ]]));
+    }
+
     public function test_branch_scope_blocks_foreign_acquisition_and_lifecycle_view(): void
     {
         $fixture = $this->fixture('branch-manager');

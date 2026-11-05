@@ -133,6 +133,25 @@ class AssetLifecycleController extends Controller
                 ->where('is_active', true)
                 ->orderBy('name')
                 ->get(['id', 'sku', 'name', 'replacement_value']),
+            'productAssetCounts' => $actor->can('assets.manage')
+                ? Asset::query()
+                    ->whereIn('current_branch_id', $branchIds)
+                    ->where('is_active', true)
+                    ->whereHas('product', fn (Builder $query) => $query
+                        ->where('company_id', $actor->company_id)
+                        ->where('tracking_type', 'serialized')
+                        ->where('is_active', true))
+                    ->select('product_id', 'current_branch_id')
+                    ->selectRaw('COUNT(*) as unit_count')
+                    ->groupBy('product_id', 'current_branch_id')
+                    ->toBase()
+                    ->get()
+                    ->groupBy('product_id')
+                    ->map(fn ($rows) => $rows->map(fn ($row): array => [
+                        'branch_id' => (int) $row->current_branch_id,
+                        'count' => (int) $row->unit_count,
+                    ])->values())
+                : [],
             'branches' => $branches,
             'filters' => [
                 'search' => $search,
