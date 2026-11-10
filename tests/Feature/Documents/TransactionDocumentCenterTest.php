@@ -22,7 +22,6 @@ use App\Models\TransactionDocument;
 use App\Models\User;
 use Database\Seeders\RentalFoundationSeeder;
 use Illuminate\Foundation\Testing\RefreshDatabase;
-use Illuminate\Validation\ValidationException;
 use Inertia\Testing\AssertableInertia;
 use Tests\TestCase;
 
@@ -251,7 +250,7 @@ class TransactionDocumentCenterTest extends TestCase
         $this->assertSame($hash, $document->fresh()?->content_hash);
     }
 
-    public function test_oversized_a5_agreement_is_rejected_without_truncating_snapshot(): void
+    public function test_oversized_agreement_downloads_with_a5_continuation_without_truncating_snapshot(): void
     {
         [$user, $branch, $customer, $product] = $this->fixture();
         $rental = $this->rental($user, $branch, $customer, $product, true);
@@ -261,14 +260,19 @@ class TransactionDocumentCenterTest extends TestCase
         $document = TransactionDocument::query()->firstOrFail();
         $snapshot = $this->documentSnapshot($document);
         $snapshot['items'] = array_fill(0, 100, $snapshot['items'][0]);
+        $snapshot['items'][99]['description'] = 'FINAL ITEM PRESERVED';
         $document->snapshot = $snapshot;
-        try {
-            app(TransactionDocumentPdfRenderer::class)->render($document);
-            $this->fail('Oversized snapshot must not be silently clipped.');
-        } catch (ValidationException $exception) {
-            $this->assertArrayHasKey('document', $exception->errors());
-            $this->assertCount(100, $document->snapshot['items']);
+        $hash = $document->content_hash;
+        foreach (['id', 'en'] as $locale) {
+            app()->setLocale($locale);
+            $pdf = app(TransactionDocumentPdfRenderer::class)->render($document);
+            $this->assertStringContainsString('/MediaBox [0 0 419.53 595.28]', $pdf);
+            $this->assertStringNotContainsString('/Count 1 >>', $pdf);
+            $this->assertStringContainsString('FINAL ITEM PRESERVED', $pdf);
+            $this->assertStringContainsString('1 / ', $pdf);
         }
+        $this->assertCount(100, $document->snapshot['items']);
+        $this->assertSame($hash, $document->fresh()?->content_hash);
     }
 
     public function test_pdf_is_valid_and_branch_isolation_blocks_foreign_document(): void

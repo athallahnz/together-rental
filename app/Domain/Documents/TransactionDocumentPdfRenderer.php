@@ -6,7 +6,6 @@ use App\Models\TransactionDocument;
 use App\Models\User;
 use Carbon\CarbonImmutable;
 use DateTimeInterface;
-use Illuminate\Validation\ValidationException;
 use Throwable;
 
 class TransactionDocumentPdfRenderer
@@ -435,7 +434,129 @@ class TransactionDocumentPdfRenderer
             return $this->buildPdf([$this->stream], $width, $height, $fonts);
         }
 
-        throw ValidationException::withMessages(['document' => __('direct_rental.a5_overflow')]);
+        return $this->continuedAgreement($document, $snapshot, $issuer);
+    }
+
+    /**
+     * Flow oversized snapshots across A5 pages without dropping units or contractual clauses.
+     *
+     * @param  array<string, mixed>  $snapshot
+     * @param  array{name: string}  $issuer
+     */
+    private function continuedAgreement(TransactionDocument $document, array $snapshot, array $issuer): string
+    {
+        $branch = is_array($snapshot['branch'] ?? null) ? $snapshot['branch'] : [];
+        $customer = is_array($snapshot['customer'] ?? null) ? $snapshot['customer'] : [];
+        $source = is_array($snapshot['source'] ?? null) ? $snapshot['source'] : [];
+        $financial = is_array($snapshot['financial'] ?? null) ? $snapshot['financial'] : [];
+        $collaterals = is_array($snapshot['collaterals'] ?? null) ? $snapshot['collaterals'] : [];
+        $pages = [];
+        $y = 0.0;
+        $this->stream = '';
+        $newPage = function () use (&$pages, &$y, $branch): void {
+            if ($this->stream !== '') {
+                $pages[] = $this->stream;
+            }
+            $this->stream = '';
+            $y = $this->a5Block($this->upper($this->value($branch['name'] ?? 'Together Kamera')), 20, 570, 379.53, 10, 12, true);
+            $y = $this->a5Block(__('direct_rental.agreement_title').' / '.$this->documentNumber, 20, $y - 3, 379.53, 7.5, 10, true);
+            $this->line(20, $y, 399.53, $y, .5);
+            $y -= 15;
+        };
+        $write = function (string $text, bool $bold = false, float $size = 7.5) use (&$y, $newPage): void {
+            foreach ($this->a5Wrap($text, 379.53, $size, $bold) as $line) {
+                if ($y < 43) {
+                    $newPage();
+                }
+                $this->a5Text($line, 20, $y, $size, $bold);
+                $y -= $size + 3;
+            }
+            $y -= 3;
+        };
+        $section = function (string $title) use (&$y, $newPage, $write): void {
+            if ($y < 80) {
+                $newPage();
+            }
+            $y -= 5;
+            $this->fillRect(20, $y - 3, 379.53, 14, .94);
+            $write($title, true);
+            $y -= 3;
+        };
+        $newPage();
+        $write($this->branchContact($branch), false, 6.8);
+        $write($this->l('Diterbitkan').': '.$this->dateTime($document->issued_at).' WIB / '.$this->l('Versi').' '.$document->version, false, 6.8);
+        $section($this->l('DATA PENYEWA').' / '.$this->l('DATA SEWA'));
+        $write($this->l('Nama').': '.$this->value($customer['name'] ?? null), true);
+        $write($this->l('Telepon').': '.$this->value($customer['phone'] ?? null));
+        $write($this->l('Alamat').': '.$this->customerAddress($customer));
+        $write($this->l('No. Sewa').': '.$this->value($source['reference'] ?? null).' / '.$this->l('Status').': '.$this->displayValue('status', $source['status'] ?? null));
+        $write($this->l('Mulai').': '.$this->dateTime($source['checked_out_at'] ?? null).' / '.$this->l('Kembali').': '.$this->dateTime($source['due_at'] ?? null));
+        $section($this->l('BARANG SEWA'));
+        foreach (is_array($snapshot['items'] ?? null) ? $snapshot['items'] : [] as $index => $item) {
+            if (! is_array($item)) {
+                continue;
+            }
+            $write(($index + 1).'. '.$this->value($item['description'] ?? null).' / '.$this->l('Qty').' '.(int) ($item['quantity'] ?? 0).' / '.$this->money((float) ($item['total_amount'] ?? 0)), true);
+            foreach (is_array($item['assets'] ?? null) ? $item['assets'] : [] as $asset) {
+                if (is_array($asset)) {
+                    $write(sprintf($this->l('Unit %s | SN %s | kondisi %s'), $this->value($asset['asset_code'] ?? null), $this->value($asset['serial_number'] ?? null), $this->displayValue('condition', $asset['checkout_condition'] ?? null)), false, 7);
+                }
+            }
+        }
+        $section($this->l('RINGKASAN BIAYA'));
+        foreach ([
+            'Subtotal' => $financial['subtotal'] ?? 0,
+            'Diskon' => $financial['discount_amount'] ?? 0,
+            'Pajak' => $financial['tax_amount'] ?? 0,
+            'Total sewa' => $financial['total_amount'] ?? 0,
+            'Terbayar' => $financial['rental_paid'] ?? $financial['paid_amount'] ?? 0,
+            'Sisa tagihan' => $financial['balance_due'] ?? 0,
+            'Deposit jaminan' => $financial['deposit_amount'] ?? $financial['deposit_required'] ?? 0,
+            'Denda' => $financial['late_fee_amount'] ?? 0,
+            'Kerusakan' => $financial['damage_fee_amount'] ?? 0,
+        ] as $label => $amount) {
+            $write($this->l($label).': '.$this->money((float) $amount), in_array($label, ['Total sewa', 'Sisa tagihan'], true));
+        }
+        foreach ($collaterals as $collateral) {
+            if (is_array($collateral)) {
+                $write($this->l('JAMINAN').': '.$this->value($collateral['type'] ?? null).' '.$this->value($collateral['number'] ?? null).' / '.$this->value($collateral['holder_name'] ?? null).' / '.$this->displayValue('status', $collateral['status'] ?? null));
+            }
+        }
+        foreach (['rights' => 'agreement_rights_obligations', 'terms' => 'agreement_terms'] as $group => $key) {
+            $clauses = is_array($snapshot[$key] ?? null) ? $snapshot[$key] : [];
+            if ($clauses === []) {
+                continue;
+            }
+            $section($this->l($group === 'rights' ? 'HAK DAN KEWAJIBAN PENYEWA' : 'KETENTUAN SEWA'));
+            foreach (array_values($clauses) as $index => $clause) {
+                $write(($index + 1).'. '.$this->agreementClause($group, $clause));
+            }
+        }
+        $guarantor = isset($collaterals[0]) && is_array($collaterals[0]) ? $this->value($collaterals[0]['holder_name'] ?? null) : '-';
+        $signatures = [[$this->l('Karyawan / Petugas'), $issuer['name']], [$this->l('Penjamin'), $guarantor], [$this->l('Peminjam'), $this->value($customer['name'] ?? null)]];
+        $names = array_map(fn (array $signature): array => $this->a5Wrap($signature[1], 112, 7, true), $signatures);
+        $required = 45 + max(array_map(count(...), $names)) * 9;
+        if ($y - $required < 43) {
+            $newPage();
+        }
+        foreach ($signatures as $index => [$title, $name]) {
+            $x = 20 + $index * 126.51;
+            $this->a5Text($title, $x + 63.25, $y - 5, 7, false, 'center');
+            $this->line($x + 7, $y - 32, $x + 119, $y - 32, .3);
+            foreach ($names[$index] as $row => $line) {
+                $this->a5Text($line, $x + 63.25, $y - 43 - $row * 9, 7, true, 'center');
+            }
+        }
+        $pages[] = $this->stream;
+        foreach ($pages as $index => $content) {
+            $this->stream = $content;
+            $this->line(20, 24, 399.53, 24, .2);
+            $this->a5Text('Snapshot: '.substr($this->contentHash, 0, 16), 20, 15, 5.6, false, 'left', .45);
+            $this->a5Text($this->l('Halaman').' '.($index + 1).' / '.count($pages).' - A5', 399.53, 15, 5.6, false, 'right', .45);
+            $pages[$index] = $this->stream;
+        }
+
+        return $this->buildPdf($pages, 419.53, 595.28, $this->agreementFonts());
     }
 
     /** @return array<string, array{name: string, widths: list<int>, bbox: list<int>, ascent: int, descent: int, cap_height: int, length: int, data: string}> */

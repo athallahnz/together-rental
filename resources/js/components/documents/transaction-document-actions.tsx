@@ -32,6 +32,11 @@ type QuickIssueResponse = {
     };
 };
 
+type DocumentErrorResponse = {
+    message?: string;
+    errors?: Record<string, string[]>;
+};
+
 const documentLabels: Record<DocumentType, string> = {
     invoice: 'Invoice',
     agreement: 'Agreement Rental',
@@ -156,30 +161,72 @@ export function TransactionDocumentActions({
             }
 
             const data = payload.data;
-            setMessage(
-                `${documentLabels[documentType]} ${data.document_number} · V${data.version}${
-                    data.created ? ' diterbitkan' : ' digunakan kembali'
-                }`,
+            const pdfResponse = await fetch(
+                mode === 'print' ? data.preview_url : data.pdf_url,
+                { headers: { Accept: 'application/json' } },
             );
+
+            if (!pdfResponse.ok) {
+                let detail =
+                    stage4Locale === 'en'
+                        ? 'The PDF could not be generated. Please try again.'
+                        : 'PDF gagal dibuat. Silakan coba kembali.';
+
+                if (
+                    pdfResponse.headers
+                        .get('content-type')
+                        ?.includes('application/json')
+                ) {
+                    const failure =
+                        (await pdfResponse.json()) as DocumentErrorResponse;
+                    detail =
+                        Object.values(failure.errors ?? {}).flat()[0] ??
+                        failure.message ??
+                        detail;
+                }
+
+                throw new Error(detail);
+            }
+
+            if (
+                !pdfResponse.headers
+                    .get('content-type')
+                    ?.includes('application/pdf')
+            ) {
+                throw new Error(
+                    stage4Locale === 'en'
+                        ? 'The server did not return a PDF. Refresh the page and sign in again if needed.'
+                        : 'Server belum mengembalikan PDF. Muat ulang halaman dan login kembali bila diperlukan.',
+                );
+            }
+
+            const pdfUrl = URL.createObjectURL(await pdfResponse.blob());
+            // Keep the URL alive while the browser PDF viewer loads and prints.
+            window.setTimeout(() => URL.revokeObjectURL(pdfUrl), 300_000);
 
             if (mode === 'print') {
                 if (previewWindow) {
-                    previewWindow.location.href = data.preview_url;
+                    previewWindow.location.href = pdfUrl;
                 } else {
-                    window.open(
-                        data.preview_url,
-                        '_blank',
-                        'noopener,noreferrer',
-                    );
+                    window.open(pdfUrl, '_blank', 'noopener,noreferrer');
                 }
             } else {
                 const link = document.createElement('a');
-                link.href = data.pdf_url;
+                link.href = pdfUrl;
+                link.download =
+                    data.document_number.toLowerCase().replace(/[\\/]/g, '-') +
+                    '.pdf';
                 link.rel = 'noopener';
                 document.body.appendChild(link);
                 link.click();
                 link.remove();
             }
+
+            setMessage(
+                `${documentLabels[documentType]} ${data.document_number} · V${data.version}${
+                    data.created ? ' diterbitkan' : ' digunakan kembali'
+                }`,
+            );
         } catch (reason) {
             previewWindow?.close();
             setError(
