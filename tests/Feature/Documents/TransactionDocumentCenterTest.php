@@ -241,12 +241,50 @@ class TransactionDocumentCenterTest extends TestCase
             $pdf = app(TransactionDocumentPdfRenderer::class)->render($document);
             $this->assertStringContainsString('/MediaBox [0 0 419.53 595.28]', $pdf);
             $this->assertStringContainsString('/Count 1', $pdf);
-            $this->assertSame(2, substr_count($pdf, '/FontFile2 '));
-            $this->assertSame(2, substr_count($pdf, '/Subtype /TrueType'));
+            $this->assertSame(1, substr_count($pdf, '/FontFile2 '));
+            $this->assertSame(1, substr_count($pdf, '/Subtype /TrueType'));
             foreach (range(1, 3) as $index) {
                 $this->assertStringContainsString('Layout Test '.$index, $pdf);
             }
         }
+        $this->assertSame($hash, $document->fresh()?->content_hash);
+    }
+
+    public function test_a5_long_contact_two_collaterals_and_all_terms_fit_with_regular_six_point_justification(): void
+    {
+        [$user, $branch, $customer, $product] = $this->fixture();
+        $rental = $this->rental($user, $branch, $customer, $product, true);
+        $this->actingAs($user)->post(route('documents.issue'), [
+            'document_type' => 'agreement', 'source_type' => 'rental', 'source_reference' => $rental->rental_number,
+        ])->assertSessionHasNoErrors();
+        $document = TransactionDocument::query()->firstOrFail();
+        $hash = $document->content_hash;
+        $snapshot = $this->documentSnapshot($document);
+        $snapshot['branch'] = [...$snapshot['branch'], 'name' => 'Together Kamera Surabaya Timur',
+            'address' => 'Jl. Contoh II No.31 B, Menur Pumpungan, Kec. Sukolilo, Surabaya, Jawa Timur 60118',
+            'city' => 'Surabaya', 'province' => 'Jawa Timur', 'postal_code' => '60118',
+            'phone' => '0800000000000', 'email' => 'surabayatimur@example.com'];
+        $snapshot['customer']['name'] = 'PELANGGAN UJI A5';
+        $snapshot['customer']['address'] = ['address' => 'JALAN CONTOH LOR 3/22 RT 01/RW03',
+            'district' => 'KEPUTARAN, TEGALSARI', 'city' => 'SURABAYA', 'province' => 'JAWA TIMUR'];
+        $snapshot['collaterals'] = array_fill(0, 2, [
+            'type' => 'SIM', 'number' => 'TEST-000000000001',
+            'holder_name' => 'PELANGGAN UJI A5', 'status' => 'returned',
+        ]);
+        $document->snapshot = $snapshot;
+        $document->document_number = 'AGR-SBY-TMR-261110-0002';
+        $document->issuer_name_snapshot = 'Super Admin Together Kamera';
+        $pdf = app(TransactionDocumentPdfRenderer::class)->render($document);
+        $this->assertStringContainsString('/Count 1 >>', $pdf);
+        $this->assertStringContainsString('/BaseFont /TogetherAgreementSans-Regular', $pdf);
+        preg_match_all('/\/F[12] ([0-9.]+) Tf/', $pdf, $sizes);
+        $this->assertNotEmpty($sizes[1]);
+        $this->assertSame(['6.00'], array_values(array_unique($sizes[1])));
+        $this->assertStringNotContainsString('/F2 ', $pdf);
+        $this->assertMatchesRegularExpression('/ (?!0\.0000)[0-9]+\.[0-9]{4} Tw /', $pdf);
+        $this->assertCount(10, $document->snapshot['agreement_rights_obligations']);
+        $this->assertCount(10, $document->snapshot['agreement_terms']);
+        $this->assertStringContainsString('TEST-000000000001', $pdf);
         $this->assertSame($hash, $document->fresh()?->content_hash);
     }
 
@@ -270,6 +308,11 @@ class TransactionDocumentCenterTest extends TestCase
             $this->assertStringNotContainsString('/Count 1 >>', $pdf);
             $this->assertStringContainsString('FINAL ITEM PRESERVED', $pdf);
             $this->assertStringContainsString('1 / ', $pdf);
+            preg_match_all('/\/F[12] ([0-9.]+) Tf/', $pdf, $sizes);
+            $this->assertNotEmpty($sizes[1]);
+            $this->assertSame(['6.00'], array_values(array_unique($sizes[1])));
+            $this->assertStringNotContainsString('/F2 ', $pdf);
+            $this->assertMatchesRegularExpression('/ (?!0\.0000)[0-9]+\.[0-9]{4} Tw /', $pdf);
         }
         $this->assertCount(100, $document->snapshot['items']);
         $this->assertSame($hash, $document->fresh()?->content_hash);

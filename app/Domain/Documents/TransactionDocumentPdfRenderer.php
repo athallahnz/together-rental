@@ -309,132 +309,170 @@ class TransactionDocumentPdfRenderer
         $terms = is_array($snapshot['agreement_terms'] ?? null) ? array_values($snapshot['agreement_terms']) : [];
         $width = 419.53;
         $height = 595.28;
-        $margin = 20.0;
+        $margin = 14.0;
         $cw = $width - 2 * $margin;
-        $gap = 14.0;
+        $gap = 10.0;
         $col = ($cw - $gap) / 2;
         $rightX = $margin + $col + $gap;
         $fonts = $this->agreementFonts();
-        $dense = count($items) > 2;
 
-        // Prefer the largest readable clause size; signatures always have a reserved area.
-        foreach (($dense ? [7.0, 6.8, 6.6, 6.4, 6.2, 6.0] : [7.0, 6.8, 6.6, 6.4]) as $clauseSize) {
-            $this->stream = '';
-            $y = $height - $margin - 3;
-            $brandY = $this->a5Block($this->upper($this->value($branch['name'] ?? 'Together Kamera')), $margin, $y, 229, 10.5, 12, true);
-            $this->a5Text($this->documentNumber, $width - $margin, $y, 7.2, true, 'right');
-            $this->a5Text($this->l('Versi').' '.$document->version.' / '.$this->dateTime($document->issued_at).' WIB', $width - $margin, $y - 10, 6.1, false, 'right', .4);
-            $y = min($brandY, $y - 13);
-            $y = $this->a5Block($this->branchContact($branch), $margin, $y, $cw, 6.5, 8, false, .4);
-            $y -= 3;
-            $this->a5Text(__('direct_rental.agreement_title'), $margin, $y, 9, true);
-            $y -= 10;
-            $this->line($margin, $y, $width - $margin, $y, .7);
-            $y -= 13;
+        $this->stream = '';
+        $y = $height - $margin - 3;
+        $y = $this->a5Block($this->upper($this->value($branch['name'] ?? 'Together Kamera')), $margin, $y, $cw, 9);
+        $y = $this->a5Block($this->agreementContact($branch), $margin, $y, $cw, 8.8);
+        $y -= 2;
+        $this->a5Text(__('direct_rental.agreement_title'), $margin, $y);
+        $y -= 10;
+        $this->a5Text($this->documentNumber.' / '.$this->l('Versi').' '.$document->version, $margin, $y);
+        $this->a5Text($this->dateTime($document->issued_at).' WIB', $width - $margin, $y, 'right');
+        $y -= 4;
+        $this->line($margin, $y, $width - $margin, $y, .7);
+        $y -= 10;
 
-            $this->a5Text($this->l('DATA PENYEWA'), $margin, $y, 6.5, true, 'left', .4);
-            $this->a5Text($this->l('DATA SEWA'), $rightX, $y, 6.5, true, 'left', .4);
-            $top = $y - 10;
-            $leftY = $this->a5Block($this->value($customer['name'] ?? null), $margin, $top, $col, 8.3, 10, true);
-            $leftY = $this->a5Block($this->l('Telepon').': '.$this->value($customer['phone'] ?? null), $margin, $leftY - 1, $col, 7.1, 9);
-            $leftY = $this->a5Block($this->customerAddress($customer), $margin, $leftY, $col, 6.8, 8.5, false, .35);
-            $rightY = $this->a5Block($this->value($source['reference'] ?? null), $rightX, $top, $col, 8, 10, true);
-            $rightY = $this->a5Block($this->l('Mulai').': '.$this->dateTime($source['checked_out_at'] ?? null), $rightX, $rightY - 1, $col, 7.1, 9);
-            $rightY = $this->a5Block($this->l('Kembali').': '.$this->dateTime($source['due_at'] ?? null), $rightX, $rightY, $col, 7.1, 9);
-            $rightY = $this->a5Block($this->l('Status').': '.$this->displayValue('status', $source['status'] ?? null), $rightX, $rightY, $col, 6.8, 8.5, false, .35);
-            $y = min($leftY, $rightY) - 5;
+        $top = $y;
+        $leftY = $this->a5Block($this->value($customer['name'] ?? null), $margin, $top, $col, 8.5);
+        $leftY = $this->a5Block($this->l('Telepon').': '.$this->value($customer['phone'] ?? null), $margin, $leftY, $col, 9);
+        $leftY = $this->a5Block($this->customerAddress($customer), $margin, $leftY, $col, 8.5);
+        $rightY = $this->a5Block($this->value($source['reference'] ?? null), $rightX, $top, $col, 8.5);
+        $rightY = $this->a5Block($this->l('Mulai').': '.$this->dateTime($source['checked_out_at'] ?? null), $rightX, $rightY, $col, 9);
+        $rightY = $this->a5Block($this->l('Kembali').': '.$this->dateTime($source['due_at'] ?? null), $rightX, $rightY, $col, 9);
+        $rightY = $this->a5Block($this->l('Status').': '.$this->displayValue('status', $source['status'] ?? null), $rightX, $rightY, $col, 8.5);
+        $y = min($leftY, $rightY) - 6;
 
-            // A proper table: item description / count / amount, with unit details indented below.
-            $this->fillRect($margin, $y - 5, $cw, 16, .94);
-            $this->a5Text($this->l('BARANG SEWA'), $margin + 5, $y, 6.8, true);
-            $this->a5Text($this->l('Qty'), $margin + $cw - 86, $y, 6.8, true, 'center');
-            $this->a5Text($this->l('Total'), $width - $margin - 5, $y, 6.8, true, 'right');
-            $y -= 14;
-            foreach ($items as $index => $item) {
-                if (! is_array($item)) {
-                    continue;
-                }
-                $bottom = $this->a5Block(($index + 1).'. '.$this->value($item['description'] ?? null), $margin + 5, $y, $cw - 123, 7.6, 9.5, true);
-                $this->a5Text((string) (int) ($item['quantity'] ?? 0), $margin + $cw - 86, $y, 7.6, false, 'center');
-                $this->a5Text($this->money((float) ($item['total_amount'] ?? 0)), $width - $margin - 5, $y, 7.6, true, 'right');
-                $y = $bottom;
-                foreach (is_array($item['assets'] ?? null) ? $item['assets'] : [] as $asset) {
-                    if (is_array($asset)) {
-                        $y = $this->a5Block(sprintf($this->l('Unit %s | SN %s | kondisi %s'), $this->value($asset['asset_code'] ?? null), $this->value($asset['serial_number'] ?? null), $this->displayValue('condition', $asset['checkout_condition'] ?? null)), $margin + 13, $y, $cw - 20, 6.5, 8, false, .35);
-                    }
-                }
-                $this->line($margin, $y + 2, $width - $margin, $y + 2, .2);
-                $y -= 5;
-            }
-            $y = $this->a5Block($this->l('Subtotal').': '.$this->money((float) ($financial['subtotal'] ?? 0)).'     '.$this->l('Diskon').': '.$this->money((float) ($financial['discount_amount'] ?? 0)).'     '.$this->l('Pajak').': '.$this->money((float) ($financial['tax_amount'] ?? 0)), $margin + 5, $y, $cw - 10, 6.7, 8.5, false, .35);
-            $y -= 2;
-            $this->fillRect($margin, $y - 24, $cw, 30, .95);
-            foreach ([[$this->l('Total sewa'), $financial['total_amount'] ?? 0], [$this->l('Terbayar'), $financial['rental_paid'] ?? $financial['paid_amount'] ?? 0], [$this->l('Sisa tagihan'), $financial['balance_due'] ?? 0]] as $index => [$label, $value]) {
-                $x = $margin + 7 + $index * $cw / 3;
-                $this->a5Text($label, $x, $y - 2, 6.8, false, 'left', .4);
-                $this->a5Text($this->money((float) $value), $x, $y - 17, 10, true);
-            }
-            $y -= $dense ? 29 : 32;
-            $y = $this->a5Block($this->l('Deposit jaminan').': '.$this->money((float) ($financial['deposit_amount'] ?? $financial['deposit_required'] ?? 0)).'     '.$this->l('Denda').': '.$this->money((float) ($financial['late_fee_amount'] ?? 0)).'     '.$this->l('Kerusakan').': '.$this->money((float) ($financial['damage_fee_amount'] ?? 0)), $margin + 5, $y, $cw - 10, 6.7, 8.5, false, .35);
-            foreach ($collaterals as $collateral) {
-                if (is_array($collateral)) {
-                    $y = $this->a5Block($this->l('JAMINAN').': '.$this->value($collateral['type'] ?? null).' '.$this->value($collateral['number'] ?? null).' / '.$this->value($collateral['holder_name'] ?? null).' / '.$this->displayValue('status', $collateral['status'] ?? null), $margin + 5, $y, $cw - 10, 6.7, 8.5);
-                }
-            }
-            $y -= $dense ? 4 : 8;
-            $this->line($margin, $y + 7, $width - $margin, $y + 7, .3);
-            $this->a5Text($this->l($rights === [] ? 'KETENTUAN SEWA' : 'HAK DAN KEWAJIBAN PENYEWA'), $margin, $y - 4, 6.8, true);
-            $termsLeftWidth = 168.0;
-            $termsRightX = $margin + $termsLeftWidth + $gap;
-            $this->a5Text($this->l('KETENTUAN SEWA'), $termsRightX, $y - 4, 6.8, true);
-            $y -= 14;
-            $leftClauses = $rights;
-            $rightClauses = $terms;
-            $rightStart = 1;
-            if ($rights === []) {
-                $split = (int) ceil(count($terms) / 2);
-                $leftClauses = array_slice($terms, 0, $split);
-                $rightClauses = array_slice($terms, $split);
-                $rightStart = $split + 1;
-            }
-            $bottoms = [];
-            foreach ([$leftClauses, $rightClauses] as $column => $clauses) {
-                $columnY = $y;
-                $x = $column === 0 ? $margin : $termsRightX;
-                $clauseWidth = $column === 0 ? $termsLeftWidth : $cw - $termsLeftWidth - $gap;
-                foreach ($clauses as $index => $clause) {
-                    $number = $index + ($column === 0 ? 1 : $rightStart);
-                    $section = $column === 0 && $rights !== [] ? 'rights' : 'terms';
-                    $this->a5Text($number.'.', $x, $columnY, $clauseSize, true, 'left', .35);
-                    $columnY = $this->a5Block($this->agreementClause($section, $clause), $x + 12, $columnY, $clauseWidth - 12, $clauseSize, $clauseSize + .8);
-                    $columnY -= $dense ? 1.5 : 2;
-                }
-                $bottoms[] = $columnY;
-            }
-            $guarantor = isset($collaterals[0]) && is_array($collaterals[0]) ? $this->value($collaterals[0]['holder_name'] ?? null) : '-';
-            $signWidth = $cw / 3;
-            $names = [$issuer['name'], $guarantor, $this->value($customer['name'] ?? null)];
-            $nameLines = array_map(fn (string $name): array => $this->a5Wrap($name, $signWidth - 14, 6.8, true), $names);
-            $signTop = 58 + max(array_map(count(...), $nameLines)) * 8;
-            if (min($bottoms) < $signTop + 9) {
+        // A proper table: item description / count / amount, with unit details indented below.
+        $this->fillRect($margin, $y - 5, $cw, 16, .94);
+        $this->a5Text($this->l('BARANG SEWA'), $margin + 5, $y);
+        $this->a5Text($this->l('Qty'), $margin + $cw - 86, $y, 'center');
+        $this->a5Text($this->l('Total'), $width - $margin - 5, $y, 'right');
+        $y -= 15;
+        foreach ($items as $index => $item) {
+            if (! is_array($item)) {
                 continue;
             }
-            foreach ([$this->l('Karyawan / Petugas'), $this->l('Penjamin'), $this->l('Peminjam')] as $index => $title) {
-                $x = $margin + $index * $signWidth;
-                $this->a5Text($title, $x + $signWidth / 2, $signTop, 6.8, false, 'center', .35);
-                $this->line($x + 7, $signTop - 25, $x + $signWidth - 7, $signTop - 25, .3);
-                foreach ($nameLines[$index] as $row => $name) {
-                    $this->a5Text($name, $x + $signWidth / 2, $signTop - 35 - $row * 8, 6.8, true, 'center');
+            $bottom = $this->a5Block(($index + 1).'. '.$this->value($item['description'] ?? null), $margin + 5, $y, $cw - 123, 8);
+            $this->a5Text((string) (int) ($item['quantity'] ?? 0), $margin + $cw - 86, $y, 'center');
+            $this->a5Text($this->money((float) ($item['total_amount'] ?? 0)), $width - $margin - 5, $y, 'right');
+            $y = $bottom;
+            foreach (is_array($item['assets'] ?? null) ? $item['assets'] : [] as $asset) {
+                if (is_array($asset)) {
+                    $y = $this->a5Block(sprintf($this->l('Unit %s | SN %s | kondisi %s'), $this->value($asset['asset_code'] ?? null), $this->value($asset['serial_number'] ?? null), $this->displayValue('condition', $asset['checkout_condition'] ?? null)), $margin + 13, $y, $cw - 20, 8.5);
                 }
             }
-            $this->line($margin, 24, $width - $margin, 24, .2);
-            $this->a5Text('Snapshot: '.substr($this->contentHash, 0, 16), $margin, 15, 5.6, false, 'left', .45);
-            $this->a5Text($this->l('Halaman').' 1 / 1 - A5', $width - $margin, 15, 5.6, false, 'right', .45);
+            $y -= 2;
+        }
+        $y = $this->a5Block($this->l('Subtotal').': '.$this->money((float) ($financial['subtotal'] ?? 0)).' | '.$this->l('Diskon').': '.$this->money((float) ($financial['discount_amount'] ?? 0)).' | '.$this->l('Pajak').': '.$this->money((float) ($financial['tax_amount'] ?? 0)), $margin + 5, $y, $cw - 10, 8.5);
+        $y -= 2;
+        $totals = [
+            [$this->l('Total sewa'), $financial['total_amount'] ?? 0],
+            [$this->l('Terbayar'), $financial['rental_paid'] ?? $financial['paid_amount'] ?? 0],
+            [$this->l('Sisa tagihan'), $financial['balance_due'] ?? 0],
+        ];
+        $totalHeight = max(array_map(fn (array $total): int => count($this->a5Wrap($total[0].': '.$this->money((float) $total[1]), $cw / 3 - 14)), $totals)) * 10 + 6;
+        $this->fillRect($margin, $y - $totalHeight + 6, $cw, $totalHeight, .95);
+        foreach ($totals as $index => [$label, $value]) {
+            $this->a5Block($label.': '.$this->money((float) $value), $margin + 7 + $index * $cw / 3, $y - 3, $cw / 3 - 14, 9);
+        }
+        $y -= $totalHeight + 3;
+        $y = $this->a5Block($this->l('Deposit jaminan').': '.$this->money((float) ($financial['deposit_amount'] ?? $financial['deposit_required'] ?? 0)).' | '.$this->l('Denda').': '.$this->money((float) ($financial['late_fee_amount'] ?? 0)).' | '.$this->l('Kerusakan').': '.$this->money((float) ($financial['damage_fee_amount'] ?? 0)), $margin + 5, $y, $cw - 10, 8.5);
+        foreach ($collaterals as $collateral) {
+            if (is_array($collateral)) {
+                $y = $this->a5Block($this->l('JAMINAN').': '.$this->value($collateral['type'] ?? null).' '.$this->value($collateral['number'] ?? null).' / '.$this->value($collateral['holder_name'] ?? null).' / '.$this->displayValue('status', $collateral['status'] ?? null), $margin + 5, $y, $cw - 10, 8.5);
+            }
+        }
+        $y -= 3;
+        $guarantor = isset($collaterals[0]) && is_array($collaterals[0]) ? $this->value($collaterals[0]['holder_name'] ?? null) : '-';
+        $signWidth = $cw / 3;
+        $names = [$issuer['name'], $guarantor, $this->value($customer['name'] ?? null)];
+        $nameLines = array_map(fn (string $name): array => $this->a5Wrap($name, $signWidth - 14), $names);
+        $signTop = 51 + max(array_map(count(...), $nameLines)) * 9;
+        if (! $this->a5AgreementClauses($rights, $terms, $margin, $y, $cw, $signTop + 10)) {
+            return $this->continuedAgreement($document, $snapshot, $issuer);
+        }
+        foreach ([$this->l('Karyawan / Petugas'), $this->l('Penjamin'), $this->l('Peminjam')] as $index => $title) {
+            $x = $margin + $index * $signWidth;
+            $this->a5Text($title, $x + $signWidth / 2, $signTop, 'center');
+            $this->line($x + 7, $signTop - 20, $x + $signWidth - 7, $signTop - 20, .3);
+            foreach ($nameLines[$index] as $row => $name) {
+                $this->a5Text($name, $x + $signWidth / 2, $signTop - 30 - $row * 9, 'center');
+            }
+        }
+        $this->line($margin, 24, $width - $margin, 24, .2);
+        $this->a5Text('Snapshot: '.substr($this->contentHash, 0, 16), $margin, 15);
+        $this->a5Text($this->l('Halaman').' 1 / 1 - A5', $width - $margin, 15, 'right');
 
-            return $this->buildPdf([$this->stream], $width, $height, $fonts);
+        return $this->buildPdf([$this->stream], $width, $height, $fonts);
+    }
+
+    /**
+     * Measure the clause columns before drawing. If a pair of columns cannot fit,
+     * try full-width sections before handing off to the paginated renderer.
+     *
+     * @param  list<mixed>  $rights
+     * @param  list<mixed>  $terms
+     */
+    private function a5AgreementClauses(array $rights, array $terms, float $x, float $y, float $width, float $bottom): bool
+    {
+        $groups = ['rights' => $rights, 'terms' => $terms];
+        $gap = 12;
+        $indent = 13;
+        $paragraphGap = 2.3;
+        $sectionSpace = 16;
+        $candidates = [];
+        if ($rights !== [] && $terms !== []) {
+            foreach ([.48, .46, .50, .44, .52, .42, .54] as $ratio) {
+                $leftWidth = ($width - $gap) * $ratio;
+                $candidates[] = [[$x, $leftWidth, ['rights']], [$x + $leftWidth + $gap, $width - $gap - $leftWidth, ['terms']]];
+            }
+        }
+        $candidates[] = [[$x, $width, array_keys(array_filter($groups))]];
+        $best = null;
+        foreach ([8.5, 8.0, 7.5] as $leading) {
+            $bestHeight = INF;
+            foreach ($candidates as $candidate) {
+                $columns = [];
+                $height = 0.0;
+                foreach ($candidate as [$columnX, $columnWidth, $keys]) {
+                    $sections = [];
+                    $columnHeight = 0.0;
+                    foreach ($keys as $key) {
+                        $paragraphs = array_map(fn (mixed $clause): array => $this->a5Wrap($this->agreementClause($key, $clause), $columnWidth - $indent), $groups[$key]);
+                        $columnHeight += $sectionSpace + $leading * array_sum(array_map(count(...), $paragraphs)) + $paragraphGap * count($paragraphs);
+                        $sections[] = [$key, $paragraphs];
+                    }
+                    $columns[] = [$columnX, $columnWidth, $sections];
+                    $height = max($height, $columnHeight);
+                }
+                // Prefer the shorter of the two-column options; use one column only when needed.
+                if ($height <= $y - $bottom && $height < $bestHeight && (count($candidate) === 2 || $best === null)) {
+                    $best = $columns;
+                    $bestHeight = $height;
+                }
+            }
+            if ($best !== null) {
+                break;
+            }
+        }
+        if ($best === null) {
+            return false;
+        }
+        foreach ($best as [$columnX, $columnWidth, $sections]) {
+            $rowY = $y;
+            foreach ($sections as [$key, $paragraphs]) {
+                $this->fillRect($columnX, $rowY - 3, $columnWidth, 12, .94);
+                $this->a5Text($this->l($key === 'rights' ? 'HAK DAN KEWAJIBAN PENYEWA' : 'KETENTUAN SEWA'), $columnX + 4, $rowY);
+                $rowY -= $sectionSpace;
+                foreach ($paragraphs as $index => $lines) {
+                    $this->a5Text(($index + 1).'.', $columnX, $rowY);
+                    foreach ($lines as $lineIndex => $line) {
+                        $this->a5Text($line, $columnX + $indent, $rowY, justifyWidth: $lineIndex < count($lines) - 1 ? $columnWidth - $indent : 0);
+                        $rowY -= $leading;
+                    }
+                    $rowY -= $paragraphGap;
+                }
+            }
         }
 
-        return $this->continuedAgreement($document, $snapshot, $issuer);
+        return true;
     }
 
     /**
@@ -458,18 +496,24 @@ class TransactionDocumentPdfRenderer
                 $pages[] = $this->stream;
             }
             $this->stream = '';
-            $y = $this->a5Block($this->upper($this->value($branch['name'] ?? 'Together Kamera')), 20, 570, 379.53, 10, 12, true);
-            $y = $this->a5Block(__('direct_rental.agreement_title').' / '.$this->documentNumber, 20, $y - 3, 379.53, 7.5, 10, true);
+            $y = $this->a5Block($this->upper($this->value($branch['name'] ?? 'Together Kamera')), 20, 570, 379.53, 12);
+            $y = $this->a5Block(__('direct_rental.agreement_title').' / '.$this->documentNumber, 20, $y - 3, 379.53, 10);
             $this->line(20, $y, 399.53, $y, .5);
             $y -= 15;
         };
-        $write = function (string $text, bool $bold = false, float $size = 7.5) use (&$y, $newPage): void {
-            foreach ($this->a5Wrap($text, 379.53, $size, $bold) as $line) {
+        $write = function (string $text, ?int $number = null) use (&$y, $newPage): void {
+            $indent = $number === null ? 0 : 14;
+            $width = 379.53 - $indent;
+            $lines = $this->a5Wrap($text, $width);
+            foreach ($lines as $index => $line) {
                 if ($y < 43) {
                     $newPage();
                 }
-                $this->a5Text($line, 20, $y, $size, $bold);
-                $y -= $size + 3;
+                if ($number !== null && $index === 0) {
+                    $this->a5Text($number.'.', 20, $y);
+                }
+                $this->a5Text($line, 20 + $indent, $y, justifyWidth: $number !== null && $index < count($lines) - 1 ? $width : 0);
+                $y -= 8;
             }
             $y -= 3;
         };
@@ -479,14 +523,14 @@ class TransactionDocumentPdfRenderer
             }
             $y -= 5;
             $this->fillRect(20, $y - 3, 379.53, 14, .94);
-            $write($title, true);
+            $write($title);
             $y -= 3;
         };
         $newPage();
-        $write($this->branchContact($branch), false, 6.8);
-        $write($this->l('Diterbitkan').': '.$this->dateTime($document->issued_at).' WIB / '.$this->l('Versi').' '.$document->version, false, 6.8);
+        $write($this->branchContact($branch));
+        $write($this->l('Diterbitkan').': '.$this->dateTime($document->issued_at).' WIB / '.$this->l('Versi').' '.$document->version);
         $section($this->l('DATA PENYEWA').' / '.$this->l('DATA SEWA'));
-        $write($this->l('Nama').': '.$this->value($customer['name'] ?? null), true);
+        $write($this->l('Nama').': '.$this->value($customer['name'] ?? null));
         $write($this->l('Telepon').': '.$this->value($customer['phone'] ?? null));
         $write($this->l('Alamat').': '.$this->customerAddress($customer));
         $write($this->l('No. Sewa').': '.$this->value($source['reference'] ?? null).' / '.$this->l('Status').': '.$this->displayValue('status', $source['status'] ?? null));
@@ -496,10 +540,10 @@ class TransactionDocumentPdfRenderer
             if (! is_array($item)) {
                 continue;
             }
-            $write(($index + 1).'. '.$this->value($item['description'] ?? null).' / '.$this->l('Qty').' '.(int) ($item['quantity'] ?? 0).' / '.$this->money((float) ($item['total_amount'] ?? 0)), true);
+            $write(($index + 1).'. '.$this->value($item['description'] ?? null).' / '.$this->l('Qty').' '.(int) ($item['quantity'] ?? 0).' / '.$this->money((float) ($item['total_amount'] ?? 0)));
             foreach (is_array($item['assets'] ?? null) ? $item['assets'] : [] as $asset) {
                 if (is_array($asset)) {
-                    $write(sprintf($this->l('Unit %s | SN %s | kondisi %s'), $this->value($asset['asset_code'] ?? null), $this->value($asset['serial_number'] ?? null), $this->displayValue('condition', $asset['checkout_condition'] ?? null)), false, 7);
+                    $write(sprintf($this->l('Unit %s | SN %s | kondisi %s'), $this->value($asset['asset_code'] ?? null), $this->value($asset['serial_number'] ?? null), $this->displayValue('condition', $asset['checkout_condition'] ?? null)));
                 }
             }
         }
@@ -515,7 +559,7 @@ class TransactionDocumentPdfRenderer
             'Denda' => $financial['late_fee_amount'] ?? 0,
             'Kerusakan' => $financial['damage_fee_amount'] ?? 0,
         ] as $label => $amount) {
-            $write($this->l($label).': '.$this->money((float) $amount), in_array($label, ['Total sewa', 'Sisa tagihan'], true));
+            $write($this->l($label).': '.$this->money((float) $amount));
         }
         foreach ($collaterals as $collateral) {
             if (is_array($collateral)) {
@@ -529,34 +573,48 @@ class TransactionDocumentPdfRenderer
             }
             $section($this->l($group === 'rights' ? 'HAK DAN KEWAJIBAN PENYEWA' : 'KETENTUAN SEWA'));
             foreach (array_values($clauses) as $index => $clause) {
-                $write(($index + 1).'. '.$this->agreementClause($group, $clause));
+                $write($this->agreementClause($group, $clause), $index + 1);
             }
         }
         $guarantor = isset($collaterals[0]) && is_array($collaterals[0]) ? $this->value($collaterals[0]['holder_name'] ?? null) : '-';
         $signatures = [[$this->l('Karyawan / Petugas'), $issuer['name']], [$this->l('Penjamin'), $guarantor], [$this->l('Peminjam'), $this->value($customer['name'] ?? null)]];
-        $names = array_map(fn (array $signature): array => $this->a5Wrap($signature[1], 112, 7, true), $signatures);
+        $names = array_map(fn (array $signature): array => $this->a5Wrap($signature[1], 112), $signatures);
         $required = 45 + max(array_map(count(...), $names)) * 9;
         if ($y - $required < 43) {
             $newPage();
         }
         foreach ($signatures as $index => [$title, $name]) {
             $x = 20 + $index * 126.51;
-            $this->a5Text($title, $x + 63.25, $y - 5, 7, false, 'center');
+            $this->a5Text($title, $x + 63.25, $y - 5, 'center');
             $this->line($x + 7, $y - 32, $x + 119, $y - 32, .3);
             foreach ($names[$index] as $row => $line) {
-                $this->a5Text($line, $x + 63.25, $y - 43 - $row * 9, 7, true, 'center');
+                $this->a5Text($line, $x + 63.25, $y - 43 - $row * 9, 'center');
             }
         }
         $pages[] = $this->stream;
         foreach ($pages as $index => $content) {
             $this->stream = $content;
             $this->line(20, 24, 399.53, 24, .2);
-            $this->a5Text('Snapshot: '.substr($this->contentHash, 0, 16), 20, 15, 5.6, false, 'left', .45);
-            $this->a5Text($this->l('Halaman').' '.($index + 1).' / '.count($pages).' - A5', 399.53, 15, 5.6, false, 'right', .45);
+            $this->a5Text('Snapshot: '.substr($this->contentHash, 0, 16), 20, 15);
+            $this->a5Text($this->l('Halaman').' '.($index + 1).' / '.count($pages).' - A5', 399.53, 15, 'right');
             $pages[$index] = $this->stream;
         }
 
         return $this->buildPdf($pages, 419.53, 595.28, $this->agreementFonts());
+    }
+
+    /** @param array<string, mixed> $branch */
+    private function agreementContact(array $branch): string
+    {
+        $address = trim((string) ($branch['address'] ?? ''));
+        foreach (['city', 'province', 'postal_code'] as $key) {
+            $part = trim((string) ($branch[$key] ?? ''));
+            if ($part !== '' && preg_match('/(?<![\pL\pN])'.preg_quote($part, '/').'(?![\pL\pN])/iu', $address) !== 1) {
+                $address .= ($address === '' ? '' : ', ').$part;
+            }
+        }
+
+        return $this->branchContact([...$branch, 'address' => $address, 'city' => null, 'province' => null, 'postal_code' => null]);
     }
 
     /** @return array<string, array{name: string, widths: list<int>, bbox: list<int>, ascent: int, descent: int, cap_height: int, length: int, data: string}> */
@@ -568,27 +626,27 @@ class TransactionDocumentPdfRenderer
         return $fonts;
     }
 
-    private function a5Width(string $text, float $size, bool $bold = false): float
+    private function a5Width(string $text): float
     {
         static $fonts = null;
         $fonts ??= $this->agreementFonts();
         $width = 0;
         foreach (str_split($this->ascii($text)) as $character) {
-            $width += $fonts[$bold ? 'bold' : 'regular']['widths'][ord($character) - 32] ?? 0;
+            $width += $fonts['regular']['widths'][ord($character) - 32] ?? 0;
         }
 
-        return $width * $size / 1000;
+        return $width * 6 / 1000;
     }
 
     /** @return list<string> */
-    private function a5Wrap(string $text, float $width, float $size, bool $bold = false): array
+    private function a5Wrap(string $text, float $width): array
     {
         $words = preg_split('/\s+/', trim($this->ascii($text))) ?: [''];
         $lines = [];
         $line = '';
         foreach ($words as $word) {
             $candidate = $line === '' ? $word : $line.' '.$word;
-            if ($this->a5Width($candidate, $size, $bold) <= $width) {
+            if ($this->a5Width($candidate) <= $width) {
                 $line = $candidate;
 
                 continue;
@@ -598,7 +656,7 @@ class TransactionDocumentPdfRenderer
                 $line = '';
             }
             foreach (str_split($word) as $character) {
-                if ($line !== '' && $this->a5Width($line.$character, $size, $bold) > $width) {
+                if ($line !== '' && $this->a5Width($line.$character) > $width) {
                     $lines[] = $line;
                     $line = '';
                 }
@@ -612,19 +670,23 @@ class TransactionDocumentPdfRenderer
         return $lines;
     }
 
-    private function a5Text(string $text, float $x, float $y, float $size, bool $bold = false, string $align = 'left', float $gray = .1): void
+    private function a5Text(string $text, float $x, float $y, string $align = 'left', float $justifyWidth = 0): void
     {
-        $width = $this->a5Width($text, $size, $bold);
+        $text = $this->ascii($text);
+        $width = $this->a5Width($text);
         $x -= $align === 'right' ? $width : ($align === 'center' ? $width / 2 : 0);
-        $this->stream .= sprintf("q %.2F g\n", $gray);
-        $this->text($text, $x, $y, $size, $bold);
-        $this->stream .= "Q\n";
+        $spaces = substr_count($text, ' ');
+        $spacing = $spaces > 0 ? max(0, $justifyWidth - $width) / $spaces : 0;
+        $this->stream .= sprintf(
+            "BT /F1 6.00 Tf %.4F Tw 1 0 0 1 %.2F %.2F Tm (%s) Tj ET\n",
+            $spacing, $x, $y, $this->pdfEscape($text),
+        );
     }
 
-    private function a5Block(string $text, float $x, float $y, float $width, float $size, float $leading, bool $bold = false, float $gray = .1): float
+    private function a5Block(string $text, float $x, float $y, float $width, float $leading): float
     {
-        foreach ($this->a5Wrap($text, $width, $size, $bold) as $line) {
-            $this->a5Text($line, $x, $y, $size, $bold, 'left', $gray);
+        foreach ($this->a5Wrap($text, $width) as $line) {
+            $this->a5Text($line, $x, $y);
             $y -= $leading;
         }
 
@@ -1204,7 +1266,7 @@ class TransactionDocumentPdfRenderer
         $objects = [];
         $pageIds = [];
         $contentIds = [];
-        $next = $embeddedFonts === [] ? 5 : 9;
+        $next = $embeddedFonts === [] ? 5 : 6;
 
         foreach ($pages as $_) {
             $pageIds[] = $next;
@@ -1216,30 +1278,25 @@ class TransactionDocumentPdfRenderer
         $objects[1] = '<< /Type /Catalog /Pages 2 0 R >>';
         $objects[2] = sprintf('<< /Type /Pages /Kids [%s] /Count %d >>', $kids, count($pages));
         $objects[3] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>';
-        $objects[4] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>';
-
-        if ($embeddedFonts !== []) {
-            foreach (['regular', 'bold'] as $index => $style) {
-                $font = $embeddedFonts[$style];
-                $fontId = 3 + $index;
-                $descriptorId = 5 + $index;
-                $fileId = 7 + $index;
-                $objects[$fontId] = sprintf('<< /Type /Font /Subtype /TrueType /BaseFont /%s /FirstChar 32 /LastChar 126 /Widths [%s] /Encoding /WinAnsiEncoding /FontDescriptor %d 0 R >>', $font['name'], implode(' ', $font['widths']), $descriptorId);
-                $objects[$descriptorId] = sprintf('<< /Type /FontDescriptor /FontName /%s /Flags 32 /FontBBox [%s] /ItalicAngle 0 /Ascent %d /Descent %d /CapHeight %d /StemV %d /FontFile2 %d 0 R >>', $font['name'], implode(' ', $font['bbox']), $font['ascent'], $font['descent'], $font['cap_height'], $index === 0 ? 80 : 120, $fileId);
-                $bytes = base64_decode($font['data'], true);
-                if ($bytes === false) {
-                    throw new \RuntimeException('Invalid embedded agreement font.');
-                }
-                $objects[$fileId] = '<< /Length '.strlen($bytes).' /Length1 '.$font['length']." /Filter /FlateDecode >>\nstream\n".$bytes."\nendstream";
+        if ($embeddedFonts === []) {
+            $objects[4] = '<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica-Bold >>';
+        } else {
+            $font = $embeddedFonts['regular'];
+            $objects[3] = sprintf('<< /Type /Font /Subtype /TrueType /BaseFont /%s /FirstChar 32 /LastChar 126 /Widths [%s] /Encoding /WinAnsiEncoding /FontDescriptor %d 0 R >>', $font['name'], implode(' ', $font['widths']), 4);
+            $objects[4] = sprintf('<< /Type /FontDescriptor /FontName /%s /Flags 32 /FontBBox [%s] /ItalicAngle 0 /Ascent %d /Descent %d /CapHeight %d /StemV %d /FontFile2 %d 0 R >>', $font['name'], implode(' ', $font['bbox']), $font['ascent'], $font['descent'], $font['cap_height'], 80, 5);
+            $bytes = base64_decode($font['data'], true);
+            if ($bytes === false) {
+                throw new \RuntimeException('Invalid embedded agreement font.');
             }
+            $objects[5] = '<< /Length '.strlen($bytes).' /Length1 '.$font['length']." /Filter /FlateDecode >>\nstream\n".$bytes."\nendstream";
         }
 
         foreach ($pages as $i => $content) {
             $pid = $pageIds[$i];
             $cid = $contentIds[$i];
             $objects[$pid] = sprintf(
-                '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 %.2F %.2F] /Resources << /Font << /F1 3 0 R /F2 4 0 R >> >> /Contents %d 0 R >>',
-                $pageWidth, $pageHeight, $cid,
+                '<< /Type /Page /Parent 2 0 R /MediaBox [0 0 %.2F %.2F] /Resources << /Font << /F1 3 0 R%s >> >> /Contents %d 0 R >>',
+                $pageWidth, $pageHeight, $embeddedFonts === [] ? ' /F2 4 0 R' : '', $cid,
             );
             $objects[$cid] = '<< /Length '.strlen($content)." >>\nstream\n".$content.'endstream';
         }
