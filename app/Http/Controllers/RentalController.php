@@ -185,6 +185,7 @@ class RentalController extends Controller
         return Inertia::render('bookings/form', [
             ...$this->formOptions($request),
             'mode' => 'direct',
+            'checkoutDefaultAt' => now()->format('Y-m-d\TH:i'),
             'paymentMethods' => $this->paymentMethods($request->user()),
             'cashSessions' => $this->cashSessions($request->user()),
         ]);

@@ -45,6 +45,28 @@ class RentalCheckoutTest extends TestCase
         $this->assertDatabaseHas('rentals', ['total_amount' => 150000]);
     }
 
+    public function test_direct_quote_accepts_line_total_at_database_decimal_precision(): void
+    {
+        [$user, $branch, $customer, $plan, $product] = $this->fixture();
+        $payload = $this->bookingPayload($branch, $customer, $plan, $product);
+        ProductRate::query()->where('product_id', $product->id)->update(['amount' => '0.10']);
+        $payload['duration_units'] = 3;
+        $response = $this->actingAs($user)->postJson(route('rentals.direct.quote'), $payload)
+            ->assertOk();
+        foreach (['bookings', 'rentals', 'payments', 'asset_reservations', 'bulk_reservations', 'rental_collaterals'] as $table) {
+            $this->assertDatabaseCount($table, 0);
+        }
+        $payload['items'][0]['id'] = (string) $product->id;
+        $payload['items'][0]['quantity'] = '1';
+        $this->post(route('rentals.direct.store'), [
+            ...$payload, 'quote_token' => $response->json('token'),
+            'checked_out_at' => now()->format('Y-m-d H:i:s'),
+            'checkout_condition' => 'good',
+            'collaterals' => [['type' => 'KTP', 'number' => 'QUOTE-KTP', 'holder_name' => $customer->name]],
+        ])->assertSessionHasNoErrors()->assertRedirect();
+        $this->assertDatabaseHas('rentals', ['total_amount' => 0.30]);
+    }
+
     public function test_changed_rate_rejects_quote_without_creating_rental_or_payment(): void
     {
         [$user, $branch, $customer, $plan, $product, $asset] = $this->fixture();

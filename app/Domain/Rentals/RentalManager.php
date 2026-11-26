@@ -19,6 +19,7 @@ use App\Models\User;
 use Carbon\CarbonImmutable;
 use Illuminate\Support\Collection;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class RentalManager
@@ -54,23 +55,46 @@ class RentalManager
                 ...$data,
                 'source' => 'direct',
             ], $actor);
-            if (isset($quote) && (
-                $booking->items->map(static fn (BookingItem $item): array => [
-                    'description' => $item->description, 'quantity' => (int) $item->quantity,
-                    'unit_rate' => (float) $item->unit_rate, 'total_amount' => (float) $item->total_amount,
-                ])->values()->all() != $quote['items']
-                || abs((float) $booking->subtotal - (float) $quote['subtotal']) > 0.009
-                || abs((float) $booking->discount_amount - (float) $quote['discount_amount']) > 0.009
-                || abs((float) $booking->total_amount - (float) $quote['total_amount']) > 0.009
-                || abs((float) $booking->deposit_required - (float) $quote['deposit_required']) > 0.009
-                || CarbonImmutable::parse($booking->ends_at)->toIso8601String() !== $quote['ends_at']
-            )) {
-                throw ValidationException::withMessages(['quote_token' => __('direct_rental.quote_changed')]);
+            if (isset($quote)) {
+                $this->assertBookingMatchesQuote($booking, $quote);
             }
             $this->bookings->confirm($booking, $actor);
 
             return $this->checkoutLocked($booking->id, $data, $actor);
         }, 3);
+    }
+
+    /** @param array<string, mixed> $quote */
+    private function assertBookingMatchesQuote(Booking $booking, array $quote): void
+    {
+        $savedItems = $booking->items->sortBy('id')->map(static fn (BookingItem $item): array => [
+            'description' => $item->description,
+            'quantity' => (int) $item->quantity,
+            'unit_rate' => (float) $item->unit_rate,
+            'total_amount' => (float) $item->total_amount,
+        ])->values()->all();
+        $quotedItems = array_map(static fn (array $item): array => [
+            ...$item,
+            'unit_rate' => round((float) $item['unit_rate'], 2),
+            'total_amount' => round((float) $item['total_amount'], 2),
+        ], $quote['items']);
+
+        $differences = [];
+        if ($savedItems !== $quotedItems) {
+            $differences[] = 'items';
+        }
+        foreach (['subtotal', 'discount_amount', 'total_amount', 'deposit_required'] as $field) {
+            if (abs((float) $booking->getAttribute($field) - (float) $quote[$field]) > 0.009) {
+                $differences[] = $field;
+            }
+        }
+        if (CarbonImmutable::parse($booking->ends_at)->toIso8601String() !== $quote['ends_at']) {
+            $differences[] = 'ends_at';
+        }
+        if ($differences !== []) {
+            Log::notice('Direct rental booking differs from quote', ['branch_id' => $booking->branch_id, 'fields' => $differences]);
+            throw ValidationException::withMessages(['quote_token' => __('direct_rental.quote_changed')]);
+        }
     }
 
     /** @param array<string, mixed> $data */

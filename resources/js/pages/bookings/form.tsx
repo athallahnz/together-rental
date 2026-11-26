@@ -44,6 +44,7 @@ type Line = { type: 'product' | 'package'; id: number; quantity: number };
 type Props = {
     booking: Booking | null;
     mode?: 'booking' | 'direct';
+    checkoutDefaultAt?: string;
     branches: AccessBranch[];
     customers: Option[];
     ratePlans: BookingRatePlan[];
@@ -153,6 +154,7 @@ const durationLabel = (plan?: BookingRatePlan, locale: 'id' | 'en' = 'id') => {
 export default function BookingForm({
     booking,
     mode = 'booking',
+    checkoutDefaultAt,
     branches,
     customers,
     ratePlans,
@@ -213,9 +215,9 @@ export default function BookingForm({
             id: item.product_id ?? item.package_id ?? 0,
             quantity: item.quantity,
         })) ?? [{ type: 'product', id: 0, quantity: 1 }],
-        checked_out_at: localDate(
-            booking?.starts_at ?? new Date().toISOString(),
-        ),
+        checked_out_at:
+            checkoutDefaultAt ??
+            localDate(booking?.starts_at ?? new Date().toISOString()),
         checkout_condition: 'good',
         checkout_notes: '',
         quote_token: '',

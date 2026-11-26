@@ -5,6 +5,7 @@ namespace App\Domain\Rentals;
 use App\Models\User;
 use Illuminate\Contracts\Encryption\DecryptException;
 use Illuminate\Support\Facades\Crypt;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\ValidationException;
 
 class DirectRentalQuote
@@ -26,10 +27,15 @@ class DirectRentalQuote
         } catch (DecryptException|\JsonException) {
             $payload = null;
         }
-        if (! is_array($payload) || ($payload['actor'] ?? null) !== $actor->id
-            || (int) ($payload['expires'] ?? 0) < now()->timestamp
-            || ! is_string($payload['hash'] ?? null)
-            || ! hash_equals($payload['hash'], $this->fingerprint($quote))) {
+        $reason = match (true) {
+            ! is_array($payload), ! is_string($payload['hash'] ?? null) => 'invalid_token',
+            ($payload['actor'] ?? null) !== $actor->id => 'actor_mismatch',
+            (int) ($payload['expires'] ?? 0) < now()->timestamp => 'expired',
+            ! hash_equals($payload['hash'], $this->fingerprint($quote)) => 'quote_changed',
+            default => null,
+        };
+        if ($reason !== null) {
+            Log::notice('Direct rental quote rejected', ['reason' => $reason, 'branch_id' => $quote['branch_id'] ?? null]);
             throw ValidationException::withMessages(['quote_token' => __('direct_rental.quote_changed')]);
         }
     }
